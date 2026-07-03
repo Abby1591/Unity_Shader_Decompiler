@@ -7,20 +7,39 @@ public class ShdrParser
     public List<Instruction> Instructions { get; } = new();
     public List<string> Warnings { get; } = new();
 
-    private Opcode DecodeOpcode(uint opcode)
+    private static readonly Dictionary<uint, OpcodeInfo> OpcodeTable = new()
     {
-        return opcode switch
-        {
-            50 => Opcode.Mad,
-            54 => Opcode.Mov,
-            56 => Opcode.Mul,
-            62 => Opcode.Ret,
-            65 => Opcode.Dp3,
-            69 => Opcode.Sample,
-            72 => Opcode.SampleL,
-            77 => Opcode.Rsq,
+        { 0,  new(){ Opcode=Opcode.Add,     Name="add", OperandCount=3 } },
+        { 50, new(){ Opcode=Opcode.Mad,     Name="mad", OperandCount=4 } },
+        { 54, new(){ Opcode=Opcode.Mov,     Name="mov", OperandCount=2 } },
+        { 56, new(){ Opcode=Opcode.Mul,     Name="mul", OperandCount=3 } },
+        { 62, new(){ Opcode=Opcode.Ret,     Name="ret", OperandCount=0 } },
+        { 65, new(){ Opcode=Opcode.Dp3,     Name="dp3", OperandCount=3 } },
+        { 69, new(){ Opcode=Opcode.Sample,  Name="sample", OperandCount=4 } },
+        { 72, new(){ Opcode=Opcode.SampleL, Name="sample_l", OperandCount=5 } },
+        { 77, new(){ Opcode=Opcode.Rsq,     Name="rsq", OperandCount=2 } },
 
-            _ => Opcode.Unknown
+        // declarations
+        { 88, new(){ Name="dcl_input", OperandCount=1 } },
+        { 89, new(){ Name="dcl_input_ps", OperandCount=1 } },
+        { 90, new(){ Name="dcl_output", OperandCount=1 } },
+        { 95, new(){ Name="dcl_constantBuffer", OperandCount=2 } },
+        { 98, new(){ Name="dcl_resource", OperandCount=2 } },
+        { 101,new(){ Name="dcl_sampler", OperandCount=2 } },
+        { 103,new(){ Name="dcl_temps", OperandCount=1 } },
+        { 104,new(){ Name="dcl_globalFlags", OperandCount=1 } },
+    };
+    
+    private OpcodeInfo DecodeOpcode(uint opcode)
+    {
+        if (OpcodeTable.TryGetValue(opcode, out var info))
+            return info;
+
+        return new OpcodeInfo
+        {
+            Opcode = Opcode.Unknown,
+            Name = $"opcode_{opcode}",
+            OperandCount = 0
         };
     }
     
@@ -75,17 +94,19 @@ public class ShdrParser
                 break;
             }
 
+            var info = DecodeOpcode((uint)opcode);
+
             var instruction = new Instruction
             {
+                Opcode = info.Opcode,
+                Name = info.Name,
                 OpcodeToken = token,
-                Opcode = DecodeOpcode((uint)opcode),
                 Length = length
             };
 
             for (int i = 1; i < length; i++)
             {
-                uint dword = reader.ReadUInt32();
-                instruction.RawOperands.Add(dword);
+                instruction.RawOperands.Add(reader.ReadUInt32());
             }
 
             Instructions.Add(instruction);

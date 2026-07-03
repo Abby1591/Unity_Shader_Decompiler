@@ -116,14 +116,7 @@ internal class Program
 
                     foreach (var inst in dxbcFile.Shader.Instructions)
                     {
-                        Console.Write($"{inst.Opcode,-10}");
-
-                        foreach (var operand in inst.Operands)
-                        {
-                            Console.Write($" {operand.RegisterType}");
-                        }
-
-                        Console.WriteLine();
+                        Console.WriteLine($"{inst.Name,-20} Length={inst.Length}");
                     }
 
                     foreach (var warning in dxbcFile.Shader.Warnings)

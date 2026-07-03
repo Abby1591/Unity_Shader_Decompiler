@@ -11,4 +11,6 @@ public class Instruction
     public List<uint> RawOperands { get; } = new();
 
     public List<Operand> Operands { get; } = new();
+    
+    public string Name = "";
 }
