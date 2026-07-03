@@ -24,14 +24,16 @@ public class ShdrParser
         };
     }
     
-    private Operand DecodeOperand(uint token)
+    private Operand DecodeOperand(BinaryReader reader, uint token)
     {
         uint type = (token >> 12) & 0xFF;
+        
+        uint index = reader.ReadUInt32();
 
         return new Operand
         {
             RegisterType = DecodeRegisterType(type),
-            RegisterIndex = 0,
+            RegisterIndex = index,
             Mask = 0xF
         };
     }
@@ -82,11 +84,8 @@ public class ShdrParser
 
             for (int i = 1; i < length; i++)
             {
-                uint operandToken = reader.ReadUInt32();
-
-                instruction.RawOperands.Add(operandToken);
-
-                instruction.Operands.Add(DecodeOperand(operandToken));
+                uint dword = reader.ReadUInt32();
+                instruction.RawOperands.Add(dword);
             }
 
             Instructions.Add(instruction);
