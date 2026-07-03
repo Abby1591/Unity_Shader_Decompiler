@@ -26,11 +26,28 @@ public class ShdrParser
     
     private Operand DecodeOperand(uint token)
     {
+        uint type = (token >> 12) & 0xFF;
+
         return new Operand
         {
-            RegisterType = RegisterType.Unknown,
+            RegisterType = DecodeRegisterType(type),
             RegisterIndex = 0,
             Mask = 0xF
+        };
+    }
+    
+    private RegisterType DecodeRegisterType(uint type)
+    {
+        return type switch
+        {
+            0 => RegisterType.Temp,
+            1 => RegisterType.Input,
+            2 => RegisterType.Output,
+            3 => RegisterType.ConstantBuffer,
+            6 => RegisterType.Resource,
+            7 => RegisterType.Sampler,
+
+            _ => RegisterType.Unknown
         };
     }
     
