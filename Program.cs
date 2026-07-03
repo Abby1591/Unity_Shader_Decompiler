@@ -92,22 +92,41 @@ internal class Program
                 var dxbcFile = new DxbcFile();
                 dxbcFile.Load(dxbcPath);
 
+                Console.WriteLine($"Length      : {dxbcFile.TotalLength}");
+                Console.WriteLine($"Chunk Count : {dxbcFile.Chunks.Count}");
+                Console.WriteLine();
+
+                if (dxbcFile.InputSignature != null)
+                {
+                    Console.WriteLine($"ISGN Elements: {dxbcFile.InputSignature.Elements.Count}");
+                    foreach (var warning in dxbcFile.InputSignature.Warnings)
+                        Console.WriteLine(warning);
+                    foreach (var element in dxbcFile.InputSignature.Elements)
+                        Console.WriteLine(element);
+                    Console.WriteLine();
+                }
+
                 if (dxbcFile.Shader != null)
                 {
+                    Console.WriteLine($"Shader Version Token : 0x{dxbcFile.Shader.VersionToken:X8}");
+                    Console.WriteLine($"Instruction DWORDs   : {dxbcFile.Shader.DeclaredDwordCount}");
                     Console.WriteLine();
                     Console.WriteLine("Instructions");
                     Console.WriteLine("------------");
 
                     foreach (var inst in dxbcFile.Shader.Instructions)
-                    {
-                        Console.WriteLine(
-                            $"Opcode={inst.Opcode,-4} Length={inst.Length}");
-                    }
+                        Console.WriteLine($"Opcode={inst.Opcode,-4} Length={inst.Length}");
+
+                    foreach (var warning in dxbcFile.Shader.Warnings)
+                        Console.WriteLine(warning);
 
                     Console.WriteLine();
                 }
 
                 string hlsl = decompiler.Decompile(dxbc);
+                string hlslPath = Path.Combine("Output", $"program{i}.hlsl");
+                File.WriteAllText(hlslPath, hlsl);
+                Console.WriteLine($"Saved: {hlslPath}");
             }
             catch (Exception ex)
             {

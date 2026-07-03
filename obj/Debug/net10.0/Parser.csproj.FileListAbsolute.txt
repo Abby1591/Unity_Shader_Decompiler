@@ -39,3 +39,4 @@ C:\Users\Abby\Software\Decomp\Shader\Parser\bin\Debug\net10.0\SharpGen.Runtime.C
 C:\Users\Abby\Software\Decomp\Shader\Parser\bin\Debug\net10.0\Vortice.D3DCompiler.dll
 C:\Users\Abby\Software\Decomp\Shader\Parser\bin\Debug\net10.0\Vortice.DirectX.dll
 C:\Users\Abby\Software\Decomp\Shader\Parser\bin\Debug\net10.0\Vortice.Mathematics.dll
+C:\Users\Abby\Software\Decomp\Shader\Parser\obj\Debug\net10.0\Parser.sourcelink.json
