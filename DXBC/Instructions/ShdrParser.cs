@@ -24,6 +24,16 @@ public class ShdrParser
         };
     }
     
+    private Operand DecodeOperand(uint token)
+    {
+        return new Operand
+        {
+            RegisterType = RegisterType.Unknown,
+            RegisterIndex = 0,
+            Mask = 0xF
+        };
+    }
+    
     public void Parse(byte[] data)
     {
         using var stream = new MemoryStream(data);
@@ -54,7 +64,13 @@ public class ShdrParser
             };
 
             for (int i = 1; i < length; i++)
-                instruction.RawOperands.Add(reader.ReadUInt32());
+            {
+                uint operandToken = reader.ReadUInt32();
+
+                instruction.RawOperands.Add(operandToken);
+
+                instruction.Operands.Add(DecodeOperand(operandToken));
+            }
 
             Instructions.Add(instruction);
 

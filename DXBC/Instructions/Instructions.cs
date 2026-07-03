@@ -2,9 +2,9 @@ namespace Parser.DXBC.Instructions;
 
 public class Instruction
 {
-    public Opcode Opcode;
-
     public uint OpcodeToken;
+
+    public Opcode Opcode;
 
     public int Length;
 
