@@ -4,9 +4,26 @@ public class ShdrParser
 {
     public uint VersionToken { get; private set; }
     public uint DeclaredDwordCount { get; private set; }
-    public List<ShaderInstruction> Instructions { get; } = new();
+    public List<Instruction> Instructions { get; } = new();
     public List<string> Warnings { get; } = new();
 
+    private Opcode DecodeOpcode(uint opcode)
+    {
+        return opcode switch
+        {
+            50 => Opcode.Mad,
+            54 => Opcode.Mov,
+            56 => Opcode.Mul,
+            62 => Opcode.Ret,
+            65 => Opcode.Dp3,
+            69 => Opcode.Sample,
+            72 => Opcode.SampleL,
+            77 => Opcode.Rsq,
+
+            _ => Opcode.Unknown
+        };
+    }
+    
     public void Parse(byte[] data)
     {
         using var stream = new MemoryStream(data);
@@ -29,15 +46,15 @@ public class ShdrParser
                 break;
             }
 
-            var instruction = new ShaderInstruction
+            var instruction = new Instruction
             {
                 OpcodeToken = token,
-                Opcode = opcode,
+                Opcode = DecodeOpcode((uint)opcode),
                 Length = length
             };
 
             for (int i = 1; i < length; i++)
-                instruction.Operands.Add(reader.ReadUInt32());
+                instruction.RawOperands.Add(reader.ReadUInt32());
 
             Instructions.Add(instruction);
 

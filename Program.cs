@@ -115,7 +115,9 @@ internal class Program
                     Console.WriteLine("------------");
 
                     foreach (var inst in dxbcFile.Shader.Instructions)
-                        Console.WriteLine($"Opcode={inst.Opcode,-4} Length={inst.Length}");
+                    {
+                        Console.WriteLine($"{inst.Opcode,-10} Length={inst.Length}");
+                    }
 
                     foreach (var warning in dxbcFile.Shader.Warnings)
                         Console.WriteLine(warning);
