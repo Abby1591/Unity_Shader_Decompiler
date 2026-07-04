@@ -1,22 +1,46 @@
-namespace Parser.DXBC.Instructions;
-
 public enum RegisterType
 {
     Temp,
-
     Input,
-
     Output,
-
-    ConstantBuffer,
-
-    Sampler,
-
-    Resource,
-
+    IndexableTemp,
     Immediate32,
-
     Immediate64,
+    Sampler,
+    Resource,
+    ConstantBuffer,
+    ImmediateConstantBuffer,
+    Label,
+    InputPrimitiveID,
+    OutputDepth,
+    Null,
+    Rasterizer,
+    OutputCoverageMask,
+    Stream,
+    FunctionBody,
+    FunctionTable,
+    Interface,
+    FunctionInput,
+    FunctionOutput,
+    OutputControlPointID,
+    InputForkInstanceID,
+    InputJoinInstanceID,
+    InputControlPoint,
+    OutputControlPoint,
+    InputPatchConstant,
+    InputDomainPoint,
+    ThisPointer,
+    UnorderedAccessView,
+    ThreadGroupSharedMemory,
+    InputThreadID,
+    InputThreadGroupID,
+    InputThreadIDInGroup,
+    InputCoverageMask,
+    InputThreadIDInGroupFlattened,
+    InputGSInstanceID,
+    OutputDepthGreaterEqual,
+    OutputDepthLessEqual,
+    CycleCounter,
 
     Unknown
 }

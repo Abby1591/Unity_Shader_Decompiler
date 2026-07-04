@@ -43,35 +43,141 @@ public class ShdrParser
         };
     }
     
-    private Operand DecodeOperand(BinaryReader reader)
+    private Operand DecodeOperand(BinaryReader reader) 
     {
-        uint token = reader.ReadUInt32();
-        uint type = (token >> 12) & 0xFF;
-        uint index = 0;
+    uint token = reader.ReadUInt32();
 
-        if (((token >> 22) & 0x3) != 0)
+    Operand operand = new();
+
+    // Bits 0-1 : Number of components
+    operand.NumComponents = (int)(token & 0x3);
+
+    // Bits 2-3 : Component selection mode
+    operand.SelectionMode = (int)((token >> 2) & 0x3);
+
+    // Bits 4-11 : Component mask/swizzle
+    switch (operand.SelectionMode)
+    {
+        // Mask mode
+        case 0:
+            operand.Mask = (byte)((token >> 4) & 0xF);
+            break;
+
+        // Swizzle mode
+        case 1:
+            operand.Swizzle = (byte)((token >> 4) & 0xFF);
+            break;
+
+        // Select 1 component
+        case 2:
+            operand.Component = (byte)((token >> 4) & 0x3);
+            break;
+    }
+
+    // Bits 10-11 : Index dimensions
+    operand.IndexDimension = (int)((token >> 10) & 0x3);
+
+    // Bits 12-19 and 20-21 : Register type
+    uint regType = ((token >> 12) & 0xFF) | (((token >> 20) & 0x3) << 8);
+    operand.RegisterType = DecodeRegisterType(regType);
+    
+    // Bit 31 = operand extension flag
+    operand.IsExtended = ((token >> 31) & 1) != 0;
+
+    // Decode register indices
+    for (int i = 0; i < operand.IndexDimension; i++)
+    {
+        uint representation = (token >> (22 + i * 3)) & 0x7;
+
+        switch (representation)
         {
-            index = reader.ReadUInt32();
+            case 0: // Immediate32
+                operand.Indices.Add(reader.ReadUInt32());
+                break;
+
+            case 1: // Immediate64
+                reader.ReadUInt64();
+                operand.Indices.Add(0);
+                break;
+
+            case 2: // Relative
+                DecodeOperand(reader);
+                operand.Indices.Add(0);
+                break;
+
+            case 3: // Immediate32 + Relative
+                operand.Indices.Add(reader.ReadUInt32());
+                DecodeOperand(reader);
+                break;
+
+            default:
+                throw new NotSupportedException(
+                    $"Unknown index representation {representation}");
         }
-        
-        return new Operand
+    }
+
+    if (operand.Indices.Count > 0)
+        operand.RegisterIndex = operand.Indices[0];
+
+    // Skip operand extensions for now
+    if (operand.IsExtended)
+    {
+        uint extToken;
+        do
         {
-            RegisterType = DecodeRegisterType(type),
-            RegisterIndex = index,
-            Mask = 0xF
-        };
+            extToken = reader.ReadUInt32();
+        }
+        while (((extToken >> 31) & 1) != 0);
+    }
+
+    return operand;
     }
     
     private RegisterType DecodeRegisterType(uint type)
     {
         return type switch
         {
-            0 => RegisterType.Temp,
-            1 => RegisterType.Input,
-            2 => RegisterType.Output,
-            3 => RegisterType.ConstantBuffer,
-            6 => RegisterType.Resource,
-            7 => RegisterType.Sampler,
+            0  => RegisterType.Temp,
+            1  => RegisterType.Input,
+            2  => RegisterType.Output,
+            3  => RegisterType.IndexableTemp,
+            4  => RegisterType.Immediate32,
+            5  => RegisterType.Immediate64,
+            6  => RegisterType.Sampler,
+            7  => RegisterType.Resource,
+            8  => RegisterType.ConstantBuffer,
+            9  => RegisterType.ImmediateConstantBuffer,
+            10 => RegisterType.Label,
+            11 => RegisterType.InputPrimitiveID,
+            12 => RegisterType.OutputDepth,
+            13 => RegisterType.Null,
+            14 => RegisterType.Rasterizer,
+            15 => RegisterType.OutputCoverageMask,
+            16 => RegisterType.Stream,
+            17 => RegisterType.FunctionBody,
+            18 => RegisterType.FunctionTable,
+            19 => RegisterType.Interface,
+            20 => RegisterType.FunctionInput,
+            21 => RegisterType.FunctionOutput,
+            22 => RegisterType.OutputControlPointID,
+            23 => RegisterType.InputForkInstanceID,
+            24 => RegisterType.InputJoinInstanceID,
+            25 => RegisterType.InputControlPoint,
+            26 => RegisterType.OutputControlPoint,
+            27 => RegisterType.InputPatchConstant,
+            28 => RegisterType.InputDomainPoint,
+            29 => RegisterType.ThisPointer,
+            30 => RegisterType.UnorderedAccessView,
+            31 => RegisterType.ThreadGroupSharedMemory,
+            32 => RegisterType.InputThreadID,
+            33 => RegisterType.InputThreadGroupID,
+            34 => RegisterType.InputThreadIDInGroup,
+            35 => RegisterType.InputCoverageMask,
+            36 => RegisterType.InputThreadIDInGroupFlattened,
+            37 => RegisterType.InputGSInstanceID,
+            38 => RegisterType.OutputDepthGreaterEqual,
+            39 => RegisterType.OutputDepthLessEqual,
+            40 => RegisterType.CycleCounter,
 
             _ => RegisterType.Unknown
         };
@@ -109,18 +215,14 @@ public class ShdrParser
                 Length = length
             };
 
+            long instructionEnd = start + length * 4;
+
             for (int i = 0; i < info.OperandCount; i++)
             {
                 instruction.Operands.Add(DecodeOperand(reader));
             }
-
-            long consumed = (reader.BaseStream.Position - start) / 4;
-
-            while (consumed < length)
-            {
-                reader.ReadUInt32();
-                consumed++;
-            }
+            
+            reader.BaseStream.Position = instructionEnd;
 
             Instructions.Add(instruction);
 
