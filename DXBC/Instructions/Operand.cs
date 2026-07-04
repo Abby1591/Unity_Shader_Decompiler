@@ -65,4 +65,22 @@ public class Operand
         return s;
     }
     
+    public override string ToString()
+    {
+        string reg = RegisterType switch
+        {
+            RegisterType.Temp => $"r{RegisterIndex}",
+            RegisterType.Input => $"v{RegisterIndex}",
+            RegisterType.Output => $"o{RegisterIndex}",
+            RegisterType.ConstantBuffer => $"cb{RegisterIndex}",
+            RegisterType.Resource => $"t{RegisterIndex}",
+            RegisterType.Sampler => $"s{RegisterIndex}",
+            RegisterType.Immediate32 => "l",
+            RegisterType.Null => "null",
+            _ => $"{RegisterType}{RegisterIndex}"
+        };
+
+        return reg + GetComponentString();
+    }
+    
 }

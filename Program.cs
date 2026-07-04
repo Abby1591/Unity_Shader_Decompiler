@@ -120,7 +120,7 @@ internal class Program
 
                         foreach (var operand in inst.Operands)
                         {
-                            Console.WriteLine($"    {operand.RegisterType}{operand.RegisterIndex}");
+                            Console.WriteLine(operand);
                         }
                     }
 

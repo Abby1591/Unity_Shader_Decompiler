@@ -7,8 +7,7 @@ public class ShdrParser
     public List<Instruction> Instructions { get; } = new();
     public List<string> Warnings { get; } = new();
 
-    private static readonly Dictionary<uint, OpcodeInfo> OpcodeTable = new()
-{
+    private static readonly Dictionary<uint, OpcodeInfo> OpcodeTable = new() {
     { 0,  new(){ Opcode=Opcode.Add, Name="add", OperandCount=3 } },
     { 1,  new(){ Opcode=Opcode.And, Name="and", OperandCount=3 } },
     { 2,  new(){ Opcode=Opcode.Break, Name="break", OperandCount=0 } },
@@ -49,28 +48,30 @@ public class ShdrParser
     { 48, new(){ Opcode=Opcode.Ld, Name="ld", OperandCount=3 } },
     { 49, new(){ Opcode=Opcode.Log, Name="log", OperandCount=2 } },
     { 50, new(){ Opcode=Opcode.Loop, Name="loop", OperandCount=0 } },
-    { 53, new(){ Opcode=Opcode.Mad, Name="mad", OperandCount=4 } },
-    { 54, new(){ Opcode=Opcode.Min, Name="min", OperandCount=3 } },
-    { 55, new(){ Opcode=Opcode.Max, Name="max", OperandCount=3 } },
-    { 56, new(){ Opcode=Opcode.Mov, Name="mov", OperandCount=2 } },
-    { 57, new(){ Opcode=Opcode.MovC, Name="movc", OperandCount=3 } },
-    { 58, new(){ Opcode=Opcode.Mul, Name="mul", OperandCount=3 } },
-    { 59, new(){ Opcode=Opcode.Ne, Name="ne", OperandCount=3 } },
-    { 60, new(){ Opcode=Opcode.Nop, Name="nop", OperandCount=0 } },
-    { 61, new(){ Opcode=Opcode.Not, Name="not", OperandCount=2 } },
-    { 62, new(){ Opcode=Opcode.Or, Name="or", OperandCount=3 } },
-    { 63, new(){ Opcode=Opcode.ResInfo, Name="resinfo", OperandCount=3 } },
-    { 64, new(){ Opcode=Opcode.Ret, Name="ret", OperandCount=0 } },
-    { 65, new(){ Opcode=Opcode.RoundNI, Name="round_ni", OperandCount=2 } },
-    { 66, new(){ Opcode=Opcode.RoundPI, Name="round_pi", OperandCount=2 } },
-    { 67, new(){ Opcode=Opcode.RoundZ, Name="round_z", OperandCount=2 } },
-    { 68, new(){ Opcode=Opcode.Rsq, Name="rsq", OperandCount=2 } },
-    { 69, new(){ Opcode=Opcode.Sample, Name="sample", OperandCount=4 } },
-    { 70, new(){ Opcode=Opcode.SampleL, Name="sample_l", OperandCount=5 } },
-    { 71, new(){ Opcode=Opcode.SampleC, Name="sample_c", OperandCount=4 } },
-    { 72, new(){ Opcode=Opcode.SinCos, Name="sincos", OperandCount=3 } },
-    { 73, new(){ Opcode=Opcode.Sqrt, Name="sqrt", OperandCount=2 } },
-    { 74, new(){ Opcode=Opcode.Switch, Name="switch", OperandCount=1 } },
+    { 53, new(){ Opcode=Opcode.Max,      Name="max",        OperandCount=3 } },
+    { 54, new(){ Opcode=Opcode.Mov,      Name="mov",        OperandCount=2 } },
+    { 55, new(){ Opcode=Opcode.MovC,     Name="movc",       OperandCount=3 } },
+    { 56, new(){ Opcode=Opcode.Mul,      Name="mul",        OperandCount=3 } },
+    { 57, new(){ Opcode=Opcode.Ne,       Name="ne",         OperandCount=3 } },
+    { 58, new(){ Opcode=Opcode.Nop,      Name="nop",        OperandCount=0 } },
+    { 59, new(){ Opcode=Opcode.Not,      Name="not",        OperandCount=2 } },
+    { 60, new(){ Opcode=Opcode.Or,       Name="or",         OperandCount=3 } },
+    { 61, new(){ Opcode=Opcode.ResInfo,  Name="resinfo",    OperandCount=3 } },
+    { 62, new(){ Opcode=Opcode.Ret,      Name="ret",        OperandCount=0 } },
+    { 63, new(){ Name="retc",            OperandCount=1 } },
+    { 64, new(){ Name="round_ne",        OperandCount=2 } },
+    { 65, new(){ Opcode=Opcode.RoundNI,  Name="round_ni",   OperandCount=2 } },
+    { 66, new(){ Opcode=Opcode.RoundPI,  Name="round_pi",   OperandCount=2 } },
+    { 67, new(){ Opcode=Opcode.RoundZ,   Name="round_z",    OperandCount=2 } },
+    { 68, new(){ Opcode=Opcode.Rsq,      Name="rsq",        OperandCount=2 } },
+    { 69, new(){ Opcode=Opcode.Sample,   Name="sample",     OperandCount=4 } },
+    { 70, new(){ Opcode=Opcode.SampleC,  Name="sample_c",   OperandCount=4 } },
+    { 71, new(){ Name="sample_c_lz",     OperandCount=4 } },
+    { 72, new(){ Opcode=Opcode.SampleL,  Name="sample_l",   OperandCount=5 } },
+    { 73, new(){ Name="sample_d",        OperandCount=6 } },
+    { 74, new(){ Name="sample_b",        OperandCount=5 } },
+    { 75, new(){ Opcode=Opcode.Sqrt,     Name="sqrt",       OperandCount=2 } },
+    { 76, new(){ Name="switch",          OperandCount=1 } },
 
     // declarations
     { 88, new(){ Name="dcl_input", OperandCount=1 } },
@@ -154,14 +155,10 @@ public class ShdrParser
                 break;
 
             case 2: // Relative
-                DecodeOperand(reader);
-                operand.Indices.Add(0);
-                break;
+                throw new NotSupportedException("Relative addressing not implemented");
 
             case 3: // Immediate32 + Relative
-                operand.Indices.Add(reader.ReadUInt32());
-                DecodeOperand(reader);
-                break;
+                throw new NotSupportedException("Relative addressing not implemented");
 
             default:
                 throw new NotSupportedException(
@@ -248,7 +245,7 @@ public class ShdrParser
         {
             long start = reader.BaseStream.Position;
             uint token = reader.ReadUInt32();
-
+            
             int opcode = (int)(token & 0x7FF);
             int length = (int)((token >> 24) & 0x7F);
 
@@ -272,7 +269,17 @@ public class ShdrParser
 
             for (int i = 0; i < info.OperandCount; i++)
             {
-                instruction.Operands.Add(DecodeOperand(reader));
+                try
+                {
+                    instruction.Operands.Add(DecodeOperand(reader));
+                }
+                catch (Exception ex)
+                {
+                    throw new Exception(
+                        $"Failed decoding operand {i} of {info.Name} " +
+                        $"at 0x{start:X} (stream 0x{reader.BaseStream.Position:X})",
+                        ex);
+                }
             }
             
             reader.BaseStream.Position = instructionEnd;
