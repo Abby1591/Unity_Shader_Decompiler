@@ -41,6 +41,7 @@ public enum RegisterType
     OutputDepthGreaterEqual,
     OutputDepthLessEqual,
     CycleCounter,
+    Uav,
 
     Unknown
 }

@@ -10,8 +10,6 @@ public class Operand
 
     public OperandComponentMode ComponentMode;
 
-    public int IndexDimension;
-
     public OperandIndexRepresentation[] IndexRepresentation = new OperandIndexRepresentation[3];
 
     public bool IsExtended { get; set; }
@@ -23,6 +21,12 @@ public class Operand
     public byte Component { get; set; }
 
     public List<uint> Indices { get; } = new();
+    
+    public float[]? Immediate32Values;
+    
+    public double[]? Immediate64Values;
+    
+    public Operand?[] RelativeOperands = new Operand?[3];
     
     private static string DecodeSwizzle(byte swizzle)
     {
@@ -69,6 +73,12 @@ public class Operand
     
     public override string ToString()
     {
+        if (RegisterType == RegisterType.Immediate32 && Immediate32Values != null)
+            return "l(" + string.Join(", ", Immediate32Values) + ")";
+
+        if (RegisterType == RegisterType.Immediate64 && Immediate64Values != null)
+            return "d(" + string.Join(", ", Immediate64Values) + ")";
+        
         string reg = RegisterType switch
         {
             RegisterType.Temp => $"r{RegisterIndex}",
@@ -111,8 +121,10 @@ public class Operand
     public enum OperandIndexRepresentation
     {
         Immediate32 = 0,
+        Immediate64 = 1,
         Relative = 2,
-        Immediate32PlusRelative = 3
+        Immediate32PlusRelative = 3,
+        Immediate64PlusRelative = 4
     }
     
 }

@@ -85,6 +85,32 @@ public class ShdrParser
     { 104,new(){ Name="dcl_globalFlags", OperandCount=1 } },
 };
     
+    private static int GetIndexCount(RegisterType type)
+    {
+        return type switch
+        {
+            RegisterType.Temp => 1,
+            RegisterType.Input => 1,
+            RegisterType.Output => 1,
+            RegisterType.IndexableTemp => 2,
+            RegisterType.ConstantBuffer => 2,
+            RegisterType.ImmediateConstantBuffer => 2,
+            RegisterType.Resource => 1,
+            RegisterType.Sampler => 1,
+            RegisterType.FunctionBody => 1,
+            RegisterType.FunctionTable => 1,
+            RegisterType.Interface => 1,
+            RegisterType.ThreadGroupSharedMemory => 1,
+            RegisterType.Uav => 1,
+
+            RegisterType.Immediate32 => 0,
+            RegisterType.Immediate64 => 0,
+            RegisterType.Null => 0,
+
+            _ => 1
+        };
+    }
+    
     private OpcodeInfo DecodeOpcode(uint opcode)
     {
         if (OpcodeTable.TryGetValue(opcode, out var info))
@@ -149,31 +175,80 @@ public class ShdrParser
         (((token >> 20) & 0x3) << 8);
 
     op.RegisterType = DecodeRegisterType(regType);
-
+    
     //--------------------------------------------------------
-    // bits 20-21
-    // Register order (= index dimension)
+    // Immediate values
     //--------------------------------------------------------
 
-    op.IndexDimension = (int)((token >> 20) & 0x3);
+    if (op.RegisterType == RegisterType.Immediate32)
+    {
+        int count = op.NumComponents switch
+        {
+            0 => 0,
+            1 => 1,
+            2 => 4,
+            _ => throw new InvalidDataException()
+        };
+
+        op.Immediate32Values = new float[count];
+
+        for (int i = 0; i < count; i++)
+            op.Immediate32Values[i] = reader.ReadSingle();
+
+        return op;
+    }
+
+    if (op.RegisterType == RegisterType.Immediate64)
+    {
+        int count = op.NumComponents switch
+        {
+            0 => 0,
+            1 => 1,
+            2 => 4,
+            _ => throw new InvalidDataException()
+        };
+
+        op.Immediate64Values = new Double[count];
+
+        for (int i = 0; i < count; i++)
+            op.Immediate64Values[i] = reader.ReadDouble();
+
+        return op;
+    }
+    
+    //--------------------------------------------------------
+    // Register type determines the number of indices.
+    // The index representations are stored in bits 22-30.
+    //--------------------------------------------------------
+    
+    int indexCount = GetIndexCount(op.RegisterType);
 
     //--------------------------------------------------------
     // bits 22-23
     // Addressing mode 0
     //--------------------------------------------------------
 
-    if (op.IndexDimension > 0)
+    if (indexCount > 0)
         op.IndexRepresentation[0] =
-            (Operand.OperandIndexRepresentation)((token >> 22) & 0x3);
+            (Operand.OperandIndexRepresentation)((token >> 22) & 0x7);
 
     //--------------------------------------------------------
     // bits 25-26
     // Addressing mode 1
     //--------------------------------------------------------
 
-    if (op.IndexDimension > 1)
+    if (indexCount > 1)
         op.IndexRepresentation[1] =
-            (Operand.OperandIndexRepresentation)((token >> 25) & 0x3);
+            (Operand.OperandIndexRepresentation)((token >> 25) & 0x7);
+    
+    //--------------------------------------------------------
+    // bits 28-29
+    // Addressing mode 2
+    //--------------------------------------------------------
+    
+    if (indexCount > 2)
+        op.IndexRepresentation[2] =
+            (Operand.OperandIndexRepresentation)((token >> 28) & 0x7);
 
     //--------------------------------------------------------
     // bit 31
@@ -186,7 +261,7 @@ public class ShdrParser
     // Read indices
     //--------------------------------------------------------
 
-    for (int i = 0; i < op.IndexDimension; i++)
+    for (int i = 0; i < indexCount; i++)
     {
         switch (op.IndexRepresentation[i])
         {
@@ -197,14 +272,14 @@ public class ShdrParser
 
             case Operand.OperandIndexRepresentation.Relative:
 
-                DecodeOperand(reader);
+                op.RelativeOperands[i] = DecodeOperand(reader);
                 op.Indices.Add(0);
                 break;
 
             case Operand.OperandIndexRepresentation.Immediate32PlusRelative:
 
                 op.Indices.Add(reader.ReadUInt32());
-                DecodeOperand(reader);
+                op.RelativeOperands[i] = DecodeOperand(reader);
                 break;
 
             default:
