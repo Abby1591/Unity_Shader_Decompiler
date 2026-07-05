@@ -72,6 +72,7 @@ public class ShdrParser
     { 74, new(){ Name="sample_b",        OperandCount=5 } },
     { 75, new(){ Opcode=Opcode.Sqrt,     Name="sqrt",       OperandCount=2 } },
     { 76, new(){ Name="switch",          OperandCount=1 } },
+    { 77, new(){ Opcode = Opcode.Dp2Add, Name = "dp2add", OperandCount = 4 } },
 
     // declarations
     { 88, new(){ Name="dcl_input", OperandCount=1 } },
@@ -97,91 +98,142 @@ public class ShdrParser
         };
     }
     
-    private Operand DecodeOperand(BinaryReader reader) 
-    {
+    private Operand DecodeOperand(BinaryReader reader)
+{
     uint token = reader.ReadUInt32();
 
-    Operand operand = new();
+    Operand op = new();
 
-    // Bits 0-1 : Number of components
-    operand.NumComponents = (int)(token & 0x3);
+    //--------------------------------------------------------
+    // bits 0-1
+    // Number of components
+    //--------------------------------------------------------
 
-    // Bits 2-3 : Component selection mode
-    operand.SelectionMode = (int)((token >> 2) & 0x3);
+    op.NumComponents = (int)(token & 0x3);
 
-    // Bits 4-11 : Component mask/swizzle
-    switch (operand.SelectionMode)
+    //--------------------------------------------------------
+    // bits 2-3
+    // Component selection mode
+    //--------------------------------------------------------
+
+    op.ComponentMode =
+        (Operand.OperandComponentMode)((token >> 2) & 0x3);
+
+    //--------------------------------------------------------
+    // bits 4-11
+    // Mask / Swizzle / Component
+    //--------------------------------------------------------
+
+    switch (op.ComponentMode)
     {
-        // Mask mode
-        case 0:
-            operand.Mask = (byte)((token >> 4) & 0xF);
+        case Operand.OperandComponentMode.Mask:
+            op.Mask = (byte)((token >> 4) & 0xF);
             break;
 
-        // Swizzle mode
-        case 1:
-            operand.Swizzle = (byte)((token >> 4) & 0xFF);
+        case Operand.OperandComponentMode.Swizzle:
+            op.Swizzle = (byte)((token >> 4) & 0xFF);
             break;
 
-        // Select 1 component
-        case 2:
-            operand.Component = (byte)((token >> 4) & 0x3);
+        case Operand.OperandComponentMode.Select1:
+            op.Component = (byte)((token >> 4) & 0x3);
             break;
     }
 
-    // Bits 10-11 : Index dimensions
-    operand.IndexDimension = (int)((token >> 10) & 0x3);
+    //--------------------------------------------------------
+    // bits 12-19
+    // Register type
+    //--------------------------------------------------------
 
-    // Bits 12-19 and 20-21 : Register type
-    uint regType = ((token >> 12) & 0xFF) | (((token >> 20) & 0x3) << 8);
-    operand.RegisterType = DecodeRegisterType(regType);
-    
-    // Bit 31 = operand extension flag
-    operand.IsExtended = ((token >> 31) & 1) != 0;
+    uint regType =
+        ((token >> 12) & 0xFF) |
+        (((token >> 20) & 0x3) << 8);
 
-    // Decode register indices
-    for (int i = 0; i < operand.IndexDimension; i++)
+    op.RegisterType = DecodeRegisterType(regType);
+
+    //--------------------------------------------------------
+    // bits 20-21
+    // Register order (= index dimension)
+    //--------------------------------------------------------
+
+    op.IndexDimension = (int)((token >> 20) & 0x3);
+
+    //--------------------------------------------------------
+    // bits 22-23
+    // Addressing mode 0
+    //--------------------------------------------------------
+
+    if (op.IndexDimension > 0)
+        op.IndexRepresentation[0] =
+            (Operand.OperandIndexRepresentation)((token >> 22) & 0x3);
+
+    //--------------------------------------------------------
+    // bits 25-26
+    // Addressing mode 1
+    //--------------------------------------------------------
+
+    if (op.IndexDimension > 1)
+        op.IndexRepresentation[1] =
+            (Operand.OperandIndexRepresentation)((token >> 25) & 0x3);
+
+    //--------------------------------------------------------
+    // bit 31
+    // Extended operand
+    //--------------------------------------------------------
+
+    op.IsExtended = (token & 0x80000000) != 0;
+
+    //--------------------------------------------------------
+    // Read indices
+    //--------------------------------------------------------
+
+    for (int i = 0; i < op.IndexDimension; i++)
     {
-        uint representation = (token >> (22 + i * 3)) & 0x7;
-
-        switch (representation)
+        switch (op.IndexRepresentation[i])
         {
-            case 0: // Immediate32
-                operand.Indices.Add(reader.ReadUInt32());
+            case Operand.OperandIndexRepresentation.Immediate32:
+
+                op.Indices.Add(reader.ReadUInt32());
                 break;
 
-            case 1: // Immediate64
-                reader.ReadUInt64();
-                operand.Indices.Add(0);
+            case Operand.OperandIndexRepresentation.Relative:
+
+                DecodeOperand(reader);
+                op.Indices.Add(0);
                 break;
 
-            case 2: // Relative
-                throw new NotSupportedException("Relative addressing not implemented");
+            case Operand.OperandIndexRepresentation.Immediate32PlusRelative:
 
-            case 3: // Immediate32 + Relative
-                throw new NotSupportedException("Relative addressing not implemented");
+                op.Indices.Add(reader.ReadUInt32());
+                DecodeOperand(reader);
+                break;
 
             default:
-                throw new NotSupportedException(
-                    $"Unknown index representation {representation}");
+
+                op.Indices.Add(0);
+                break;
         }
     }
 
-    if (operand.Indices.Count > 0)
-        operand.RegisterIndex = operand.Indices[0];
+    if (op.Indices.Count > 0)
+        op.RegisterIndex = op.Indices[0];
 
-    // Skip operand extensions for now
-    if (operand.IsExtended)
+    //--------------------------------------------------------
+    // Skip extension tokens
+    //--------------------------------------------------------
+
+    if (op.IsExtended)
     {
-        uint extToken;
+        uint ext;
+
         do
         {
-            extToken = reader.ReadUInt32();
+            ext = reader.ReadUInt32();
         }
-        while (((extToken >> 31) & 1) != 0);
+        while ((ext & 0x80000000) != 0);
     }
 
-    return operand;
-    }
+    return op;
+}
     
     private RegisterType DecodeRegisterType(uint type)
     {
@@ -246,6 +298,7 @@ public class ShdrParser
             long start = reader.BaseStream.Position;
             uint token = reader.ReadUInt32();
             
+
             int opcode = (int)(token & 0x7FF);
             int length = (int)((token >> 24) & 0x7F);
 

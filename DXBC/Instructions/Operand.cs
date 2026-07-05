@@ -8,9 +8,11 @@ public class Operand
 
     public int NumComponents { get; set; }
 
-    public int SelectionMode { get; set; }
+    public OperandComponentMode ComponentMode;
 
-    public int IndexDimension { get; set; }
+    public int IndexDimension;
+
+    public OperandIndexRepresentation[] IndexRepresentation = new OperandIndexRepresentation[3];
 
     public bool IsExtended { get; set; }
 
@@ -37,15 +39,15 @@ public class Operand
     
     public string GetComponentString()
     {
-        switch (SelectionMode)
+        switch (ComponentMode)
         {
-            case 0:
+            case OperandComponentMode.Mask:
                 return "." + DecodeMask(Mask);
 
-            case 1:
+            case OperandComponentMode.Swizzle:
                 return "." + DecodeSwizzle(Swizzle);
 
-            case 2:
+            case OperandComponentMode.Select1:
                 return "." + "xyzw"[Component];
 
             default:
@@ -81,6 +83,36 @@ public class Operand
         };
 
         return reg + GetComponentString();
+    }
+    
+    public enum OperandNumComponents
+    {
+        Zero = 0,
+        One = 1,
+        Four = 2,
+        N = 3
+    }
+
+    public enum OperandComponentSelectionMode
+    {
+        Mask = 0,
+        Swizzle = 1,
+        Select1 = 2
+    }
+    
+    
+    public enum OperandComponentMode
+    {
+        Mask = 0,
+        Swizzle = 1,
+        Select1 = 2
+    }
+
+    public enum OperandIndexRepresentation
+    {
+        Immediate32 = 0,
+        Relative = 2,
+        Immediate32PlusRelative = 3
     }
     
 }

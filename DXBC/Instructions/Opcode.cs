@@ -68,5 +68,6 @@ public enum Opcode
     SampleC,
     Sqrt,
     Switch,
-    SinCos
+    SinCos,
+    Dp2Add,
 }
