@@ -28,6 +28,8 @@ public class Operand
     
     public Operand?[] RelativeOperands = new Operand?[3];
     
+    public ShdrParser.OperandModifier Modifier { get; set; } = ShdrParser.OperandModifier.None;
+    
     private static string DecodeSwizzle(byte swizzle)
     {
         char[] c = { 'x', 'y', 'z', 'w' };

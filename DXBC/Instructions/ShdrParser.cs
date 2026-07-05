@@ -8,83 +8,84 @@ public class ShdrParser
     public List<string> Warnings { get; } = new();
 
     private static readonly Dictionary<uint, OpcodeInfo> OpcodeTable = new()
-    {
-        { 0, new() { Opcode = Opcode.Add, Name = "add", OperandCount = 3 } },
-        { 1, new() { Opcode = Opcode.And, Name = "and", OperandCount = 3 } },
-        { 2, new() { Opcode = Opcode.Break, Name = "break", OperandCount = 0 } },
-        { 3, new() { Opcode = Opcode.BreakC, Name = "breakc", OperandCount = 1 } },
-        { 8, new() { Opcode = Opcode.Call, Name = "call", OperandCount = 1 } },
-        { 9, new() { Opcode = Opcode.CallC, Name = "callc", OperandCount = 2 } },
-        { 10, new() { Opcode = Opcode.Case, Name = "case", OperandCount = 1 } },
-        { 13, new() { Opcode = Opcode.Continue, Name = "continue", OperandCount = 0 } },
-        { 14, new() { Opcode = Opcode.ContinueC, Name = "continuec", OperandCount = 1 } },
-        { 16, new() { Opcode = Opcode.Discard, Name = "discard", OperandCount = 1 } },
-        { 18, new() { Opcode = Opcode.Div, Name = "div", OperandCount = 3 } },
-        { 21, new() { Opcode = Opcode.Dp2, Name = "dp2", OperandCount = 3 } },
-        { 22, new() { Opcode = Opcode.Dp3, Name = "dp3", OperandCount = 3 } },
-        { 23, new() { Opcode = Opcode.Dp4, Name = "dp4", OperandCount = 3 } },
-        { 24, new() { Opcode = Opcode.Else, Name = "else", OperandCount = 0 } },
-        { 25, new() { Opcode = Opcode.Emit, Name = "emit", OperandCount = 0 } },
-        { 26, new() { Opcode = Opcode.EmitThenCut, Name = "emitThenCut", OperandCount = 0 } },
-        { 27, new() { Opcode = Opcode.EndIf, Name = "endif", OperandCount = 0 } },
-        { 28, new() { Opcode = Opcode.EndLoop, Name = "endloop", OperandCount = 0 } },
-        { 30, new() { Opcode = Opcode.EndSwitch, Name = "endswitch", OperandCount = 0 } },
-        { 31, new() { Opcode = Opcode.Eq, Name = "eq", OperandCount = 3 } },
-        { 32, new() { Opcode = Opcode.Exp, Name = "exp", OperandCount = 2 } },
-        { 33, new() { Opcode = Opcode.Frc, Name = "frc", OperandCount = 2 } },
-        { 34, new() { Opcode = Opcode.Ftoi, Name = "ftoi", OperandCount = 2 } },
-        { 35, new() { Opcode = Opcode.Ftou, Name = "ftou", OperandCount = 2 } },
-        { 36, new() { Opcode = Opcode.GE, Name = "ge", OperandCount = 3 } },
-        { 37, new() { Opcode = Opcode.IAdd, Name = "iadd", OperandCount = 3 } },
-        { 38, new() { Opcode = Opcode.If, Name = "if", OperandCount = 1 } },
-        { 39, new() { Opcode = Opcode.IEq, Name = "ieq", OperandCount = 3 } },
-        { 40, new() { Opcode = Opcode.IGe, Name = "ige", OperandCount = 3 } },
-        { 41, new() { Opcode = Opcode.ILt, Name = "ilt", OperandCount = 3 } },
-        { 42, new() { Opcode = Opcode.IMad, Name = "imad", OperandCount = 4 } },
-        { 43, new() { Opcode = Opcode.IMax, Name = "imax", OperandCount = 3 } },
-        { 44, new() { Opcode = Opcode.IMin, Name = "imin", OperandCount = 3 } },
-        { 45, new() { Opcode = Opcode.IMul, Name = "imul", OperandCount = 3 } },
-        { 46, new() { Opcode = Opcode.INe, Name = "ine", OperandCount = 3 } },
-        { 47, new() { Opcode = Opcode.Label, Name = "label", OperandCount = 1 } },
-        { 48, new() { Opcode = Opcode.Ld, Name = "ld", OperandCount = 3 } },
-        { 49, new() { Opcode = Opcode.Log, Name = "log", OperandCount = 2 } },
-        { 50, new() { Opcode = Opcode.Loop, Name = "loop", OperandCount = 0 } },
-        { 53, new() { Opcode = Opcode.Max, Name = "max", OperandCount = 3 } },
-        { 54, new() { Opcode = Opcode.Mov, Name = "mov", OperandCount = 2 } },
-        { 55, new() { Opcode = Opcode.MovC, Name = "movc", OperandCount = 3 } },
-        { 56, new() { Opcode = Opcode.Mul, Name = "mul", OperandCount = 3 } },
-        { 57, new() { Opcode = Opcode.Ne, Name = "ne", OperandCount = 3 } },
-        { 58, new() { Opcode = Opcode.Nop, Name = "nop", OperandCount = 0 } },
-        { 59, new() { Opcode = Opcode.Not, Name = "not", OperandCount = 2 } },
-        { 60, new() { Opcode = Opcode.Or, Name = "or", OperandCount = 3 } },
-        { 61, new() { Opcode = Opcode.ResInfo, Name = "resinfo", OperandCount = 3 } },
-        { 62, new() { Opcode = Opcode.Ret, Name = "ret", OperandCount = 0 } },
-        { 63, new() { Name = "retc", OperandCount = 1 } },
-        { 64, new() { Name = "round_ne", OperandCount = 2 } },
-        { 65, new() { Opcode = Opcode.RoundNI, Name = "round_ni", OperandCount = 2 } },
-        { 66, new() { Opcode = Opcode.RoundPI, Name = "round_pi", OperandCount = 2 } },
-        { 67, new() { Opcode = Opcode.RoundZ, Name = "round_z", OperandCount = 2 } },
-        { 68, new() { Opcode = Opcode.Rsq, Name = "rsq", OperandCount = 2 } },
-        { 69, new() { Opcode = Opcode.Sample, Name = "sample", OperandCount = 4 } },
-        { 70, new() { Opcode = Opcode.SampleC, Name = "sample_c", OperandCount = 4 } },
-        { 71, new() { Name = "sample_c_lz", OperandCount = 4 } },
-        { 72, new() { Opcode = Opcode.SampleL, Name = "sample_l", OperandCount = 5 } },
-        { 73, new() { Name = "sample_d", OperandCount = 6 } },
-        { 74, new() { Name = "sample_b", OperandCount = 5 } },
-        { 75, new() { Opcode = Opcode.Sqrt, Name = "sqrt", OperandCount = 2 } },
-        { 76, new() { Name = "switch", OperandCount = 1 } },
-        { 77, new() { Opcode = Opcode.Dp2Add, Name = "dp2add", OperandCount = 4 } },
-
-        // declarations
-        { 88, new() { Name = "dcl_input", OperandCount = 1 } },
-        { 89, new() { Name = "dcl_input_ps", OperandCount = 1 } },
-        { 90, new() { Name = "dcl_output", OperandCount = 1 } },
-        { 95, new() { Name = "dcl_constantbuffer", OperandCount = 2 } },
-        { 98, new() { Name = "dcl_resource", OperandCount = 2 } },
-        { 101, new() { Name = "dcl_sampler", OperandCount = 2 } },
-        { 103, new() { Name = "dcl_temps", OperandCount = 1 } },
-        { 104, new() { Name = "dcl_globalFlags", OperandCount = 0 } },
-    };
+{
+    { 0, new() { Opcode = Opcode.Add, Name = "add", OperandCount = 3 } },
+    { 1, new() { Opcode = Opcode.And, Name = "and", OperandCount = 3 } },
+    { 2, new() { Opcode = Opcode.Break, Name = "break", OperandCount = 0 } },
+    { 3, new() { Opcode = Opcode.BreakC, Name = "breakc", OperandCount = 1 } },
+    // NOTE: no CALL/CALLC opcode exists in Wine's SM4 enum (0x04/0x05 are
+    // unused/reserved here) - your old 8/9 entries were never real opcodes.
+    { 6, new() { Opcode = Opcode.Case, Name = "case", OperandCount = 1 } },
+    { 7, new() { Opcode = Opcode.Continue, Name = "continue", OperandCount = 0 } },
+    { 8, new() { Opcode = Opcode.ContinueC, Name = "continuec", OperandCount = 1 } },
+    { 13, new() { Opcode = Opcode.Discard, Name = "discard", OperandCount = 1 } },
+    { 14, new() { Opcode = Opcode.Div, Name = "div", OperandCount = 3 } },
+    { 15, new() { Opcode = Opcode.Dp2, Name = "dp2", OperandCount = 3 } },
+    { 16, new() { Opcode = Opcode.Dp3, Name = "dp3", OperandCount = 3 } },
+    { 17, new() { Opcode = Opcode.Dp4, Name = "dp4", OperandCount = 3 } },
+    { 18, new() { Opcode = Opcode.Else, Name = "else", OperandCount = 0 } },
+    { 19, new() { Opcode = Opcode.Emit, Name = "emit", OperandCount = 0 } },
+    { 20, new() { Opcode = Opcode.EmitThenCut, Name = "emitThenCut", OperandCount = 0 } },
+    { 21, new() { Opcode = Opcode.EndIf, Name = "endif", OperandCount = 0 } },
+    { 22, new() { Opcode = Opcode.EndLoop, Name = "endloop", OperandCount = 0 } },
+    { 23, new() { Opcode = Opcode.EndSwitch, Name = "endswitch", OperandCount = 0 } },
+    { 24, new() { Opcode = Opcode.Eq, Name = "eq", OperandCount = 3 } },
+    { 25, new() { Opcode = Opcode.Exp, Name = "exp", OperandCount = 2 } },
+    { 26, new() { Opcode = Opcode.Frc, Name = "frc", OperandCount = 2 } },
+    { 27, new() { Opcode = Opcode.Ftoi, Name = "ftoi", OperandCount = 2 } },
+    { 28, new() { Opcode = Opcode.Ftou, Name = "ftou", OperandCount = 2 } },
+    { 29, new() { Opcode = Opcode.GE, Name = "ge", OperandCount = 3 } },
+    { 30, new() { Opcode = Opcode.IAdd, Name = "iadd", OperandCount = 3 } },
+    { 31, new() { Opcode = Opcode.If, Name = "if", OperandCount = 1 } },
+    { 32, new() { Opcode = Opcode.IEq, Name = "ieq", OperandCount = 3 } },
+    { 33, new() { Opcode = Opcode.IGe, Name = "ige", OperandCount = 3 } },
+    { 34, new() { Opcode = Opcode.ILt, Name = "ilt", OperandCount = 3 } },
+    { 35, new() { Opcode = Opcode.IMad, Name = "imad", OperandCount = 4 } },
+    { 36, new() { Opcode = Opcode.IMax, Name = "imax", OperandCount = 3 } },
+    { 37, new() { Opcode = Opcode.IMin, Name = "imin", OperandCount = 3 } },
+    { 38, new() { Opcode = Opcode.IMul, Name = "imul", OperandCount = 3 } },
+    { 39, new() { Opcode = Opcode.INe, Name = "ine", OperandCount = 3 } },
+    { 44, new() { Opcode = Opcode.Label, Name = "label", OperandCount = 1 } },
+    { 45, new() { Opcode = Opcode.Ld, Name = "ld", OperandCount = 3 } },
+    { 47, new() { Opcode = Opcode.Log, Name = "log", OperandCount = 2 } },
+    { 48, new() { Opcode = Opcode.Loop, Name = "loop", OperandCount = 0 } },
+    { 50, new() { Opcode = Opcode.Mad, Name = "mad", OperandCount = 3 } },
+    { 52, new() { Opcode = Opcode.Max, Name = "max", OperandCount = 3 } },
+    { 54, new() { Opcode = Opcode.Mov, Name = "mov", OperandCount = 2 } },
+    { 55, new() { Opcode = Opcode.MovC, Name = "movc", OperandCount = 3 } },
+    { 56, new() { Opcode = Opcode.Mul, Name = "mul", OperandCount = 3 } },
+    { 57, new() { Opcode = Opcode.Ne, Name = "ne", OperandCount = 3 } },
+    { 58, new() { Opcode = Opcode.Nop, Name = "nop", OperandCount = 0 } },
+    { 59, new() { Opcode = Opcode.Not, Name = "not", OperandCount = 2 } },
+    { 60, new() { Opcode = Opcode.Or, Name = "or", OperandCount = 3 } },
+    { 61, new() { Opcode = Opcode.ResInfo, Name = "resinfo", OperandCount = 3 } },
+    { 62, new() { Opcode = Opcode.Ret, Name = "ret", OperandCount = 0 } },
+    { 63, new() { Name = "retc", OperandCount = 1 } },
+    { 64, new() { Name = "round_ne", OperandCount = 2 } },
+    { 65, new() { Opcode = Opcode.RoundNI, Name = "round_ni", OperandCount = 2 } },
+    { 66, new() { Opcode = Opcode.RoundPI, Name = "round_pi", OperandCount = 2 } },
+    { 67, new() { Opcode = Opcode.RoundZ, Name = "round_z", OperandCount = 2 } },
+    { 68, new() { Opcode = Opcode.Rsq, Name = "rsq", OperandCount = 2 } },
+    { 69, new() { Opcode = Opcode.Sample, Name = "sample", OperandCount = 4 } },
+    { 70, new() { Opcode = Opcode.SampleC, Name = "sample_c", OperandCount = 4 } },
+    { 71, new() { Name = "sample_c_lz", OperandCount = 4 } },
+    { 72, new() { Opcode = Opcode.SampleL, Name = "sample_l", OperandCount = 5 } },
+    { 73, new() { Name = "sample_d", OperandCount = 6 } },
+    { 74, new() { Name = "sample_b", OperandCount = 5 } },
+    { 75, new() { Opcode = Opcode.Sqrt, Name = "sqrt", OperandCount = 2 } },
+    { 76, new() { Name = "switch", OperandCount = 1 } },
+    { 77, new() { Name = "sincos", OperandCount = 3 } },
+    
+    // declarations (these were the ones actually causing your desyncs)
+    { 88, new() { Name = "dcl_resource", OperandCount = 1 } },
+    { 89, new() { Name = "dcl_constantbuffer", OperandCount = 1 } },
+    { 90, new() { Name = "dcl_sampler", OperandCount = 1 } },
+    { 95, new() { Name = "dcl_input", OperandCount = 1 } },
+    { 98, new() { Name = "dcl_input_ps", OperandCount = 1 } },
+    { 101, new() { Name = "dcl_output", OperandCount = 1 } },
+    { 104, new() { Name = "dcl_temps", OperandCount = 1 } },
+    { 106, new() { Name = "dcl_globalFlags", OperandCount = 0 } },
+};
 
     private static int GetIndexCount(RegisterType type)
     {
@@ -123,6 +124,14 @@ public class ShdrParser
             Name = $"opcode_{opcode}",
             OperandCount = 0
         };
+    }
+
+    public enum OperandModifier
+    {
+        None,
+        Neg,
+        Abs,
+        AbsNeg
     }
 
     private Operand DecodeOperand(BinaryReader reader)
@@ -168,12 +177,14 @@ public class ShdrParser
 
         //--------------------------------------------------------
         // bits 12-19
-        // Register type
+        // Register type (8 bits only - NOT extended by bits 20-21,
+        // those belong to the index count "order" field below)
         //--------------------------------------------------------
 
-        uint regType =
-            ((token >> 12) & 0xFF) |
-            (((token >> 20) & 0x3) << 8);
+        uint regType = (token >> 12) & 0xFF;
+
+        Console.WriteLine(
+            $"Operand token=0x{token:X8}  regType={regType} ({DecodeRegisterType(regType)})");
 
         op.RegisterType = DecodeRegisterType(regType);
 
@@ -218,15 +229,20 @@ public class ShdrParser
         }
 
         //--------------------------------------------------------
-        // Register type determines the number of indices.
-        // The index representations are stored in bits 22-30.
+        // bits 20-21
+        // "Order" - the number of register indices that follow.
+        // This is read directly from the token, NOT derived from
+        // register type. (Previously this code used GetIndexCount()
+        // based on RegisterType, which is incorrect - that table
+        // silently desyncs the parser whenever a register type
+        // uses an index count the table didn't predict.)
         //--------------------------------------------------------
 
-        int indexCount = GetIndexCount(op.RegisterType);
+        int indexCount = (int)((token >> 20) & 0x3);
 
         //--------------------------------------------------------
-        // bits 22-23
-        // Addressing mode 0
+        // bits 22-24
+        // Addressing mode / index representation 0
         //--------------------------------------------------------
 
         if (indexCount > 0)
@@ -234,8 +250,8 @@ public class ShdrParser
                 (Operand.OperandIndexRepresentation)((token >> 22) & 0x7);
 
         //--------------------------------------------------------
-        // bits 25-26
-        // Addressing mode 1
+        // bits 25-27
+        // Addressing mode / index representation 1
         //--------------------------------------------------------
 
         if (indexCount > 1)
@@ -243,8 +259,8 @@ public class ShdrParser
                 (Operand.OperandIndexRepresentation)((token >> 25) & 0x7);
 
         //--------------------------------------------------------
-        // bits 28-29
-        // Addressing mode 2
+        // bits 28-30
+        // Addressing mode / index representation 2
         //--------------------------------------------------------
 
         if (indexCount > 2)
@@ -294,23 +310,33 @@ public class ShdrParser
             op.RegisterIndex = op.Indices[0];
 
         //--------------------------------------------------------
-        // Skip extension tokens
+        // Extension token(s)
+        // First extension token (if present) encodes a source
+        // modifier (neg/abs/absneg). Further chained extension
+        // tokens (bit 31 set again) are skipped - not modeled.
         //--------------------------------------------------------
 
         if (op.IsExtended)
         {
-            uint ext;
+            uint ext = reader.ReadUInt32();
 
-            do
+            op.Modifier = (ext & 0x7F) switch
             {
+                0x41 => OperandModifier.Neg,
+                0x81 => OperandModifier.Abs,
+                0xC1 => OperandModifier.AbsNeg,
+                _ => OperandModifier.None // includes 0x01 (explicit "none")
+            };
+
+            while ((ext & 0x80000000) != 0)
                 ext = reader.ReadUInt32();
-            } while ((ext & 0x80000000) != 0);
         }
 
         return op;
     }
 
-    private RegisterType DecodeRegisterType(uint type)
+
+private RegisterType DecodeRegisterType(uint type)
     {
         return type switch
         {
@@ -398,44 +424,43 @@ public class ShdrParser
             {
                 //----------------------------------------------------------
                 // dcl_input
-                //----------------------------------------------------------
-                case 88:
-                case 89:
+                //---------------------------------------------------------- 
+                case 95:
                     instruction.ExtraData.Add(reader.ReadUInt32()); // interpolation mode
                     break;
 
                 //----------------------------------------------------------
                 // dcl_output
                 //----------------------------------------------------------
-                case 90:
+                case 101:
                     // no extra DWORD
                     break;
 
                 //----------------------------------------------------------
                 // dcl_resource
                 //----------------------------------------------------------
-                case 98:
+                case 88:
                     instruction.ExtraData.Add(reader.ReadUInt32()); // resource return type
                     break;
 
                 //----------------------------------------------------------
                 // dcl_sampler
                 //----------------------------------------------------------
-                case 101:
+                case 90:
                     instruction.ExtraData.Add(reader.ReadUInt32()); // sampler mode
                     break;
 
                 //----------------------------------------------------------
                 // dcl_constantbuffer
                 //----------------------------------------------------------
-                case 95:
+                case 89:
                     instruction.ExtraData.Add(reader.ReadUInt32()); // access pattern
                     break;
 
                 //----------------------------------------------------------
                 // dcl_globalFlags
                 //----------------------------------------------------------
-                case 104:
+                case 106:
                     instruction.ExtraData.Add(reader.ReadUInt32()); // flags
                     break;
             }
