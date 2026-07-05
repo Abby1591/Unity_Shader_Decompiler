@@ -7,84 +7,85 @@ public class ShdrParser
     public List<Instruction> Instructions { get; } = new();
     public List<string> Warnings { get; } = new();
 
-    private static readonly Dictionary<uint, OpcodeInfo> OpcodeTable = new() {
-    { 0,  new(){ Opcode=Opcode.Add, Name="add", OperandCount=3 } },
-    { 1,  new(){ Opcode=Opcode.And, Name="and", OperandCount=3 } },
-    { 2,  new(){ Opcode=Opcode.Break, Name="break", OperandCount=0 } },
-    { 3,  new(){ Opcode=Opcode.BreakC, Name="breakc", OperandCount=1 } },
-    { 8,  new(){ Opcode=Opcode.Call, Name="call", OperandCount=1 } },
-    { 9,  new(){ Opcode=Opcode.CallC, Name="callc", OperandCount=2 } },
-    { 10, new(){ Opcode=Opcode.Case, Name="case", OperandCount=1 } },
-    { 13, new(){ Opcode=Opcode.Continue, Name="continue", OperandCount=0 } },
-    { 14, new(){ Opcode=Opcode.ContinueC, Name="continuec", OperandCount=1 } },
-    { 16, new(){ Opcode=Opcode.Discard, Name="discard", OperandCount=1 } },
-    { 18, new(){ Opcode=Opcode.Div, Name="div", OperandCount=3 } },
-    { 21, new(){ Opcode=Opcode.Dp2, Name="dp2", OperandCount=3 } },
-    { 22, new(){ Opcode=Opcode.Dp3, Name="dp3", OperandCount=3 } },
-    { 23, new(){ Opcode=Opcode.Dp4, Name="dp4", OperandCount=3 } },
-    { 24, new(){ Opcode=Opcode.Else, Name="else", OperandCount=0 } },
-    { 25, new(){ Opcode=Opcode.Emit, Name="emit", OperandCount=0 } },
-    { 26, new(){ Opcode=Opcode.EmitThenCut, Name="emitThenCut", OperandCount=0 } },
-    { 27, new(){ Opcode=Opcode.EndIf, Name="endif", OperandCount=0 } },
-    { 28, new(){ Opcode=Opcode.EndLoop, Name="endloop", OperandCount=0 } },
-    { 30, new(){ Opcode=Opcode.EndSwitch, Name="endswitch", OperandCount=0 } },
-    { 31, new(){ Opcode=Opcode.Eq, Name="eq", OperandCount=3 } },
-    { 32, new(){ Opcode=Opcode.Exp, Name="exp", OperandCount=2 } },
-    { 33, new(){ Opcode=Opcode.Frc, Name="frc", OperandCount=2 } },
-    { 34, new(){ Opcode=Opcode.Ftoi, Name="ftoi", OperandCount=2 } },
-    { 35, new(){ Opcode=Opcode.Ftou, Name="ftou", OperandCount=2 } },
-    { 36, new(){ Opcode=Opcode.GE, Name="ge", OperandCount=3 } },
-    { 37, new(){ Opcode=Opcode.IAdd, Name="iadd", OperandCount=3 } },
-    { 38, new(){ Opcode=Opcode.If, Name="if", OperandCount=1 } },
-    { 39, new(){ Opcode=Opcode.IEq, Name="ieq", OperandCount=3 } },
-    { 40, new(){ Opcode=Opcode.IGe, Name="ige", OperandCount=3 } },
-    { 41, new(){ Opcode=Opcode.ILt, Name="ilt", OperandCount=3 } },
-    { 42, new(){ Opcode=Opcode.IMad, Name="imad", OperandCount=4 } },
-    { 43, new(){ Opcode=Opcode.IMax, Name="imax", OperandCount=3 } },
-    { 44, new(){ Opcode=Opcode.IMin, Name="imin", OperandCount=3 } },
-    { 45, new(){ Opcode=Opcode.IMul, Name="imul", OperandCount=3 } },
-    { 46, new(){ Opcode=Opcode.INe, Name="ine", OperandCount=3 } },
-    { 47, new(){ Opcode=Opcode.Label, Name="label", OperandCount=1 } },
-    { 48, new(){ Opcode=Opcode.Ld, Name="ld", OperandCount=3 } },
-    { 49, new(){ Opcode=Opcode.Log, Name="log", OperandCount=2 } },
-    { 50, new(){ Opcode=Opcode.Loop, Name="loop", OperandCount=0 } },
-    { 53, new(){ Opcode=Opcode.Max,      Name="max",        OperandCount=3 } },
-    { 54, new(){ Opcode=Opcode.Mov,      Name="mov",        OperandCount=2 } },
-    { 55, new(){ Opcode=Opcode.MovC,     Name="movc",       OperandCount=3 } },
-    { 56, new(){ Opcode=Opcode.Mul,      Name="mul",        OperandCount=3 } },
-    { 57, new(){ Opcode=Opcode.Ne,       Name="ne",         OperandCount=3 } },
-    { 58, new(){ Opcode=Opcode.Nop,      Name="nop",        OperandCount=0 } },
-    { 59, new(){ Opcode=Opcode.Not,      Name="not",        OperandCount=2 } },
-    { 60, new(){ Opcode=Opcode.Or,       Name="or",         OperandCount=3 } },
-    { 61, new(){ Opcode=Opcode.ResInfo,  Name="resinfo",    OperandCount=3 } },
-    { 62, new(){ Opcode=Opcode.Ret,      Name="ret",        OperandCount=0 } },
-    { 63, new(){ Name="retc",            OperandCount=1 } },
-    { 64, new(){ Name="round_ne",        OperandCount=2 } },
-    { 65, new(){ Opcode=Opcode.RoundNI,  Name="round_ni",   OperandCount=2 } },
-    { 66, new(){ Opcode=Opcode.RoundPI,  Name="round_pi",   OperandCount=2 } },
-    { 67, new(){ Opcode=Opcode.RoundZ,   Name="round_z",    OperandCount=2 } },
-    { 68, new(){ Opcode=Opcode.Rsq,      Name="rsq",        OperandCount=2 } },
-    { 69, new(){ Opcode=Opcode.Sample,   Name="sample",     OperandCount=4 } },
-    { 70, new(){ Opcode=Opcode.SampleC,  Name="sample_c",   OperandCount=4 } },
-    { 71, new(){ Name="sample_c_lz",     OperandCount=4 } },
-    { 72, new(){ Opcode=Opcode.SampleL,  Name="sample_l",   OperandCount=5 } },
-    { 73, new(){ Name="sample_d",        OperandCount=6 } },
-    { 74, new(){ Name="sample_b",        OperandCount=5 } },
-    { 75, new(){ Opcode=Opcode.Sqrt,     Name="sqrt",       OperandCount=2 } },
-    { 76, new(){ Name="switch",          OperandCount=1 } },
-    { 77, new(){ Opcode = Opcode.Dp2Add, Name = "dp2add", OperandCount = 4 } },
+    private static readonly Dictionary<uint, OpcodeInfo> OpcodeTable = new()
+    {
+        { 0, new() { Opcode = Opcode.Add, Name = "add", OperandCount = 3 } },
+        { 1, new() { Opcode = Opcode.And, Name = "and", OperandCount = 3 } },
+        { 2, new() { Opcode = Opcode.Break, Name = "break", OperandCount = 0 } },
+        { 3, new() { Opcode = Opcode.BreakC, Name = "breakc", OperandCount = 1 } },
+        { 8, new() { Opcode = Opcode.Call, Name = "call", OperandCount = 1 } },
+        { 9, new() { Opcode = Opcode.CallC, Name = "callc", OperandCount = 2 } },
+        { 10, new() { Opcode = Opcode.Case, Name = "case", OperandCount = 1 } },
+        { 13, new() { Opcode = Opcode.Continue, Name = "continue", OperandCount = 0 } },
+        { 14, new() { Opcode = Opcode.ContinueC, Name = "continuec", OperandCount = 1 } },
+        { 16, new() { Opcode = Opcode.Discard, Name = "discard", OperandCount = 1 } },
+        { 18, new() { Opcode = Opcode.Div, Name = "div", OperandCount = 3 } },
+        { 21, new() { Opcode = Opcode.Dp2, Name = "dp2", OperandCount = 3 } },
+        { 22, new() { Opcode = Opcode.Dp3, Name = "dp3", OperandCount = 3 } },
+        { 23, new() { Opcode = Opcode.Dp4, Name = "dp4", OperandCount = 3 } },
+        { 24, new() { Opcode = Opcode.Else, Name = "else", OperandCount = 0 } },
+        { 25, new() { Opcode = Opcode.Emit, Name = "emit", OperandCount = 0 } },
+        { 26, new() { Opcode = Opcode.EmitThenCut, Name = "emitThenCut", OperandCount = 0 } },
+        { 27, new() { Opcode = Opcode.EndIf, Name = "endif", OperandCount = 0 } },
+        { 28, new() { Opcode = Opcode.EndLoop, Name = "endloop", OperandCount = 0 } },
+        { 30, new() { Opcode = Opcode.EndSwitch, Name = "endswitch", OperandCount = 0 } },
+        { 31, new() { Opcode = Opcode.Eq, Name = "eq", OperandCount = 3 } },
+        { 32, new() { Opcode = Opcode.Exp, Name = "exp", OperandCount = 2 } },
+        { 33, new() { Opcode = Opcode.Frc, Name = "frc", OperandCount = 2 } },
+        { 34, new() { Opcode = Opcode.Ftoi, Name = "ftoi", OperandCount = 2 } },
+        { 35, new() { Opcode = Opcode.Ftou, Name = "ftou", OperandCount = 2 } },
+        { 36, new() { Opcode = Opcode.GE, Name = "ge", OperandCount = 3 } },
+        { 37, new() { Opcode = Opcode.IAdd, Name = "iadd", OperandCount = 3 } },
+        { 38, new() { Opcode = Opcode.If, Name = "if", OperandCount = 1 } },
+        { 39, new() { Opcode = Opcode.IEq, Name = "ieq", OperandCount = 3 } },
+        { 40, new() { Opcode = Opcode.IGe, Name = "ige", OperandCount = 3 } },
+        { 41, new() { Opcode = Opcode.ILt, Name = "ilt", OperandCount = 3 } },
+        { 42, new() { Opcode = Opcode.IMad, Name = "imad", OperandCount = 4 } },
+        { 43, new() { Opcode = Opcode.IMax, Name = "imax", OperandCount = 3 } },
+        { 44, new() { Opcode = Opcode.IMin, Name = "imin", OperandCount = 3 } },
+        { 45, new() { Opcode = Opcode.IMul, Name = "imul", OperandCount = 3 } },
+        { 46, new() { Opcode = Opcode.INe, Name = "ine", OperandCount = 3 } },
+        { 47, new() { Opcode = Opcode.Label, Name = "label", OperandCount = 1 } },
+        { 48, new() { Opcode = Opcode.Ld, Name = "ld", OperandCount = 3 } },
+        { 49, new() { Opcode = Opcode.Log, Name = "log", OperandCount = 2 } },
+        { 50, new() { Opcode = Opcode.Loop, Name = "loop", OperandCount = 0 } },
+        { 53, new() { Opcode = Opcode.Max, Name = "max", OperandCount = 3 } },
+        { 54, new() { Opcode = Opcode.Mov, Name = "mov", OperandCount = 2 } },
+        { 55, new() { Opcode = Opcode.MovC, Name = "movc", OperandCount = 3 } },
+        { 56, new() { Opcode = Opcode.Mul, Name = "mul", OperandCount = 3 } },
+        { 57, new() { Opcode = Opcode.Ne, Name = "ne", OperandCount = 3 } },
+        { 58, new() { Opcode = Opcode.Nop, Name = "nop", OperandCount = 0 } },
+        { 59, new() { Opcode = Opcode.Not, Name = "not", OperandCount = 2 } },
+        { 60, new() { Opcode = Opcode.Or, Name = "or", OperandCount = 3 } },
+        { 61, new() { Opcode = Opcode.ResInfo, Name = "resinfo", OperandCount = 3 } },
+        { 62, new() { Opcode = Opcode.Ret, Name = "ret", OperandCount = 0 } },
+        { 63, new() { Name = "retc", OperandCount = 1 } },
+        { 64, new() { Name = "round_ne", OperandCount = 2 } },
+        { 65, new() { Opcode = Opcode.RoundNI, Name = "round_ni", OperandCount = 2 } },
+        { 66, new() { Opcode = Opcode.RoundPI, Name = "round_pi", OperandCount = 2 } },
+        { 67, new() { Opcode = Opcode.RoundZ, Name = "round_z", OperandCount = 2 } },
+        { 68, new() { Opcode = Opcode.Rsq, Name = "rsq", OperandCount = 2 } },
+        { 69, new() { Opcode = Opcode.Sample, Name = "sample", OperandCount = 4 } },
+        { 70, new() { Opcode = Opcode.SampleC, Name = "sample_c", OperandCount = 4 } },
+        { 71, new() { Name = "sample_c_lz", OperandCount = 4 } },
+        { 72, new() { Opcode = Opcode.SampleL, Name = "sample_l", OperandCount = 5 } },
+        { 73, new() { Name = "sample_d", OperandCount = 6 } },
+        { 74, new() { Name = "sample_b", OperandCount = 5 } },
+        { 75, new() { Opcode = Opcode.Sqrt, Name = "sqrt", OperandCount = 2 } },
+        { 76, new() { Name = "switch", OperandCount = 1 } },
+        { 77, new() { Opcode = Opcode.Dp2Add, Name = "dp2add", OperandCount = 4 } },
 
-    // declarations
-    { 88, new(){ Name="dcl_input", OperandCount=1 } },
-    { 89, new(){ Name="dcl_input_ps", OperandCount=1 } },
-    { 90, new(){ Name="dcl_output", OperandCount=1 } },
-    { 95, new(){ Name="dcl_constantbuffer", OperandCount=2 } },
-    { 98, new(){ Name="dcl_resource", OperandCount=2 } },
-    { 101,new(){ Name="dcl_sampler", OperandCount=2 } },
-    { 103,new(){ Name="dcl_temps", OperandCount=1 } },
-    { 104,new(){ Name="dcl_globalFlags", OperandCount=1 } },
-};
-    
+        // declarations
+        { 88, new() { Name = "dcl_input", OperandCount = 1 } },
+        { 89, new() { Name = "dcl_input_ps", OperandCount = 1 } },
+        { 90, new() { Name = "dcl_output", OperandCount = 1 } },
+        { 95, new() { Name = "dcl_constantbuffer", OperandCount = 2 } },
+        { 98, new() { Name = "dcl_resource", OperandCount = 2 } },
+        { 101, new() { Name = "dcl_sampler", OperandCount = 2 } },
+        { 103, new() { Name = "dcl_temps", OperandCount = 1 } },
+        { 104, new() { Name = "dcl_globalFlags", OperandCount = 0 } },
+    };
+
     private static int GetIndexCount(RegisterType type)
     {
         return type switch
@@ -110,7 +111,7 @@ public class ShdrParser
             _ => 1
         };
     }
-    
+
     private OpcodeInfo DecodeOpcode(uint opcode)
     {
         if (OpcodeTable.TryGetValue(opcode, out var info))
@@ -123,193 +124,192 @@ public class ShdrParser
             OperandCount = 0
         };
     }
-    
+
     private Operand DecodeOperand(BinaryReader reader)
-{
-    uint token = reader.ReadUInt32();
-
-    Operand op = new();
-
-    //--------------------------------------------------------
-    // bits 0-1
-    // Number of components
-    //--------------------------------------------------------
-
-    op.NumComponents = (int)(token & 0x3);
-
-    //--------------------------------------------------------
-    // bits 2-3
-    // Component selection mode
-    //--------------------------------------------------------
-
-    op.ComponentMode =
-        (Operand.OperandComponentMode)((token >> 2) & 0x3);
-
-    //--------------------------------------------------------
-    // bits 4-11
-    // Mask / Swizzle / Component
-    //--------------------------------------------------------
-
-    switch (op.ComponentMode)
     {
-        case Operand.OperandComponentMode.Mask:
-            op.Mask = (byte)((token >> 4) & 0xF);
-            break;
+        uint token = reader.ReadUInt32();
 
-        case Operand.OperandComponentMode.Swizzle:
-            op.Swizzle = (byte)((token >> 4) & 0xFF);
-            break;
+        Operand op = new();
 
-        case Operand.OperandComponentMode.Select1:
-            op.Component = (byte)((token >> 4) & 0x3);
-            break;
-    }
+        //--------------------------------------------------------
+        // bits 0-1
+        // Number of components
+        //--------------------------------------------------------
 
-    //--------------------------------------------------------
-    // bits 12-19
-    // Register type
-    //--------------------------------------------------------
+        op.NumComponents = (int)(token & 0x3);
 
-    uint regType =
-        ((token >> 12) & 0xFF) |
-        (((token >> 20) & 0x3) << 8);
+        //--------------------------------------------------------
+        // bits 2-3
+        // Component selection mode
+        //--------------------------------------------------------
 
-    op.RegisterType = DecodeRegisterType(regType);
-    
-    //--------------------------------------------------------
-    // Immediate values
-    //--------------------------------------------------------
+        op.ComponentMode =
+            (Operand.OperandComponentMode)((token >> 2) & 0x3);
 
-    if (op.RegisterType == RegisterType.Immediate32)
-    {
-        int count = op.NumComponents switch
+        //--------------------------------------------------------
+        // bits 4-11
+        // Mask / Swizzle / Component
+        //--------------------------------------------------------
+
+        switch (op.ComponentMode)
         {
-            0 => 0,
-            1 => 1,
-            2 => 4,
-            _ => throw new InvalidDataException()
-        };
+            case Operand.OperandComponentMode.Mask:
+                op.Mask = (byte)((token >> 4) & 0xF);
+                break;
 
-        op.Immediate32Values = new float[count];
+            case Operand.OperandComponentMode.Swizzle:
+                op.Swizzle = (byte)((token >> 4) & 0xFF);
+                break;
 
-        for (int i = 0; i < count; i++)
-            op.Immediate32Values[i] = reader.ReadSingle();
+            case Operand.OperandComponentMode.Select1:
+                op.Component = (byte)((token >> 4) & 0x3);
+                break;
+        }
+
+        //--------------------------------------------------------
+        // bits 12-19
+        // Register type
+        //--------------------------------------------------------
+
+        uint regType =
+            ((token >> 12) & 0xFF) |
+            (((token >> 20) & 0x3) << 8);
+
+        op.RegisterType = DecodeRegisterType(regType);
+
+        //--------------------------------------------------------
+        // Immediate values
+        //--------------------------------------------------------
+
+        if (op.RegisterType == RegisterType.Immediate32)
+        {
+            int count = op.NumComponents switch
+            {
+                0 => 0,
+                1 => 1,
+                2 => 4,
+                _ => throw new InvalidDataException()
+            };
+
+            op.Immediate32Values = new float[count];
+
+            for (int i = 0; i < count; i++)
+                op.Immediate32Values[i] = reader.ReadSingle();
+
+            return op;
+        }
+
+        if (op.RegisterType == RegisterType.Immediate64)
+        {
+            int count = op.NumComponents switch
+            {
+                0 => 0,
+                1 => 1,
+                2 => 4,
+                _ => throw new InvalidDataException()
+            };
+
+            op.Immediate64Values = new Double[count];
+
+            for (int i = 0; i < count; i++)
+                op.Immediate64Values[i] = reader.ReadDouble();
+
+            return op;
+        }
+
+        //--------------------------------------------------------
+        // Register type determines the number of indices.
+        // The index representations are stored in bits 22-30.
+        //--------------------------------------------------------
+
+        int indexCount = GetIndexCount(op.RegisterType);
+
+        //--------------------------------------------------------
+        // bits 22-23
+        // Addressing mode 0
+        //--------------------------------------------------------
+
+        if (indexCount > 0)
+            op.IndexRepresentation[0] =
+                (Operand.OperandIndexRepresentation)((token >> 22) & 0x7);
+
+        //--------------------------------------------------------
+        // bits 25-26
+        // Addressing mode 1
+        //--------------------------------------------------------
+
+        if (indexCount > 1)
+            op.IndexRepresentation[1] =
+                (Operand.OperandIndexRepresentation)((token >> 25) & 0x7);
+
+        //--------------------------------------------------------
+        // bits 28-29
+        // Addressing mode 2
+        //--------------------------------------------------------
+
+        if (indexCount > 2)
+            op.IndexRepresentation[2] =
+                (Operand.OperandIndexRepresentation)((token >> 28) & 0x7);
+
+        //--------------------------------------------------------
+        // bit 31
+        // Extended operand
+        //--------------------------------------------------------
+
+        op.IsExtended = (token & 0x80000000) != 0;
+
+        //--------------------------------------------------------
+        // Read indices
+        //--------------------------------------------------------
+
+        for (int i = 0; i < indexCount; i++)
+        {
+            switch (op.IndexRepresentation[i])
+            {
+                case Operand.OperandIndexRepresentation.Immediate32:
+
+                    op.Indices.Add(reader.ReadUInt32());
+                    break;
+
+                case Operand.OperandIndexRepresentation.Relative:
+
+                    op.RelativeOperands[i] = DecodeOperand(reader);
+                    op.Indices.Add(0);
+                    break;
+
+                case Operand.OperandIndexRepresentation.Immediate32PlusRelative:
+
+                    op.Indices.Add(reader.ReadUInt32());
+                    op.RelativeOperands[i] = DecodeOperand(reader);
+                    break;
+
+                default:
+
+                    op.Indices.Add(0);
+                    break;
+            }
+        }
+
+        if (op.Indices.Count > 0)
+            op.RegisterIndex = op.Indices[0];
+
+        //--------------------------------------------------------
+        // Skip extension tokens
+        //--------------------------------------------------------
+
+        if (op.IsExtended)
+        {
+            uint ext;
+
+            do
+            {
+                ext = reader.ReadUInt32();
+            } while ((ext & 0x80000000) != 0);
+        }
 
         return op;
     }
 
-    if (op.RegisterType == RegisterType.Immediate64)
-    {
-        int count = op.NumComponents switch
-        {
-            0 => 0,
-            1 => 1,
-            2 => 4,
-            _ => throw new InvalidDataException()
-        };
-
-        op.Immediate64Values = new Double[count];
-
-        for (int i = 0; i < count; i++)
-            op.Immediate64Values[i] = reader.ReadDouble();
-
-        return op;
-    }
-    
-    //--------------------------------------------------------
-    // Register type determines the number of indices.
-    // The index representations are stored in bits 22-30.
-    //--------------------------------------------------------
-    
-    int indexCount = GetIndexCount(op.RegisterType);
-
-    //--------------------------------------------------------
-    // bits 22-23
-    // Addressing mode 0
-    //--------------------------------------------------------
-
-    if (indexCount > 0)
-        op.IndexRepresentation[0] =
-            (Operand.OperandIndexRepresentation)((token >> 22) & 0x7);
-
-    //--------------------------------------------------------
-    // bits 25-26
-    // Addressing mode 1
-    //--------------------------------------------------------
-
-    if (indexCount > 1)
-        op.IndexRepresentation[1] =
-            (Operand.OperandIndexRepresentation)((token >> 25) & 0x7);
-    
-    //--------------------------------------------------------
-    // bits 28-29
-    // Addressing mode 2
-    //--------------------------------------------------------
-    
-    if (indexCount > 2)
-        op.IndexRepresentation[2] =
-            (Operand.OperandIndexRepresentation)((token >> 28) & 0x7);
-
-    //--------------------------------------------------------
-    // bit 31
-    // Extended operand
-    //--------------------------------------------------------
-
-    op.IsExtended = (token & 0x80000000) != 0;
-
-    //--------------------------------------------------------
-    // Read indices
-    //--------------------------------------------------------
-
-    for (int i = 0; i < indexCount; i++)
-    {
-        switch (op.IndexRepresentation[i])
-        {
-            case Operand.OperandIndexRepresentation.Immediate32:
-
-                op.Indices.Add(reader.ReadUInt32());
-                break;
-
-            case Operand.OperandIndexRepresentation.Relative:
-
-                op.RelativeOperands[i] = DecodeOperand(reader);
-                op.Indices.Add(0);
-                break;
-
-            case Operand.OperandIndexRepresentation.Immediate32PlusRelative:
-
-                op.Indices.Add(reader.ReadUInt32());
-                op.RelativeOperands[i] = DecodeOperand(reader);
-                break;
-
-            default:
-
-                op.Indices.Add(0);
-                break;
-        }
-    }
-
-    if (op.Indices.Count > 0)
-        op.RegisterIndex = op.Indices[0];
-
-    //--------------------------------------------------------
-    // Skip extension tokens
-    //--------------------------------------------------------
-
-    if (op.IsExtended)
-    {
-        uint ext;
-
-        do
-        {
-            ext = reader.ReadUInt32();
-        }
-        while ((ext & 0x80000000) != 0);
-    }
-
-    return op;
-}
-    
     private RegisterType DecodeRegisterType(uint type)
     {
         return type switch
@@ -359,7 +359,7 @@ public class ShdrParser
             _ => RegisterType.Unknown
         };
     }
-    
+
     public void Parse(byte[] data)
     {
         using var stream = new MemoryStream(data);
@@ -370,20 +370,21 @@ public class ShdrParser
 
         while (reader.BaseStream.Position < reader.BaseStream.Length)
         {
-            long start = reader.BaseStream.Position;
-            uint token = reader.ReadUInt32();
-            
+            long instructionStartByte = reader.BaseStream.Position;
+            int instructionStart = (int)(instructionStartByte / 4);
 
-            int opcode = (int)(token & 0x7FF);
+            uint token = reader.ReadUInt32();
+
+            int opcodeValue = (int)(token & 0x7FF);
             int length = (int)((token >> 24) & 0x7F);
 
             if (length == 0)
             {
-                Warnings.Add($"Invalid instruction at 0x{start:X}");
+                Warnings.Add($"Invalid instruction at DWORD {instructionStart}");
                 break;
             }
 
-            var info = DecodeOpcode((uint)opcode);
+            OpcodeInfo info = DecodeOpcode((uint)opcodeValue);
 
             var instruction = new Instruction
             {
@@ -392,29 +393,111 @@ public class ShdrParser
                 OpcodeToken = token,
                 Length = length
             };
+            
+            switch (opcodeValue)
+            {
+                //----------------------------------------------------------
+                // dcl_input
+                //----------------------------------------------------------
+                case 88:
+                case 89:
+                    instruction.ExtraData.Add(reader.ReadUInt32()); // interpolation mode
+                    break;
 
-            long instructionEnd = start + length * 4;
+                //----------------------------------------------------------
+                // dcl_output
+                //----------------------------------------------------------
+                case 90:
+                    // no extra DWORD
+                    break;
+
+                //----------------------------------------------------------
+                // dcl_resource
+                //----------------------------------------------------------
+                case 98:
+                    instruction.ExtraData.Add(reader.ReadUInt32()); // resource return type
+                    break;
+
+                //----------------------------------------------------------
+                // dcl_sampler
+                //----------------------------------------------------------
+                case 101:
+                    instruction.ExtraData.Add(reader.ReadUInt32()); // sampler mode
+                    break;
+
+                //----------------------------------------------------------
+                // dcl_constantbuffer
+                //----------------------------------------------------------
+                case 95:
+                    instruction.ExtraData.Add(reader.ReadUInt32()); // access pattern
+                    break;
+
+                //----------------------------------------------------------
+                // dcl_globalFlags
+                //----------------------------------------------------------
+                case 104:
+                    instruction.ExtraData.Add(reader.ReadUInt32()); // flags
+                    break;
+            }
+
+            foreach (uint value in instruction.ExtraData)
+            {
+                Console.WriteLine($"    Extra = 0x{value:X8}");
+            }
+            
+            Console.WriteLine(
+                $"[{instructionStart}] {info.Name,-20} Length={length} Operands={info.OperandCount}");
 
             for (int i = 0; i < info.OperandCount; i++)
             {
                 try
                 {
-                    instruction.Operands.Add(DecodeOperand(reader));
+                    Operand operand = DecodeOperand(reader);
+
+                    instruction.Operands.Add(operand);
+
+                    Console.WriteLine($"    {i}: {operand}");
                 }
                 catch (Exception ex)
                 {
                     throw new Exception(
                         $"Failed decoding operand {i} of {info.Name} " +
-                        $"at 0x{start:X} (stream 0x{reader.BaseStream.Position:X})",
+                        $"at DWORD {instructionStart} (stream DWORD {reader.BaseStream.Position / 4})",
                         ex);
                 }
             }
-            
-            reader.BaseStream.Position = instructionEnd;
+
+            //------------------------------------------------------------------
+            // Check that DecodeOperand() consumed exactly the correct number
+            // of DWORDs for this instruction.
+            //------------------------------------------------------------------
+
+            int expectedEnd = instructionStart + length;
+            int actualEnd = (int)(reader.BaseStream.Position / 4);
+
+            if (actualEnd != expectedEnd)
+            {
+                Console.ForegroundColor = ConsoleColor.Yellow;
+
+                Console.WriteLine(
+                    $"*** DESYNC *** {info.Name}");
+
+                Console.WriteLine($"Expected end : DWORD {expectedEnd}");
+                Console.WriteLine($"Actual end   : DWORD {actualEnd}");
+                Console.WriteLine($"Difference   : {actualEnd - expectedEnd}");
+
+                Console.ResetColor();
+            }
+
+            //------------------------------------------------------------------
+            // Move to the official end of the instruction.
+            //------------------------------------------------------------------
+
+            reader.BaseStream.Position = instructionStartByte + length * 4;
 
             Instructions.Add(instruction);
 
-            if (opcode == 62) // RET
+            if (opcodeValue == 62) // ret
                 break;
         }
     }
