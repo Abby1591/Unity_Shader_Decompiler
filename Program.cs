@@ -3,6 +3,7 @@ using System.IO;
 using Parser.Decompiler;
 using Parser.DXBC;
 using AssetStudio;
+using Parser.DXBC.IR;
 
 namespace Parser;
 
@@ -131,6 +132,11 @@ internal class Program
                     Console.WriteLine();
                 }
 
+                IRBuilder builder = new();
+                IRProgram ir = builder.Build(dxbcFile.Shader);
+
+                Console.WriteLine($"IR statements: {ir.Statements.Count}");
+                
                 string hlsl = decompiler.Decompile(dxbc);
                 string hlslPath = Path.Combine("Output", $"program{i}.hlsl");
                 File.WriteAllText(hlslPath, hlsl);
