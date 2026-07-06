@@ -93,6 +93,17 @@ internal class Program
 
                 var dxbcFile = new DxbcFile();
                 dxbcFile.Load(dxbcPath);
+                
+                var builder = new IRBuilder();
+                IRProgram ir = builder.Build(dxbcFile.Shader!);
+                
+                Console.WriteLine("IR");
+                Console.WriteLine("--");
+
+                foreach (var stmt in ir.Statements)
+                {
+                    Console.WriteLine(stmt);
+                }
 
                 Console.WriteLine($"Length      : {dxbcFile.TotalLength}");
                 Console.WriteLine($"Chunk Count : {dxbcFile.Chunks.Count}");
@@ -131,9 +142,6 @@ internal class Program
 
                     Console.WriteLine();
                 }
-
-                IRBuilder builder = new();
-                IRProgram ir = builder.Build(dxbcFile.Shader);
 
                 Console.WriteLine($"IR statements: {ir.Statements.Count}");
                 

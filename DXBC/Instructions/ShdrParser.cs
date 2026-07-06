@@ -158,9 +158,6 @@ private OpcodeInfo DecodeOpcode(uint opcode)
 
         uint regType = (token >> 12) & 0xFF;
 
-        Console.WriteLine(
-            $"Operand token=0x{token:X8}  regType={regType} ({DecodeRegisterType(regType)})");
-
         op.RegisterType = DecodeRegisterType(regType);
 
         //--------------------------------------------------------
@@ -383,8 +380,6 @@ private RegisterType DecodeRegisterType(uint type)
                 Warnings.Add($"Invalid instruction at DWORD {instructionStart}");
                 break;
             }
-            
-            Console.WriteLine($"IndexRep0={(token >> 22) & 7}");
 
             OpcodeInfo info = DecodeOpcode((uint)opcodeValue);
 
@@ -395,13 +390,6 @@ private RegisterType DecodeRegisterType(uint type)
                 OpcodeToken = token,
                 Length = length
             };
-            
-            Console.WriteLine($"Instruction {info.Name}");
-            for (int i = 0; i < length; i++)
-            {
-                uint dw = BitConverter.ToUInt32(data, (instructionStart + i) * 4);
-                Console.WriteLine($"{i}: 0x{dw:X8}");
-            }
             
             if (opcodeValue == 88) // dcl_resource
             {
@@ -419,25 +407,14 @@ private RegisterType DecodeRegisterType(uint type)
                 instruction.ExtraData.Add(indexType);
             }
 
-            foreach (uint value in instruction.ExtraData)
-            {
-                Console.WriteLine($"    Extra = 0x{value:X8}");
-            }
-            
-            Console.WriteLine(
-                $"[{instructionStart}] {info.Name,-20} Length={length} Operands={info.OperandCount}");
-
             for (int i = 0; i < info.OperandCount; i++)
             {
                 try
                 {
                     Operand operand = DecodeOperand(reader);
                     
-                    Console.WriteLine($"    Extended={operand.IsExtended}  EndDWORD={reader.BaseStream.Position / 4}");
-
                     instruction.Operands.Add(operand);
 
-                    Console.WriteLine($"    {i}: {operand}");
                 }
                 catch (Exception ex)
                 {
@@ -496,16 +473,7 @@ private RegisterType DecodeRegisterType(uint type)
 
             if (actualEnd != expectedEnd)
             {
-                Console.ForegroundColor = ConsoleColor.Yellow;
-
-                Console.WriteLine(
-                    $"*** DESYNC *** {info.Name}");
-
-                Console.WriteLine($"Expected end : DWORD {expectedEnd}");
-                Console.WriteLine($"Actual end   : DWORD {actualEnd}");
-                Console.WriteLine($"Difference   : {actualEnd - expectedEnd}");
-
-                Console.ResetColor();
+                Warnings.Add($"Instruction desync after {info.Name}: expected DWORD {expectedEnd}, got {actualEnd}");
             }
 
             //------------------------------------------------------------------
