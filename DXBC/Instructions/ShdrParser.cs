@@ -49,10 +49,10 @@ public class ShdrParser
     { 45, new() { Opcode = Opcode.Ld, Name = "ld", OperandCount = 3 } },
     { 47, new() { Opcode = Opcode.Log, Name = "log", OperandCount = 2 } },
     { 48, new() { Opcode = Opcode.Loop, Name = "loop", OperandCount = 0 } },
-    { 50, new() { Opcode = Opcode.Mad, Name = "mad", OperandCount = 3 } },
+    { 50, new() { Opcode = Opcode.Mad, Name = "mad", OperandCount = 4 } },
     { 52, new() { Opcode = Opcode.Max, Name = "max", OperandCount = 3 } },
     { 54, new() { Opcode = Opcode.Mov, Name = "mov", OperandCount = 2 } },
-    { 55, new() { Opcode = Opcode.MovC, Name = "movc", OperandCount = 3 } },
+    { 55, new() { Opcode = Opcode.MovC, Name = "movc", OperandCount = 4 } },
     { 56, new() { Opcode = Opcode.Mul, Name = "mul", OperandCount = 3 } },
     { 57, new() { Opcode = Opcode.Ne, Name = "ne", OperandCount = 3 } },
     { 58, new() { Opcode = Opcode.Nop, Name = "nop", OperandCount = 0 } },
@@ -83,7 +83,7 @@ public class ShdrParser
     { 95, new() { Name = "dcl_input", OperandCount = 1 } },
     { 98, new() { Name = "dcl_input_ps", OperandCount = 1 } },
     { 101, new() { Name = "dcl_output", OperandCount = 1 } },
-    { 104, new() { Name = "dcl_temps", OperandCount = 1 } },
+    { 104, new() { Name = "dcl_temps", OperandCount = 0 } },
     { 106, new() { Name = "dcl_globalFlags", OperandCount = 0 } },
 };
 
@@ -300,9 +300,8 @@ public class ShdrParser
                     break;
 
                 default:
-
-                    op.Indices.Add(0);
-                    break;
+                    throw new InvalidDataException(
+                        $"Unknown index representation {op.IndexRepresentation[i]}");
             }
         }
 
@@ -320,12 +319,12 @@ public class ShdrParser
         {
             uint ext = reader.ReadUInt32();
 
-            op.Modifier = (ext & 0x7F) switch
+            op.Modifier = (ext & 0xFF) switch
             {
                 0x41 => OperandModifier.Neg,
                 0x81 => OperandModifier.Abs,
                 0xC1 => OperandModifier.AbsNeg,
-                _ => OperandModifier.None // includes 0x01 (explicit "none")
+                _ => OperandModifier.None
             };
 
             while ((ext & 0x80000000) != 0)
@@ -409,6 +408,8 @@ private RegisterType DecodeRegisterType(uint type)
                 Warnings.Add($"Invalid instruction at DWORD {instructionStart}");
                 break;
             }
+            
+            Console.WriteLine($"IndexRep0={(token >> 22) & 7}");
 
             OpcodeInfo info = DecodeOpcode((uint)opcodeValue);
 
@@ -419,6 +420,64 @@ private RegisterType DecodeRegisterType(uint type)
                 OpcodeToken = token,
                 Length = length
             };
+            
+            Console.WriteLine($"Instruction {info.Name}");
+            for (int i = 0; i < length; i++)
+            {
+                uint dw = BitConverter.ToUInt32(data, (instructionStart + i) * 4);
+                Console.WriteLine($"{i}: 0x{dw:X8}");
+            }
+            
+            if (opcodeValue == 88) // dcl_resource
+            {
+                uint resourceDim = (token >> 11) & 0x1F; // verify shift/width against actual dumps
+                instruction.ExtraData.Add(resourceDim);
+            }
+            else if (opcodeValue == 90) // dcl_sampler
+            {
+                uint samplerMode = (token >> 11) & 0x3;
+                instruction.ExtraData.Add(samplerMode);
+            }
+            else if (opcodeValue == 89)
+            {
+                uint indexType = (token >> 11) & 0x1;
+                instruction.ExtraData.Add(indexType);
+            }
+
+            foreach (uint value in instruction.ExtraData)
+            {
+                Console.WriteLine($"    Extra = 0x{value:X8}");
+            }
+            
+            Console.WriteLine(
+                $"[{instructionStart}] {info.Name,-20} Length={length} Operands={info.OperandCount}");
+
+            for (int i = 0; i < info.OperandCount; i++)
+            {
+                try
+                {
+                    Operand operand = DecodeOperand(reader);
+                    
+                    Console.WriteLine($"    Extended={operand.IsExtended}  EndDWORD={reader.BaseStream.Position / 4}");
+
+                    instruction.Operands.Add(operand);
+
+                    Console.WriteLine($"    {i}: {operand}");
+                }
+                catch (Exception ex)
+                {
+                    throw new Exception(
+                        $"Failed decoding operand {i} of {info.Name} " +
+                        $"at DWORD {instructionStart} (stream DWORD {reader.BaseStream.Position / 4})",
+                        ex);
+                }
+            }
+            
+            if (opcodeValue == 88)
+            {
+                uint returnType = reader.ReadUInt32();
+                instruction.ExtraData.Add(returnType);
+            }
             
             switch (opcodeValue)
             {
@@ -435,26 +494,12 @@ private RegisterType DecodeRegisterType(uint type)
                 case 101:
                     // no extra DWORD
                     break;
-
+                    
                 //----------------------------------------------------------
-                // dcl_resource
+                // dcl_temps
                 //----------------------------------------------------------
-                case 88:
-                    instruction.ExtraData.Add(reader.ReadUInt32()); // resource return type
-                    break;
-
-                //----------------------------------------------------------
-                // dcl_sampler
-                //----------------------------------------------------------
-                case 90:
-                    instruction.ExtraData.Add(reader.ReadUInt32()); // sampler mode
-                    break;
-
-                //----------------------------------------------------------
-                // dcl_constantbuffer
-                //----------------------------------------------------------
-                case 89:
-                    instruction.ExtraData.Add(reader.ReadUInt32()); // access pattern
+                case 104:
+                    instruction.ExtraData.Add(reader.ReadUInt32());
                     break;
 
                 //----------------------------------------------------------
@@ -463,33 +508,6 @@ private RegisterType DecodeRegisterType(uint type)
                 case 106:
                     instruction.ExtraData.Add(reader.ReadUInt32()); // flags
                     break;
-            }
-
-            foreach (uint value in instruction.ExtraData)
-            {
-                Console.WriteLine($"    Extra = 0x{value:X8}");
-            }
-            
-            Console.WriteLine(
-                $"[{instructionStart}] {info.Name,-20} Length={length} Operands={info.OperandCount}");
-
-            for (int i = 0; i < info.OperandCount; i++)
-            {
-                try
-                {
-                    Operand operand = DecodeOperand(reader);
-
-                    instruction.Operands.Add(operand);
-
-                    Console.WriteLine($"    {i}: {operand}");
-                }
-                catch (Exception ex)
-                {
-                    throw new Exception(
-                        $"Failed decoding operand {i} of {info.Name} " +
-                        $"at DWORD {instructionStart} (stream DWORD {reader.BaseStream.Position / 4})",
-                        ex);
-                }
             }
 
             //------------------------------------------------------------------
