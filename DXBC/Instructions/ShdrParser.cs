@@ -8,112 +8,87 @@ public class ShdrParser
     public List<string> Warnings { get; } = new();
 
     private static readonly Dictionary<uint, OpcodeInfo> OpcodeTable = new()
-{
-    { 0, new() { Opcode = Opcode.Add, Name = "add", OperandCount = 3 } },
-    { 1, new() { Opcode = Opcode.And, Name = "and", OperandCount = 3 } },
-    { 2, new() { Opcode = Opcode.Break, Name = "break", OperandCount = 0 } },
-    { 3, new() { Opcode = Opcode.BreakC, Name = "breakc", OperandCount = 1 } },
-    // NOTE: no CALL/CALLC opcode exists in Wine's SM4 enum (0x04/0x05 are
-    // unused/reserved here) - your old 8/9 entries were never real opcodes.
-    { 6, new() { Opcode = Opcode.Case, Name = "case", OperandCount = 1 } },
-    { 7, new() { Opcode = Opcode.Continue, Name = "continue", OperandCount = 0 } },
-    { 8, new() { Opcode = Opcode.ContinueC, Name = "continuec", OperandCount = 1 } },
-    { 13, new() { Opcode = Opcode.Discard, Name = "discard", OperandCount = 1 } },
-    { 14, new() { Opcode = Opcode.Div, Name = "div", OperandCount = 3 } },
-    { 15, new() { Opcode = Opcode.Dp2, Name = "dp2", OperandCount = 3 } },
-    { 16, new() { Opcode = Opcode.Dp3, Name = "dp3", OperandCount = 3 } },
-    { 17, new() { Opcode = Opcode.Dp4, Name = "dp4", OperandCount = 3 } },
-    { 18, new() { Opcode = Opcode.Else, Name = "else", OperandCount = 0 } },
-    { 19, new() { Opcode = Opcode.Emit, Name = "emit", OperandCount = 0 } },
-    { 20, new() { Opcode = Opcode.EmitThenCut, Name = "emitThenCut", OperandCount = 0 } },
-    { 21, new() { Opcode = Opcode.EndIf, Name = "endif", OperandCount = 0 } },
-    { 22, new() { Opcode = Opcode.EndLoop, Name = "endloop", OperandCount = 0 } },
-    { 23, new() { Opcode = Opcode.EndSwitch, Name = "endswitch", OperandCount = 0 } },
-    { 24, new() { Opcode = Opcode.Eq, Name = "eq", OperandCount = 3 } },
-    { 25, new() { Opcode = Opcode.Exp, Name = "exp", OperandCount = 2 } },
-    { 26, new() { Opcode = Opcode.Frc, Name = "frc", OperandCount = 2 } },
-    { 27, new() { Opcode = Opcode.Ftoi, Name = "ftoi", OperandCount = 2 } },
-    { 28, new() { Opcode = Opcode.Ftou, Name = "ftou", OperandCount = 2 } },
-    { 29, new() { Opcode = Opcode.GE, Name = "ge", OperandCount = 3 } },
-    { 30, new() { Opcode = Opcode.IAdd, Name = "iadd", OperandCount = 3 } },
-    { 31, new() { Opcode = Opcode.If, Name = "if", OperandCount = 1 } },
-    { 32, new() { Opcode = Opcode.IEq, Name = "ieq", OperandCount = 3 } },
-    { 33, new() { Opcode = Opcode.IGe, Name = "ige", OperandCount = 3 } },
-    { 34, new() { Opcode = Opcode.ILt, Name = "ilt", OperandCount = 3 } },
-    { 35, new() { Opcode = Opcode.IMad, Name = "imad", OperandCount = 4 } },
-    { 36, new() { Opcode = Opcode.IMax, Name = "imax", OperandCount = 3 } },
-    { 37, new() { Opcode = Opcode.IMin, Name = "imin", OperandCount = 3 } },
-    { 38, new() { Opcode = Opcode.IMul, Name = "imul", OperandCount = 3 } },
-    { 39, new() { Opcode = Opcode.INe, Name = "ine", OperandCount = 3 } },
-    { 44, new() { Opcode = Opcode.Label, Name = "label", OperandCount = 1 } },
-    { 45, new() { Opcode = Opcode.Ld, Name = "ld", OperandCount = 3 } },
-    { 47, new() { Opcode = Opcode.Log, Name = "log", OperandCount = 2 } },
-    { 48, new() { Opcode = Opcode.Loop, Name = "loop", OperandCount = 0 } },
-    { 50, new() { Opcode = Opcode.Mad, Name = "mad", OperandCount = 4 } },
-    { 52, new() { Opcode = Opcode.Max, Name = "max", OperandCount = 3 } },
-    { 54, new() { Opcode = Opcode.Mov, Name = "mov", OperandCount = 2 } },
-    { 55, new() { Opcode = Opcode.MovC, Name = "movc", OperandCount = 4 } },
-    { 56, new() { Opcode = Opcode.Mul, Name = "mul", OperandCount = 3 } },
-    { 57, new() { Opcode = Opcode.Ne, Name = "ne", OperandCount = 3 } },
-    { 58, new() { Opcode = Opcode.Nop, Name = "nop", OperandCount = 0 } },
-    { 59, new() { Opcode = Opcode.Not, Name = "not", OperandCount = 2 } },
-    { 60, new() { Opcode = Opcode.Or, Name = "or", OperandCount = 3 } },
-    { 61, new() { Opcode = Opcode.ResInfo, Name = "resinfo", OperandCount = 3 } },
-    { 62, new() { Opcode = Opcode.Ret, Name = "ret", OperandCount = 0 } },
-    { 63, new() { Name = "retc", OperandCount = 1 } },
-    { 64, new() { Name = "round_ne", OperandCount = 2 } },
-    { 65, new() { Opcode = Opcode.RoundNI, Name = "round_ni", OperandCount = 2 } },
-    { 66, new() { Opcode = Opcode.RoundPI, Name = "round_pi", OperandCount = 2 } },
-    { 67, new() { Opcode = Opcode.RoundZ, Name = "round_z", OperandCount = 2 } },
-    { 68, new() { Opcode = Opcode.Rsq, Name = "rsq", OperandCount = 2 } },
-    { 69, new() { Opcode = Opcode.Sample, Name = "sample", OperandCount = 4 } },
-    { 70, new() { Opcode = Opcode.SampleC, Name = "sample_c", OperandCount = 4 } },
-    { 71, new() { Name = "sample_c_lz", OperandCount = 4 } },
-    { 72, new() { Opcode = Opcode.SampleL, Name = "sample_l", OperandCount = 5 } },
-    { 73, new() { Name = "sample_d", OperandCount = 6 } },
-    { 74, new() { Name = "sample_b", OperandCount = 5 } },
-    { 75, new() { Opcode = Opcode.Sqrt, Name = "sqrt", OperandCount = 2 } },
-    { 76, new() { Name = "switch", OperandCount = 1 } },
-    { 77, new() { Name = "sincos", OperandCount = 3 } },
-    
-    // declarations (these were the ones actually causing your desyncs)
-    { 88, new() { Name = "dcl_resource", OperandCount = 1 } },
-    { 89, new() { Name = "dcl_constantbuffer", OperandCount = 1 } },
-    { 90, new() { Name = "dcl_sampler", OperandCount = 1 } },
-    { 95, new() { Name = "dcl_input", OperandCount = 1 } },
-    { 98, new() { Name = "dcl_input_ps", OperandCount = 1 } },
-    { 101, new() { Name = "dcl_output", OperandCount = 1 } },
-    { 104, new() { Name = "dcl_temps", OperandCount = 0 } },
-    { 106, new() { Name = "dcl_globalFlags", OperandCount = 0 } },
-};
-
-    private static int GetIndexCount(RegisterType type)
     {
-        return type switch
-        {
-            RegisterType.Temp => 1,
-            RegisterType.Input => 1,
-            RegisterType.Output => 1,
-            RegisterType.IndexableTemp => 2,
-            RegisterType.ConstantBuffer => 2,
-            RegisterType.ImmediateConstantBuffer => 2,
-            RegisterType.Resource => 1,
-            RegisterType.Sampler => 1,
-            RegisterType.FunctionBody => 1,
-            RegisterType.FunctionTable => 1,
-            RegisterType.Interface => 1,
-            RegisterType.ThreadGroupSharedMemory => 1,
-            RegisterType.Uav => 1,
+        { 0, new() { Opcode = Opcode.Add, Name = "add", OperandCount = 3 } },
+        { 1, new() { Opcode = Opcode.And, Name = "and", OperandCount = 3 } },
+        { 2, new() { Opcode = Opcode.Break, Name = "break", OperandCount = 0 } },
+        { 3, new() { Opcode = Opcode.BreakC, Name = "breakc", OperandCount = 1 } },
+        // NOTE: no CALL/CALLC opcode exists in Wine's SM4 enum (0x04/0x05 are
+        // unused/reserved here) - your old 8/9 entries were never real opcodes.
+        { 6, new() { Opcode = Opcode.Case, Name = "case", OperandCount = 1 } },
+        { 7, new() { Opcode = Opcode.Continue, Name = "continue", OperandCount = 0 } },
+        { 8, new() { Opcode = Opcode.ContinueC, Name = "continuec", OperandCount = 1 } },
+        { 13, new() { Opcode = Opcode.Discard, Name = "discard", OperandCount = 1 } },
+        { 14, new() { Opcode = Opcode.Div, Name = "div", OperandCount = 3 } },
+        { 15, new() { Opcode = Opcode.Dp2, Name = "dp2", OperandCount = 3 } },
+        { 16, new() { Opcode = Opcode.Dp3, Name = "dp3", OperandCount = 3 } },
+        { 17, new() { Opcode = Opcode.Dp4, Name = "dp4", OperandCount = 3 } },
+        { 18, new() { Opcode = Opcode.Else, Name = "else", OperandCount = 0 } },
+        { 19, new() { Opcode = Opcode.Emit, Name = "emit", OperandCount = 0 } },
+        { 20, new() { Opcode = Opcode.EmitThenCut, Name = "emitThenCut", OperandCount = 0 } },
+        { 21, new() { Opcode = Opcode.EndIf, Name = "endif", OperandCount = 0 } },
+        { 22, new() { Opcode = Opcode.EndLoop, Name = "endloop", OperandCount = 0 } },
+        { 23, new() { Opcode = Opcode.EndSwitch, Name = "endswitch", OperandCount = 0 } },
+        { 24, new() { Opcode = Opcode.Eq, Name = "eq", OperandCount = 3 } },
+        { 25, new() { Opcode = Opcode.Exp, Name = "exp", OperandCount = 2 } },
+        { 26, new() { Opcode = Opcode.Frc, Name = "frc", OperandCount = 2 } },
+        { 27, new() { Opcode = Opcode.Ftoi, Name = "ftoi", OperandCount = 2 } },
+        { 28, new() { Opcode = Opcode.Ftou, Name = "ftou", OperandCount = 2 } },
+        { 29, new() { Opcode = Opcode.GE, Name = "ge", OperandCount = 3 } },
+        { 30, new() { Opcode = Opcode.IAdd, Name = "iadd", OperandCount = 3 } },
+        { 31, new() { Opcode = Opcode.If, Name = "if", OperandCount = 1 } },
+        { 32, new() { Opcode = Opcode.IEq, Name = "ieq", OperandCount = 3 } },
+        { 33, new() { Opcode = Opcode.IGe, Name = "ige", OperandCount = 3 } },
+        { 34, new() { Opcode = Opcode.ILt, Name = "ilt", OperandCount = 3 } },
+        { 35, new() { Opcode = Opcode.IMad, Name = "imad", OperandCount = 4 } },
+        { 36, new() { Opcode = Opcode.IMax, Name = "imax", OperandCount = 3 } },
+        { 37, new() { Opcode = Opcode.IMin, Name = "imin", OperandCount = 3 } },
+        { 38, new() { Opcode = Opcode.IMul, Name = "imul", OperandCount = 3 } },
+        { 39, new() { Opcode = Opcode.INe, Name = "ine", OperandCount = 3 } },
+        { 44, new() { Opcode = Opcode.Label, Name = "label", OperandCount = 1 } },
+        { 45, new() { Opcode = Opcode.Ld, Name = "ld", OperandCount = 3 } },
+        { 47, new() { Opcode = Opcode.Log, Name = "log", OperandCount = 2 } },
+        { 48, new() { Opcode = Opcode.Loop, Name = "loop", OperandCount = 0 } },
+        { 50, new() { Opcode = Opcode.Mad, Name = "mad", OperandCount = 4 } },
+        { 52, new() { Opcode = Opcode.Max, Name = "max", OperandCount = 3 } },
+        { 54, new() { Opcode = Opcode.Mov, Name = "mov", OperandCount = 2 } },
+        { 55, new() { Opcode = Opcode.MovC, Name = "movc", OperandCount = 4 } },
+        { 56, new() { Opcode = Opcode.Mul, Name = "mul", OperandCount = 3 } },
+        { 57, new() { Opcode = Opcode.Ne, Name = "ne", OperandCount = 3 } },
+        { 58, new() { Opcode = Opcode.Nop, Name = "nop", OperandCount = 0 } },
+        { 59, new() { Opcode = Opcode.Not, Name = "not", OperandCount = 2 } },
+        { 60, new() { Opcode = Opcode.Or, Name = "or", OperandCount = 3 } },
+        { 61, new() { Opcode = Opcode.ResInfo, Name = "resinfo", OperandCount = 3 } },
+        { 62, new() { Opcode = Opcode.Ret, Name = "ret", OperandCount = 0 } },
+        { 63, new() { Name = "retc", OperandCount = 1 } },
+        { 64, new() { Name = "round_ne", OperandCount = 2 } },
+        { 65, new() { Opcode = Opcode.RoundNI, Name = "round_ni", OperandCount = 2 } },
+        { 66, new() { Opcode = Opcode.RoundPI, Name = "round_pi", OperandCount = 2 } },
+        { 67, new() { Opcode = Opcode.RoundZ, Name = "round_z", OperandCount = 2 } },
+        { 68, new() { Opcode = Opcode.Rsq, Name = "rsq", OperandCount = 2 } },
+        { 69, new() { Opcode = Opcode.Sample, Name = "sample", OperandCount = 4 } },
+        { 70, new() { Opcode = Opcode.SampleC, Name = "sample_c", OperandCount = 4 } },
+        { 71, new() { Name = "sample_c_lz", OperandCount = 4 } },
+        { 72, new() { Opcode = Opcode.SampleL, Name = "sample_l", OperandCount = 5 } },
+        { 73, new() { Name = "sample_d", OperandCount = 6 } },
+        { 74, new() { Name = "sample_b", OperandCount = 5 } },
+        { 75, new() { Opcode = Opcode.Sqrt, Name = "sqrt", OperandCount = 2 } },
+        { 76, new() { Name = "switch", OperandCount = 1 } },
+        { 77, new() { Name = "sincos", OperandCount = 3 } },
 
-            RegisterType.Immediate32 => 0,
-            RegisterType.Immediate64 => 0,
-            RegisterType.Null => 0,
+        // declarations (these were the ones actually causing your desyncs)
+        { 88, new() { Name = "dcl_resource", OperandCount = 1 } },
+        { 89, new() { Name = "dcl_constantbuffer", OperandCount = 1 } },
+        { 90, new() { Name = "dcl_sampler", OperandCount = 1 } },
+        { 95, new() { Name = "dcl_input", OperandCount = 1 } },
+        { 98, new() { Name = "dcl_input_ps", OperandCount = 1 } },
+        { 101, new() { Name = "dcl_output", OperandCount = 1 } },
+        { 103, new() { Name = "dcl_input_sgv", OperandCount = 1 } },
+        { 104, new() { Name = "dcl_temps", OperandCount = 0 } },
+        { 106, new() { Name = "dcl_globalFlags", OperandCount = 0 } },
+    };
 
-            _ => 1
-        };
-    }
-
-    private OpcodeInfo DecodeOpcode(uint opcode)
+private OpcodeInfo DecodeOpcode(uint opcode)
     {
         if (OpcodeTable.TryGetValue(opcode, out var info))
             return info;
@@ -481,18 +456,19 @@ private RegisterType DecodeRegisterType(uint type)
             
             switch (opcodeValue)
             {
-                //----------------------------------------------------------
-                // dcl_input
-                //---------------------------------------------------------- 
-                case 95:
-                    instruction.ExtraData.Add(reader.ReadUInt32()); // interpolation mode
-                    break;
 
                 //----------------------------------------------------------
                 // dcl_output
                 //----------------------------------------------------------
                 case 101:
                     // no extra DWORD
+                    break;
+                
+                //----------------------------------------------------------
+                // dcl_input_sgv
+                //----------------------------------------------------------
+                case 103:
+                    instruction.ExtraData.Add(reader.ReadUInt32()); // system-value semantic
                     break;
                     
                 //----------------------------------------------------------
