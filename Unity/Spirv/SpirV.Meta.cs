@@ -1,6 +1,6 @@
 using System.Collections.Generic;
 
-namespace Parser
+namespace AssetStudio
 {
 	internal class Meta
     {

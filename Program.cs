@@ -2,6 +2,7 @@ using System;
 using System.IO;
 using Parser.Decompiler;
 using Parser.DXBC;
+using AssetStudio;
 
 namespace Parser;
 

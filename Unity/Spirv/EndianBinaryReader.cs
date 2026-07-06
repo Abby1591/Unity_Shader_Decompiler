@@ -2,7 +2,7 @@
 using System.Buffers.Binary;
 using System.IO;
 
-namespace Parser
+namespace AssetStudio
 {
     public class EndianBinaryReader : BinaryReader
     {

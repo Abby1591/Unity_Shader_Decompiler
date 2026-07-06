@@ -1,4 +1,4 @@
-namespace Parser
+namespace AssetStudio
 {
     public enum ShaderGpuProgramType
     {

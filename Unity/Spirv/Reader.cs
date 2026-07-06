@@ -2,7 +2,7 @@ using System;
 using System.IO;
 using System.Runtime.CompilerServices;
 
-namespace Parser
+namespace AssetStudio
 {
 	internal sealed class Reader
 	{

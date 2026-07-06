@@ -4,7 +4,7 @@ using System.Text;
 
 using Parser;
 
-namespace Parser
+namespace AssetStudio
 {
     public static class SpirVShaderConverter
     {

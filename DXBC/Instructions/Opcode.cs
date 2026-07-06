@@ -1,3 +1,5 @@
+namespace Parser.DXBC.Instructions;
+
 public enum Opcode
 {
     Unknown,

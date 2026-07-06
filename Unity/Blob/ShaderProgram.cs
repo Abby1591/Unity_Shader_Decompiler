@@ -1,6 +1,6 @@
 using System.Text.RegularExpressions;
 
-namespace Parser;
+namespace AssetStudio;
 
 public class ShaderProgram
 {

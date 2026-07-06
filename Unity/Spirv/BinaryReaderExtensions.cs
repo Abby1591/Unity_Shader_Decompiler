@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Text;
 
-namespace Parser
+namespace AssetStudio
 {
     public static class BinaryReaderExtensions
     {

@@ -4,7 +4,7 @@ using System.Text;
 using System.Linq;
 using System.Reflection;
 
-namespace Parser
+namespace AssetStudio
 {
 	public class OperandType
 	{

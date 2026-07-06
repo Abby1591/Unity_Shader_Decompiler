@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Runtime.InteropServices;
 
-namespace Parser
+namespace AssetStudio
 {
     [StructLayout(LayoutKind.Sequential, Pack = 4)]
     public struct Color : IEquatable<Color>
