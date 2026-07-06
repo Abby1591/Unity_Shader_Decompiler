@@ -2,73 +2,68 @@ using Parser.DXBC.Instructions;
 
 namespace Parser.DXBC.IR;
 
-public class IRBuilder
+public partial class IRBuilder
 {
     public IRProgram Build(ShdrParser parser)
     {
         IRProgram program = new();
 
-        foreach (Parser.DXBC.Instructions.Instruction instruction in parser.Instructions)
+        foreach (Instruction instruction in parser.Instructions)
         {
             ConvertInstruction(program, instruction);
         }
 
         return program;
     }
-    
+
     private void ConvertInstruction(IRProgram program, Instruction instruction)
     {
         switch (instruction.Opcode)
         {
+            // Arithmetic
             case Opcode.Mov:
-
-                program.Statements.Add(
-                    new IRStatement.IRAssignment
-                    {
-                        Destination = BuildRegister(instruction.Operands[0]),
-                        Expression = BuildExpression(instruction.Operands[1])
-                    });
-
+                BuildMov(program, instruction);
                 break;
-            
+
             case Opcode.Add:
-
-                program.Statements.Add(
-                    new IRStatement.IRAssignment
-                    {
-                        Destination = BuildRegister(instruction.Operands[0]),
-
-                        Expression =
-                            new IRExpression.BinaryExpression
-                            {
-                                Operation = IRExpression.BinaryOperation.Add,
-                                Left = BuildExpression(instruction.Operands[1]),
-                                Right = BuildExpression(instruction.Operands[2])
-                            }
-                    });
-
+                BuildAdd(program, instruction);
                 break;
-            
+
             case Opcode.Mul:
+                BuildMul(program, instruction);
+                break;
 
-                program.Statements.Add(
-                    new IRStatement.IRAssignment
-                    {
-                        Destination = BuildRegister(instruction.Operands[0]),
+            case Opcode.Div:
+                BuildDiv(program, instruction);
+                break;
 
-                        Expression =
-                            new IRExpression.BinaryExpression
-                            {
-                                Operation = IRExpression.BinaryOperation.Multiply,
-                                Left = BuildExpression(instruction.Operands[1]),
-                                Right = BuildExpression(instruction.Operands[2])
-                            }
-                    });
+            case Opcode.Mad:
+                BuildMad(program, instruction);
+                break;
 
+            // Comparisons
+            case Opcode.Eq:
+                BuildEq(program, instruction);
+                break;
+
+            case Opcode.Ne:
+                BuildNe(program, instruction);
+                break;
+
+            case Opcode.GE:
+                BuildGE(program, instruction);
+                break;
+
+            case Opcode.Lt:
+                BuildLt(program, instruction);
+                break;
+
+            default:
+                Console.WriteLine($"IR: Unsupported opcode {instruction.Name}");
                 break;
         }
     }
-    
+
     private IRExpression BuildExpression(Operand operand)
     {
         if (operand.RegisterType == RegisterType.Immediate32)
@@ -84,7 +79,7 @@ public class IRBuilder
             Register = BuildRegister(operand)
         };
     }
-    
+
     private IRRegister BuildRegister(Operand operand)
     {
         return new IRRegister
