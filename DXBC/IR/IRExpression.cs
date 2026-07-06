@@ -18,7 +18,10 @@ public abstract class IRExpression
 
         public override string ToString()
         {
-            return string.Join(", ", Values);
+            if (Values.Length == 1)
+                return Values[0].ToString();
+
+            return $"float{Values.Length}({string.Join(", ", Values)})";
         }
     }
     

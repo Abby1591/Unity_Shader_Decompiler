@@ -82,11 +82,23 @@ public partial class IRBuilder
 
     private IRRegister BuildRegister(Operand operand)
     {
-        return new IRRegister
+        IRRegister reg = new()
         {
             Type = operand.RegisterType,
             Index = operand.RegisterIndex,
-            Mask = operand.Mask
+
+            Mask = operand.Mask,
+
+            ComponentMode = operand.ComponentMode,
+            Swizzle = operand.Swizzle,
+            Component = operand.Component,
+
+            Modifier = operand.Modifier
         };
+
+        foreach (uint i in operand.Indices)
+            reg.Indices.Add(i);
+
+        return reg;
     }
 }
