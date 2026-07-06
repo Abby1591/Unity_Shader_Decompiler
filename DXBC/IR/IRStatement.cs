@@ -6,7 +6,7 @@ public abstract class IRStatement
 {
     public sealed class IRAssignment : IRStatement
     {
-        public Operand Destination { get; init; } = null!;
+        public IRRegister Destination { get; init; } = null!;
         public IRExpression Expression { get; init; } = null!;
     }
 }

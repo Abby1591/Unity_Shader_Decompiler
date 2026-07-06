@@ -25,8 +25,8 @@ public class IRBuilder
                 program.Statements.Add(
                     new IRStatement.IRAssignment
                     {
-                        Destination = instruction.Operands[0],
-                        Expression = ConvertOperand(instruction.Operands[1])
+                        Destination = BuildRegister(instruction.Operands[0]),
+                        Expression = BuildExpression(instruction.Operands[1])
                     });
 
                 break;
@@ -36,14 +36,14 @@ public class IRBuilder
                 program.Statements.Add(
                     new IRStatement.IRAssignment
                     {
-                        Destination = instruction.Operands[0],
+                        Destination = BuildRegister(instruction.Operands[0]),
 
                         Expression =
                             new IRExpression.BinaryExpression
                             {
                                 Operation = IRExpression.BinaryOperation.Add,
-                                Left = ConvertOperand(instruction.Operands[1]),
-                                Right = ConvertOperand(instruction.Operands[2])
+                                Left = BuildExpression(instruction.Operands[1]),
+                                Right = BuildExpression(instruction.Operands[2])
                             }
                     });
 
@@ -54,14 +54,14 @@ public class IRBuilder
                 program.Statements.Add(
                     new IRStatement.IRAssignment
                     {
-                        Destination = instruction.Operands[0],
+                        Destination = BuildRegister(instruction.Operands[0]),
 
                         Expression =
                             new IRExpression.BinaryExpression
                             {
                                 Operation = IRExpression.BinaryOperation.Multiply,
-                                Left = ConvertOperand(instruction.Operands[1]),
-                                Right = ConvertOperand(instruction.Operands[2])
+                                Left = BuildExpression(instruction.Operands[1]),
+                                Right = BuildExpression(instruction.Operands[2])
                             }
                     });
 
@@ -69,7 +69,7 @@ public class IRBuilder
         }
     }
     
-    private IRExpression ConvertOperand(Operand operand)
+    private IRExpression BuildExpression(Operand operand)
     {
         if (operand.RegisterType == RegisterType.Immediate32)
         {
@@ -81,7 +81,17 @@ public class IRBuilder
 
         return new IRExpression.RegisterExpression
         {
-            Operand = operand
+            Register = BuildRegister(operand)
+        };
+    }
+    
+    private IRRegister BuildRegister(Operand operand)
+    {
+        return new IRRegister
+        {
+            Type = operand.RegisterType,
+            Index = operand.RegisterIndex,
+            Mask = operand.Mask
         };
     }
 }

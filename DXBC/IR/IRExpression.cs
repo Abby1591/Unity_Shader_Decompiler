@@ -6,7 +6,7 @@ public abstract class IRExpression
 {
     public sealed class RegisterExpression : IRExpression
     {
-        public Operand Operand { get; init; } = null!;
+        public IRRegister Register { get; init; } = null!;
     }
     
     public sealed class ConstantExpression : IRExpression
