@@ -64,6 +64,25 @@ public partial class IRBuilder
 
     private void BuildMad(IRProgram program, Instruction instruction)
     {
-        // implement later
+        program.Statements.Add(
+            new IRStatement.IRAssignment
+            {
+                Destination = BuildRegister(instruction.Operands[0]),
+                Expression =
+                    new IRExpression.BinaryExpression
+                    {
+                        Operation = IRExpression.BinaryOperation.Add,
+
+                        Left =
+                            new IRExpression.BinaryExpression
+                            {
+                                Operation = IRExpression.BinaryOperation.Multiply,
+                                Left = BuildExpression(instruction.Operands[1]),
+                                Right = BuildExpression(instruction.Operands[2])
+                            },
+
+                        Right = BuildExpression(instruction.Operands[3])
+                    }
+            });
     }
 }
