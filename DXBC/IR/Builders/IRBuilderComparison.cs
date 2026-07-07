@@ -35,6 +35,22 @@ public partial class IRBuilder
             instruction,
             IRExpression.BinaryOperation.LessThan);
     }
+    
+    private void BuildIlt(IRProgram program, Instruction instruction)
+    {
+        BuildComparison(
+            program,
+            instruction,
+            IRExpression.BinaryOperation.LessThan);
+    }
+    
+    private void BuildIge(IRProgram program, Instruction instruction)
+    {
+        BuildComparison(
+            program,
+            instruction,
+            IRExpression.BinaryOperation.GreaterEqual);
+    }
 
     private void BuildComparison(
         IRProgram program,

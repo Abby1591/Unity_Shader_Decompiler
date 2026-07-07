@@ -28,6 +28,10 @@ public partial class IRBuilder
             case Opcode.Add:
                 BuildAdd(program, instruction);
                 break;
+            
+            case Opcode.IAdd:
+                BuildIAdd(program, instruction);
+                break;
 
             case Opcode.Mul:
                 BuildMul(program, instruction);
@@ -39,6 +43,10 @@ public partial class IRBuilder
 
             case Opcode.Mad:
                 BuildMad(program, instruction);
+                break;
+            
+            case Opcode.MovC:
+                BuildMovC(program, instruction);
                 break;
 
             // Comparisons
@@ -58,6 +66,24 @@ public partial class IRBuilder
                 BuildLt(program, instruction);
                 break;
             
+            case Opcode.IGe:
+                BuildIge(program, instruction);
+                break;
+
+            case Opcode.ILt:
+                BuildIlt(program, instruction);
+                break;
+            
+            //Conversions
+            
+            case Opcode.Ftoi:
+                BuildFtoi(program, instruction);
+                break;
+
+            case Opcode.RoundNI:
+                BuildRoundNI(program, instruction);
+                break;
+            
             //Declarations
             
             case Opcode.DclConstantBuffer:
@@ -71,6 +97,10 @@ public partial class IRBuilder
             case Opcode.DclResource:
                 BuildResource(program, instruction);
                 break;
+            
+            case Opcode.DclInput:
+                BuildInput(program, instruction);
+                break;
 
             case Opcode.DclInputPS:
                 BuildInputPS(program, instruction);
@@ -83,7 +113,54 @@ public partial class IRBuilder
             case Opcode.DclTemps:
                 BuildTemps(program, instruction);
                 break;
+            
+            //Texture
+            
+            case Opcode.Sample:
+                BuildSample(program, instruction);
+                break;
 
+            case Opcode.SampleL:
+                BuildSampleLevel(program, instruction);
+                break;
+            
+            //Flow
+            
+            case Opcode.If:
+                BuildIf(program, instruction);
+                break;
+
+            case Opcode.Else:
+                BuildElse(program, instruction);
+                break;
+
+            case Opcode.EndIf:
+                BuildEndIf(program, instruction);
+                break;
+
+            case Opcode.Loop:
+                BuildLoop(program, instruction);
+                break;
+
+            case Opcode.EndLoop:
+                BuildEndLoop(program, instruction);
+                break;
+
+            case Opcode.BreakC:
+                BuildBreakC(program, instruction);
+                break;
+
+            case Opcode.Ret:
+                BuildRet(program, instruction);
+                break;
+            
+            //intrinsic
+            
+            case Opcode.SinCos:
+                BuildSincos(program, instruction);
+                break;
+
+            
             default:
                 Console.WriteLine($"IR: Unsupported opcode {instruction.Name}");
                 break;

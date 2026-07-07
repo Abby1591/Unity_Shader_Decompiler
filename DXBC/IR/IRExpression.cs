@@ -74,4 +74,50 @@ public abstract class IRExpression
             return $"{Name}({string.Join(", ", Arguments)})";
         }
     }
+    
+    public sealed class ConditionalExpression : IRExpression
+    {
+        public IRExpression Condition { get; init; } = null!;
+
+        public IRExpression TrueExpression { get; init; } = null!;
+
+        public IRExpression FalseExpression { get; init; } = null!;
+
+        public override string ToString()
+        {
+            return $"({Condition} ? {TrueExpression} : {FalseExpression})";
+        }
+    }
+    
+    public sealed class TextureSampleExpression : IRExpression
+    {
+        public IRRegister Resource { get; init; } = null!;
+
+        public IRRegister Sampler { get; init; } = null!;
+
+        public IRExpression Coordinates { get; init; } = null!;
+
+        public IRExpression? Offset { get; init; }
+
+        public override string ToString()
+        {
+            return $"{Resource}.Sample({Sampler}, {Coordinates})";
+        }
+    }
+    
+    public sealed class TextureSampleLevelExpression : IRExpression
+    {
+        public IRRegister Resource { get; init; } = null!;
+
+        public IRRegister Sampler { get; init; } = null!;
+
+        public IRExpression Coordinates { get; init; } = null!;
+
+        public IRExpression Level { get; init; } = null!;
+
+        public override string ToString()
+        {
+            return $"{Resource}.SampleLevel({Sampler}, {Coordinates}, {Level})";
+        }
+    }
 }

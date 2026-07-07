@@ -29,6 +29,22 @@ public partial class IRBuilder
                     }
             });
     }
+    
+    private void BuildIAdd(IRProgram program, Instruction instruction)
+    {
+        program.Statements.Add(
+            new IRStatement.IRAssignment
+            {
+                Destination = BuildRegister(instruction.Operands[0]),
+                Expression =
+                    new IRExpression.BinaryExpression
+                    {
+                        Operation = IRExpression.BinaryOperation.Add,
+                        Left = BuildExpression(instruction.Operands[1]),
+                        Right = BuildExpression(instruction.Operands[2])
+                    }
+            });
+    }
 
     private void BuildMul(IRProgram program, Instruction instruction)
     {
@@ -82,6 +98,23 @@ public partial class IRBuilder
                             },
 
                         Right = BuildExpression(instruction.Operands[3])
+                    }
+            });
+    }
+    
+    private void BuildMovC(IRProgram program, Instruction instruction)
+    {
+        program.Statements.Add(
+            new IRStatement.IRAssignment
+            {
+                Destination = BuildRegister(instruction.Operands[0]),
+
+                Expression =
+                    new IRExpression.ConditionalExpression
+                    {
+                        Condition = BuildExpression(instruction.Operands[1]),
+                        TrueExpression = BuildExpression(instruction.Operands[2]),
+                        FalseExpression = BuildExpression(instruction.Operands[3])
                     }
             });
     }
