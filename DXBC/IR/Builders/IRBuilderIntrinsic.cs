@@ -6,34 +6,40 @@ public partial class IRBuilder
 {
     private void BuildSincos(IRProgram program, Instruction instruction)
     {
-        // dstSin
-        program.Statements.Add(
-            new IRStatement.IRAssignment
-            {
-                Destination = BuildRegister(instruction.Operands[0]),
-                Expression = new IRExpression.IntrinsicExpression
+        // Destination 0 = sine
+        if (instruction.Operands[0].RegisterType != RegisterType.Null)
+        {
+            program.Statements.Add(
+                new IRStatement.IRAssignment
                 {
-                    Name = "sin",
-                    Arguments =
+                    Destination = BuildRegister(instruction.Operands[0]),
+                    Expression = new IRExpression.IntrinsicExpression
                     {
-                        BuildExpression(instruction.Operands[2])
+                        Name = "sin",
+                        Arguments =
+                        {
+                            BuildExpression(instruction.Operands[2])
+                        }
                     }
-                }
-            });
+                });
+        }
 
-        // dstCos
-        program.Statements.Add(
-            new IRStatement.IRAssignment
-            {
-                Destination = BuildRegister(instruction.Operands[1]),
-                Expression = new IRExpression.IntrinsicExpression
+        // Destination 1 = cosine
+        if (instruction.Operands[1].RegisterType != RegisterType.Null)
+        {
+            program.Statements.Add(
+                new IRStatement.IRAssignment
                 {
-                    Name = "cos",
-                    Arguments =
+                    Destination = BuildRegister(instruction.Operands[1]),
+                    Expression = new IRExpression.IntrinsicExpression
                     {
-                        BuildExpression(instruction.Operands[2])
+                        Name = "cos",
+                        Arguments =
+                        {
+                            BuildExpression(instruction.Operands[2])
+                        }
                     }
-                }
-            });
+                });
+        }
     }
 }
