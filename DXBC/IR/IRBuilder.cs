@@ -57,6 +57,32 @@ public partial class IRBuilder
             case Opcode.Lt:
                 BuildLt(program, instruction);
                 break;
+            
+            //Declarations
+            
+            case Opcode.DclConstantBuffer:
+                BuildConstantBuffer(program, instruction);
+                break;
+            
+            case Opcode.DclSampler:
+                BuildSampler(program, instruction);
+                break;
+
+            case Opcode.DclResource:
+                BuildResource(program, instruction);
+                break;
+
+            case Opcode.DclInputPS:
+                BuildInputPS(program, instruction);
+                break;
+
+            case Opcode.DclOutput:
+                BuildOutput(program, instruction);
+                break;
+
+            case Opcode.DclTemps:
+                BuildTemps(program, instruction);
+                break;
 
             default:
                 Console.WriteLine($"IR: Unsupported opcode {instruction.Name}");

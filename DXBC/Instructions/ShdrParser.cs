@@ -73,19 +73,19 @@ public class ShdrParser
         { 73, new() { Name = "sample_d", OperandCount = 6 } },
         { 74, new() { Name = "sample_b", OperandCount = 5 } },
         { 75, new() { Opcode = Opcode.Sqrt, Name = "sqrt", OperandCount = 2 } },
-        { 76, new() { Name = "switch", OperandCount = 1 } },
-        { 77, new() { Name = "sincos", OperandCount = 3 } },
+        { 76, new() { Opcode = Opcode.Switch, Name = "switch", OperandCount = 1 } },
+        { 77, new() { Opcode = Opcode.SinCos, Name = "sincos", OperandCount = 3 } },
 
         // declarations (these were the ones actually causing your desyncs)
-        { 88, new() { Name = "dcl_resource", OperandCount = 1 } },
-        { 89, new() { Name = "dcl_constantbuffer", OperandCount = 1 } },
-        { 90, new() { Name = "dcl_sampler", OperandCount = 1 } },
-        { 95, new() { Name = "dcl_input", OperandCount = 1 } },
-        { 98, new() { Name = "dcl_input_ps", OperandCount = 1 } },
-        { 101, new() { Name = "dcl_output", OperandCount = 1 } },
-        { 103, new() { Name = "dcl_input_sgv", OperandCount = 1 } },
-        { 104, new() { Name = "dcl_temps", OperandCount = 0 } },
-        { 106, new() { Name = "dcl_globalFlags", OperandCount = 0 } },
+        { 88, new() { Opcode = Opcode.DclResource ,Name = "dcl_resource", OperandCount = 1 } },
+        { 89, new() { Opcode = Opcode.DclConstantBuffer ,Name = "dcl_constantbuffer", OperandCount = 1 } },
+        { 90, new() { Opcode = Opcode.DclSampler ,Name = "dcl_sampler", OperandCount = 1 } },
+        { 95, new() { Opcode = Opcode.DclInput ,Name = "dcl_input", OperandCount = 1 } },
+        { 98, new() { Opcode = Opcode.DclInputPS ,Name = "dcl_input_ps", OperandCount = 1 } },
+        { 101, new() { Opcode = Opcode.DclOutput ,Name = "dcl_output", OperandCount = 1 } },
+        { 103, new() { Opcode = Opcode.DclInputSVG ,Name = "dcl_input_sgv", OperandCount = 1 } },
+        { 104, new() { Opcode = Opcode.DclTemps ,Name = "dcl_temps", OperandCount = 0 } },
+        { 106, new() { Opcode = Opcode.DclGlobalFlags ,Name = "dcl_globalFlags", OperandCount = 0 } },
     };
 
 private OpcodeInfo DecodeOpcode(uint opcode)

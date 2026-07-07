@@ -72,4 +72,13 @@ public enum Opcode
     Switch,
     SinCos,
     Dp2Add,
+    DclResource,
+    DclSampler,
+    DclConstantBuffer,
+    DclInput,
+    DclInputPS,
+    DclOutput,
+    DclTemps,
+    DclGlobalFlags,
+    DclInputSVG,
 }
