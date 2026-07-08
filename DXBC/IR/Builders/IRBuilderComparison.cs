@@ -35,7 +35,7 @@ public partial class IRBuilder
             instruction,
             IRExpression.BinaryOperation.LessThan);
     }
-    
+
     private void BuildIlt(IRProgram program, Instruction instruction)
     {
         BuildIntComparison(
@@ -43,7 +43,7 @@ public partial class IRBuilder
             instruction,
             IRExpression.BinaryOperation.LessThan);
     }
-    
+
     private void BuildIge(IRProgram program, Instruction instruction)
     {
         BuildIntComparison(
@@ -57,10 +57,14 @@ public partial class IRBuilder
         Instruction instruction,
         IRExpression.BinaryOperation operation)
     {
+        var destination = BuildRegister(instruction.Operands[0]);
+        destination.Type = IRValueType.Bool;
+        SetRegisterType(destination);
+
         program.Statements.Add(
             new IRStatement.IRAssignment
             {
-                Destination = BuildRegister(instruction.Operands[0]),
+                Destination = destination,
                 Expression =
                     new IRExpression.BinaryExpression
                     {
@@ -70,16 +74,20 @@ public partial class IRBuilder
                     }
             });
     }
-    
+
     private void BuildIntComparison(
         IRProgram program,
         Instruction instruction,
         IRExpression.BinaryOperation operation)
     {
+        var destination = BuildRegister(instruction.Operands[0]);
+        destination.Type = IRValueType.Bool;
+        SetRegisterType(destination);
+
         program.Statements.Add(
             new IRStatement.IRAssignment
             {
-                Destination = BuildRegister(instruction.Operands[0]),
+                Destination = destination,
                 Expression =
                     new IRExpression.BinaryExpression
                     {

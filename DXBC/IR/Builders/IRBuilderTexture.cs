@@ -6,10 +6,14 @@ public partial class IRBuilder
 {
     private void BuildSample(IRProgram program, Instruction instruction)
     {
+        var destination = BuildRegister(instruction.Operands[0]);
+        destination.Type = IRValueType.Float;
+        SetRegisterType(destination);
+        
         program.Statements.Add(
             new IRStatement.IRAssignment
             {
-                Destination = BuildRegister(instruction.Operands[0]),
+                Destination = destination,
 
                 Expression = new IRExpression.TextureSampleExpression
                 {
@@ -22,10 +26,14 @@ public partial class IRBuilder
 
     private void BuildSampleLevel(IRProgram program, Instruction instruction)
     {
+        var destination = BuildRegister(instruction.Operands[0]);
+        destination.Type = IRValueType.Float;
+        SetRegisterType(destination);
+        
         program.Statements.Add(
             new IRStatement.IRAssignment
             {
-                Destination = BuildRegister(instruction.Operands[0]),
+                Destination = destination,
 
                 Expression =
                     new IRExpression.TextureSampleLevelExpression

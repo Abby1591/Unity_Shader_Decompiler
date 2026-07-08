@@ -33,6 +33,8 @@ public enum Opcode
     Frc,
     Ftoi,
     Ftou,
+    Itof,
+    Utof,
     GE,
     IAdd,
     If,

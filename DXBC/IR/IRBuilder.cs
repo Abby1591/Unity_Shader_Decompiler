@@ -84,6 +84,18 @@ public partial class IRBuilder
                 BuildRoundNI(program, instruction);
                 break;
             
+            case Opcode.Ftou:
+                BuildFtou(program, instruction);
+                break;
+
+            case Opcode.Itof:
+                BuildItof(program, instruction);
+                break;
+
+            case Opcode.Utof:
+                BuildUtof(program, instruction);
+                break;
+            
             //Declarations
             
             case Opcode.DclConstantBuffer:
@@ -183,7 +195,7 @@ public partial class IRBuilder
             Register = BuildRegister(operand)
         };
     }
-    
+
     private IRExpression BuildIntExpression(Operand operand)
     {
         if (operand.RegisterType == RegisterType.Immediate32)
@@ -201,11 +213,29 @@ public partial class IRBuilder
         };
     }
 
+    private IRExpression BuildUIntExpression(Operand operand)
+    {
+        if (operand.RegisterType == RegisterType.Immediate32)
+        {
+            return new IRExpression.ConstantExpression
+            {
+                RawValues = operand.Immediate32Values!,
+                Kind = IRExpression.ConstantExpression.ConstantKind.UInt
+            };
+        }
+
+        return new IRExpression.RegisterExpression
+        {
+            Register = BuildRegister(operand)
+        };
+    }
+
     private IRRegister BuildRegister(Operand operand)
     {
         IRRegister reg = new()
         {
             RegisterType = operand.RegisterType,
+            Type = GetRegisterType(operand.RegisterType, operand.RegisterIndex),
             Index = operand.RegisterIndex,
 
             Mask = operand.Mask,
@@ -221,5 +251,25 @@ public partial class IRBuilder
             reg.Indices.Add(i);
 
         return reg;
+    }
+    
+    private readonly Dictionary<(RegisterType Type, uint Index), IRValueType> _registerTypes = new();
+    
+    private void SetRegisterType(IRRegister register)
+    {
+        _registerTypes[(register.RegisterType, register.Index)] = register.Type;
+    }
+
+    private IRValueType GetRegisterType(RegisterType type, uint index)
+    {
+        if (_registerTypes.TryGetValue((type, index), out var value))
+            return value;
+
+        return IRValueType.Unknown;
+    }
+    
+    private IRValueType GetExpressionType(IRExpression expression)
+    {
+        return expression.Type;
     }
 }

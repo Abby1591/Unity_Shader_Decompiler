@@ -6,20 +6,32 @@ public partial class IRBuilder
 {
     private void BuildMov(IRProgram program, Instruction instruction)
     {
+        IRRegister destination = BuildRegister(instruction.Operands[0]);
+
+        destination.Type = instruction.Operands[1].RegisterType == RegisterType.Immediate32
+            ? IRValueType.Float
+            : BuildRegister(instruction.Operands[1]).Type;
+        
+        SetRegisterType(destination);
+
         program.Statements.Add(
             new IRStatement.IRAssignment
             {
-                Destination = BuildRegister(instruction.Operands[0]),
+                Destination = destination,
                 Expression = BuildExpression(instruction.Operands[1])
             });
     }
 
     private void BuildAdd(IRProgram program, Instruction instruction)
     {
+        IRRegister destination = BuildRegister(instruction.Operands[0]);
+        destination.Type = IRValueType.Float;
+        SetRegisterType(destination);
+
         program.Statements.Add(
             new IRStatement.IRAssignment
             {
-                Destination = BuildRegister(instruction.Operands[0]),
+                Destination = destination,
                 Expression =
                     new IRExpression.BinaryExpression
                     {
@@ -29,13 +41,17 @@ public partial class IRBuilder
                     }
             });
     }
-    
+
     private void BuildIAdd(IRProgram program, Instruction instruction)
     {
+        IRRegister destination = BuildRegister(instruction.Operands[0]);
+        destination.Type = IRValueType.Int;
+        SetRegisterType(destination);
+
         program.Statements.Add(
             new IRStatement.IRAssignment
             {
-                Destination = BuildRegister(instruction.Operands[0]),
+                Destination = destination,
                 Expression =
                     new IRExpression.BinaryExpression
                     {
@@ -48,10 +64,14 @@ public partial class IRBuilder
 
     private void BuildMul(IRProgram program, Instruction instruction)
     {
+        IRRegister destination = BuildRegister(instruction.Operands[0]);
+        destination.Type = IRValueType.Float;
+        SetRegisterType(destination);
+
         program.Statements.Add(
             new IRStatement.IRAssignment
             {
-                Destination = BuildRegister(instruction.Operands[0]),
+                Destination = destination,
                 Expression =
                     new IRExpression.BinaryExpression
                     {
@@ -64,10 +84,14 @@ public partial class IRBuilder
 
     private void BuildDiv(IRProgram program, Instruction instruction)
     {
+        IRRegister destination = BuildRegister(instruction.Operands[0]);
+        destination.Type = IRValueType.Float;
+        SetRegisterType(destination);
+
         program.Statements.Add(
             new IRStatement.IRAssignment
             {
-                Destination = BuildRegister(instruction.Operands[0]),
+                Destination = destination,
                 Expression =
                     new IRExpression.BinaryExpression
                     {
@@ -80,10 +104,14 @@ public partial class IRBuilder
 
     private void BuildMad(IRProgram program, Instruction instruction)
     {
+        IRRegister destination = BuildRegister(instruction.Operands[0]);
+        destination.Type = IRValueType.Float;SetRegisterType(destination);
+
         program.Statements.Add(
             new IRStatement.IRAssignment
             {
-                Destination = BuildRegister(instruction.Operands[0]),
+                Destination = destination,
+
                 Expression =
                     new IRExpression.BinaryExpression
                     {
@@ -101,13 +129,19 @@ public partial class IRBuilder
                     }
             });
     }
-    
+
     private void BuildMovC(IRProgram program, Instruction instruction)
     {
+        IRRegister destination = BuildRegister(instruction.Operands[0]);
+
+        // movc keeps the type of the values being selected
+        destination.Type = BuildRegister(instruction.Operands[2]).Type;
+        SetRegisterType(destination);
+
         program.Statements.Add(
             new IRStatement.IRAssignment
             {
-                Destination = BuildRegister(instruction.Operands[0]),
+                Destination = destination,
 
                 Expression =
                     new IRExpression.ConditionalExpression

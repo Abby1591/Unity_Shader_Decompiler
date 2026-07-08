@@ -9,10 +9,14 @@ public partial class IRBuilder
         // Destination 0 = sine
         if (instruction.Operands[0].RegisterType != RegisterType.Null)
         {
+            var destination = BuildRegister(instruction.Operands[0]);
+            destination.Type = IRValueType.Float;
+            SetRegisterType(destination);
+            
             program.Statements.Add(
                 new IRStatement.IRAssignment
                 {
-                    Destination = BuildRegister(instruction.Operands[0]),
+                    Destination = destination,
                     Expression = new IRExpression.IntrinsicExpression
                     {
                         Name = "sin",
@@ -27,10 +31,14 @@ public partial class IRBuilder
         // Destination 1 = cosine
         if (instruction.Operands[1].RegisterType != RegisterType.Null)
         {
+            var destination = BuildRegister(instruction.Operands[1]);
+            destination.Type = IRValueType.Float;
+            SetRegisterType(destination);
+            
             program.Statements.Add(
                 new IRStatement.IRAssignment
                 {
-                    Destination = BuildRegister(instruction.Operands[1]),
+                    Destination = destination,
                     Expression = new IRExpression.IntrinsicExpression
                     {
                         Name = "cos",

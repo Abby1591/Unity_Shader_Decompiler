@@ -132,9 +132,36 @@ public abstract class IRExpression
         public List<IRExpression> Arguments { get; } = new();
 
         public override IRValueType Type =>
-            Arguments.Count > 0
-                ? Arguments[0].Type
-                : IRValueType.Unknown;
+            Name switch
+            {
+                // Casts
+                "int"   => IRValueType.Int,
+                "uint"  => IRValueType.UInt,
+                "float" => IRValueType.Float,
+
+                // Comparisons / boolean intrinsics (future)
+                "isnan" => IRValueType.Bool,
+                "isinf" => IRValueType.Bool,
+
+                // Math functions preserve the input type
+                "sin"   => Arguments[0].Type,
+                "cos"   => Arguments[0].Type,
+                "sqrt"  => Arguments[0].Type,
+                "rsqrt" => Arguments[0].Type,
+                "abs"   => Arguments[0].Type,
+                "floor" => Arguments[0].Type,
+                "ceil"  => Arguments[0].Type,
+                "round" => Arguments[0].Type,
+                "frac"  => Arguments[0].Type,
+                "exp"   => Arguments[0].Type,
+                "log"   => Arguments[0].Type,
+                "min"   => Arguments[0].Type,
+                "max"   => Arguments[0].Type,
+
+                _ => Arguments.Count > 0
+                    ? Arguments[0].Type
+                    : IRValueType.Unknown
+            };
 
         public override string ToString()
         {
