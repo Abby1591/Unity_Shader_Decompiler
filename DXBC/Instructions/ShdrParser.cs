@@ -81,9 +81,10 @@ public class ShdrParser
         { 89, new() { Opcode = Opcode.DclConstantBuffer ,Name = "dcl_constantbuffer", OperandCount = 1 } },
         { 90, new() { Opcode = Opcode.DclSampler ,Name = "dcl_sampler", OperandCount = 1 } },
         { 95, new() { Opcode = Opcode.DclInput ,Name = "dcl_input", OperandCount = 1 } },
+        { 96, new() { Opcode = Opcode.DclInputSVG ,Name = "dcl_input_sgv", OperandCount = 1 } },
         { 98, new() { Opcode = Opcode.DclInputPS ,Name = "dcl_input_ps", OperandCount = 1 } },
         { 101, new() { Opcode = Opcode.DclOutput ,Name = "dcl_output", OperandCount = 1 } },
-        { 103, new() { Opcode = Opcode.DclInputSVG ,Name = "dcl_input_sgv", OperandCount = 1 } },
+        { 103, new() { Opcode = Opcode.DclOutputSIV ,Name = "dcl_output_siv", OperandCount = 1 } },
         { 104, new() { Opcode = Opcode.DclTemps ,Name = "dcl_temps", OperandCount = 0 } },
         { 106, new() { Opcode = Opcode.DclGlobalFlags ,Name = "dcl_globalFlags", OperandCount = 0 } },
     };
@@ -393,12 +394,12 @@ private RegisterType DecodeRegisterType(uint type)
             
             if (opcodeValue == 88) // dcl_resource
             {
-                uint resourceDim = (token >> 11) & 0x1F; // verify shift/width against actual dumps
+                uint resourceDim = (token >> 11) & 0xF;
                 instruction.ExtraData.Add(resourceDim);
             }
             else if (opcodeValue == 90) // dcl_sampler
             {
-                uint samplerMode = (token >> 11) & 0x3;
+                uint samplerMode = (token >> 11) & 0xF;
                 instruction.ExtraData.Add(samplerMode);
             }
             else if (opcodeValue == 89)
@@ -444,8 +445,16 @@ private RegisterType DecodeRegisterType(uint type)
                 //----------------------------------------------------------
                 // dcl_input_sgv
                 //----------------------------------------------------------
-                case 103:
+                case 96:
                     instruction.ExtraData.Add(reader.ReadUInt32()); // system-value semantic
+                    break;
+                
+                //----------------------------------------------------------
+                // dcl_output_siv
+                //----------------------------------------------------------
+                
+                case 103:
+                    instruction.ExtraData.Add(reader.ReadUInt32());
                     break;
                     
                 //----------------------------------------------------------
@@ -459,7 +468,6 @@ private RegisterType DecodeRegisterType(uint type)
                 // dcl_globalFlags
                 //----------------------------------------------------------
                 case 106:
-                    instruction.ExtraData.Add(reader.ReadUInt32()); // flags
                     break;
             }
 

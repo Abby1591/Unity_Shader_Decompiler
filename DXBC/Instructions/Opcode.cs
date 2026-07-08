@@ -86,4 +86,5 @@ public enum Opcode
     DclTemps,
     DclGlobalFlags,
     DclInputSVG,
+    DclOutputSIV,
 }

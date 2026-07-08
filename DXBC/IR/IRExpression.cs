@@ -1,10 +1,18 @@
+using System;
+using System.Linq;
+using System.Collections.Generic;
+
 namespace Parser.DXBC.IR;
 
 public abstract class IRExpression
 {
+    public abstract IRValueType Type { get; }
+
     public sealed class RegisterExpression : IRExpression
     {
         public IRRegister Register { get; init; } = null!;
+
+        public override IRValueType Type => Register.Type;
 
         public override string ToString()
         {
@@ -24,6 +32,15 @@ public abstract class IRExpression
         public ConstantKind Kind { get; init; } = ConstantKind.Float;
 
         public uint[] RawValues { get; init; } = Array.Empty<uint>();
+
+        public override IRValueType Type =>
+            Kind switch
+            {
+                ConstantKind.Float => IRValueType.Float,
+                ConstantKind.Int => IRValueType.Int,
+                ConstantKind.UInt => IRValueType.UInt,
+                _ => IRValueType.Unknown
+            };
 
         public override string ToString()
         {
@@ -58,7 +75,7 @@ public abstract class IRExpression
             return $"{prefix}{RawValues.Length}({string.Join(", ", RawValues.Select(Format))})";
         }
     }
-    
+
     public enum BinaryOperation
     {
         Add,
@@ -76,7 +93,18 @@ public abstract class IRExpression
         public BinaryOperation Operation { get; init; }
 
         public IRExpression Left { get; init; } = null!;
+
         public IRExpression Right { get; init; } = null!;
+
+        public override IRValueType Type =>
+            Operation switch
+            {
+                BinaryOperation.Equal => IRValueType.Bool,
+                BinaryOperation.NotEqual => IRValueType.Bool,
+                BinaryOperation.GreaterEqual => IRValueType.Bool,
+                BinaryOperation.LessThan => IRValueType.Bool,
+                _ => Left.Type
+            };
 
         public override string ToString()
         {
@@ -96,19 +124,24 @@ public abstract class IRExpression
             return $"({Left} {op} {Right})";
         }
     }
-    
+
     public sealed class IntrinsicExpression : IRExpression
     {
         public string Name { get; init; } = "";
 
         public List<IRExpression> Arguments { get; } = new();
 
+        public override IRValueType Type =>
+            Arguments.Count > 0
+                ? Arguments[0].Type
+                : IRValueType.Unknown;
+
         public override string ToString()
         {
             return $"{Name}({string.Join(", ", Arguments)})";
         }
     }
-    
+
     public sealed class ConditionalExpression : IRExpression
     {
         public IRExpression Condition { get; init; } = null!;
@@ -117,12 +150,14 @@ public abstract class IRExpression
 
         public IRExpression FalseExpression { get; init; } = null!;
 
+        public override IRValueType Type => TrueExpression.Type;
+
         public override string ToString()
         {
             return $"({Condition} ? {TrueExpression} : {FalseExpression})";
         }
     }
-    
+
     public sealed class TextureSampleExpression : IRExpression
     {
         public IRRegister Resource { get; init; } = null!;
@@ -133,12 +168,14 @@ public abstract class IRExpression
 
         public IRExpression? Offset { get; init; }
 
+        public override IRValueType Type => IRValueType.Float;
+
         public override string ToString()
         {
             return $"{Resource}.Sample({Sampler}, {Coordinates})";
         }
     }
-    
+
     public sealed class TextureSampleLevelExpression : IRExpression
     {
         public IRRegister Resource { get; init; } = null!;
@@ -148,6 +185,8 @@ public abstract class IRExpression
         public IRExpression Coordinates { get; init; } = null!;
 
         public IRExpression Level { get; init; } = null!;
+
+        public override IRValueType Type => IRValueType.Float;
 
         public override string ToString()
         {

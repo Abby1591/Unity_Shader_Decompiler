@@ -4,10 +4,14 @@ namespace Parser.DXBC.IR;
 
 public sealed class IRRegister
 {
-    public RegisterType Type;
+    // What kind of register it is (r#, v#, cb#, ...)
+    public RegisterType RegisterType;
+
+    // What data it stores
+    public IRValueType Type = IRValueType.Unknown;
 
     public uint Index;
-    
+
     public List<uint> Indices { get; } = new();
 
     public byte Mask;
@@ -22,7 +26,7 @@ public sealed class IRRegister
 
     public override string ToString()
     {
-        string name = Type switch
+        string name = RegisterType switch
         {
             RegisterType.Temp => $"r{Index}",
             RegisterType.Input => $"v{Index}",
@@ -33,7 +37,7 @@ public sealed class IRRegister
                     : $"cb{Index}",
             RegisterType.Resource => $"t{Index}",
             RegisterType.Sampler => $"s{Index}",
-            _ => $"{Type.ToString().ToLower()}{Index}"
+            _ => $"{RegisterType.ToString().ToLower()}{Index}"
         };
 
         string suffix = ComponentMode switch

@@ -203,10 +203,9 @@ public partial class IRBuilder
 
     private IRRegister BuildRegister(Operand operand)
     {
-        Console.WriteLine($"{operand.RegisterType}  idx={operand.RegisterIndex}");
         IRRegister reg = new()
         {
-            Type = operand.RegisterType,
+            RegisterType = operand.RegisterType,
             Index = operand.RegisterIndex,
 
             Mask = operand.Mask,
