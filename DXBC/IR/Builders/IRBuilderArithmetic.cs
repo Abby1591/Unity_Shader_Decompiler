@@ -40,8 +40,8 @@ public partial class IRBuilder
                     new IRExpression.BinaryExpression
                     {
                         Operation = IRExpression.BinaryOperation.Add,
-                        Left = BuildExpression(instruction.Operands[1]),
-                        Right = BuildExpression(instruction.Operands[2])
+                        Left = BuildIntExpression(instruction.Operands[1]),
+                        Right = BuildIntExpression(instruction.Operands[2])
                     }
             });
     }

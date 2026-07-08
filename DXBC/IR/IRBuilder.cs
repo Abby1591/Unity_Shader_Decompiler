@@ -173,7 +173,25 @@ public partial class IRBuilder
         {
             return new IRExpression.ConstantExpression
             {
-                Values = operand.Immediate32Values
+                RawValues = operand.Immediate32Values,
+                Kind = IRExpression.ConstantExpression.ConstantKind.Float
+            };
+        }
+
+        return new IRExpression.RegisterExpression
+        {
+            Register = BuildRegister(operand)
+        };
+    }
+    
+    private IRExpression BuildIntExpression(Operand operand)
+    {
+        if (operand.RegisterType == RegisterType.Immediate32)
+        {
+            return new IRExpression.ConstantExpression
+            {
+                RawValues = operand.Immediate32Values!,
+                Kind = IRExpression.ConstantExpression.ConstantKind.Int
             };
         }
 

@@ -22,13 +22,28 @@ public class Operand
 
     public List<uint> Indices { get; } = new();
     
-    public float[]? Immediate32Values;
+    public uint[]? Immediate32Values;
     
     public double[]? Immediate64Values;
     
     public Operand?[] RelativeOperands = new Operand?[3];
     
     public ShdrParser.OperandModifier Modifier { get; set; } = ShdrParser.OperandModifier.None;
+    
+    public float GetImmediateFloat(int index)
+    {
+        return BitConverter.Int32BitsToSingle((int)Immediate32Values![index]);
+    }
+
+    public int GetImmediateInt(int index)
+    {
+        return unchecked((int)Immediate32Values![index]);
+    }
+
+    public uint GetImmediateUInt(int index)
+    {
+        return Immediate32Values![index];
+    }
     
     private static string DecodeSwizzle(byte swizzle)
     {
@@ -76,7 +91,9 @@ public class Operand
     public override string ToString()
     {
         if (RegisterType == RegisterType.Immediate32 && Immediate32Values != null)
-            return "l(" + string.Join(", ", Immediate32Values) + ")";
+        {
+            return "l(" + string.Join(", ", Immediate32Values.Select(v => BitConverter.Int32BitsToSingle((int)v))) + ")";
+        }
 
         if (RegisterType == RegisterType.Immediate64 && Immediate64Values != null)
             return "d(" + string.Join(", ", Immediate64Values) + ")";

@@ -14,14 +14,48 @@ public abstract class IRExpression
 
     public sealed class ConstantExpression : IRExpression
     {
-        public float[] Values { get; init; } = Array.Empty<float>();
+        public enum ConstantKind
+        {
+            Float,
+            Int,
+            UInt
+        }
+
+        public ConstantKind Kind { get; init; } = ConstantKind.Float;
+
+        public uint[] RawValues { get; init; } = Array.Empty<uint>();
 
         public override string ToString()
         {
-            if (Values.Length == 1)
-                return Values[0].ToString();
+            string Format(uint value)
+            {
+                return Kind switch
+                {
+                    ConstantKind.Float =>
+                        BitConverter.Int32BitsToSingle((int)value).ToString(),
 
-            return $"float{Values.Length}({string.Join(", ", Values)})";
+                    ConstantKind.Int =>
+                        unchecked((int)value).ToString(),
+
+                    ConstantKind.UInt =>
+                        value.ToString(),
+
+                    _ => "?"
+                };
+            }
+
+            if (RawValues.Length == 1)
+                return Format(RawValues[0]);
+
+            string prefix = Kind switch
+            {
+                ConstantKind.Float => "float",
+                ConstantKind.Int => "int",
+                ConstantKind.UInt => "uint",
+                _ => "?"
+            };
+
+            return $"{prefix}{RawValues.Length}({string.Join(", ", RawValues.Select(Format))})";
         }
     }
     

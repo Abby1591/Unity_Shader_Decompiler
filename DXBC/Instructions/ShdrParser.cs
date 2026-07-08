@@ -174,10 +174,10 @@ private OpcodeInfo DecodeOpcode(uint opcode)
                 _ => throw new InvalidDataException()
             };
 
-            op.Immediate32Values = new float[count];
+            op.Immediate32Values = new uint[count];
 
             for (int i = 0; i < count; i++)
-                op.Immediate32Values[i] = reader.ReadSingle();
+                op.Immediate32Values[i] = reader.ReadUInt32();
 
             return op;
         }
