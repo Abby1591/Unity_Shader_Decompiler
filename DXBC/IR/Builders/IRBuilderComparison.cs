@@ -58,20 +58,23 @@ public partial class IRBuilder
         IRExpression.BinaryOperation operation)
     {
         var destination = BuildRegister(instruction.Operands[0]);
-        destination.Type = IRValueType.Bool;
+
+        IRExpression expression =
+            new IRExpression.BinaryExpression
+            {
+                Operation = operation,
+                Left = BuildExpression(instruction.Operands[1]),
+                Right = BuildExpression(instruction.Operands[2])
+            };
+
+        destination.Type = expression.Type;
         SetRegisterType(destination);
 
         program.Statements.Add(
             new IRStatement.IRAssignment
             {
                 Destination = destination,
-                Expression =
-                    new IRExpression.BinaryExpression
-                    {
-                        Operation = operation,
-                        Left = BuildExpression(instruction.Operands[1]),
-                        Right = BuildExpression(instruction.Operands[2])
-                    }
+                Expression = expression
             });
     }
 
@@ -81,20 +84,23 @@ public partial class IRBuilder
         IRExpression.BinaryOperation operation)
     {
         var destination = BuildRegister(instruction.Operands[0]);
-        destination.Type = IRValueType.Bool;
+
+        IRExpression expression =
+            new IRExpression.BinaryExpression
+            {
+                Operation = operation,
+                Left = BuildIntExpression(instruction.Operands[1]),
+                Right = BuildIntExpression(instruction.Operands[2])
+            };
+
+        destination.Type = expression.Type;
         SetRegisterType(destination);
 
         program.Statements.Add(
             new IRStatement.IRAssignment
             {
                 Destination = destination,
-                Expression =
-                    new IRExpression.BinaryExpression
-                    {
-                        Operation = operation,
-                        Left = BuildIntExpression(instruction.Operands[1]),
-                        Right = BuildIntExpression(instruction.Operands[2])
-                    }
+                Expression = expression
             });
     }
 }

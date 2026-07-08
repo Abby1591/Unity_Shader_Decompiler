@@ -10,21 +10,25 @@ public partial class IRBuilder
         if (instruction.Operands[0].RegisterType != RegisterType.Null)
         {
             var destination = BuildRegister(instruction.Operands[0]);
-            destination.Type = IRValueType.Float;
+
+            IRExpression expression =
+                new IRExpression.IntrinsicExpression
+                {
+                    Name = "sin",
+                    Arguments =
+                    {
+                        BuildExpression(instruction.Operands[2])
+                    }
+                };
+
+            destination.Type = expression.Type;
             SetRegisterType(destination);
-            
+
             program.Statements.Add(
                 new IRStatement.IRAssignment
                 {
                     Destination = destination,
-                    Expression = new IRExpression.IntrinsicExpression
-                    {
-                        Name = "sin",
-                        Arguments =
-                        {
-                            BuildExpression(instruction.Operands[2])
-                        }
-                    }
+                    Expression = expression
                 });
         }
 
@@ -32,21 +36,25 @@ public partial class IRBuilder
         if (instruction.Operands[1].RegisterType != RegisterType.Null)
         {
             var destination = BuildRegister(instruction.Operands[1]);
-            destination.Type = IRValueType.Float;
+
+            IRExpression expression =
+                new IRExpression.IntrinsicExpression
+                {
+                    Name = "cos",
+                    Arguments =
+                    {
+                        BuildExpression(instruction.Operands[2])
+                    }
+                };
+
+            destination.Type = expression.Type;
             SetRegisterType(destination);
-            
+
             program.Statements.Add(
                 new IRStatement.IRAssignment
                 {
                     Destination = destination,
-                    Expression = new IRExpression.IntrinsicExpression
-                    {
-                        Name = "cos",
-                        Arguments =
-                        {
-                            BuildExpression(instruction.Operands[2])
-                        }
-                    }
+                    Expression = expression
                 });
         }
     }
