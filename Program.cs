@@ -127,13 +127,16 @@ internal class Program
                     Console.WriteLine("Instructions");
                     Console.WriteLine("------------");
 
+                    int index = 0;
+
                     foreach (var inst in dxbcFile.Shader.Instructions)
                     {
-                        Console.WriteLine($"{inst.Name,-20} Length={inst.Length}");
+                        Console.WriteLine($"[{index++}] {inst.Name,-20} Length={inst.Length}");
 
                         foreach (var operand in inst.Operands)
                         {
-                            Console.WriteLine(operand);
+                            Console.WriteLine(
+                                $"    {operand.RegisterType}  idx={operand.RegisterIndex}  {operand}");
                         }
                     }
 

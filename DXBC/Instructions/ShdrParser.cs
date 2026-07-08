@@ -247,6 +247,29 @@ private OpcodeInfo DecodeOpcode(uint opcode)
         op.IsExtended = (token & 0x80000000) != 0;
 
         //--------------------------------------------------------
+        // Extension token(s)
+        // First extension token (if present) encodes a source
+        // modifier (neg/abs/absneg). Further chained extension
+        // tokens (bit 31 set again) are skipped - not modeled.
+        //--------------------------------------------------------
+
+        if (op.IsExtended)
+        {
+            uint ext = reader.ReadUInt32();
+
+            op.Modifier = (ext & 0xFF) switch
+            {
+                0x41 => OperandModifier.Neg,
+                0x81 => OperandModifier.Abs,
+                0xC1 => OperandModifier.AbsNeg,
+                _ => OperandModifier.None
+            };
+
+            while ((ext & 0x80000000) != 0)
+                ext = reader.ReadUInt32();
+        }
+        
+        //--------------------------------------------------------
         // Read indices
         //--------------------------------------------------------
 
@@ -279,30 +302,7 @@ private OpcodeInfo DecodeOpcode(uint opcode)
 
         if (op.Indices.Count > 0)
             op.RegisterIndex = op.Indices[0];
-
-        //--------------------------------------------------------
-        // Extension token(s)
-        // First extension token (if present) encodes a source
-        // modifier (neg/abs/absneg). Further chained extension
-        // tokens (bit 31 set again) are skipped - not modeled.
-        //--------------------------------------------------------
-
-        if (op.IsExtended)
-        {
-            uint ext = reader.ReadUInt32();
-
-            op.Modifier = (ext & 0xFF) switch
-            {
-                0x41 => OperandModifier.Neg,
-                0x81 => OperandModifier.Abs,
-                0xC1 => OperandModifier.AbsNeg,
-                _ => OperandModifier.None
-            };
-
-            while ((ext & 0x80000000) != 0)
-                ext = reader.ReadUInt32();
-        }
-
+        
         return op;
     }
 

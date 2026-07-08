@@ -60,6 +60,7 @@ public partial class IRBuilder
 
     private void BuildTemps(IRProgram program, Instruction instruction)
     {
+        Console.WriteLine($"dcl_temps count = {instruction.ExtraData[0]}");
         program.Declarations.Add(
             new IRDeclaration.IRTempDeclaration
             {
