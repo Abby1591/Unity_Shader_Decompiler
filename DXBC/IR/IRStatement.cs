@@ -41,16 +41,72 @@ public abstract class IRStatement
         public override string ToString() => "endloop";
     }
 
+    // break / breakc: Condition is null for an unconditional break
     public sealed class IRBreak : IRStatement
+    {
+        public IRExpression? Condition { get; init; }
+
+        public override string ToString()
+            => Condition is null ? "break" : $"breakc ({Condition})";
+    }
+
+    // continue / continuec: Condition is null for an unconditional continue
+    public sealed class IRContinue : IRStatement
+    {
+        public IRExpression? Condition { get; init; }
+
+        public override string ToString()
+            => Condition is null ? "continue" : $"continuec ({Condition})";
+    }
+
+    // ret / retc: Condition is null for an unconditional return
+    public sealed class IRReturn : IRStatement
+    {
+        public IRExpression? Condition { get; init; }
+
+        public override string ToString()
+            => Condition is null ? "return" : $"retc ({Condition})";
+    }
+
+    public sealed class IRSwitch : IRStatement
+    {
+        public IRExpression Selector { get; init; } = null!;
+
+        public override string ToString()
+            => $"switch ({Selector})";
+    }
+
+    public sealed class IRCase : IRStatement
+    {
+        public IRExpression Value { get; init; } = null!;
+
+        public override string ToString()
+            => $"case {Value}";
+    }
+
+    public sealed class IRDefault : IRStatement
+    {
+        public override string ToString() => "default";
+    }
+
+    public sealed class IREndSwitch : IRStatement
+    {
+        public override string ToString() => "endswitch";
+    }
+
+    public sealed class IRDiscard : IRStatement
     {
         public IRExpression Condition { get; init; } = null!;
 
         public override string ToString()
-            => $"breakc ({Condition})";
+            => $"discard ({Condition})";
     }
 
-    public sealed class IRReturn : IRStatement
+    public sealed class IRLabel : IRStatement
     {
-        public override string ToString() => "return";
+        public string Name { get; init; } = "";
+
+        public override string ToString()
+            => $"label {Name}";
     }
 }

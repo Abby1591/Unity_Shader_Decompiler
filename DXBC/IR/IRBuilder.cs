@@ -34,6 +34,10 @@ public partial class IRBuilder
             case Opcode.IAdd:
                 BuildIAdd(program, instruction);
                 break;
+            
+            case Opcode.Sub:
+                BuildSub(program, instruction);
+                break;
 
             case Opcode.Mul:
                 BuildMul(program, instruction);
@@ -42,6 +46,22 @@ public partial class IRBuilder
             case Opcode.Div:
                 BuildDiv(program, instruction);
                 break;
+            
+            case Opcode.Neg:
+                BuildNeg(program, instruction);
+                break;
+
+            case Opcode.Abs:
+                BuildAbs(program, instruction);
+                break;
+
+            case Opcode.Min:
+                BuildMin(program, instruction);
+                break;
+
+            case Opcode.Max:
+                BuildMax(program, instruction);
+                break;
 
             case Opcode.Mad:
                 BuildMad(program, instruction);
@@ -49,6 +69,50 @@ public partial class IRBuilder
             
             case Opcode.MovC:
                 BuildMovC(program, instruction);
+                break;
+            
+            case Opcode.Sqrt:
+                BuildSqrt(program, instruction);
+                break;
+
+            case Opcode.Rsq:
+                BuildRsqrt(program, instruction);
+                break;
+
+            case Opcode.Rcp:
+                BuildRcp(program, instruction);
+                break;
+
+            case Opcode.Frc:
+                BuildFrac(program, instruction);
+                break;
+
+            case Opcode.Exp:
+                BuildExp(program, instruction);
+                break;
+
+            case Opcode.Log:
+                BuildLog(program, instruction);
+                break;
+
+            case Opcode.Pow:
+                BuildPow(program, instruction);
+                break;
+
+            case Opcode.Saturate:
+                BuildSaturate(program, instruction);
+                break;
+            
+            case Opcode.Dp2:
+                BuildDp2(program, instruction);
+                break;
+
+            case Opcode.Dp3:
+                BuildDp3(program, instruction);
+                break;
+
+            case Opcode.Dp4:
+                BuildDp4(program, instruction);
                 break;
 
             // Comparisons
@@ -255,8 +319,59 @@ public partial class IRBuilder
             }
         };
     }
+    
+        private void BuildUnaryIntrinsic(IRProgram program, Instruction instruction, string name)
+        {
+            var destination = BuildRegister(instruction.Operands[0]);
 
-    private IRRegister BuildRegister(Operand operand)
+            IRExpression expression =
+                new IRExpression.IntrinsicExpression
+                {
+                    Name = name,
+                    Arguments = { BuildExpression(instruction.Operands[1]) }
+                };
+
+            AddAssignment(program, destination, expression);
+        }
+
+        private void BuildBinaryIntrinsic(IRProgram program, Instruction instruction, string name)
+        {
+            var destination = BuildRegister(instruction.Operands[0]);
+
+            IRExpression expression =
+                new IRExpression.IntrinsicExpression
+                {
+                    Name = name,
+                    Arguments =
+                    {
+                        BuildExpression(instruction.Operands[1]),
+                        BuildExpression(instruction.Operands[2])
+                    }
+                };
+
+            AddAssignment(program, destination, expression);
+        }
+
+        private void BuildTernaryIntrinsic(IRProgram program, Instruction instruction, string name)
+        {
+            var destination = BuildRegister(instruction.Operands[0]);
+
+            IRExpression expression =
+                new IRExpression.IntrinsicExpression
+                {
+                    Name = name,
+                    Arguments =
+                    {
+                        BuildExpression(instruction.Operands[1]),
+                        BuildExpression(instruction.Operands[2]),
+                        BuildExpression(instruction.Operands[3])
+                    }
+                };
+
+            AddAssignment(program, destination, expression);
+        }
+
+        private IRRegister BuildRegister(Operand operand)
     {
         IRRegister reg = new()
         {

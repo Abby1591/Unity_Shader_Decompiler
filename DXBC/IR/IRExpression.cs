@@ -85,7 +85,12 @@ public abstract class IRExpression
         Equal,
         NotEqual,
         GreaterEqual,
-        LessThan
+        LessThan,
+        BitwiseAnd,
+        BitwiseOr,
+        BitwiseXor,
+        LeftShift,
+        RightShift,
     }
 
     public sealed class BinaryExpression : IRExpression
@@ -118,6 +123,11 @@ public abstract class IRExpression
                 BinaryOperation.NotEqual => "!=",
                 BinaryOperation.GreaterEqual => ">=",
                 BinaryOperation.LessThan => "<",
+                BinaryOperation.BitwiseAnd => "&",
+                BinaryOperation.BitwiseOr  => "|",
+                BinaryOperation.BitwiseXor => "^",
+                BinaryOperation.LeftShift  => "<<",
+                BinaryOperation.RightShift => ">>",
                 _ => "?"
             };
 
@@ -131,7 +141,8 @@ public abstract class IRExpression
         {
             Negate,
             LogicalNot,
-            BitwiseNot
+            BitwiseNot,
+            Absolute
         }
 
         public UnaryOperation Operation { get; init; }
@@ -139,20 +150,19 @@ public abstract class IRExpression
         public IRExpression Operand { get; init; } = null!;
 
         public override IRValueType Type =>
-            Operation switch
-            {
-                UnaryOperation.LogicalNot => IRValueType.Bool,
-                _ => Operand.Type
-            };
+            Operation == UnaryOperation.LogicalNot
+                ? IRValueType.Bool
+                : Operand.Type;
 
         public override string ToString()
         {
             return Operation switch
             {
-                UnaryOperation.Negate    => $"-{Operand}",
+                UnaryOperation.Negate     => $"-{Operand}",
                 UnaryOperation.LogicalNot => $"!{Operand}",
                 UnaryOperation.BitwiseNot => $"~{Operand}",
-                _ => Operand?.ToString() ?? "<?>"
+                UnaryOperation.Absolute   => $"abs({Operand})",
+                _ => Operand.ToString()!
             };
         }
     }
@@ -208,6 +218,22 @@ public abstract class IRExpression
         }
     }
 
+    public sealed class DotProductExpression : IRExpression
+    {
+        public IRExpression Left { get; init; } = null!;
+        public IRExpression Right { get; init; } = null!;
+        public int Components { get; init; }
+
+        public override IRValueType Type => IRValueType.Float;
+
+        public override string ToString()
+        {
+            return $"dot({Left}, {Right})";
+        }
+    }
+
+    // ===================== texture sampling =====================
+
     public sealed class TextureSampleExpression : IRExpression
     {
         public IRRegister Resource { get; init; } = null!;
@@ -241,6 +267,225 @@ public abstract class IRExpression
         public override string ToString()
         {
             return $"{Resource}.SampleLevel({Sampler}, {Coordinates}, {Level})";
+        }
+    }
+
+    // sample_d: sample with explicit gradients
+    public sealed class TextureSampleGradExpression : IRExpression
+    {
+        public IRRegister Resource { get; init; } = null!;
+
+        public IRRegister Sampler { get; init; } = null!;
+
+        public IRExpression Coordinates { get; init; } = null!;
+
+        public IRExpression DDX { get; init; } = null!;
+
+        public IRExpression DDY { get; init; } = null!;
+
+        public override IRValueType Type => IRValueType.Float;
+
+        public override string ToString()
+        {
+            return $"{Resource}.SampleGrad({Sampler}, {Coordinates}, {DDX}, {DDY})";
+        }
+    }
+
+    // sample_b: sample with mip-level bias
+    public sealed class TextureSampleBiasExpression : IRExpression
+    {
+        public IRRegister Resource { get; init; } = null!;
+
+        public IRRegister Sampler { get; init; } = null!;
+
+        public IRExpression Coordinates { get; init; } = null!;
+
+        public IRExpression Bias { get; init; } = null!;
+
+        public override IRValueType Type => IRValueType.Float;
+
+        public override string ToString()
+        {
+            return $"{Resource}.SampleBias({Sampler}, {Coordinates}, {Bias})";
+        }
+    }
+
+    // sample_c: comparison sample (shadow maps)
+    public sealed class TextureSampleCompareExpression : IRExpression
+    {
+        public IRRegister Resource { get; init; } = null!;
+
+        public IRRegister Sampler { get; init; } = null!;
+
+        public IRExpression Coordinates { get; init; } = null!;
+
+        public IRExpression CompareValue { get; init; } = null!;
+
+        public override IRValueType Type => IRValueType.Float;
+
+        public override string ToString()
+        {
+            return $"{Resource}.SampleCmp({Sampler}, {Coordinates}, {CompareValue})";
+        }
+    }
+
+    // sample_c_lz: comparison sample, forced to mip level 0
+    public sealed class TextureSampleCompareLevelZeroExpression : IRExpression
+    {
+        public IRRegister Resource { get; init; } = null!;
+
+        public IRRegister Sampler { get; init; } = null!;
+
+        public IRExpression Coordinates { get; init; } = null!;
+
+        public IRExpression CompareValue { get; init; } = null!;
+
+        public override IRValueType Type => IRValueType.Float;
+
+        public override string ToString()
+        {
+            return $"{Resource}.SampleCmpLevelZero({Sampler}, {Coordinates}, {CompareValue})";
+        }
+    }
+
+    // sample_info: number of samples in a resource
+    public sealed class SampleInfoExpression : IRExpression
+    {
+        public IRRegister Resource { get; init; } = null!;
+
+        public override IRValueType Type => IRValueType.UInt;
+
+        public override string ToString()
+        {
+            return $"{Resource}.GetSampleInfo()";
+        }
+    }
+
+    // ===================== texture load =====================
+
+    public sealed class TextureLoadExpression : IRExpression
+    {
+        public IRRegister Resource { get; init; } = null!;
+
+        public IRExpression Coordinates { get; init; } = null!;
+
+        public IRExpression? SampleIndex { get; init; }
+
+        public override IRValueType Type => IRValueType.Float;
+
+        public override string ToString()
+        {
+            return SampleIndex is null
+                ? $"{Resource}.Load({Coordinates})"
+                : $"{Resource}.Load({Coordinates}, {SampleIndex})";
+        }
+    }
+
+    // ===================== texture gather =====================
+
+    public sealed class TextureGatherExpression : IRExpression
+    {
+        public IRRegister Resource { get; init; } = null!;
+
+        public IRRegister Sampler { get; init; } = null!;
+
+        public IRExpression Coordinates { get; init; } = null!;
+
+        public override IRValueType Type => IRValueType.Float;
+
+        public override string ToString()
+        {
+            return $"{Resource}.Gather({Sampler}, {Coordinates})";
+        }
+    }
+
+    public sealed class TextureGatherCompareExpression : IRExpression
+    {
+        public IRRegister Resource { get; init; } = null!;
+
+        public IRRegister Sampler { get; init; } = null!;
+
+        public IRExpression Coordinates { get; init; } = null!;
+
+        public IRExpression CompareValue { get; init; } = null!;
+
+        public override IRValueType Type => IRValueType.Float;
+
+        public override string ToString()
+        {
+            return $"{Resource}.GatherCmp({Sampler}, {Coordinates}, {CompareValue})";
+        }
+    }
+
+    public sealed class TextureGatherOffsetExpression : IRExpression
+    {
+        public IRRegister Resource { get; init; } = null!;
+
+        public IRRegister Sampler { get; init; } = null!;
+
+        public IRExpression Coordinates { get; init; } = null!;
+
+        public IRExpression Offset { get; init; } = null!;
+
+        public override IRValueType Type => IRValueType.Float;
+
+        public override string ToString()
+        {
+            return $"{Resource}.Gather({Sampler}, {Coordinates}, {Offset})";
+        }
+    }
+
+    public sealed class TextureGatherOffsetCompareExpression : IRExpression
+    {
+        public IRRegister Resource { get; init; } = null!;
+
+        public IRRegister Sampler { get; init; } = null!;
+
+        public IRExpression Coordinates { get; init; } = null!;
+
+        public IRExpression Offset { get; init; } = null!;
+
+        public IRExpression CompareValue { get; init; } = null!;
+
+        public override IRValueType Type => IRValueType.Float;
+
+        public override string ToString()
+        {
+            return $"{Resource}.GatherCmp({Sampler}, {Coordinates}, {Offset}, {CompareValue})";
+        }
+    }
+
+    // ===================== misc texture queries =====================
+
+    // lod: computes the mip level that would be used by a sample operation
+    public sealed class TextureLodExpression : IRExpression
+    {
+        public IRRegister Resource { get; init; } = null!;
+
+        public IRRegister Sampler { get; init; } = null!;
+
+        public IRExpression Coordinates { get; init; } = null!;
+
+        public override IRValueType Type => IRValueType.Float;
+
+        public override string ToString()
+        {
+            return $"{Resource}.CalculateLevelOfDetail({Sampler}, {Coordinates})";
+        }
+    }
+
+    // resinfo: dimensions of a resource at a given mip level
+    public sealed class ResourceInfoExpression : IRExpression
+    {
+        public IRRegister Resource { get; init; } = null!;
+
+        public IRExpression MipLevel { get; init; } = null!;
+
+        public override IRValueType Type => IRValueType.Float;
+
+        public override string ToString()
+        {
+            return $"{Resource}.GetDimensions({MipLevel})";
         }
     }
 }

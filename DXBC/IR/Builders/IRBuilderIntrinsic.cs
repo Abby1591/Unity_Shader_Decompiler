@@ -4,6 +4,8 @@ namespace Parser.DXBC.IR;
 
 public partial class IRBuilder
 {
+    // ===================== sincos =====================
+
     private void BuildSincos(IRProgram program, Instruction instruction)
     {
         // Destination 0 = sine
@@ -15,10 +17,7 @@ public partial class IRBuilder
                 new IRExpression.IntrinsicExpression
                 {
                     Name = "sin",
-                    Arguments =
-                    {
-                        BuildExpression(instruction.Operands[2])
-                    }
+                    Arguments = { BuildExpression(instruction.Operands[2]) }
                 };
 
             AddAssignment(program, destination, expression);
@@ -33,10 +32,7 @@ public partial class IRBuilder
                 new IRExpression.IntrinsicExpression
                 {
                     Name = "cos",
-                    Arguments =
-                    {
-                        BuildExpression(instruction.Operands[2])
-                    }
+                    Arguments = { BuildExpression(instruction.Operands[2]) }
                 };
 
             AddAssignment(program, destination, expression);
