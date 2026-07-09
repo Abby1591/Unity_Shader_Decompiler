@@ -9,7 +9,7 @@ public partial class IRBuilder
         program.Statements.Add(
             new IRStatement.IRIf
             {
-                Condition = BuildExpression(instruction.Operands[0])
+                Condition = BuildBoolExpression(instruction.Operands[0])
             });
     }
 
@@ -38,7 +38,7 @@ public partial class IRBuilder
         program.Statements.Add(
             new IRStatement.IRBreak
             {
-                Condition = BuildExpression(instruction.Operands[0])
+                Condition = BuildBoolExpression(instruction.Operands[0])
             });
     }
 

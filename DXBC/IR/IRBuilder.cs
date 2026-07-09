@@ -231,6 +231,30 @@ public partial class IRBuilder
             Register = BuildRegister(operand)
         };
     }
+    
+    private IRExpression BuildBoolExpression(Operand operand)
+    {
+        IRExpression expression = BuildExpression(operand);
+
+        if (expression.Type == IRValueType.Bool)
+            return expression;
+
+        return new IRExpression.BinaryExpression
+        {
+            Operation = IRExpression.BinaryOperation.NotEqual,
+            Left = expression,
+            Right = new IRExpression.ConstantExpression
+            {
+                Kind = expression.Type switch
+                {
+                    IRValueType.Int => IRExpression.ConstantExpression.ConstantKind.Int,
+                    IRValueType.UInt => IRExpression.ConstantExpression.ConstantKind.UInt,
+                    _ => IRExpression.ConstantExpression.ConstantKind.Float
+                },
+                RawValues = new uint[] { 0 }
+            }
+        };
+    }
 
     private IRRegister BuildRegister(Operand operand)
     {

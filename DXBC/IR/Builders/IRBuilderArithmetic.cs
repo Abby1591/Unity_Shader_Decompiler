@@ -103,7 +103,7 @@ public partial class IRBuilder
         IRExpression expression =
             new IRExpression.ConditionalExpression
             {
-                Condition = BuildExpression(instruction.Operands[1]),
+                Condition = BuildBoolExpression(instruction.Operands[1]),
                 TrueExpression = BuildExpression(instruction.Operands[2]),
                 FalseExpression = BuildExpression(instruction.Operands[3])
             };

@@ -124,6 +124,38 @@ public abstract class IRExpression
             return $"({Left} {op} {Right})";
         }
     }
+    
+    public sealed class UnaryExpression : IRExpression
+    {
+        public enum UnaryOperation
+        {
+            Negate,
+            LogicalNot,
+            BitwiseNot
+        }
+
+        public UnaryOperation Operation { get; init; }
+
+        public IRExpression Operand { get; init; } = null!;
+
+        public override IRValueType Type =>
+            Operation switch
+            {
+                UnaryOperation.LogicalNot => IRValueType.Bool,
+                _ => Operand.Type
+            };
+
+        public override string ToString()
+        {
+            return Operation switch
+            {
+                UnaryOperation.Negate    => $"-{Operand}",
+                UnaryOperation.LogicalNot => $"!{Operand}",
+                UnaryOperation.BitwiseNot => $"~{Operand}",
+                _ => Operand?.ToString() ?? "<?>"
+            };
+        }
+    }
 
     public sealed class IntrinsicExpression : IRExpression
     {
