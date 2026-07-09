@@ -4,6 +4,8 @@ namespace Parser.DXBC.IR;
 
 public partial class IRBuilder
 {
+    private readonly Dictionary<(RegisterType Type, uint Index), IRValueType> _registerTypes = new();
+    
     public IRProgram Build(ShdrParser parser)
     {
         IRProgram program = new();
@@ -253,7 +255,21 @@ public partial class IRBuilder
         return reg;
     }
     
-    private readonly Dictionary<(RegisterType Type, uint Index), IRValueType> _registerTypes = new();
+    private void AddAssignment(IRProgram program, IRRegister destination, IRExpression expression)
+    {
+        if (expression.Type != IRValueType.Unknown)
+        {
+            destination.Type = expression.Type;
+            SetRegisterType(destination);
+        }
+
+        program.Statements.Add(
+            new IRStatement.IRAssignment
+            {
+                Destination = destination,
+                Expression = expression
+            });
+    }
     
     private void SetRegisterType(IRRegister register)
     {
@@ -268,8 +284,4 @@ public partial class IRBuilder
         return IRValueType.Unknown;
     }
     
-    private IRValueType GetExpressionType(IRExpression expression)
-    {
-        return expression.Type;
-    }
 }

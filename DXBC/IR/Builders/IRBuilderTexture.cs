@@ -16,15 +16,7 @@ public partial class IRBuilder
                 Coordinates = BuildExpression(instruction.Operands[1])
             };
 
-        destination.Type = expression.Type;
-        SetRegisterType(destination);
-
-        program.Statements.Add(
-            new IRStatement.IRAssignment
-            {
-                Destination = destination,
-                Expression = expression
-            });
+        AddAssignment(program, destination, expression);
     }
 
     private void BuildSampleLevel(IRProgram program, Instruction instruction)
@@ -40,14 +32,6 @@ public partial class IRBuilder
                 Level = BuildExpression(instruction.Operands[4])
             };
 
-        destination.Type = expression.Type;
-        SetRegisterType(destination);
-
-        program.Statements.Add(
-            new IRStatement.IRAssignment
-            {
-                Destination = destination,
-                Expression = expression
-            });
+        AddAssignment(program, destination, expression);
     }
 }

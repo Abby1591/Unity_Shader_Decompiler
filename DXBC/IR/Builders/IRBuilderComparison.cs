@@ -67,15 +67,7 @@ public partial class IRBuilder
                 Right = BuildExpression(instruction.Operands[2])
             };
 
-        destination.Type = expression.Type;
-        SetRegisterType(destination);
-
-        program.Statements.Add(
-            new IRStatement.IRAssignment
-            {
-                Destination = destination,
-                Expression = expression
-            });
+        AddAssignment(program, destination, expression);
     }
 
     private void BuildIntComparison(
@@ -93,14 +85,6 @@ public partial class IRBuilder
                 Right = BuildIntExpression(instruction.Operands[2])
             };
 
-        destination.Type = expression.Type;
-        SetRegisterType(destination);
-
-        program.Statements.Add(
-            new IRStatement.IRAssignment
-            {
-                Destination = destination,
-                Expression = expression
-            });
+        AddAssignment(program, destination, expression);
     }
 }

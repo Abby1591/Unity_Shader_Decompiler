@@ -21,15 +21,7 @@ public partial class IRBuilder
                     }
                 };
 
-            destination.Type = expression.Type;
-            SetRegisterType(destination);
-
-            program.Statements.Add(
-                new IRStatement.IRAssignment
-                {
-                    Destination = destination,
-                    Expression = expression
-                });
+            AddAssignment(program, destination, expression);
         }
 
         // Destination 1 = cosine
@@ -47,15 +39,7 @@ public partial class IRBuilder
                     }
                 };
 
-            destination.Type = expression.Type;
-            SetRegisterType(destination);
-
-            program.Statements.Add(
-                new IRStatement.IRAssignment
-                {
-                    Destination = destination,
-                    Expression = expression
-                });
+            AddAssignment(program, destination, expression);
         }
     }
 }

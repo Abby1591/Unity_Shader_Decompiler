@@ -18,15 +18,7 @@ public partial class IRBuilder
                 }
             };
 
-        destination.Type = expression.Type;
-        SetRegisterType(destination);
-
-        program.Statements.Add(
-            new IRStatement.IRAssignment
-            {
-                Destination = destination,
-                Expression = expression
-            });
+        AddAssignment(program, destination, expression);
     }
 
     private void BuildFtou(IRProgram program, Instruction instruction)
@@ -43,15 +35,7 @@ public partial class IRBuilder
                 }
             };
 
-        destination.Type = expression.Type;
-        SetRegisterType(destination);
-
-        program.Statements.Add(
-            new IRStatement.IRAssignment
-            {
-                Destination = destination,
-                Expression = expression
-            });
+        AddAssignment(program, destination, expression);
     }
 
     private void BuildItof(IRProgram program, Instruction instruction)
@@ -68,15 +52,7 @@ public partial class IRBuilder
                 }
             };
 
-        destination.Type = expression.Type;
-        SetRegisterType(destination);
-
-        program.Statements.Add(
-            new IRStatement.IRAssignment
-            {
-                Destination = destination,
-                Expression = expression
-            });
+        AddAssignment(program, destination, expression);
     }
 
     private void BuildUtof(IRProgram program, Instruction instruction)
@@ -93,15 +69,7 @@ public partial class IRBuilder
                 }
             };
 
-        destination.Type = expression.Type;
-        SetRegisterType(destination);
-
-        program.Statements.Add(
-            new IRStatement.IRAssignment
-            {
-                Destination = destination,
-                Expression = expression
-            });
+        AddAssignment(program, destination, expression);
     }
 
     private void BuildRoundNI(IRProgram program, Instruction instruction)
@@ -118,14 +86,6 @@ public partial class IRBuilder
                 }
             };
 
-        destination.Type = expression.Type;
-        SetRegisterType(destination);
-
-        program.Statements.Add(
-            new IRStatement.IRAssignment
-            {
-                Destination = destination,
-                Expression = expression
-            });
+        AddAssignment(program, destination, expression);
     }
 }

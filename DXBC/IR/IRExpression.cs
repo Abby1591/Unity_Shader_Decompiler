@@ -103,7 +103,7 @@ public abstract class IRExpression
                 BinaryOperation.NotEqual => IRValueType.Bool,
                 BinaryOperation.GreaterEqual => IRValueType.Bool,
                 BinaryOperation.LessThan => IRValueType.Bool,
-                _ => Left.Type
+                _ => Left.Type == Right.Type ? Left.Type : IRValueType.Unknown,
             };
 
         public override string ToString()
@@ -131,36 +131,24 @@ public abstract class IRExpression
 
         public List<IRExpression> Arguments { get; } = new();
 
+        private IRValueType GetFirstArgumentType()
+        {
+            return Arguments.Count > 0
+                ? Arguments[0].Type
+                : IRValueType.Unknown;
+        }
+
         public override IRValueType Type =>
             Name switch
             {
-                // Casts
+                "float" => IRValueType.Float,
                 "int"   => IRValueType.Int,
                 "uint"  => IRValueType.UInt,
-                "float" => IRValueType.Float,
 
-                // Comparisons / boolean intrinsics (future)
-                "isnan" => IRValueType.Bool,
-                "isinf" => IRValueType.Bool,
+                "any"   => IRValueType.Bool,
+                "all"   => IRValueType.Bool,
 
-                // Math functions preserve the input type
-                "sin"   => Arguments[0].Type,
-                "cos"   => Arguments[0].Type,
-                "sqrt"  => Arguments[0].Type,
-                "rsqrt" => Arguments[0].Type,
-                "abs"   => Arguments[0].Type,
-                "floor" => Arguments[0].Type,
-                "ceil"  => Arguments[0].Type,
-                "round" => Arguments[0].Type,
-                "frac"  => Arguments[0].Type,
-                "exp"   => Arguments[0].Type,
-                "log"   => Arguments[0].Type,
-                "min"   => Arguments[0].Type,
-                "max"   => Arguments[0].Type,
-
-                _ => Arguments.Count > 0
-                    ? Arguments[0].Type
-                    : IRValueType.Unknown
+                _ => GetFirstArgumentType()
             };
 
         public override string ToString()
@@ -177,7 +165,10 @@ public abstract class IRExpression
 
         public IRExpression FalseExpression { get; init; } = null!;
 
-        public override IRValueType Type => TrueExpression.Type;
+        public override IRValueType Type =>
+            TrueExpression.Type == FalseExpression.Type
+                ? TrueExpression.Type
+                : IRValueType.Unknown;
 
         public override string ToString()
         {
