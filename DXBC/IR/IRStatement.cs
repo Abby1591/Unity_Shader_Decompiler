@@ -109,4 +109,30 @@ public abstract class IRStatement
         public override string ToString()
             => $"label {Name}";
     }
+
+    // call / callc: invoke a function body declared via dcl_function_body
+    public sealed class IRCall : IRStatement
+    {
+        public string Label { get; init; } = "";
+
+        public IRExpression? Condition { get; init; }
+
+        public override string ToString()
+            => Condition is null ? $"call {Label}" : $"callc {Label} ({Condition})";
+    }
+
+    // Writes to a UAV / raw / structured buffer (store_raw, store_structured).
+    // Unlike IRAssignment this has no register destination — the target is a
+    // resource plus an address.
+    public sealed class IRMemoryStore : IRStatement
+    {
+        public IRRegister Resource { get; init; } = null!;
+
+        public IRExpression Address { get; init; } = null!;
+
+        public IRExpression Value { get; init; } = null!;
+
+        public override string ToString()
+            => $"{Resource}[{Address}] = {Value}";
+    }
 }

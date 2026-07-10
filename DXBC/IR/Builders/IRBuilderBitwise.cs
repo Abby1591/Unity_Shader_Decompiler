@@ -249,4 +249,18 @@ public partial class IRBuilder
 
         AddAssignment(program, destination, expression);
     }
+
+    // ===================== aliases =====================
+    // BFRev is the same op as reversebits (bfrev is just the SM5 mnemonic).
+    // InsertBits/ExtractBits are the HLSL-facing names for bfi/ibfe/ubfe.
+    // Wave intrinsics (WaveActiveBit*, WavePrefixBit*, WaveMatch,
+    // WaveMultiPrefix) are SM6-only and intentionally omitted.
+
+    private void BuildBFRev(IRProgram program, Instruction instruction) => BuildReverseBits(program, instruction);
+
+    private void BuildInsertBits(IRProgram program, Instruction instruction) => BuildBfi(program, instruction);
+
+    private void BuildExtractBitsSigned(IRProgram program, Instruction instruction) => BuildIbfe(program, instruction);
+
+    private void BuildExtractBitsUnsigned(IRProgram program, Instruction instruction) => BuildUbfe(program, instruction);
 }

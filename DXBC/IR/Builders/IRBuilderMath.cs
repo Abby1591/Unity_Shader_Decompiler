@@ -257,4 +257,46 @@ public partial class IRBuilder
 
         AddAssignment(program, destination, expression);
     }
+
+    // ===================== trig =====================
+    // Not raw DXBC opcodes — SM4/5 has no native sin/cos/tan/etc, they're
+    // synthesized from sincos/exp/log sequences by the compiler. Included
+    // for use once a pattern-matcher recognizes the underlying sequence and
+    // wants to emit the higher-level intrinsic instead.
+
+    private void BuildCos(IRProgram program, Instruction instruction) => BuildUnaryIntrinsic(program, instruction, "cos");
+    private void BuildSin(IRProgram program, Instruction instruction) => BuildUnaryIntrinsic(program, instruction, "sin");
+    private void BuildTan(IRProgram program, Instruction instruction) => BuildUnaryIntrinsic(program, instruction, "tan");
+    private void BuildAsin(IRProgram program, Instruction instruction) => BuildUnaryIntrinsic(program, instruction, "asin");
+    private void BuildAcos(IRProgram program, Instruction instruction) => BuildUnaryIntrinsic(program, instruction, "acos");
+    private void BuildAtan(IRProgram program, Instruction instruction) => BuildUnaryIntrinsic(program, instruction, "atan");
+    private void BuildAtan2(IRProgram program, Instruction instruction) => BuildBinaryIntrinsic(program, instruction, "atan2");
+
+    // ===================== exponentials / rounding =====================
+
+    private void BuildExp2(IRProgram program, Instruction instruction) => BuildUnaryIntrinsic(program, instruction, "exp2");
+    private void BuildLog2(IRProgram program, Instruction instruction) => BuildUnaryIntrinsic(program, instruction, "log2");
+
+    private void BuildFloor(IRProgram program, Instruction instruction) => BuildUnaryIntrinsic(program, instruction, "floor");
+    private void BuildCeil(IRProgram program, Instruction instruction) => BuildUnaryIntrinsic(program, instruction, "ceil");
+    private void BuildTrunc(IRProgram program, Instruction instruction) => BuildUnaryIntrinsic(program, instruction, "trunc");
+
+    private void BuildFmod(IRProgram program, Instruction instruction) => BuildBinaryIntrinsic(program, instruction, "fmod");
+    private void BuildModf(IRProgram program, Instruction instruction) => BuildBinaryIntrinsic(program, instruction, "modf");
+    private void BuildLdexp(IRProgram program, Instruction instruction) => BuildBinaryIntrinsic(program, instruction, "ldexp");
+    private void BuildFrexp(IRProgram program, Instruction instruction) => BuildBinaryIntrinsic(program, instruction, "frexp");
+
+    // ===================== vector / matrix geometry =====================
+
+    private void BuildNormalize(IRProgram program, Instruction instruction) => BuildUnaryIntrinsic(program, instruction, "normalize");
+    private void BuildLength(IRProgram program, Instruction instruction) => BuildUnaryIntrinsic(program, instruction, "length");
+    private void BuildDistance(IRProgram program, Instruction instruction) => BuildBinaryIntrinsic(program, instruction, "distance");
+    private void BuildCross(IRProgram program, Instruction instruction) => BuildBinaryIntrinsic(program, instruction, "cross");
+    private void BuildReflect(IRProgram program, Instruction instruction) => BuildBinaryIntrinsic(program, instruction, "reflect");
+    private void BuildRefract(IRProgram program, Instruction instruction) => BuildTernaryIntrinsic(program, instruction, "refract");
+    private void BuildFaceForward(IRProgram program, Instruction instruction) => BuildTernaryIntrinsic(program, instruction, "faceforward");
+
+    private void BuildTranspose(IRProgram program, Instruction instruction) => BuildUnaryIntrinsic(program, instruction, "transpose");
+    private void BuildDeterminant(IRProgram program, Instruction instruction) => BuildUnaryIntrinsic(program, instruction, "determinant");
+    private void BuildNoise(IRProgram program, Instruction instruction) => BuildUnaryIntrinsic(program, instruction, "noise");
 }

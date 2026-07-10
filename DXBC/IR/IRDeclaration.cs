@@ -70,4 +70,26 @@ public abstract class IRDeclaration
     {
         public uint Index { get; init; }
     }
+
+    // dcl_indexable_temp: indexable temp array (x#[n], used for dynamic indexing)
+    public sealed class IRIndexableTempDeclaration : IRDeclaration
+    {
+        public uint Register { get; init; }
+        public uint Count { get; init; }
+        public uint ComponentCount { get; init; }
+    }
+
+    // dcl_stream: active geometry-shader output stream (SM5 multi-stream GS)
+    public sealed class IRStreamDeclaration : IRDeclaration
+    {
+        public uint Index { get; init; }
+    }
+
+    // dcl_interface: SM5 interface/class slot table for dynamic linkage
+    public sealed class IRInterfaceDeclaration : IRDeclaration
+    {
+        public uint Index { get; init; }
+        public uint NumTypes { get; init; }
+        public uint TableLength { get; init; }
+    }
 }

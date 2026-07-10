@@ -161,4 +161,37 @@ public partial class IRBuilder
                     : 0
             });
     }
+
+    // ===================== indexable temps / streams / interfaces =====================
+
+    private void BuildIndexableTemp(IRProgram program, Instruction instruction)
+    {
+        program.Declarations.Add(
+            new IRDeclaration.IRIndexableTempDeclaration
+            {
+                Register = instruction.Operands[0].RegisterIndex,
+                Count = instruction.ExtraData.Count > 0 ? instruction.ExtraData[0] : 0,
+                ComponentCount = instruction.ExtraData.Count > 1 ? instruction.ExtraData[1] : 0
+            });
+    }
+
+    private void BuildStream(IRProgram program, Instruction instruction)
+    {
+        program.Declarations.Add(
+            new IRDeclaration.IRStreamDeclaration
+            {
+                Index = instruction.Operands[0].RegisterIndex
+            });
+    }
+
+    private void BuildInterface(IRProgram program, Instruction instruction)
+    {
+        program.Declarations.Add(
+            new IRDeclaration.IRInterfaceDeclaration
+            {
+                Index = instruction.Operands[0].RegisterIndex,
+                NumTypes = instruction.ExtraData.Count > 0 ? instruction.ExtraData[0] : 0,
+                TableLength = instruction.ExtraData.Count > 1 ? instruction.ExtraData[1] : 0
+            });
+    }
 }

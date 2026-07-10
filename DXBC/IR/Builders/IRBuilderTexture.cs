@@ -248,4 +248,160 @@ public partial class IRBuilder
 
         AddAssignment(program, destination, expression);
     }
+
+    // ===================== raw / structured / UAV loads =====================
+    // Atomic ops (atomic_iadd, atomic_and, ..., uav_atomic*) are intentionally
+    // not included — large, mostly-compute-shader-only category.
+
+    private void BuildLdUAV(IRProgram program, Instruction instruction)
+    {
+        var destination = BuildRegister(instruction.Operands[0]);
+
+        IRExpression expression =
+            new IRExpression.TextureLoadExpression
+            {
+                Resource = BuildRegister(instruction.Operands[2]),
+                Coordinates = BuildExpression(instruction.Operands[1])
+            };
+
+        AddAssignment(program, destination, expression);
+    }
+
+    private void BuildLdRaw(IRProgram program, Instruction instruction)
+    {
+        var destination = BuildRegister(instruction.Operands[0]);
+
+        IRExpression expression =
+            new IRExpression.TextureLoadExpression
+            {
+                Resource = BuildRegister(instruction.Operands[2]),
+                Coordinates = BuildExpression(instruction.Operands[1])
+            };
+
+        AddAssignment(program, destination, expression);
+    }
+
+    private void BuildLdStructured(IRProgram program, Instruction instruction)
+    {
+        var destination = BuildRegister(instruction.Operands[0]);
+
+        // operand 1 = element index, operand 2 = byte offset within element
+        IRExpression address =
+            new IRExpression.BinaryExpression
+            {
+                Operation = IRExpression.BinaryOperation.Add,
+                Left = BuildUIntExpression(instruction.Operands[1]),
+                Right = BuildUIntExpression(instruction.Operands[2])
+            };
+
+        IRExpression expression =
+            new IRExpression.TextureLoadExpression
+            {
+                Resource = BuildRegister(instruction.Operands[3]),
+                Coordinates = address
+            };
+
+        AddAssignment(program, destination, expression);
+    }
+
+    // ===================== raw / structured stores =====================
+
+    // store_raw dest[address] = value
+    private void BuildStoreRaw(IRProgram program, Instruction instruction)
+    {
+        program.Statements.Add(
+            new IRStatement.IRMemoryStore
+            {
+                Resource = BuildRegister(instruction.Operands[0]),
+                Address = BuildUIntExpression(instruction.Operands[1]),
+                Value = BuildExpression(instruction.Operands[2])
+            });
+    }
+
+    // store_structured dest[element, offset] = value
+    private void BuildStoreStructured(IRProgram program, Instruction instruction)
+    {
+        IRExpression address =
+            new IRExpression.BinaryExpression
+            {
+                Operation = IRExpression.BinaryOperation.Add,
+                Left = BuildUIntExpression(instruction.Operands[1]),
+                Right = BuildUIntExpression(instruction.Operands[2])
+            };
+
+        program.Statements.Add(
+            new IRStatement.IRMemoryStore
+            {
+                Resource = BuildRegister(instruction.Operands[0]),
+                Address = address,
+                Value = BuildExpression(instruction.Operands[3])
+            });
+    }
+
+    // ===================== misc queries =====================
+
+    private void BuildSamplePos(IRProgram program, Instruction instruction)
+    {
+        var destination = BuildRegister(instruction.Operands[0]);
+
+        IRExpression expression =
+            new IRExpression.IntrinsicExpression
+            {
+                Name = "GetSamplePosition",
+                Arguments =
+                {
+                    BuildExpression(instruction.Operands[1]),
+                    BuildUIntExpression(instruction.Operands[2])
+                }
+            };
+
+        AddAssignment(program, destination, expression);
+    }
+
+    private void BuildSampleIndex(IRProgram program, Instruction instruction)
+    {
+        var destination = BuildRegister(instruction.Operands[0]);
+
+        IRExpression expression =
+            new IRExpression.IntrinsicExpression
+            {
+                Name = "sampleindex",
+                Arguments = { }
+            };
+
+        AddAssignment(program, destination, expression);
+    }
+
+    private void BuildCheckAccessFullyMapped(IRProgram program, Instruction instruction)
+    {
+        var destination = BuildRegister(instruction.Operands[0]);
+
+        IRExpression expression =
+            new IRExpression.IntrinsicExpression
+            {
+                Name = "CheckAccessFullyMapped",
+                Arguments = { BuildUIntExpression(instruction.Operands[1]) }
+            };
+
+        AddAssignment(program, destination, expression);
+    }
+
+    // bufinfo: element count / stride of a raw or structured buffer
+    private void BuildBufInfo(IRProgram program, Instruction instruction)
+    {
+        var destination = BuildRegister(instruction.Operands[0]);
+
+        IRExpression expression =
+            new IRExpression.ResourceInfoExpression
+            {
+                Resource = BuildRegister(instruction.Operands[1]),
+                MipLevel = new IRExpression.ConstantExpression
+                {
+                    Kind = IRExpression.ConstantExpression.ConstantKind.UInt,
+                    RawValues = new uint[] { 0 }
+                }
+            };
+
+        AddAssignment(program, destination, expression);
+    }
 }

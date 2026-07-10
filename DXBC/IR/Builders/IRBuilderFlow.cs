@@ -136,4 +136,25 @@ public partial class IRBuilder
                 Name = instruction.Operands[0].RegisterIndex.ToString()
             });
     }
+
+    // ===================== call / callc =====================
+
+    private void BuildCall(IRProgram program, Instruction instruction)
+    {
+        program.Statements.Add(
+            new IRStatement.IRCall
+            {
+                Label = instruction.Operands[0].RegisterIndex.ToString()
+            });
+    }
+
+    private void BuildCallC(IRProgram program, Instruction instruction)
+    {
+        program.Statements.Add(
+            new IRStatement.IRCall
+            {
+                Label = instruction.Operands[1].RegisterIndex.ToString(),
+                Condition = BuildBoolExpression(instruction.Operands[0])
+            });
+    }
 }

@@ -354,4 +354,105 @@ public partial class IRBuilder
 
         AddAssignment(program, destination, expression);
     }
+
+    // ===================== lrp / dp2add / msad / dst =====================
+
+    private void BuildLrp(IRProgram program, Instruction instruction) => BuildTernaryIntrinsic(program, instruction, "lerp");
+
+    // dp2add: dot(a.xy, b.xy) + c
+    private void BuildDp2Add(IRProgram program, Instruction instruction)
+    {
+        var destination = BuildRegister(instruction.Operands[0]);
+
+        IRExpression expression =
+            new IRExpression.BinaryExpression
+            {
+                Operation = IRExpression.BinaryOperation.Add,
+                Left = new IRExpression.DotProductExpression
+                {
+                    Left = BuildExpression(instruction.Operands[1]),
+                    Right = BuildExpression(instruction.Operands[2]),
+                    Components = 2
+                },
+                Right = BuildExpression(instruction.Operands[3])
+            };
+
+        AddAssignment(program, destination, expression);
+    }
+
+    // msad: masked sum-of-absolute-differences (used for texture-space skinning/video codecs)
+    private void BuildMSad(IRProgram program, Instruction instruction) => BuildTernaryIntrinsic(program, instruction, "msad4");
+
+    // dst: DirectX distance vector — (1, a1*b1, a2, b3)
+    private void BuildDst(IRProgram program, Instruction instruction) => BuildBinaryIntrinsic(program, instruction, "dst");
+
+    // ===================== 64-bit widening multiply =====================
+
+    private void BuildMul64(IRProgram program, Instruction instruction) => BuildBinaryIntrinsic(program, instruction, "imul64");
+    private void BuildUMul64(IRProgram program, Instruction instruction) => BuildBinaryIntrinsic(program, instruction, "umul64");
+
+    // ===================== saturated variants =====================
+    // _sat is a modifier on the destination in real DXBC (clamped to [0,1]
+    // after the op), modeled here as wrapping the base expression in saturate().
+
+    private void BuildAddSat(IRProgram program, Instruction instruction)
+    {
+        var destination = BuildRegister(instruction.Operands[0]);
+
+        IRExpression inner =
+            new IRExpression.BinaryExpression
+            {
+                Operation = IRExpression.BinaryOperation.Add,
+                Left = BuildExpression(instruction.Operands[1]),
+                Right = BuildExpression(instruction.Operands[2])
+            };
+
+        IRExpression expression =
+            new IRExpression.IntrinsicExpression { Name = "saturate", Arguments = { inner } };
+
+        AddAssignment(program, destination, expression);
+    }
+
+    private void BuildMulSat(IRProgram program, Instruction instruction)
+    {
+        var destination = BuildRegister(instruction.Operands[0]);
+
+        IRExpression inner =
+            new IRExpression.BinaryExpression
+            {
+                Operation = IRExpression.BinaryOperation.Multiply,
+                Left = BuildExpression(instruction.Operands[1]),
+                Right = BuildExpression(instruction.Operands[2])
+            };
+
+        IRExpression expression =
+            new IRExpression.IntrinsicExpression { Name = "saturate", Arguments = { inner } };
+
+        AddAssignment(program, destination, expression);
+    }
+
+    private void BuildMadSat(IRProgram program, Instruction instruction)
+    {
+        var destination = BuildRegister(instruction.Operands[0]);
+
+        IRExpression inner =
+            new IRExpression.BinaryExpression
+            {
+                Operation = IRExpression.BinaryOperation.Add,
+
+                Left = new IRExpression.BinaryExpression
+                {
+                    Operation = IRExpression.BinaryOperation.Multiply,
+                    Left = BuildExpression(instruction.Operands[1]),
+                    Right = BuildExpression(instruction.Operands[2])
+                },
+
+                Right = BuildExpression(instruction.Operands[3])
+            };
+
+        IRExpression expression =
+            new IRExpression.IntrinsicExpression { Name = "saturate", Arguments = { inner } };
+
+        AddAssignment(program, destination, expression);
+    }
 }
