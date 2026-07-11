@@ -2,20 +2,20 @@ using Parser.DXBC.Instructions;
 
 namespace Parser.DXBC.IR;
 
-// All resource-read instructions (sample*, ld*, gather4*, lod, resinfo,
-// bufinfo, sample_info, sample_pos, check_access_fully_mapped) go through
-// BuildTextureOp so there's exactly one place that builds a
-// TextureOperationExpression. Writes (store_raw/store_structured/UAV
-// writes) are statements, not expressions — see BuildStoreRaw/BuildStoreStructured.
-//
-// Static-offset variants (sample_po/sample_po_c and friends) reuse the same
-// builders as their non-offset counterparts — offset is just another operand.
-// Resource-array addressing (Texture2DArray, TextureCubeArray, etc.) is
-// handled by ResourceDimension on the declaration, not by the read
-// instruction itself — an array index is simply an extra component of
-// Coordinates, same as any other DXBC texture coordinate.
 public partial class IRBuilder
 {
+    // All resource-read instructions (sample*, ld*, gather4*, lod, resinfo,
+    // bufinfo, sample_info, sample_pos, check_access_fully_mapped) go through
+    // BuildTextureOp so there's exactly one place that builds a
+    // TextureOperationExpression. Writes (store_raw/store_structured/UAV
+    // writes) are statements, not expressions — see BuildStoreRaw/BuildStoreStructured.
+//
+    // Static-offset variants (sample_po/sample_po_c and friends) reuse the same
+    // builders as their non-offset counterparts — offset is just another operand.
+    // Resource-array addressing (Texture2DArray, TextureCubeArray, etc.) is
+    // handled by ResourceDimension on the declaration, not by the read
+    // instruction itself — an array index is simply an extra component of
+    // Coordinates, same as any other DXBC texture coordinate.
     private void BuildTextureOp(
         IRProgram program,
         Instruction instruction,
@@ -51,7 +51,9 @@ public partial class IRBuilder
         AddAssignment(program, destination, expression);
     }
 
-    // ===================== load =====================
+    // ============================================================
+    // Load
+    // ============================================================
 
     private void BuildLd(IRProgram program, Instruction instruction)
     {
@@ -109,7 +111,9 @@ public partial class IRBuilder
             coordinates: address);
     }
 
-    // ===================== stores (raw / structured / UAV) =====================
+    // ============================================================
+    // Stores (raw / structured / UAV)
+    // ============================================================
 
     // store_raw dest[address] = value
     private void BuildStoreRaw(IRProgram program, Instruction instruction)
@@ -155,7 +159,9 @@ public partial class IRBuilder
             });
     }
 
-    // ===================== sample =====================
+    // ============================================================
+    // Sample
+    // ============================================================
 
     private void BuildSample(IRProgram program, Instruction instruction)
     {
@@ -280,7 +286,9 @@ public partial class IRBuilder
         AddAssignment(program, destination, expression);
     }
 
-    // ===================== gather =====================
+    // ============================================================
+    // Gather
+    // ============================================================
 
     private void BuildGather4(IRProgram program, Instruction instruction)
     {
@@ -327,7 +335,9 @@ public partial class IRBuilder
             compareValue: BuildExpression(instruction.Operands[5]));
     }
 
-    // ===================== misc queries =====================
+    // ============================================================
+    // Misc queries
+    // ============================================================
 
     private void BuildLod(IRProgram program, Instruction instruction)
     {

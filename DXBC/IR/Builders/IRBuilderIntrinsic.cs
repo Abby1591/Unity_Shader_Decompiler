@@ -4,7 +4,9 @@ namespace Parser.DXBC.IR;
 
 public partial class IRBuilder
 {
-    // ===================== sincos =====================
+    // ============================================================
+    // Sincos
+    // ============================================================
 
     private void BuildSincos(IRProgram program, Instruction instruction)
     {

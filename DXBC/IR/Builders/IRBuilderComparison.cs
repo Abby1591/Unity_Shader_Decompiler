@@ -4,7 +4,9 @@ namespace Parser.DXBC.IR;
 
 public partial class IRBuilder
 {
-    // ===================== float comparisons =====================
+    // ============================================================
+    // Float comparisons
+    // ============================================================
 
     private void BuildEq(IRProgram program, Instruction instruction)
     {
@@ -26,7 +28,9 @@ public partial class IRBuilder
         BuildComparison(program, instruction, IRExpression.BinaryOperation.LessThan);
     }
 
-    // ===================== signed integer comparisons =====================
+    // ============================================================
+    // Signed integer comparisons
+    // ============================================================
 
     private void BuildIeq(IRProgram program, Instruction instruction)
     {
@@ -48,7 +52,9 @@ public partial class IRBuilder
         BuildIntComparison(program, instruction, IRExpression.BinaryOperation.LessThan);
     }
 
-    // ===================== unsigned integer comparisons =====================
+    // ============================================================
+    // Unsigned integer comparisons
+    // ============================================================
 
     private void BuildUge(IRProgram program, Instruction instruction)
     {
@@ -60,7 +66,9 @@ public partial class IRBuilder
         BuildUIntComparison(program, instruction, IRExpression.BinaryOperation.LessThan);
     }
 
-    // ===================== helpers =====================
+    // ============================================================
+    // Helpers
+    // ============================================================
 
     private void BuildComparison(
         IRProgram program,
@@ -116,23 +124,35 @@ public partial class IRBuilder
         AddAssignment(program, destination, expression);
     }
 
-    // ===================== le / gt (float) =====================
+    // ============================================================
+    // Le / gt (float)
+    // ============================================================
     // Not real SM4 opcodes — SM4 only has ge/lt; le/gt are synthesized by
     // swapping the operand order around ge/lt: a<=b == b>=a, a>b == b<a.
 
     private void BuildLe(IRProgram program, Instruction instruction)
-        => BuildComparisonSwapped(program, instruction, IRExpression.BinaryOperation.GreaterEqual);
+    {
+        BuildComparisonSwapped(program, instruction, IRExpression.BinaryOperation.GreaterEqual);
+    }
 
     private void BuildGt(IRProgram program, Instruction instruction)
-        => BuildComparisonSwapped(program, instruction, IRExpression.BinaryOperation.LessThan);
+    {
+        BuildComparisonSwapped(program, instruction, IRExpression.BinaryOperation.LessThan);
+    }
 
-    // ===================== ugt / ule (unsigned) =====================
+    // ============================================================
+    // Ugt / ule (unsigned)
+    // ============================================================
 
     private void BuildUgt(IRProgram program, Instruction instruction)
-        => BuildUIntComparisonSwapped(program, instruction, IRExpression.BinaryOperation.LessThan);
+    {
+        BuildUIntComparisonSwapped(program, instruction, IRExpression.BinaryOperation.LessThan);
+    }
 
     private void BuildUle(IRProgram program, Instruction instruction)
-        => BuildUIntComparisonSwapped(program, instruction, IRExpression.BinaryOperation.GreaterEqual);
+    {
+        BuildUIntComparisonSwapped(program, instruction, IRExpression.BinaryOperation.GreaterEqual);
+    }
 
     private void BuildComparisonSwapped(
         IRProgram program,
@@ -170,17 +190,51 @@ public partial class IRBuilder
         AddAssignment(program, destination, expression);
     }
 
-    // ===================== derivatives =====================
+    // ============================================================
+    // Derivatives
+    // ============================================================
 
-    private void BuildDerivRtx(IRProgram program, Instruction instruction) => BuildUnaryIntrinsic(program, instruction, "ddx");
-    private void BuildDerivRty(IRProgram program, Instruction instruction) => BuildUnaryIntrinsic(program, instruction, "ddy");
-    private void BuildDerivRtxCoarse(IRProgram program, Instruction instruction) => BuildUnaryIntrinsic(program, instruction, "ddx_coarse");
-    private void BuildDerivRtxFine(IRProgram program, Instruction instruction) => BuildUnaryIntrinsic(program, instruction, "ddx_fine");
-    private void BuildDerivRtyCoarse(IRProgram program, Instruction instruction) => BuildUnaryIntrinsic(program, instruction, "ddy_coarse");
-    private void BuildDerivRtyFine(IRProgram program, Instruction instruction) => BuildUnaryIntrinsic(program, instruction, "ddy_fine");
+    private void BuildDerivRtx(IRProgram program, Instruction instruction)
+    {
+        BuildUnaryIntrinsic(program, instruction, "ddx");
+    }
 
-    // ===================== boolean reductions =====================
+    private void BuildDerivRty(IRProgram program, Instruction instruction)
+    {
+        BuildUnaryIntrinsic(program, instruction, "ddy");
+    }
 
-    private void BuildAny(IRProgram program, Instruction instruction) => BuildUnaryIntrinsic(program, instruction, "any");
-    private void BuildAll(IRProgram program, Instruction instruction) => BuildUnaryIntrinsic(program, instruction, "all");
+    private void BuildDerivRtxCoarse(IRProgram program, Instruction instruction)
+    {
+        BuildUnaryIntrinsic(program, instruction, "ddx_coarse");
+    }
+
+    private void BuildDerivRtxFine(IRProgram program, Instruction instruction)
+    {
+        BuildUnaryIntrinsic(program, instruction, "ddx_fine");
+    }
+
+    private void BuildDerivRtyCoarse(IRProgram program, Instruction instruction)
+    {
+        BuildUnaryIntrinsic(program, instruction, "ddy_coarse");
+    }
+
+    private void BuildDerivRtyFine(IRProgram program, Instruction instruction)
+    {
+        BuildUnaryIntrinsic(program, instruction, "ddy_fine");
+    }
+
+    // ============================================================
+    // Boolean reductions
+    // ============================================================
+
+    private void BuildAny(IRProgram program, Instruction instruction)
+    {
+        BuildUnaryIntrinsic(program, instruction, "any");
+    }
+
+    private void BuildAll(IRProgram program, Instruction instruction)
+    {
+        BuildUnaryIntrinsic(program, instruction, "all");
+    }
 }
