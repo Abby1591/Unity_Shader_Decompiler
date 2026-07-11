@@ -157,4 +157,30 @@ public partial class IRBuilder
                 Condition = BuildBoolExpression(instruction.Operands[0])
             });
     }
+
+    // ===================== dynamic linkage =====================
+
+    // interface_call fnIndex, interfaceIndex — operand layout is a guess
+    // (dcl_interface's slot table isn't opcode-numbered yet either); revisit
+    // once both are confirmed.
+    private void BuildInterfaceCall(IRProgram program, Instruction instruction)
+    {
+        program.Statements.Add(
+            new IRStatement.IRInterfaceCall
+            {
+                InterfaceIndex = instruction.Operands[0].RegisterIndex,
+                FunctionIndex = instruction.Operands[1].RegisterIndex
+            });
+    }
+
+    private void BuildInterfaceCallC(IRProgram program, Instruction instruction)
+    {
+        program.Statements.Add(
+            new IRStatement.IRInterfaceCall
+            {
+                InterfaceIndex = instruction.Operands[1].RegisterIndex,
+                FunctionIndex = instruction.Operands[2].RegisterIndex,
+                Condition = BuildBoolExpression(instruction.Operands[0])
+            });
+    }
 }

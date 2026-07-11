@@ -14,6 +14,11 @@ public sealed class IRRegister
 
     public List<uint> Indices { get; } = new();
 
+    // Dynamic/relative component of each index slot (e.g. cb0[r2.x + 4] or
+    // x0[r2.y]). Parallel to Indices/IndexRepresentation on the source
+    // Operand — null when that index slot is a plain immediate.
+    public IRExpression?[] RelativeIndices { get; } = new IRExpression?[3];
+
     public byte Mask;
 
     public Operand.OperandComponentMode ComponentMode;
@@ -24,6 +29,14 @@ public sealed class IRRegister
 
     public ShdrParser.OperandModifier Modifier;
 
+    // "precise" qualifier — real DXBC encodes this via a bitmask on the
+    // extended opcode token (OPCODE_EXTENDED_TYPE == precision/precise info),
+    // which ShdrParser doesn't decode yet (only Neg/Abs/AbsNeg modifiers are
+    // currently extracted from the extension token). Field is provided so
+    // downstream consumers can start threading it through; defaults false
+    // until parser support lands.
+    public bool Precise;
+
     public override string ToString()
     {
         string name = RegisterType switch
@@ -33,10 +46,14 @@ public sealed class IRRegister
             RegisterType.Output => $"o{Index}",
             RegisterType.ConstantBuffer =>
                 Indices.Count >= 2
-                    ? $"cb{Indices[0]}[{Indices[1]}]"
+                    ? $"cb{IndexToString(0)}[{IndexToString(1)}]"
                     : $"cb{Index}",
             RegisterType.Resource => $"t{Index}",
             RegisterType.Sampler => $"s{Index}",
+            RegisterType.IndexableTemp =>
+                Indices.Count >= 1
+                    ? $"x{IndexToString(0)}[{(Indices.Count >= 2 ? IndexToString(1) : "0")}]"
+                    : $"x{Index}",
             _ => $"{RegisterType.ToString().ToLower()}{Index}"
         };
 
@@ -59,6 +76,25 @@ public sealed class IRRegister
         };
 
         return result;
+    }
+
+    // Renders index slot i, combining a dynamic component (from relative
+    // addressing, e.g. r2.x) with any constant offset that accompanies it
+    // (the "Immediate32PlusRelative" case — cb0[r2.x + 4]).
+    private string IndexToString(int i)
+    {
+        IRExpression? relative = i < RelativeIndices.Length ? RelativeIndices[i] : null;
+
+        if (relative is not null)
+        {
+            uint constantOffset = Indices.Count > i ? Indices[i] : 0;
+
+            return constantOffset != 0
+                ? $"{relative} + {constantOffset}"
+                : relative.ToString()!;
+        }
+
+        return Indices.Count > i ? Indices[i].ToString() : "0";
     }
 
     private static string MaskToString(byte mask)

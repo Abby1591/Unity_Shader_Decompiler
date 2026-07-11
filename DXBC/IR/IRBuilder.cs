@@ -238,6 +238,190 @@ public partial class IRBuilder
                 BuildSincos(program, instruction);
                 break;
 
+            // ===================== previously missing arithmetic/bitwise/comparison =====================
+
+            case Opcode.ISub: BuildISub(program, instruction); break;
+            case Opcode.UMul: BuildUMul(program, instruction); break;
+            case Opcode.UDiv: BuildUDiv(program, instruction); break;
+            case Opcode.IMul: BuildIMul(program, instruction); break;
+            case Opcode.UMin: BuildUMin(program, instruction); break;
+            case Opcode.UMax: BuildUMax(program, instruction); break;
+            case Opcode.IMin: BuildIMin(program, instruction); break;
+            case Opcode.IMax: BuildIMax(program, instruction); break;
+            case Opcode.IMad: BuildIMad(program, instruction); break;
+            case Opcode.Not: BuildNot(program, instruction); break;
+            case Opcode.Or: BuildOr(program, instruction); break;
+            case Opcode.Xor: BuildXor(program, instruction); break;
+            case Opcode.Ishl: BuildIShl(program, instruction); break;
+            case Opcode.Ushr: BuildUShr(program, instruction); break;
+            case Opcode.Ishr: BuildIShr(program, instruction); break;
+            case Opcode.CountBits: BuildCountBits(program, instruction); break;
+            case Opcode.FirstBitHi: BuildFirstBitHi(program, instruction); break;
+            case Opcode.FirstBitLo: BuildFirstBitLo(program, instruction); break;
+            case Opcode.FirstBitSHi: BuildFirstBitSHi(program, instruction); break;
+            case Opcode.ReverseBits: BuildReverseBits(program, instruction); break;
+            case Opcode.Bfi: BuildBfi(program, instruction); break;
+            case Opcode.Ubfe: BuildUbfe(program, instruction); break;
+            case Opcode.Ibfe: BuildIbfe(program, instruction); break;
+            case Opcode.INe: BuildIne(program, instruction); break;
+            case Opcode.Le: BuildLe(program, instruction); break;
+            case Opcode.Gt: BuildGt(program, instruction); break;
+            case Opcode.Uge: BuildUge(program, instruction); break;
+            case Opcode.Ult: BuildUlt(program, instruction); break;
+            case Opcode.Ugt: BuildUgt(program, instruction); break;
+            case Opcode.Ule: BuildUle(program, instruction); break;
+            case Opcode.DerivRtx: BuildDerivRtx(program, instruction); break;
+            case Opcode.DerivRty: BuildDerivRty(program, instruction); break;
+            case Opcode.Any: BuildAny(program, instruction); break;
+            case Opcode.All: BuildAll(program, instruction); break;
+            case Opcode.Dp2Add: BuildDp2Add(program, instruction); break;
+
+            // ===================== conversions =====================
+
+            case Opcode.F16ToF32: BuildF16ToF32(program, instruction); break;
+            case Opcode.F32ToF16: BuildF32ToF16(program, instruction); break;
+            case Opcode.BitcastFloat: BuildBitcastFloat(program, instruction); break;
+            case Opcode.BitcastInt: BuildBitcastInt(program, instruction); break;
+            case Opcode.BitcastUInt: BuildBitcastUInt(program, instruction); break;
+
+            // ===================== extended math =====================
+
+            case Opcode.Lrp: BuildLrp(program, instruction); break;
+            case Opcode.MSad: BuildMSad(program, instruction); break;
+            case Opcode.Dst: BuildDst(program, instruction); break;
+            case Opcode.Mul64: BuildMul64(program, instruction); break;
+            case Opcode.UMul64: BuildUMul64(program, instruction); break;
+            case Opcode.AddSat: BuildAddSat(program, instruction); break;
+            case Opcode.MulSat: BuildMulSat(program, instruction); break;
+            case Opcode.MadSat: BuildMadSat(program, instruction); break;
+
+            // ===================== texture / buffer =====================
+
+            case Opcode.LdMS: BuildLdMS(program, instruction); break;
+            case Opcode.SampleInfo: BuildSampleInfo(program, instruction); break;
+            case Opcode.SamplePos: BuildSamplePos(program, instruction); break;
+            case Opcode.CheckAccessFullyMapped: BuildCheckAccessFullyMapped(program, instruction); break;
+            case Opcode.Gather4: BuildGather4(program, instruction); break;
+            case Opcode.Gather4C: BuildGather4C(program, instruction); break;
+            case Opcode.Gather4Po: BuildGather4Po(program, instruction); break;
+            case Opcode.Gather4PoC: BuildGather4PoC(program, instruction); break;
+            case Opcode.Lod: BuildLod(program, instruction); break;
+            case Opcode.ResInfo: BuildResInfo(program, instruction); break;
+            case Opcode.BufInfo: BuildBufInfo(program, instruction); break;
+            case Opcode.LdUAV: BuildLdUAV(program, instruction); break;
+            case Opcode.LdRaw: BuildLdRaw(program, instruction); break;
+            case Opcode.LdStructured: BuildLdStructured(program, instruction); break;
+            case Opcode.StoreRaw: BuildStoreRaw(program, instruction); break;
+            case Opcode.StoreStructured: BuildStoreStructured(program, instruction); break;
+            case Opcode.StoreUAV: BuildStoreUAV(program, instruction); break;
+            case Opcode.SamplePo: BuildSamplePo(program, instruction); break;
+            case Opcode.SamplePoC: BuildSamplePoC(program, instruction); break;
+            case Opcode.SampleC: BuildSampleC(program, instruction); break;
+            case Opcode.SampleCLZ: BuildSampleCLz(program, instruction); break;
+            case Opcode.SampleB: BuildSampleB(program, instruction); break;
+            case Opcode.SampleD: BuildSampleD(program, instruction); break;
+
+            // ===================== declarations =====================
+
+            case Opcode.DclUAV: BuildUAV(program, instruction); break;
+            case Opcode.DclThreadGroup: BuildThreadGroup(program, instruction); break;
+            case Opcode.DclIndexRange: BuildIndexRange(program, instruction); break;
+            case Opcode.DclFunctionBody: BuildFunctionBody(program, instruction); break;
+            case Opcode.DclFunctionTable: BuildFunctionTable(program, instruction); break;
+            case Opcode.DclIndexableTemp: BuildIndexableTemp(program, instruction); break;
+            case Opcode.DclStream: BuildStream(program, instruction); break;
+            case Opcode.DclInterface: BuildInterface(program, instruction); break;
+            case Opcode.DclInputControlPointCount: BuildInputControlPointCount(program, instruction); break;
+            case Opcode.DclOutputControlPointCount: BuildOutputControlPointCount(program, instruction); break;
+            case Opcode.DclHSMaxTessFactor: BuildHSMaxTessFactor(program, instruction); break;
+            case Opcode.DclDomain: BuildDomain(program, instruction); break;
+            case Opcode.DclPartitioning: BuildPartitioning(program, instruction); break;
+            case Opcode.DclOutputTopology: BuildOutputTopology(program, instruction); break;
+
+            // ===================== UAV atomics =====================
+
+            case Opcode.AtomicIAdd: BuildAtomicIAdd(program, instruction); break;
+            case Opcode.AtomicAnd: BuildAtomicAnd(program, instruction); break;
+            case Opcode.AtomicOr: BuildAtomicOr(program, instruction); break;
+            case Opcode.AtomicXor: BuildAtomicXor(program, instruction); break;
+            case Opcode.AtomicIMin: BuildAtomicIMin(program, instruction); break;
+            case Opcode.AtomicIMax: BuildAtomicIMax(program, instruction); break;
+            case Opcode.AtomicUMin: BuildAtomicUMin(program, instruction); break;
+            case Opcode.AtomicUMax: BuildAtomicUMax(program, instruction); break;
+            case Opcode.AtomicCmpStore: BuildAtomicCmpStore(program, instruction); break;
+            case Opcode.ImmAtomicIAdd: BuildImmAtomicIAdd(program, instruction); break;
+            case Opcode.ImmAtomicAnd: BuildImmAtomicAnd(program, instruction); break;
+            case Opcode.ImmAtomicOr: BuildImmAtomicOr(program, instruction); break;
+            case Opcode.ImmAtomicXor: BuildImmAtomicXor(program, instruction); break;
+            case Opcode.ImmAtomicIMin: BuildImmAtomicIMin(program, instruction); break;
+            case Opcode.ImmAtomicIMax: BuildImmAtomicIMax(program, instruction); break;
+            case Opcode.ImmAtomicUMin: BuildImmAtomicUMin(program, instruction); break;
+            case Opcode.ImmAtomicUMax: BuildImmAtomicUMax(program, instruction); break;
+            case Opcode.ImmAtomicExch: BuildImmAtomicExch(program, instruction); break;
+            case Opcode.ImmAtomicCmpExch: BuildImmAtomicCmpExch(program, instruction); break;
+
+            // ===================== synchronization =====================
+
+            case Opcode.Sync: BuildSync(program, instruction); break;
+            case Opcode.GroupMemoryBarrier: BuildGroupMemoryBarrier(program, instruction); break;
+            case Opcode.GroupMemoryBarrierWithGroupSync: BuildGroupMemoryBarrierWithGroupSync(program, instruction); break;
+            case Opcode.DeviceMemoryBarrier: BuildDeviceMemoryBarrier(program, instruction); break;
+            case Opcode.DeviceMemoryBarrierWithGroupSync: BuildDeviceMemoryBarrierWithGroupSync(program, instruction); break;
+            case Opcode.AllMemoryBarrier: BuildAllMemoryBarrier(program, instruction); break;
+            case Opcode.AllMemoryBarrierWithGroupSync: BuildAllMemoryBarrierWithGroupSync(program, instruction); break;
+
+            // ===================== geometry shader =====================
+
+            case Opcode.Emit: BuildEmit(program, instruction); break;
+            case Opcode.EmitStream: BuildEmitStream(program, instruction); break;
+            case Opcode.Cut: BuildCut(program, instruction); break;
+            case Opcode.CutStream: BuildCutStream(program, instruction); break;
+            case Opcode.EmitThenCut: BuildEmitThenCut(program, instruction); break;
+            case Opcode.EmitThenCutStream: BuildEmitThenCutStream(program, instruction); break;
+
+            // ===================== hull shader =====================
+
+            case Opcode.HSControlPointPhase: BuildHSControlPointPhase(program, instruction); break;
+            case Opcode.HSForkPhase: BuildHSForkPhase(program, instruction); break;
+            case Opcode.HSJoinPhase: BuildHSJoinPhase(program, instruction); break;
+
+            // ===================== control flow additions =====================
+
+            case Opcode.Call: BuildCall(program, instruction); break;
+            case Opcode.CallC: BuildCallC(program, instruction); break;
+            case Opcode.Case: BuildCase(program, instruction); break;
+            case Opcode.Default: BuildDefault(program, instruction); break;
+            case Opcode.Switch: BuildSwitch(program, instruction); break;
+            case Opcode.EndSwitch: BuildEndSwitch(program, instruction); break;
+            case Opcode.Continue: BuildContinue(program, instruction); break;
+            case Opcode.ContinueC: BuildContinueC(program, instruction); break;
+            case Opcode.Break: BuildBreak(program, instruction); break;
+            case Opcode.Discard: BuildDiscard(program, instruction); break;
+            case Opcode.Label: BuildLabel(program, instruction); break;
+
+            // ===================== dynamic linkage =====================
+
+            case Opcode.InterfaceCall: BuildInterfaceCall(program, instruction); break;
+            case Opcode.InterfaceCallC: BuildInterfaceCallC(program, instruction); break;
+
+            // ===================== double precision =====================
+
+            case Opcode.DMov: BuildDMov(program, instruction); break;
+            case Opcode.DAdd: BuildDAdd(program, instruction); break;
+            case Opcode.DSub: BuildDSub(program, instruction); break;
+            case Opcode.DMul: BuildDMul(program, instruction); break;
+            case Opcode.DDiv: BuildDDiv(program, instruction); break;
+            case Opcode.DFma: BuildDFma(program, instruction); break;
+            case Opcode.DRcp: BuildDRcp(program, instruction); break;
+            case Opcode.DSqrt: BuildDSqrt(program, instruction); break;
+            case Opcode.DRsq: BuildDRsq(program, instruction); break;
+            case Opcode.DtoI: BuildDtoI(program, instruction); break;
+            case Opcode.DtoU: BuildDtoU(program, instruction); break;
+            case Opcode.ItoD: BuildItoD(program, instruction); break;
+            case Opcode.UtoD: BuildUtoD(program, instruction); break;
+            case Opcode.FtoD: BuildFtoD(program, instruction); break;
+            case Opcode.DtoF: BuildDtoF(program, instruction); break;
+
             
             default:
                 Console.WriteLine($"IR: Unsupported opcode {instruction.Name}");
@@ -287,6 +471,23 @@ public partial class IRBuilder
             {
                 RawValues = operand.Immediate32Values!,
                 Kind = IRExpression.ConstantExpression.ConstantKind.UInt
+            };
+        }
+
+        return new IRExpression.RegisterExpression
+        {
+            Register = BuildRegister(operand)
+        };
+    }
+
+    private IRExpression BuildDoubleExpression(Operand operand)
+    {
+        if (operand.RegisterType == RegisterType.Immediate64)
+        {
+            return new IRExpression.ConstantExpression
+            {
+                DoubleValues = operand.Immediate64Values!,
+                Kind = IRExpression.ConstantExpression.ConstantKind.Double
             };
         }
 
@@ -390,6 +591,15 @@ public partial class IRBuilder
 
         foreach (uint i in operand.Indices)
             reg.Indices.Add(i);
+
+        // Relative/dynamic indexing (cb0[r2.x + 4], x0[r2.y], etc.) was
+        // previously parsed into Operand.RelativeOperands but silently
+        // discarded here — only the constant Indices made it into the IR.
+        for (int i = 0; i < operand.RelativeOperands.Length; i++)
+        {
+            if (operand.RelativeOperands[i] is { } relativeOperand)
+                reg.RelativeIndices[i] = BuildUIntExpression(relativeOperand);
+        }
 
         return reg;
     }

@@ -11,7 +11,14 @@ public partial class IRBuilder
         program.Declarations.Add(
             new IRDeclaration.IRResourceDeclaration
             {
-                Slot = instruction.Operands[0].RegisterIndex
+                Slot = instruction.Operands[0].RegisterIndex,
+
+                // ShdrParser.Parse() already stashes the resourceDim bits
+                // from the dcl_resource opcode token into ExtraData[0] —
+                // this just interprets them.
+                Dimension = instruction.ExtraData.Count > 0
+                    ? instruction.ExtraData[0].ToResourceDimension()
+                    : ResourceDimension.Unknown
             });
     }
 
@@ -108,6 +115,10 @@ public partial class IRBuilder
             });
     }
 
+    // NOTE: dcl_uav has no opcode-table entry yet, so ShdrParser doesn't
+    // capture a resourceDim ExtraData DWORD for it the way it does for
+    // dcl_resource. Once the opcode number and its ExtraData capture are
+    // added to ShdrParser, populate Dimension here the same way BuildResource does.
     private void BuildUAV(IRProgram program, Instruction instruction)
     {
         program.Declarations.Add(

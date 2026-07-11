@@ -15,6 +15,10 @@ public abstract class IRDeclaration
     public sealed class IRResourceDeclaration : IRDeclaration
     {
         public uint Slot { get; init; }
+
+        // Decoded from instruction.ExtraData[0] (already captured by ShdrParser
+        // for dcl_resource, previously left as an uninterpreted uint).
+        public ResourceDimension Dimension { get; init; } = ResourceDimension.Unknown;
     }
 
     public sealed class IRInputDeclaration : IRDeclaration
@@ -23,6 +27,10 @@ public abstract class IRDeclaration
 
         // Only set for dcl_input_sgv (system-generated-value inputs, e.g. vertex/instance id)
         public uint? SystemValue { get; init; }
+
+        // Only meaningful for dcl_input_ps — see InterpolationMode.cs for why
+        // this isn't decoded from the token yet.
+        public InterpolationMode Interpolation { get; init; } = InterpolationMode.Undefined;
     }
 
     public sealed class IROutputDeclaration : IRDeclaration
@@ -46,6 +54,8 @@ public abstract class IRDeclaration
     public sealed class IRUAVDeclaration : IRDeclaration
     {
         public uint Slot { get; init; }
+
+        public ResourceDimension Dimension { get; init; } = ResourceDimension.Unknown;
     }
 
     public sealed class IRThreadGroupDeclaration : IRDeclaration
@@ -91,5 +101,67 @@ public abstract class IRDeclaration
         public uint Index { get; init; }
         public uint NumTypes { get; init; }
         public uint TableLength { get; init; }
+    }
+
+    // ===================== hull / domain shader =====================
+    // These carry values encoded directly in their opcode tokens rather than
+    // a trailing ExtraData DWORD or an Operand — exact bit layout needs
+    // confirming against shader_sm4.c before wiring up decode, same caveat
+    // as InterpolationMode. Fields are provided so that's a one-line change.
+
+    public sealed class IRInputControlPointCountDeclaration : IRDeclaration
+    {
+        public uint Count { get; init; }
+    }
+
+    public sealed class IROutputControlPointCountDeclaration : IRDeclaration
+    {
+        public uint Count { get; init; }
+    }
+
+    public sealed class IRMaxTessFactorDeclaration : IRDeclaration
+    {
+        public float Value { get; init; }
+    }
+
+    public enum TessellatorDomain
+    {
+        Undefined = 0,
+        Isoline = 1,
+        Tri = 2,
+        Quad = 3,
+    }
+
+    public sealed class IRDomainDeclaration : IRDeclaration
+    {
+        public TessellatorDomain Domain { get; init; }
+    }
+
+    public enum TessellatorPartitioning
+    {
+        Undefined = 0,
+        Integer = 1,
+        Pow2 = 2,
+        FractionalOdd = 3,
+        FractionalEven = 4,
+    }
+
+    public sealed class IRPartitioningDeclaration : IRDeclaration
+    {
+        public TessellatorPartitioning Partitioning { get; init; }
+    }
+
+    public enum TessellatorOutputPrimitive
+    {
+        Undefined = 0,
+        Point = 1,
+        Line = 2,
+        TriangleClockwise = 3,
+        TriangleCounterclockwise = 4,
+    }
+
+    public sealed class IROutputTopologyDeclaration : IRDeclaration
+    {
+        public TessellatorOutputPrimitive Topology { get; init; }
     }
 }

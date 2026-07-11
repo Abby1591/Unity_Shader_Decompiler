@@ -107,19 +107,35 @@ public partial class IRBuilder
         AddAssignment(program, destination, expression);
     }
 
+    // imul dest_hi, dest_lo, src0, src1 — OperandCount=4 in ShdrParser's
+    // OpcodeTable confirms this is a real two-destination instruction (32x32
+    // multiply producing a 64-bit result split across two registers), not a
+    // single-destination multiply. Either destination may be the "null"
+    // register if the caller only wants one half.
     private void BuildIMul(IRProgram program, Instruction instruction)
     {
-        var destination = BuildRegister(instruction.Operands[0]);
+        var destinationHi = BuildRegister(instruction.Operands[0]);
+        var destinationLo = BuildRegister(instruction.Operands[1]);
 
-        IRExpression expression =
-            new IRExpression.BinaryExpression
-            {
-                Operation = IRExpression.BinaryOperation.Multiply,
-                Left = BuildIntExpression(instruction.Operands[1]),
-                Right = BuildIntExpression(instruction.Operands[2])
-            };
+        IRExpression left = BuildIntExpression(instruction.Operands[2]);
+        IRExpression right = BuildIntExpression(instruction.Operands[3]);
 
-        AddAssignment(program, destination, expression);
+        var multiply = new IRExpression.BinaryExpression
+        {
+            Operation = IRExpression.BinaryOperation.Multiply,
+            Left = left,
+            Right = right
+        };
+
+        var statement = new IRStatement.IRMultiAssignment();
+
+        statement.Destinations.Add(destinationHi.RegisterType == RegisterType.Null ? null : destinationHi);
+        statement.Expressions.Add(new IRExpression.IntrinsicExpression { Name = "imul_hi", Arguments = { left, right } });
+
+        statement.Destinations.Add(destinationLo.RegisterType == RegisterType.Null ? null : destinationLo);
+        statement.Expressions.Add(multiply);
+
+        program.Statements.Add(statement);
     }
 
     private void BuildUMul(IRProgram program, Instruction instruction)
@@ -165,6 +181,35 @@ public partial class IRBuilder
             };
 
         AddAssignment(program, destination, expression);
+    }
+
+    // Real DXBC udiv is udiv dest_quot, dest_rem, src0, src1 (4 operands) —
+    // same multi-destination shape as imul. Not wired into ConvertInstruction
+    // yet since udiv has no OpcodeTable entry to confirm the operand order
+    // against; BuildUDiv above stays as the single-output simplification
+    // until then. Use this once confirmed.
+    private void BuildUDivQuotientRemainder(IRProgram program, Instruction instruction)
+    {
+        var destinationQuotient = BuildRegister(instruction.Operands[0]);
+        var destinationRemainder = BuildRegister(instruction.Operands[1]);
+
+        IRExpression left = BuildUIntExpression(instruction.Operands[2]);
+        IRExpression right = BuildUIntExpression(instruction.Operands[3]);
+
+        var statement = new IRStatement.IRMultiAssignment();
+
+        statement.Destinations.Add(destinationQuotient.RegisterType == RegisterType.Null ? null : destinationQuotient);
+        statement.Expressions.Add(new IRExpression.BinaryExpression
+        {
+            Operation = IRExpression.BinaryOperation.Divide,
+            Left = left,
+            Right = right
+        });
+
+        statement.Destinations.Add(destinationRemainder.RegisterType == RegisterType.Null ? null : destinationRemainder);
+        statement.Expressions.Add(new IRExpression.IntrinsicExpression { Name = "umod", Arguments = { left, right } });
+
+        program.Statements.Add(statement);
     }
 
     // ===================== mad / imad =====================

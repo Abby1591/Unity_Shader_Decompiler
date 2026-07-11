@@ -26,12 +26,19 @@ public abstract class IRExpression
         {
             Float,
             Int,
-            UInt
+            UInt,
+            Double
         }
 
         public ConstantKind Kind { get; init; } = ConstantKind.Float;
 
         public uint[] RawValues { get; init; } = Array.Empty<uint>();
+
+        // Only populated for Kind == Double. Unlike Float/Int/UInt immediates
+        // (which DXBC stores as raw 32-bit patterns in RawValues), 64-bit
+        // double immediates come through Operand.Immediate64Values as actual
+        // double values already, so there's no bit-reinterpretation to do.
+        public double[] DoubleValues { get; init; } = Array.Empty<double>();
 
         public override IRValueType Type =>
             Kind switch
@@ -39,11 +46,19 @@ public abstract class IRExpression
                 ConstantKind.Float => IRValueType.Float,
                 ConstantKind.Int => IRValueType.Int,
                 ConstantKind.UInt => IRValueType.UInt,
+                ConstantKind.Double => IRValueType.Double,
                 _ => IRValueType.Unknown
             };
 
         public override string ToString()
         {
+            if (Kind == ConstantKind.Double)
+            {
+                return DoubleValues.Length == 1
+                    ? DoubleValues[0].ToString()
+                    : $"double{DoubleValues.Length}({string.Join(", ", DoubleValues)})";
+            }
+
             string Format(uint value)
             {
                 return Kind switch
@@ -232,7 +247,85 @@ public abstract class IRExpression
         }
     }
 
-    // ===================== texture sampling =====================
+    // ===================== texture operations (consolidated) =====================
+    // Single expression type covering every texture/buffer read instruction,
+    // instead of one sealed class per DXBC opcode. Only the fields relevant
+    // to a given Operation are populated; unused fields stay null. This is
+    // the type IRBuilderTexture.cs now emits — the individual
+    // TextureSampleExpression / TextureLoadExpression / TextureGatherExpression
+    // / etc. classes below are kept only so nothing else referencing them
+    // breaks, but are no longer produced by the builder.
+    public enum TextureOperation
+    {
+        Sample,
+        SampleLevel,
+        SampleGrad,
+        SampleBias,
+        SampleCompare,
+        SampleCompareLevelZero,
+        Load,
+        Gather,
+        GatherCompare,
+        Lod,
+        ResInfo,
+        SampleInfo,
+        SamplePos,
+        BufInfo,
+        CheckAccessFullyMapped,
+    }
+
+    public sealed class TextureOperationExpression : IRExpression
+    {
+        public TextureOperation Operation { get; init; }
+
+        public IRRegister Resource { get; init; } = null!;
+
+        public IRRegister? Sampler { get; init; }
+
+        public IRExpression? Coordinates { get; init; }
+
+        public IRExpression? Offset { get; init; }
+
+        public IRExpression? LOD { get; init; }
+
+        public IRExpression? Bias { get; init; }
+
+        public IRExpression? CompareValue { get; init; }
+
+        public IRExpression? GradX { get; init; }
+
+        public IRExpression? GradY { get; init; }
+
+        public IRExpression? SampleIndex { get; init; }
+
+        public override IRValueType Type =>
+            Operation switch
+            {
+                TextureOperation.SampleInfo => IRValueType.UInt,
+                TextureOperation.CheckAccessFullyMapped => IRValueType.Bool,
+                _ => IRValueType.Float
+            };
+
+        public override string ToString()
+        {
+            string args = string.Join(", ", new[]
+            {
+                Sampler?.ToString(),
+                Coordinates?.ToString(),
+                Offset is null ? null : $"offset={Offset}",
+                LOD is null ? null : $"lod={LOD}",
+                Bias is null ? null : $"bias={Bias}",
+                CompareValue is null ? null : $"cmp={CompareValue}",
+                GradX is null ? null : $"ddx={GradX}",
+                GradY is null ? null : $"ddy={GradY}",
+                SampleIndex is null ? null : $"sample={SampleIndex}",
+            }.Where(s => s is not null));
+
+            return $"{Resource}.{Operation}({args})";
+        }
+    }
+
+    // ===================== texture sampling (superseded by TextureOperationExpression) =====================
 
     public sealed class TextureSampleExpression : IRExpression
     {

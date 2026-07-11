@@ -95,4 +95,157 @@ public enum Opcode
     DclGlobalFlags,
     DclInputSVG,
     DclOutputSIV,
+
+    // ===================== previously missing arithmetic/bitwise/comparison =====================
+
+    ISub,
+    UMul,
+    UDiv,
+    UMin,
+    UMax,
+    Xor,
+    Ishl,
+    Ushr,
+    Ishr,
+    CountBits,
+    FirstBitHi,
+    FirstBitLo,
+    FirstBitSHi,
+    ReverseBits,
+    Bfi,
+    Ubfe,
+    Ibfe,
+    Le,
+    Gt,
+    Uge,
+    Ult,
+    Ugt,
+    Ule,
+    Any,
+    All,
+
+    // ===================== conversions =====================
+
+    F16ToF32,
+    F32ToF16,
+    BitcastFloat,
+    BitcastInt,
+    BitcastUInt,
+
+    // ===================== extended math =====================
+
+    Lrp,
+    MSad,
+    Dst,
+    Mul64,
+    UMul64,
+    AddSat,
+    MulSat,
+    MadSat,
+
+    // ===================== texture / buffer =====================
+
+    LdMS,
+    SampleInfo,
+    SamplePos,
+    SampleIndex,
+    CheckAccessFullyMapped,
+    Gather4,
+    Gather4C,
+    Gather4Po,
+    Gather4PoC,
+    Lod,
+    BufInfo,
+    LdUAV,
+    LdRaw,
+    LdStructured,
+    StoreRaw,
+    StoreStructured,
+    StoreUAV,
+    SamplePo,
+    SamplePoC,
+
+    // ===================== declarations =====================
+
+    DclUAV,
+    DclThreadGroup,
+    DclIndexRange,
+    DclFunctionBody,
+    DclFunctionTable,
+    DclIndexableTemp,
+    DclStream,
+    DclInterface,
+    DclInputControlPointCount,
+    DclOutputControlPointCount,
+    DclHSMaxTessFactor,
+    DclDomain,
+    DclPartitioning,
+    DclOutputTopology,
+
+    // ===================== UAV atomics =====================
+
+    AtomicIAdd,
+    AtomicAnd,
+    AtomicOr,
+    AtomicXor,
+    AtomicIMin,
+    AtomicIMax,
+    AtomicUMin,
+    AtomicUMax,
+    AtomicCmpStore,
+    ImmAtomicIAdd,
+    ImmAtomicAnd,
+    ImmAtomicOr,
+    ImmAtomicXor,
+    ImmAtomicIMin,
+    ImmAtomicIMax,
+    ImmAtomicUMin,
+    ImmAtomicUMax,
+    ImmAtomicExch,
+    ImmAtomicCmpExch,
+
+    // ===================== synchronization =====================
+
+    Sync,
+    GroupMemoryBarrier,
+    GroupMemoryBarrierWithGroupSync,
+    DeviceMemoryBarrier,
+    DeviceMemoryBarrierWithGroupSync,
+    AllMemoryBarrier,
+    AllMemoryBarrierWithGroupSync,
+
+    // ===================== geometry shader =====================
+
+    EmitStream,
+    CutStream,
+    EmitThenCutStream,
+
+    // ===================== hull shader =====================
+
+    HSControlPointPhase,
+    HSForkPhase,
+    HSJoinPhase,
+
+    // ===================== dynamic linkage =====================
+
+    InterfaceCall,
+    InterfaceCallC,
+
+    // ===================== double precision =====================
+
+    DMov,
+    DAdd,
+    DSub,
+    DMul,
+    DDiv,
+    DFma,
+    DRcp,
+    DSqrt,
+    DRsq,
+    DtoI,
+    DtoU,
+    ItoD,
+    UtoD,
+    FtoD,
+    DtoF,
 }
