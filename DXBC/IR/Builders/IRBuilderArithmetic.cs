@@ -90,7 +90,7 @@ public partial class IRBuilder
             BuildRegister(instruction.Operands[0]),
             new IRExpression.BinaryExpression { Operation = IRExpression.BinaryOperation.Divide, Left = left, Right = right },
             BuildRegister(instruction.Operands[1]),
-            new IRExpression.IntrinsicExpression { Intrinsic = IRExpression.IRIntrinsic.UnsignedModulo, Arguments = { left, right } });
+            new IRExpression.BinaryExpression { Operation = IRExpression.BinaryOperation.Modulo, Left = left, Right = right });
     }
 
     // ===================== mad / imad =====================
@@ -253,18 +253,22 @@ public partial class IRBuilder
     private void BuildIShl(IRProgram program, Instruction instruction) =>
         BuildTypedBinary(program, instruction, IRExpression.BinaryOperation.LeftShift, BuildUIntExpression);
 
-    // ushr: logical (unsigned) right shift
+    // ushr: logical (unsigned) right shift — zero-fills from the top
     private void BuildUShr(IRProgram program, Instruction instruction) =>
-        BuildTypedBinary(program, instruction, IRExpression.BinaryOperation.RightShift, BuildUIntExpression);
+        BuildTypedBinary(program, instruction, IRExpression.BinaryOperation.UnsignedRightShift, BuildUIntExpression);
 
-    // ishr: arithmetic (signed) right shift
+    // ishr: arithmetic (signed) right shift — sign-extends from the top
     private void BuildIShr(IRProgram program, Instruction instruction) =>
-        BuildTypedBinary(program, instruction, IRExpression.BinaryOperation.RightShift, BuildIntExpression);
+        BuildTypedBinary(program, instruction, IRExpression.BinaryOperation.SignedRightShift, BuildIntExpression);
 
     // ===================== bit-scan / bit-count intrinsics =====================
 
     private void BuildCountBits(IRProgram program, Instruction instruction) =>
-        Emit(program, instruction, new IRExpression.CountBitsExpression { Value = BuildUIntExpression(instruction.Operands[1]) });
+        Emit(program, instruction, new IRExpression.IntrinsicExpression
+        {
+            Intrinsic = IRExpression.IRIntrinsic.CountBits,
+            Arguments = { BuildUIntExpression(instruction.Operands[1]) }
+        });
 
     private void BuildFirstBitHi(IRProgram program, Instruction instruction) =>
         BuildUnaryIntrinsic(program, instruction, IRExpression.IRIntrinsic.FirstBitHigh);
@@ -281,7 +285,11 @@ public partial class IRBuilder
         });
 
     private void BuildReverseBits(IRProgram program, Instruction instruction) =>
-        Emit(program, instruction, new IRExpression.ReverseBitsExpression { Value = BuildUIntExpression(instruction.Operands[1]) });
+        Emit(program, instruction, new IRExpression.IntrinsicExpression
+        {
+            Intrinsic = IRExpression.IRIntrinsic.ReverseBits,
+            Arguments = { BuildUIntExpression(instruction.Operands[1]) }
+        });
 
     // ===================== bitfield insert / extract =====================
 

@@ -637,6 +637,53 @@ public partial class IRBuilder
             Emit(program, instruction, expression);
         }
 
+        // Backs every eq/ne/ge/lt/ieq/ine/ige/ilt/uge/ult comparison opcode.
+        // swap=true builds Operands[2] <op> Operands[1] instead of the
+        // normal order — used for le/gt/ugt/ule, which SM4 synthesizes by
+        // flipping operands around ge/lt rather than having real opcodes.
+        private void BuildComparison(
+            IRProgram program,
+            Instruction instruction,
+            IRExpression.BinaryOperation operation,
+            Func<Operand, IRExpression> buildOperand,
+            bool swap = false)
+        {
+            IRExpression left = buildOperand(instruction.Operands[swap ? 2 : 1]);
+            IRExpression right = buildOperand(instruction.Operands[swap ? 1 : 2]);
+
+            Emit(program, instruction, new IRExpression.BinaryExpression
+            {
+                Operation = operation,
+                Left = left,
+                Right = right
+            });
+        }
+
+        // Backs ftoi/ftou/itof/utof and any other single-argument type cast.
+        private void BuildCast(
+            IRProgram program,
+            Instruction instruction,
+            IRExpression.IRIntrinsic intrinsic,
+            Func<Operand, IRExpression> buildOperand)
+        {
+            Emit(program, instruction, new IRExpression.IntrinsicExpression
+            {
+                Intrinsic = intrinsic,
+                Arguments = { buildOperand(instruction.Operands[1]) }
+            });
+        }
+
+        // sincos and any other instruction that writes to multiple
+        // independent destinations, any of which may legally be "null"
+        // (DXBC's way of saying "discard this output").
+        private void EmitIfNotNull(IRProgram program, Operand destinationOperand, IRExpression expression)
+        {
+            if (destinationOperand.RegisterType == RegisterType.Null)
+                return;
+
+            AddAssignment(program, BuildRegister(destinationOperand), expression);
+        }
+
         // (a * b) + c, typed. Backs mad/imad/fma/dfma so the multiply-add
         // tree only gets built in one place.
         private void BuildFusedMultiplyAdd(
