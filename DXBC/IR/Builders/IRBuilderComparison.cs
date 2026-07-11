@@ -196,32 +196,32 @@ public partial class IRBuilder
 
     private void BuildDerivRtx(IRProgram program, Instruction instruction)
     {
-        BuildUnaryIntrinsic(program, instruction, "ddx");
+        BuildUnaryIntrinsic(program, instruction, IRExpression.IRIntrinsic.DerivativeX);
     }
 
     private void BuildDerivRty(IRProgram program, Instruction instruction)
     {
-        BuildUnaryIntrinsic(program, instruction, "ddy");
+        BuildUnaryIntrinsic(program, instruction, IRExpression.IRIntrinsic.DerivativeY);
     }
 
     private void BuildDerivRtxCoarse(IRProgram program, Instruction instruction)
     {
-        BuildUnaryIntrinsic(program, instruction, "ddx_coarse");
+        BuildUnaryIntrinsic(program, instruction, IRExpression.IRIntrinsic.DerivativeXCoarse);
     }
 
     private void BuildDerivRtxFine(IRProgram program, Instruction instruction)
     {
-        BuildUnaryIntrinsic(program, instruction, "ddx_fine");
+        BuildUnaryIntrinsic(program, instruction, IRExpression.IRIntrinsic.DerivativeXFine);
     }
 
     private void BuildDerivRtyCoarse(IRProgram program, Instruction instruction)
     {
-        BuildUnaryIntrinsic(program, instruction, "ddy_coarse");
+        BuildUnaryIntrinsic(program, instruction, IRExpression.IRIntrinsic.DerivativeYCoarse);
     }
 
     private void BuildDerivRtyFine(IRProgram program, Instruction instruction)
     {
-        BuildUnaryIntrinsic(program, instruction, "ddy_fine");
+        BuildUnaryIntrinsic(program, instruction, IRExpression.IRIntrinsic.DerivativeYFine);
     }
 
     // ============================================================
@@ -230,11 +230,11 @@ public partial class IRBuilder
 
     private void BuildAny(IRProgram program, Instruction instruction)
     {
-        BuildUnaryIntrinsic(program, instruction, "any");
+        BuildUnaryIntrinsic(program, instruction, IRExpression.IRIntrinsic.Any);
     }
 
     private void BuildAll(IRProgram program, Instruction instruction)
     {
-        BuildUnaryIntrinsic(program, instruction, "all");
+        BuildUnaryIntrinsic(program, instruction, IRExpression.IRIntrinsic.All);
     }
 }

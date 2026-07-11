@@ -521,28 +521,24 @@ public partial class IRBuilder
         };
     }
     
-        private void BuildUnaryIntrinsic(IRProgram program, Instruction instruction, string name)
+        private void BuildUnaryIntrinsic(IRProgram program, Instruction instruction, IRExpression.IRIntrinsic intrinsic)
         {
-            var destination = BuildRegister(instruction.Operands[0]);
-
             IRExpression expression =
                 new IRExpression.IntrinsicExpression
                 {
-                    Name = name,
+                    Intrinsic = intrinsic,
                     Arguments = { BuildExpression(instruction.Operands[1]) }
                 };
 
-            AddAssignment(program, destination, expression);
+            Emit(program, instruction, expression);
         }
 
-        private void BuildBinaryIntrinsic(IRProgram program, Instruction instruction, string name)
+        private void BuildBinaryIntrinsic(IRProgram program, Instruction instruction, IRExpression.IRIntrinsic intrinsic)
         {
-            var destination = BuildRegister(instruction.Operands[0]);
-
             IRExpression expression =
                 new IRExpression.IntrinsicExpression
                 {
-                    Name = name,
+                    Intrinsic = intrinsic,
                     Arguments =
                     {
                         BuildExpression(instruction.Operands[1]),
@@ -550,17 +546,15 @@ public partial class IRBuilder
                     }
                 };
 
-            AddAssignment(program, destination, expression);
+            Emit(program, instruction, expression);
         }
 
-        private void BuildTernaryIntrinsic(IRProgram program, Instruction instruction, string name)
+        private void BuildTernaryIntrinsic(IRProgram program, Instruction instruction, IRExpression.IRIntrinsic intrinsic)
         {
-            var destination = BuildRegister(instruction.Operands[0]);
-
             IRExpression expression =
                 new IRExpression.IntrinsicExpression
                 {
-                    Name = name,
+                    Intrinsic = intrinsic,
                     Arguments =
                     {
                         BuildExpression(instruction.Operands[1]),
@@ -569,7 +563,96 @@ public partial class IRBuilder
                     }
                 };
 
-            AddAssignment(program, destination, expression);
+            Emit(program, instruction, expression);
+        }
+
+        // Destination is always Operands[0] and the expression always gets
+        // AddAssignment'd to it — nearly every builder in this file was
+        // repeating that pair of lines around whatever expression it built.
+        private void Emit(IRProgram program, Instruction instruction, IRExpression expression)
+        {
+            AddAssignment(program, BuildRegister(instruction.Operands[0]), expression);
+        }
+
+        // Two-destination form (imul, udiv-with-remainder, etc). Either
+        // destination may legally be the "null" register when the caller
+        // only wants one half of the result.
+        private void EmitMulti(
+            IRProgram program,
+            IRRegister destinationA, IRExpression expressionA,
+            IRRegister destinationB, IRExpression expressionB)
+        {
+            var statement = new IRStatement.IRMultiAssignment();
+
+            statement.Destinations.Add(destinationA.RegisterType == RegisterType.Null ? null : destinationA);
+            statement.Expressions.Add(expressionA);
+
+            statement.Destinations.Add(destinationB.RegisterType == RegisterType.Null ? null : destinationB);
+            statement.Expressions.Add(expressionB);
+
+            program.Statements.Add(statement);
+        }
+
+        // Builds `left <op> right` where both sides go through the same
+        // typed operand builder (BuildExpression / BuildIntExpression /
+        // BuildUIntExpression / BuildDoubleExpression), then emits it to
+        // Operands[0]. Collapses e.g. BuildAdd/BuildIAdd/BuildDAdd into
+        // one-line callers.
+        private void BuildTypedBinary(
+            IRProgram program,
+            Instruction instruction,
+            IRExpression.BinaryOperation operation,
+            Func<Operand, IRExpression> buildOperand)
+        {
+            IRExpression expression =
+                new IRExpression.BinaryExpression
+                {
+                    Operation = operation,
+                    Left = buildOperand(instruction.Operands[1]),
+                    Right = buildOperand(instruction.Operands[2])
+                };
+
+            Emit(program, instruction, expression);
+        }
+
+        // Same idea for a two-argument intrinsic call (min/max/etc) where
+        // both arguments share a typed operand builder.
+        private void BuildTypedBinaryIntrinsic(
+            IRProgram program,
+            Instruction instruction,
+            IRExpression.IRIntrinsic intrinsic,
+            Func<Operand, IRExpression> buildOperand)
+        {
+            IRExpression expression =
+                new IRExpression.IntrinsicExpression
+                {
+                    Intrinsic = intrinsic,
+                    Arguments =
+                    {
+                        buildOperand(instruction.Operands[1]),
+                        buildOperand(instruction.Operands[2])
+                    }
+                };
+
+            Emit(program, instruction, expression);
+        }
+
+        // (a * b) + c, typed. Backs mad/imad/fma/dfma so the multiply-add
+        // tree only gets built in one place.
+        private void BuildFusedMultiplyAdd(
+            IRProgram program,
+            Instruction instruction,
+            Func<Operand, IRExpression> buildOperand)
+        {
+            IRExpression expression =
+                new IRExpression.FusedMultiplyAddExpression
+                {
+                    A = buildOperand(instruction.Operands[1]),
+                    B = buildOperand(instruction.Operands[2]),
+                    C = buildOperand(instruction.Operands[3])
+                };
+
+            Emit(program, instruction, expression);
         }
 
         private IRRegister BuildRegister(Operand operand)

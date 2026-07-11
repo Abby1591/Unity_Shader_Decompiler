@@ -279,7 +279,7 @@ public partial class IRBuilder
         IRExpression expression =
             new IRExpression.IntrinsicExpression
             {
-                Name = "CheckAccessFullyMapped",
+                Intrinsic = IRExpression.IRIntrinsic.CheckAccessFullyMapped,
                 Arguments = { BuildUIntExpression(instruction.Operands[1]) }
             };
 

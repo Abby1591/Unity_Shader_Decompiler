@@ -18,7 +18,7 @@ public partial class IRBuilder
             IRExpression expression =
                 new IRExpression.IntrinsicExpression
                 {
-                    Name = "sin",
+                    Intrinsic = IRExpression.IRIntrinsic.Sin,
                     Arguments = { BuildExpression(instruction.Operands[2]) }
                 };
 
@@ -33,7 +33,7 @@ public partial class IRBuilder
             IRExpression expression =
                 new IRExpression.IntrinsicExpression
                 {
-                    Name = "cos",
+                    Intrinsic = IRExpression.IRIntrinsic.Cos,
                     Arguments = { BuildExpression(instruction.Operands[2]) }
                 };
 
