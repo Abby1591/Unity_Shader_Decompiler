@@ -97,6 +97,7 @@ public abstract class IRExpression
         Subtract,
         Multiply,
         Divide,
+        UnsignedDivide,
         Modulo,
         Equal,
         NotEqual,
@@ -148,6 +149,7 @@ public abstract class IRExpression
                 BinaryOperation.Subtract => "-",
                 BinaryOperation.Multiply => "*",
                 BinaryOperation.Divide => "/",
+                BinaryOperation.UnsignedDivide => "/",
                 BinaryOperation.Modulo => "%",
                 BinaryOperation.Equal => "==",
                 BinaryOperation.NotEqual => "!=",
@@ -271,7 +273,7 @@ public abstract class IRExpression
         Modf,
         Ldexp,
         Frexp,
-        DirectionVector,
+        DistanceVector,
         MaskedSumOfAbsoluteDifferences,
 
         // derivatives / boolean reduction
@@ -344,7 +346,7 @@ public abstract class IRExpression
         public IRExpression B { get; init; } = null!;
         public IRExpression C { get; init; } = null!;
 
-        public override IRValueType Type => A.Type == B.Type && B.Type == C.Type ? A.Type : A.Type;
+        public override IRValueType Type => A.Type == B.Type && B.Type == C.Type ? A.Type : IRValueType.Unknown;
 
         public override string ToString() => $"fma({A}, {B}, {C})";
     }
@@ -359,6 +361,29 @@ public abstract class IRExpression
         public override IRValueType Type => Signed ? IRValueType.Int : IRValueType.UInt;
 
         public override string ToString() => $"{(Signed ? "imul_hi" : "umul_hi")}({Left}, {Right})";
+    }
+
+    // mul64/umul64 are a distinct DXBC opcode pair from imul/umul — a real
+    // 64-bit product, not the high 32 bits of a widening 32x32 multiply.
+    // Folding this onto MultiplyHighExpression would silently lose that
+    // distinction, so it gets its own node even though the shape is
+    // superficially identical.
+    //
+    // Neither opcode has an OperandCount entry in ShdrParser's opcode table
+    // yet, so it's unconfirmed whether DXBC exposes the result as a single
+    // 64-bit-typed destination or splits it across a register pair the way
+    // imul/udiv do. This models the single-destination case; if it turns
+    // out to be a dual-output instruction, switch BuildMul64/BuildUMul64
+    // to EmitMulti the same way BuildIMul does.
+    public sealed class Multiply64Expression : IRExpression
+    {
+        public IRExpression Left { get; init; } = null!;
+        public IRExpression Right { get; init; } = null!;
+        public bool Signed { get; init; }
+
+        public override IRValueType Type => Signed ? IRValueType.Int : IRValueType.UInt;
+
+        public override string ToString() => $"{(Signed ? "mul64" : "umul64")}({Left}, {Right})";
     }
 
     public sealed class BitFieldInsertExpression : IRExpression

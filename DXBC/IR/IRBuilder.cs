@@ -523,11 +523,20 @@ public partial class IRBuilder
     
         private void BuildUnaryIntrinsic(IRProgram program, Instruction instruction, IRExpression.IRIntrinsic intrinsic)
         {
+            BuildUnaryIntrinsic(program, instruction, intrinsic, BuildExpression);
+        }
+
+        private void BuildUnaryIntrinsic(
+            IRProgram program,
+            Instruction instruction,
+            IRExpression.IRIntrinsic intrinsic,
+            Func<Operand, IRExpression> buildOperand)
+        {
             IRExpression expression =
                 new IRExpression.IntrinsicExpression
                 {
                     Intrinsic = intrinsic,
-                    Arguments = { BuildExpression(instruction.Operands[1]) }
+                    Arguments = { buildOperand(instruction.Operands[1]) }
                 };
 
             Emit(program, instruction, expression);

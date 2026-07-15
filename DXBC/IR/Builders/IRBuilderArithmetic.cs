@@ -73,14 +73,14 @@ public partial class IRBuilder
         BuildTypedBinary(program, instruction, IRExpression.BinaryOperation.Divide, BuildExpression);
 
     private void BuildUDiv(IRProgram program, Instruction instruction) =>
-        BuildTypedBinary(program, instruction, IRExpression.BinaryOperation.Divide, BuildUIntExpression);
+        BuildTypedBinary(program, instruction, IRExpression.BinaryOperation.UnsignedDivide, BuildUIntExpression);
 
     // Real DXBC udiv is udiv dest_quot, dest_rem, src0, src1 (4 operands) —
     // same multi-destination shape as imul. Not wired into ConvertInstruction
     // yet since udiv has no OpcodeTable entry to confirm the operand order
     // against; BuildUDiv above stays as the single-output simplification
     // until then. Use this once confirmed.
-    private void BuildUDivQuotientRemainder(IRProgram program, Instruction instruction)
+    private void BuildUDivExtended(IRProgram program, Instruction instruction)
     {
         IRExpression left = BuildUIntExpression(instruction.Operands[2]);
         IRExpression right = BuildUIntExpression(instruction.Operands[3]);
@@ -88,7 +88,7 @@ public partial class IRBuilder
         EmitMulti(
             program,
             BuildRegister(instruction.Operands[0]),
-            new IRExpression.BinaryExpression { Operation = IRExpression.BinaryOperation.Divide, Left = left, Right = right },
+            new IRExpression.BinaryExpression { Operation = IRExpression.BinaryOperation.UnsignedDivide, Left = left, Right = right },
             BuildRegister(instruction.Operands[1]),
             new IRExpression.BinaryExpression { Operation = IRExpression.BinaryOperation.Modulo, Left = left, Right = right });
     }
@@ -168,13 +168,13 @@ public partial class IRBuilder
     private void BuildMSad(IRProgram program, Instruction instruction) => BuildTernaryIntrinsic(program, instruction, IRExpression.IRIntrinsic.MaskedSumOfAbsoluteDifferences);
 
     // dst: DirectX distance vector — (1, a1*b1, a2, b3)
-    private void BuildDst(IRProgram program, Instruction instruction) => BuildBinaryIntrinsic(program, instruction, IRExpression.IRIntrinsic.DirectionVector);
+    private void BuildDst(IRProgram program, Instruction instruction) => BuildBinaryIntrinsic(program, instruction, IRExpression.IRIntrinsic.DistanceVector);
 
     // ===================== 64-bit widening multiply =====================
 
     private void BuildMul64(IRProgram program, Instruction instruction)
     {
-        Emit(program, instruction, new IRExpression.MultiplyHighExpression
+        Emit(program, instruction, new IRExpression.Multiply64Expression
         {
             Left = BuildExpression(instruction.Operands[1]),
             Right = BuildExpression(instruction.Operands[2]),
@@ -184,7 +184,7 @@ public partial class IRBuilder
 
     private void BuildUMul64(IRProgram program, Instruction instruction)
     {
-        Emit(program, instruction, new IRExpression.MultiplyHighExpression
+        Emit(program, instruction, new IRExpression.Multiply64Expression
         {
             Left = BuildExpression(instruction.Operands[1]),
             Right = BuildExpression(instruction.Operands[2]),
@@ -439,25 +439,13 @@ public partial class IRBuilder
         BuildFusedMultiplyAdd(program, instruction, BuildDoubleExpression);
 
     private void BuildDRcp(IRProgram program, Instruction instruction) =>
-        Emit(program, instruction, new IRExpression.IntrinsicExpression
-        {
-            Intrinsic = IRExpression.IRIntrinsic.Reciprocal,
-            Arguments = { BuildDoubleExpression(instruction.Operands[1]) }
-        });
+        BuildUnaryIntrinsic(program, instruction, IRExpression.IRIntrinsic.Reciprocal, BuildDoubleExpression);
 
     private void BuildDSqrt(IRProgram program, Instruction instruction) =>
-        Emit(program, instruction, new IRExpression.IntrinsicExpression
-        {
-            Intrinsic = IRExpression.IRIntrinsic.Sqrt,
-            Arguments = { BuildDoubleExpression(instruction.Operands[1]) }
-        });
+        BuildUnaryIntrinsic(program, instruction, IRExpression.IRIntrinsic.Sqrt, BuildDoubleExpression);
 
     private void BuildDRsq(IRProgram program, Instruction instruction) =>
-        Emit(program, instruction, new IRExpression.IntrinsicExpression
-        {
-            Intrinsic = IRExpression.IRIntrinsic.Rsqrt,
-            Arguments = { BuildDoubleExpression(instruction.Operands[1]) }
-        });
+        BuildUnaryIntrinsic(program, instruction, IRExpression.IRIntrinsic.Rsqrt, BuildDoubleExpression);
 
     // ===================== conversions to/from double =====================
 
