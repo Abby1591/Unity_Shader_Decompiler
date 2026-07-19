@@ -51,7 +51,7 @@ public class ShdrParser
         { 48, new() { Opcode = Opcode.Loop, Name = "loop", OperandCount = 0 } },
         { 50, new() { Opcode = Opcode.Mad, Name = "mad", OperandCount = 4 } },
         { 52, new() { Opcode = Opcode.Max, Name = "max", OperandCount = 3 } },
-        { 53, new() { Opcode = Opcode.CustomData, Name = "customdata", OperandCount = 3 } },
+        { 53, new() { Opcode = Opcode.CustomData, Name = "customdata", OperandCount = 0 } },
         { 54, new() { Opcode = Opcode.Mov, Name = "mov", OperandCount = 2 } },
         { 55, new() { Opcode = Opcode.MovC, Name = "movc", OperandCount = 4 } },
         { 56, new() { Opcode = Opcode.Mul, Name = "mul", OperandCount = 3 } },
@@ -156,6 +156,19 @@ public class ShdrParser
         { 189, new() { Opcode = Opcode.ImmAtomicUMin, Name = "imm_atomic_umin", OperandCount = 3 } },
         { 190, new() { Opcode = Opcode.Sync, Name = "sync", OperandCount = 0 } },
 
+        // ===================== SM5.1 / misc additions =====================
+
+        { 122, new() { Opcode = Opcode.DerivRtxCoarse, Name = "deriv_rtx_coarse", OperandCount = 2 } },
+        { 123, new() { Opcode = Opcode.DerivRtxFine, Name = "deriv_rtx_fine", OperandCount = 2 } },
+        { 124, new() { Opcode = Opcode.DerivRtyCoarse, Name = "deriv_rty_coarse", OperandCount = 2 } },
+        { 125, new() { Opcode = Opcode.DerivRtyFine, Name = "deriv_rty_fine", OperandCount = 2 } },
+        { 132, new() { Opcode = Opcode.UAddC, Name = "uaddc", OperandCount = 4 } },
+        { 133, new() { Opcode = Opcode.USubB, Name = "usubb", OperandCount = 4 } },
+        { 142, new() { Opcode = Opcode.SwapC, Name = "swapc", OperandCount = 5 } },
+        { 203, new() { Opcode = Opcode.EvalSnapped, Name = "eval_snapped", OperandCount = 3 } },
+        { 204, new() { Opcode = Opcode.EvalSampleIndex, Name = "eval_sample_index", OperandCount = 3 } },
+        { 205, new() { Opcode = Opcode.EvalCentroid, Name = "eval_centroid", OperandCount = 2 } },
+
         // declarations (these were the ones actually causing your desyncs)
         { 88, new() { Opcode = Opcode.DclResource ,Name = "dcl_resource", OperandCount = 1 } },
         { 89, new() { Opcode = Opcode.DclConstantBuffer ,Name = "dcl_constantbuffer", OperandCount = 1 } },
@@ -168,6 +181,18 @@ public class ShdrParser
         { 104, new() { Opcode = Opcode.DclTemps ,Name = "dcl_temps", OperandCount = 0 } },
         { 106, new() { Opcode = Opcode.DclGlobalFlags ,Name = "dcl_globalFlags", OperandCount = 0 } },
     };
+
+    //------------------------------------------------------------------
+    // Extended opcode tokens. For now this just stores the raw DWORD so
+    // the parser stays synchronized. Later this should decode aoffimmi,
+    // resource return type, etc. based on the extended opcode type in
+    // bits 0-5 of the token.
+    //------------------------------------------------------------------
+
+    private void ParseExtendedOpcode(uint token, Instruction instruction)
+    {
+        instruction.ExtendedOpcode = token;
+    }
 
 private OpcodeInfo DecodeOpcode(uint opcode)
     {
@@ -454,6 +479,36 @@ private RegisterType DecodeRegisterType(uint type)
             uint token = reader.ReadUInt32();
 
             int opcodeValue = (int)(token & 0x7FF);
+
+            //------------------------------------------------------------------
+            // CUSTOMDATA (opcode 53) is the only opcode whose length is NOT
+            // taken from bits 24-30 - it has its own length DWORD that
+            // immediately follows, covering the whole custom data block
+            // (including the two header DWORDs already read). Handle it
+            // before any of the normal length/operand logic runs, or the
+            // parser will desync on every shader that uses it (e.g. for
+            // immediate constant buffers).
+            //------------------------------------------------------------------
+
+            if (opcodeValue == 53)
+            {
+                uint customLength = reader.ReadUInt32();
+
+                var customInstruction = new Instruction
+                {
+                    Opcode = Opcode.CustomData,
+                    Name = "customdata",
+                    OpcodeToken = token,
+                    CustomDataLength = customLength,
+                    CustomData = reader.ReadBytes((int)((customLength - 2) * 4))
+                };
+
+                customInstruction.Length = (int)customLength;
+
+                Instructions.Add(customInstruction);
+                continue;
+            }
+
             int length = (int)((token >> 24) & 0x7F);
 
             if (length == 0)
@@ -469,9 +524,37 @@ private RegisterType DecodeRegisterType(uint type)
                 Opcode = info.Opcode,
                 Name = info.Name,
                 OpcodeToken = token,
-                Length = length
+                Length = length,
+
+                // bit 13: saturate result
+                Saturate = (token & 0x2000) != 0,
+
+                // bit 31: this opcode token is followed by an extended
+                // opcode token
+                HasExtendedOpcode = (token & 0x80000000) != 0,
+
+                // bit 18: test boolean (used by breakc/if/continuec/retc/etc.)
+                TestBoolean = (InstructionTestBoolean)((token >> 18) & 1)
             };
-            
+
+            //------------------------------------------------------------------
+            // Extended opcode token(s). We don't decode the contents yet
+            // (aoffimmi, resource return type, etc.) - just consume the
+            // DWORD(s) so the parser stays synchronized. Chained extended
+            // tokens (bit 31 set again) are also consumed.
+            //------------------------------------------------------------------
+
+            if (instruction.HasExtendedOpcode)
+            {
+                uint ext = reader.ReadUInt32();
+                ParseExtendedOpcode(ext, instruction);
+
+                while ((ext & 0x80000000) != 0)
+                {
+                    ext = reader.ReadUInt32();
+                }
+            }
+
             if (opcodeValue == 88) // dcl_resource
             {
                 uint resourceDim = (token >> 11) & 0xF;
@@ -571,9 +654,6 @@ private RegisterType DecodeRegisterType(uint type)
             reader.BaseStream.Position = instructionStartByte + length * 4;
 
             Instructions.Add(instruction);
-
-            if (opcodeValue == 62) // ret
-                break;
         }
     }
 }
