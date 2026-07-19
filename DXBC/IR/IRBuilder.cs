@@ -308,7 +308,7 @@ public partial class IRBuilder
             case Opcode.Lod: BuildLod(program, instruction); break;
             case Opcode.ResInfo: BuildResInfo(program, instruction); break;
             case Opcode.BufInfo: BuildBufInfo(program, instruction); break;
-            case Opcode.LdUAV: BuildLdUAV(program, instruction); break;
+            case Opcode.LdUAVTyped: BuildLdUAV(program, instruction); break;
             case Opcode.LdRaw: BuildLdRaw(program, instruction); break;
             case Opcode.LdStructured: BuildLdStructured(program, instruction); break;
             case Opcode.StoreRaw: BuildStoreRaw(program, instruction); break;

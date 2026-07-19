@@ -11,6 +11,7 @@ public class DxbcFile
     public List<DxbcChunk> Chunks { get; } = new();
     public IsgnChunk? InputSignature { get; private set; }
     public ShdrParser? Shader;
+    public FourCC ShaderChunkType { get; private set; }
 
     public void Load(string file)
     {
@@ -24,7 +25,11 @@ public class DxbcFile
 
         reader.ReadBytes(16); // checksum
 
-        uint unknown = reader.ReadUInt32();
+        uint version = reader.ReadUInt32();
+
+        if (version != 1)
+            throw new InvalidDataException($"Unsupported DXBC container version {version}.");
+        
         TotalLength = reader.ReadUInt32();
         uint chunkCount = reader.ReadUInt32();
 
@@ -39,6 +44,11 @@ public class DxbcFile
 
     private void ReadChunk(BinaryReader reader, uint offset)
     {
+        if (offset >= TotalLength)
+        {
+            throw new InvalidDataException($"Chunk offset {offset} is outside the DXBC container.");
+        }
+
         reader.BaseStream.Position = offset;
 
         var chunk = new DxbcChunk
@@ -46,7 +56,12 @@ public class DxbcFile
             Name = reader.ReadFourCC(),
             Offset = offset
         };
+        
         chunk.Size = reader.ReadUInt32();
+        if (offset + 8 + chunk.Size > TotalLength)
+        {
+            throw new InvalidDataException($"Chunk {chunk.Name} extends past end of container.");
+        }
 
         long dataStart = reader.BaseStream.Position;
         chunk.Data = reader.ReadBytes((int)chunk.Size);
@@ -59,8 +74,11 @@ public class DxbcFile
             InputSignature = new IsgnChunk();
             InputSignature.Read(r);
         }
-        else if (chunk.Name == FourCC.SHDR)
+        else if (chunk.Name == FourCC.SHDR ||
+                 chunk.Name == FourCC.SHEX)
         {
+            ShaderChunkType = chunk.Name;
+
             Shader = new ShdrParser();
             Shader.Parse(chunk.Data);
         }

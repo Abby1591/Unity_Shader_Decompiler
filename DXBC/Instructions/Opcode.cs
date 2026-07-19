@@ -5,9 +5,6 @@ public enum Opcode
     Unknown,
 
     Add,
-    Sub,
-    Neg,
-    Abs,
     And,
     Break,
     BreakC,
@@ -64,7 +61,6 @@ public enum Opcode
     Nop,
     Not,
     Or,
-    Pow,
     ResInfo,
     Ret,
     Retc,
@@ -74,7 +70,6 @@ public enum Opcode
     RoundZ,
     Rsq,
     Rcp,
-    Saturate,
     Sample,
     SampleL,
     SampleC,
@@ -133,8 +128,7 @@ public enum Opcode
     BitcastUInt,
 
     // ===================== extended math =====================
-
-    Lrp,
+    
     MSad,
     Dst,
     Mul64,
@@ -156,7 +150,7 @@ public enum Opcode
     Gather4PoC,
     Lod,
     BufInfo,
-    LdUAV,
+    LdUAVTyped,
     LdRaw,
     LdStructured,
     StoreRaw,
@@ -248,4 +242,28 @@ public enum Opcode
     UtoD,
     FtoD,
     DtoF,
+    // ===================== SM5.1 / misc additions =====================
+
+    CustomData,
+
+    DerivRtxCoarse,
+    DerivRtxFine,
+    DerivRtyCoarse,
+    DerivRtyFine,
+
+    UAddC,
+    USubB,
+    SwapC,
+
+    EvalSnapped,
+    EvalSampleIndex,
+    EvalCentroid,
+    
+    // IR-only operations
+    Sub,
+    Neg,
+    Abs,
+    Pow,
+    Lrp,
+    Saturate,
 }
