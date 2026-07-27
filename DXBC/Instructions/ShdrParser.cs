@@ -1,9 +1,29 @@
 namespace Parser.DXBC.Instructions;
 
+// D3D10_SB_TOKENIZED_PROGRAM_TYPE - decoded from bits 16-31 of the
+// shader version token.
+public enum ShaderProgramType
+{
+    Pixel = 0,
+    Vertex = 1,
+    Geometry = 2,
+    Hull = 3,
+    Domain = 4,
+    Compute = 5,
+    Unknown = 0xFFFF
+}
+
 public class ShdrParser
 {
     public uint VersionToken { get; private set; }
     public uint DeclaredDwordCount { get; private set; }
+
+    // Decoded from VersionToken: bits 0-3 minor version, bits 4-7 major
+    // version, bits 16-31 program type (shader stage).
+    public uint MinorVersion { get; private set; }
+    public uint MajorVersion { get; private set; }
+    public ShaderProgramType ProgramType { get; private set; }
+
     public List<Instruction> Instructions { get; } = new();
     public List<string> Warnings { get; } = new();
 
@@ -13,13 +33,15 @@ public class ShdrParser
         { 1, new() { Opcode = Opcode.And, Name = "and", OperandCount = 3 } },
         { 2, new() { Opcode = Opcode.Break, Name = "break", OperandCount = 0 } },
         { 3, new() { Opcode = Opcode.BreakC, Name = "breakc", OperandCount = 1 } },
-        // NOTE: no CALL/CALLC opcode exists in Wine's SM4 enum (0x04/0x05 are
-        // unused/reserved here) - your old 8/9 entries were never real opcodes.
+        { 4, new() { Opcode = Opcode.Call, Name = "call", OperandCount = 1 } },
+        { 5, new() { Opcode = Opcode.CallC, Name = "callc", OperandCount = 2 } },
         { 6, new() { Opcode = Opcode.Case, Name = "case", OperandCount = 1 } },
-        { 7, new() { Opcode = Opcode.Continue, Name = "continue", OperandCount = 0 } },
-        { 8, new() { Opcode = Opcode.ContinueC, Name = "continuec", OperandCount = 1 } },
+        { 9, new() { Opcode = Opcode.Cut, Name = "cut", OperandCount = 0 } },
+        { 10, new() { Opcode = Opcode.Default, Name = "default", OperandCount = 0 } },
         { 11, new() { Opcode = Opcode.DerivRtx, Name = "deriv_rtx", OperandCount = 2 } },
         { 12, new() { Opcode = Opcode.DerivRty, Name = "deriv_rty", OperandCount = 2 } },
+        { 7, new() { Opcode = Opcode.Continue, Name = "continue", OperandCount = 0 } },
+        { 8, new() { Opcode = Opcode.ContinueC, Name = "continuec", OperandCount = 1 } },
         { 13, new() { Opcode = Opcode.Discard, Name = "discard", OperandCount = 1 } },
         { 14, new() { Opcode = Opcode.Div, Name = "div", OperandCount = 3 } },
         { 15, new() { Opcode = Opcode.Dp2, Name = "dp2", OperandCount = 3 } },
@@ -49,13 +71,15 @@ public class ShdrParser
         { 39, new() { Opcode = Opcode.INe, Name = "ine", OperandCount = 3 } },
         { 40, new() { Opcode = Opcode.INeg, Name = "ineg", OperandCount = 2 } },
         { 43, new() { Opcode = Opcode.Itof, Name = "itof", OperandCount = 2 } },
+        { 49, new() { Opcode = Opcode.Lt, Name = "lt", OperandCount = 3 } },
+        { 51, new() { Opcode = Opcode.Min, Name = "min", OperandCount = 3 } },
+        { 86, new() { Opcode = Opcode.Utof, Name = "utof", OperandCount = 2 } },
+        { 129, new() { Opcode = Opcode.Rcp, Name = "rcp", OperandCount = 2 } },
         { 44, new() { Opcode = Opcode.Label, Name = "label", OperandCount = 1 } },
         { 45, new() { Opcode = Opcode.Ld, Name = "ld", OperandCount = 3 } },
         { 47, new() { Opcode = Opcode.Log, Name = "log", OperandCount = 2 } },
         { 48, new() { Opcode = Opcode.Loop, Name = "loop", OperandCount = 0 } },
-        { 49, new() { Opcode = Opcode.Lt, Name = "lt", OperandCount = 3 } },
         { 50, new() { Opcode = Opcode.Mad, Name = "mad", OperandCount = 4 } },
-        { 51, new() { Opcode = Opcode.Min, Name = "min", OperandCount = 3 } },
         { 52, new() { Opcode = Opcode.Max, Name = "max", OperandCount = 3 } },
         { 53, new() { Opcode = Opcode.CustomData, Name = "customdata", OperandCount = 0 } },
         { 54, new() { Opcode = Opcode.Mov, Name = "mov", OperandCount = 2 } },
@@ -82,7 +106,6 @@ public class ShdrParser
         { 75, new() { Opcode = Opcode.Sqrt, Name = "sqrt", OperandCount = 2 } },
         { 76, new() { Opcode = Opcode.Switch, Name = "switch", OperandCount = 1 } },
         { 77, new() { Opcode = Opcode.SinCos, Name = "sincos", OperandCount = 3 } },
-        { 86, new() { Opcode = Opcode.Utof, Name = "utof", OperandCount = 2 } },
 
         // ===================== newly confirmed against Wine's shader_sm4.c =====================
         // (WINED3D_SM4_OP_*/WINED3D_SM5_OP_* numeric IDs — see
@@ -95,13 +118,14 @@ public class ShdrParser
         { 79, new() { Opcode = Opcode.Ult, Name = "ult", OperandCount = 3 } },
         { 80, new() { Opcode = Opcode.Uge, Name = "uge", OperandCount = 3 } },
         { 81, new() { Opcode = Opcode.UMul, Name = "umul", OperandCount = 4 } },
+        { 82, new() { Opcode = Opcode.UMad, Name = "umad", OperandCount = 4 } },
         { 83, new() { Opcode = Opcode.UMax, Name = "umax", OperandCount = 3 } },
         { 84, new() { Opcode = Opcode.UMin, Name = "umin", OperandCount = 3 } },
         { 85, new() { Opcode = Opcode.Ushr, Name = "ushr", OperandCount = 3 } },
         { 87, new() { Opcode = Opcode.Xor, Name = "xor", OperandCount = 3 } },
         { 91, new() { Opcode = Opcode.DclIndexRange, Name = "dcl_indexrange", OperandCount = 2 } },
         { 92, new() { Opcode = Opcode.DclOutputTopology, Name = "dcl_outputtopology", OperandCount = 0 } },
-        { 105, new() { Opcode = Opcode.DclIndexableTemp, Name = "dcl_indexabletemp", OperandCount = 3 } },
+        { 105, new() { Opcode = Opcode.DclIndexableTemp, Name = "dcl_indexabletemp", OperandCount = 0 } }, // reg index/count/components read as raw DWORDs below
         { 108, new() { Opcode = Opcode.Lod, Name = "lod", OperandCount = 4 } },
         { 109, new() { Opcode = Opcode.Gather4, Name = "gather4", OperandCount = 4 } },
         { 110, new() { Opcode = Opcode.SamplePos, Name = "sample_pos", OperandCount = 3 } },
@@ -115,7 +139,6 @@ public class ShdrParser
         { 126, new() { Opcode = Opcode.Gather4C, Name = "gather4_c", OperandCount = 5 } },
         { 127, new() { Opcode = Opcode.Gather4Po, Name = "gather4_po", OperandCount = 5 } },
         { 128, new() { Opcode = Opcode.Gather4PoC, Name = "gather4_po_c", OperandCount = 6 } },
-        { 129, new() { Opcode = Opcode.Rcp, Name = "rcp", OperandCount = 2 } },
         { 130, new() { Opcode = Opcode.F32ToF16, Name = "f32tof16", OperandCount = 2 } },
         { 131, new() { Opcode = Opcode.F16ToF32, Name = "f16tof32", OperandCount = 2 } },
         { 134, new() { Opcode = Opcode.CountBits, Name = "countbits", OperandCount = 2 } },
@@ -139,29 +162,29 @@ public class ShdrParser
         { 156, new() { Opcode = Opcode.DclUAV, Name = "dcl_uav_typed", OperandCount = 1 } },
         { 163, new() { Opcode = Opcode.LdUAVTyped, Name = "ld_uav_typed", OperandCount = 2 } },
         { 164, new() { Opcode = Opcode.StoreUAV, Name = "store_uav_typed", OperandCount = 2 } },
-        { 165, new() { Opcode = Opcode.LdRaw, Name = "ld_raw", OperandCount = 2 } },
-        { 166, new() { Opcode = Opcode.StoreRaw, Name = "store_raw", OperandCount = 2 } },
-        { 167, new() { Opcode = Opcode.LdStructured, Name = "ld_structured", OperandCount = 3 } },
-        { 168, new() { Opcode = Opcode.StoreStructured, Name = "store_structured", OperandCount = 3 } },
-        { 169, new() { Opcode = Opcode.AtomicAnd, Name = "atomic_and", OperandCount = 2 } },
-        { 170, new() { Opcode = Opcode.AtomicOr, Name = "atomic_or", OperandCount = 2 } },
-        { 171, new() { Opcode = Opcode.AtomicXor, Name = "atomic_xor", OperandCount = 2 } },
-        { 172, new() { Opcode = Opcode.AtomicCmpStore, Name = "atomic_cmp_store", OperandCount = 3 } },
-        { 173, new() { Opcode = Opcode.AtomicIAdd, Name = "atomic_iadd", OperandCount = 2 } },
-        { 174, new() { Opcode = Opcode.AtomicIMax, Name = "atomic_imax", OperandCount = 2 } },
-        { 175, new() { Opcode = Opcode.AtomicIMin, Name = "atomic_imin", OperandCount = 2 } },
-        { 176, new() { Opcode = Opcode.AtomicUMax, Name = "atomic_umax", OperandCount = 2 } },
-        { 177, new() { Opcode = Opcode.AtomicUMin, Name = "atomic_umin", OperandCount = 2 } },
-        { 180, new() { Opcode = Opcode.ImmAtomicIAdd, Name = "imm_atomic_iadd", OperandCount = 3 } },
-        { 181, new() { Opcode = Opcode.ImmAtomicAnd, Name = "imm_atomic_and", OperandCount = 3 } },
-        { 182, new() { Opcode = Opcode.ImmAtomicOr, Name = "imm_atomic_or", OperandCount = 3 } },
-        { 183, new() { Opcode = Opcode.ImmAtomicXor, Name = "imm_atomic_xor", OperandCount = 3 } },
-        { 184, new() { Opcode = Opcode.ImmAtomicExch, Name = "imm_atomic_exch", OperandCount = 3 } },
-        { 185, new() { Opcode = Opcode.ImmAtomicCmpExch, Name = "imm_atomic_cmp_exch", OperandCount = 4 } },
-        { 186, new() { Opcode = Opcode.ImmAtomicIMax, Name = "imm_atomic_imax", OperandCount = 3 } },
-        { 187, new() { Opcode = Opcode.ImmAtomicIMin, Name = "imm_atomic_imin", OperandCount = 3 } },
-        { 188, new() { Opcode = Opcode.ImmAtomicUMax, Name = "imm_atomic_umax", OperandCount = 3 } },
-        { 189, new() { Opcode = Opcode.ImmAtomicUMin, Name = "imm_atomic_umin", OperandCount = 3 } },
+        { 165, new() { Opcode = Opcode.LdRaw, Name = "ld_raw", OperandCount = 3 } }, // dest, byteOffset, resource
+        { 166, new() { Opcode = Opcode.StoreRaw, Name = "store_raw", OperandCount = 3 } }, // uav, byteOffset, value
+        { 167, new() { Opcode = Opcode.LdStructured, Name = "ld_structured", OperandCount = 4 } }, // dest, structIndex, byteOffset, resource
+        { 168, new() { Opcode = Opcode.StoreStructured, Name = "store_structured", OperandCount = 4 } }, // uav, structIndex, byteOffset, value
+        { 169, new() { Opcode = Opcode.AtomicAnd, Name = "atomic_and", OperandCount = 3 } }, // dest, address, value
+        { 170, new() { Opcode = Opcode.AtomicOr, Name = "atomic_or", OperandCount = 3 } },
+        { 171, new() { Opcode = Opcode.AtomicXor, Name = "atomic_xor", OperandCount = 3 } },
+        { 172, new() { Opcode = Opcode.AtomicCmpStore, Name = "atomic_cmp_store", OperandCount = 4 } }, // dest, address, compare, value
+        { 173, new() { Opcode = Opcode.AtomicIAdd, Name = "atomic_iadd", OperandCount = 3 } },
+        { 174, new() { Opcode = Opcode.AtomicIMax, Name = "atomic_imax", OperandCount = 3 } },
+        { 175, new() { Opcode = Opcode.AtomicIMin, Name = "atomic_imin", OperandCount = 3 } },
+        { 176, new() { Opcode = Opcode.AtomicUMax, Name = "atomic_umax", OperandCount = 3 } },
+        { 177, new() { Opcode = Opcode.AtomicUMin, Name = "atomic_umin", OperandCount = 3 } },
+        { 180, new() { Opcode = Opcode.ImmAtomicIAdd, Name = "imm_atomic_iadd", OperandCount = 4 } }, // dest, uav/tgsm, address, value
+        { 181, new() { Opcode = Opcode.ImmAtomicAnd, Name = "imm_atomic_and", OperandCount = 4 } },
+        { 182, new() { Opcode = Opcode.ImmAtomicOr, Name = "imm_atomic_or", OperandCount = 4 } },
+        { 183, new() { Opcode = Opcode.ImmAtomicXor, Name = "imm_atomic_xor", OperandCount = 4 } },
+        { 184, new() { Opcode = Opcode.ImmAtomicExch, Name = "imm_atomic_exch", OperandCount = 4 } },
+        { 185, new() { Opcode = Opcode.ImmAtomicCmpExch, Name = "imm_atomic_cmp_exch", OperandCount = 5 } }, // dest, uav, address, compare, value
+        { 186, new() { Opcode = Opcode.ImmAtomicIMax, Name = "imm_atomic_imax", OperandCount = 4 } },
+        { 187, new() { Opcode = Opcode.ImmAtomicIMin, Name = "imm_atomic_imin", OperandCount = 4 } },
+        { 188, new() { Opcode = Opcode.ImmAtomicUMax, Name = "imm_atomic_umax", OperandCount = 4 } },
+        { 189, new() { Opcode = Opcode.ImmAtomicUMin, Name = "imm_atomic_umin", OperandCount = 4 } },
         { 190, new() { Opcode = Opcode.Sync, Name = "sync", OperandCount = 0 } },
 
         // ===================== SM5.1 / misc additions =====================
@@ -212,6 +235,23 @@ public class ShdrParser
             instruction.AoffimmiU = SignExtend4((token >> 9) & 0xF);
             instruction.AoffimmiV = SignExtend4((token >> 13) & 0xF);
             instruction.AoffimmiW = SignExtend4((token >> 17) & 0xF);
+        }
+        else if (extType == 2)
+        {
+            // bits 6-10: resource dimension, bits 11-16: structure stride
+            // (only meaningful for RESOURCE_DIMENSION_STRUCTURED_BUFFER)
+            instruction.HasResourceDim = true;
+            instruction.ResourceDim = (token >> 6) & 0x1F;
+            instruction.ResourceStructureStride = (token >> 11) & 0xFFF;
+        }
+        else if (extType == 3)
+        {
+            // bits 6-9/10-13/14-17/18-21: return type per component (x/y/z/w)
+            instruction.HasResourceReturnType = true;
+            instruction.ResourceReturnTypeX = (token >> 6) & 0xF;
+            instruction.ResourceReturnTypeY = (token >> 10) & 0xF;
+            instruction.ResourceReturnTypeZ = (token >> 14) & 0xF;
+            instruction.ResourceReturnTypeW = (token >> 18) & 0xF;
         }
     }
 
@@ -497,6 +537,15 @@ private RegisterType DecodeRegisterType(uint type)
         using var reader = new BinaryReader(stream);
 
         VersionToken = reader.ReadUInt32();
+
+        MinorVersion = VersionToken & 0xF;
+        MajorVersion = (VersionToken >> 4) & 0xF;
+
+        uint programTypeValue = (VersionToken >> 16) & 0xFFFF;
+        ProgramType = Enum.IsDefined(typeof(ShaderProgramType), (int)programTypeValue)
+            ? (ShaderProgramType)programTypeValue
+            : ShaderProgramType.Unknown;
+
         DeclaredDwordCount = reader.ReadUInt32();
 
         // Parse up to the declared shader size (in DWORDs), not just
@@ -544,6 +593,7 @@ private RegisterType DecodeRegisterType(uint type)
 
                 customInstruction.Length = (int)customLength;
 
+                customInstruction.InstructionIndex = Instructions.Count;
                 Instructions.Add(customInstruction);
                 continue;
             }
@@ -585,21 +635,22 @@ private RegisterType DecodeRegisterType(uint type)
             };
 
             //------------------------------------------------------------------
-            // Extended opcode token(s). We don't decode the contents yet
-            // (aoffimmi, resource return type, etc.) - just consume the
-            // DWORD(s) so the parser stays synchronized. Chained extended
-            // tokens (bit 31 set again) are also consumed.
+            // Extended opcode token(s). Each is decoded via
+            // ParseExtendedOpcode(); if bit 31 is set again, another
+            // extension token follows immediately (chained extensions),
+            // so keep decoding until a token without bit 31 is read.
             //------------------------------------------------------------------
 
             if (instruction.HasExtendedOpcode)
             {
-                uint ext = reader.ReadUInt32();
-                ParseExtendedOpcode(ext, instruction);
+                uint ext;
 
-                while ((ext & 0x80000000) != 0)
+                do
                 {
                     ext = reader.ReadUInt32();
+                    ParseExtendedOpcode(ext, instruction);
                 }
+                while ((ext & 0x80000000) != 0);
             }
 
             if (opcodeValue == 88) // dcl_resource
@@ -616,6 +667,10 @@ private RegisterType DecodeRegisterType(uint type)
             {
                 uint indexType = (token >> 11) & 0x1;
                 instruction.ExtraData.Add(indexType);
+            }
+            else if (opcodeValue == 98) // dcl_input_ps: interpolation mode, bits 11-14
+            {
+                instruction.Interpolation = (Parser.DXBC.IR.InterpolationMode)((token >> 11) & 0xF);
             }
 
             for (int i = 0; i < info.OperandCount; i++)
@@ -679,6 +734,27 @@ private RegisterType DecodeRegisterType(uint type)
                 //----------------------------------------------------------
                 case 106:
                     break;
+
+                //----------------------------------------------------------
+                // dcl_indexableTemp - 3 raw immediate DWORDs: register
+                // index, number of registers, number of components.
+                // Not encoded as normal operand tokens.
+                //----------------------------------------------------------
+                case 105:
+                    instruction.ExtraData.Add(reader.ReadUInt32()); // register index
+                    instruction.ExtraData.Add(reader.ReadUInt32()); // num registers
+                    instruction.ExtraData.Add(reader.ReadUInt32()); // num components
+                    break;
+
+                //----------------------------------------------------------
+                // dcl_thread_group - 3 raw immediate DWORDs: x, y, z
+                // thread group sizes. Not encoded as normal operand tokens.
+                //----------------------------------------------------------
+                case 155:
+                    instruction.ExtraData.Add(reader.ReadUInt32()); // x
+                    instruction.ExtraData.Add(reader.ReadUInt32()); // y
+                    instruction.ExtraData.Add(reader.ReadUInt32()); // z
+                    break;
             }
 
             //------------------------------------------------------------------
@@ -700,6 +776,7 @@ private RegisterType DecodeRegisterType(uint type)
 
             reader.BaseStream.Position = instructionStartByte + length * 4;
 
+            instruction.InstructionIndex = Instructions.Count;
             Instructions.Add(instruction);
         }
     }

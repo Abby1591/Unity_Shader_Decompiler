@@ -96,6 +96,7 @@ public enum Opcode
 
     ISub,
     UMul,
+    UMad,
     UDiv,
     UMin,
     UMax,

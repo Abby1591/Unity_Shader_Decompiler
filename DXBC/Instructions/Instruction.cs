@@ -8,10 +8,19 @@ public enum InstructionTestBoolean
 
 public class Instruction
 {
+    // Position of this instruction within ShdrParser.Instructions, set
+    // by the parser as each instruction is emitted. Makes it easy to
+    // refer back to "the Nth instruction" in later IR/decompiler passes.
+    public int InstructionIndex;
+
     public uint OpcodeToken;
 
     public Opcode Opcode;
 
+    public uint OpcodeId;
+    
+    public uint OpcodeControls;
+    
     public int Length;
     
     public List<uint> ExtraData { get; } = new();
@@ -45,9 +54,27 @@ public class Instruction
     public sbyte AoffimmiV;
     public sbyte AoffimmiW;
 
+    // Extended opcode type 2: resource dimension (e.g. on ld_structured /
+    // ld_raw variants that carry it inline rather than via dcl_resource).
+    public bool HasResourceDim;
+    public uint ResourceDim;
+    public uint ResourceStructureStride;
+
+    // Extended opcode type 3: resource return type, one 4-bit component
+    // type (x/y/z/w) per return component.
+    public bool HasResourceReturnType;
+    public uint ResourceReturnTypeX;
+    public uint ResourceReturnTypeY;
+    public uint ResourceReturnTypeZ;
+    public uint ResourceReturnTypeW;
+
     // CUSTOMDATA (opcode 53) is the only instruction whose length is
     // not derived from bits 24-30 of the opcode token - it has its
     // own length DWORD immediately following, followed by raw bytes.
     public uint CustomDataLength;
     public byte[]? CustomData;
+
+    // dcl_input_ps only: interpolation mode, encoded in bits 11-14 of
+    // the opcode token itself (not a trailing DWORD).
+    public Parser.DXBC.IR.InterpolationMode Interpolation = Parser.DXBC.IR.InterpolationMode.Undefined;
 }
