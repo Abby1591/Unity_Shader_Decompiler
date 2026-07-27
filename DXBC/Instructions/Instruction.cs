@@ -29,10 +29,21 @@ public class Instruction
     // bit 18 of the opcode token (used by breakc/if/etc.)
     public InstructionTestBoolean TestBoolean;
 
-    // raw DWORD(s) consumed for an extended opcode chain (only the
-    // first is kept for now - later this should be decoded into
-    // aoffimmi / resource-return-type / etc.)
+    // raw DWORD(s) consumed for an extended opcode chain (kept for
+    // reference/debugging; decoded fields below hold the actual data).
     public uint ExtendedOpcode;
+
+    // "precise" flags (bits 19-22 of the opcode token) - one bit per
+    // component (x/y/z/w) requesting IEEE-precise evaluation.
+    public byte Precise;
+
+    // Decoded sample_controls (aoffimmi) extended opcode token, present
+    // on ld/sample/gather4/etc. Each offset is a signed 4-bit immediate
+    // in the range -8..7 texel offset.
+    public bool HasSampleControls;
+    public sbyte AoffimmiU;
+    public sbyte AoffimmiV;
+    public sbyte AoffimmiW;
 
     // CUSTOMDATA (opcode 53) is the only instruction whose length is
     // not derived from bits 24-30 of the opcode token - it has its

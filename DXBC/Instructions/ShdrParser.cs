@@ -18,6 +18,8 @@ public class ShdrParser
         { 6, new() { Opcode = Opcode.Case, Name = "case", OperandCount = 1 } },
         { 7, new() { Opcode = Opcode.Continue, Name = "continue", OperandCount = 0 } },
         { 8, new() { Opcode = Opcode.ContinueC, Name = "continuec", OperandCount = 1 } },
+        { 11, new() { Opcode = Opcode.DerivRtx, Name = "deriv_rtx", OperandCount = 2 } },
+        { 12, new() { Opcode = Opcode.DerivRty, Name = "deriv_rty", OperandCount = 2 } },
         { 13, new() { Opcode = Opcode.Discard, Name = "discard", OperandCount = 1 } },
         { 14, new() { Opcode = Opcode.Div, Name = "div", OperandCount = 3 } },
         { 15, new() { Opcode = Opcode.Dp2, Name = "dp2", OperandCount = 3 } },
@@ -45,11 +47,15 @@ public class ShdrParser
         { 37, new() { Opcode = Opcode.IMin, Name = "imin", OperandCount = 3 } },
         { 38, new() { Opcode = Opcode.IMul, Name = "imul", OperandCount = 4 } },
         { 39, new() { Opcode = Opcode.INe, Name = "ine", OperandCount = 3 } },
+        { 40, new() { Opcode = Opcode.INeg, Name = "ineg", OperandCount = 2 } },
+        { 43, new() { Opcode = Opcode.Itof, Name = "itof", OperandCount = 2 } },
         { 44, new() { Opcode = Opcode.Label, Name = "label", OperandCount = 1 } },
         { 45, new() { Opcode = Opcode.Ld, Name = "ld", OperandCount = 3 } },
         { 47, new() { Opcode = Opcode.Log, Name = "log", OperandCount = 2 } },
         { 48, new() { Opcode = Opcode.Loop, Name = "loop", OperandCount = 0 } },
+        { 49, new() { Opcode = Opcode.Lt, Name = "lt", OperandCount = 3 } },
         { 50, new() { Opcode = Opcode.Mad, Name = "mad", OperandCount = 4 } },
+        { 51, new() { Opcode = Opcode.Min, Name = "min", OperandCount = 3 } },
         { 52, new() { Opcode = Opcode.Max, Name = "max", OperandCount = 3 } },
         { 53, new() { Opcode = Opcode.CustomData, Name = "customdata", OperandCount = 0 } },
         { 54, new() { Opcode = Opcode.Mov, Name = "mov", OperandCount = 2 } },
@@ -76,6 +82,7 @@ public class ShdrParser
         { 75, new() { Opcode = Opcode.Sqrt, Name = "sqrt", OperandCount = 2 } },
         { 76, new() { Opcode = Opcode.Switch, Name = "switch", OperandCount = 1 } },
         { 77, new() { Opcode = Opcode.SinCos, Name = "sincos", OperandCount = 3 } },
+        { 86, new() { Opcode = Opcode.Utof, Name = "utof", OperandCount = 2 } },
 
         // ===================== newly confirmed against Wine's shader_sm4.c =====================
         // (WINED3D_SM4_OP_*/WINED3D_SM5_OP_* numeric IDs — see
@@ -108,6 +115,7 @@ public class ShdrParser
         { 126, new() { Opcode = Opcode.Gather4C, Name = "gather4_c", OperandCount = 5 } },
         { 127, new() { Opcode = Opcode.Gather4Po, Name = "gather4_po", OperandCount = 5 } },
         { 128, new() { Opcode = Opcode.Gather4PoC, Name = "gather4_po_c", OperandCount = 6 } },
+        { 129, new() { Opcode = Opcode.Rcp, Name = "rcp", OperandCount = 2 } },
         { 130, new() { Opcode = Opcode.F32ToF16, Name = "f32tof16", OperandCount = 2 } },
         { 131, new() { Opcode = Opcode.F16ToF32, Name = "f16tof32", OperandCount = 2 } },
         { 134, new() { Opcode = Opcode.CountBits, Name = "countbits", OperandCount = 2 } },
@@ -192,6 +200,26 @@ public class ShdrParser
     private void ParseExtendedOpcode(uint token, Instruction instruction)
     {
         instruction.ExtendedOpcode = token;
+
+        // bits 0-5: extended opcode type. Type 1 is "sample controls"
+        // (aoffimmi) - three signed 4-bit texel offsets (U/V/W) packed
+        // into bits 9-12 / 13-16 / 17-20.
+        uint extType = token & 0x3F;
+
+        if (extType == 1)
+        {
+            instruction.HasSampleControls = true;
+            instruction.AoffimmiU = SignExtend4((token >> 9) & 0xF);
+            instruction.AoffimmiV = SignExtend4((token >> 13) & 0xF);
+            instruction.AoffimmiW = SignExtend4((token >> 17) & 0xF);
+        }
+    }
+
+    // Sign-extend a 4-bit immediate (range -8..7) stored in the low
+    // nibble of an unsigned value.
+    private static sbyte SignExtend4(uint value)
+    {
+        return (sbyte)((value & 0x8) != 0 ? (int)value - 16 : (int)value);
     }
 
 private OpcodeInfo DecodeOpcode(uint opcode)
@@ -471,7 +499,18 @@ private RegisterType DecodeRegisterType(uint type)
         VersionToken = reader.ReadUInt32();
         DeclaredDwordCount = reader.ReadUInt32();
 
-        while (reader.BaseStream.Position < reader.BaseStream.Length)
+        // Parse up to the declared shader size (in DWORDs), not just
+        // until we happen to hit a RET or run out of stream. Clamp to
+        // the actual buffer length in case the declared count lies.
+        long declaredEndByte = (long)DeclaredDwordCount * 4;
+        long parseEndByte = Math.Min(declaredEndByte, reader.BaseStream.Length);
+
+        if (declaredEndByte != reader.BaseStream.Length)
+        {
+            Warnings.Add($"Declared shader size ({DeclaredDwordCount} DWORDs) does not match chunk data length ({reader.BaseStream.Length / 4} DWORDs).");
+        }
+
+        while (reader.BaseStream.Position < parseEndByte)
         {
             long instructionStartByte = reader.BaseStream.Position;
             int instructionStart = (int)(instructionStartByte / 4);
@@ -519,6 +558,11 @@ private RegisterType DecodeRegisterType(uint type)
 
             OpcodeInfo info = DecodeOpcode((uint)opcodeValue);
 
+            if (info.Opcode == Opcode.Unknown)
+            {
+                Warnings.Add($"Warning: Unknown opcode {opcodeValue} at DWORD {instructionStart}. Skipping {length} DWORDs.");
+            }
+
             var instruction = new Instruction
             {
                 Opcode = info.Opcode,
@@ -534,7 +578,10 @@ private RegisterType DecodeRegisterType(uint type)
                 HasExtendedOpcode = (token & 0x80000000) != 0,
 
                 // bit 18: test boolean (used by breakc/if/continuec/retc/etc.)
-                TestBoolean = (InstructionTestBoolean)((token >> 18) & 1)
+                TestBoolean = (InstructionTestBoolean)((token >> 18) & 1),
+
+                // bits 19-22: "precise" flags, one bit per component (xyzw)
+                Precise = (byte)((token >> 19) & 0xF)
             };
 
             //------------------------------------------------------------------

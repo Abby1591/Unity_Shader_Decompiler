@@ -41,6 +41,7 @@ public enum Opcode
     IEq,
     IGe,
     ILt,
+    INeg,
     IMad,
     IMax,
     IMin,
