@@ -189,9 +189,18 @@ public class ShdrParser
         { 148, new() { Opcode = Opcode.DclOutputControlPointCount, Name = "dcl_output_control_point_count", OperandCount = 0 } },
         { 149, new() { Opcode = Opcode.DclDomain, Name = "dcl_tessellator_domain", OperandCount = 0 } },
         { 150, new() { Opcode = Opcode.DclPartitioning, Name = "dcl_tessellator_partitioning", OperandCount = 0 } },
+        { 151, new() { Opcode = Opcode.DclTessOutputPrimitive, Name = "dcl_tessellator_output_primitive", OperandCount = 0 } },
         { 152, new() { Opcode = Opcode.DclHSMaxTessFactor, Name = "dcl_hs_max_tessfactor", OperandCount = 0 } },
+        { 153, new() { Opcode = Opcode.DclHSForkPhaseInstanceCount, Name = "dcl_hs_fork_phase_instance_count", OperandCount = 0 } },
+        { 154, new() { Opcode = Opcode.DclHSJoinPhaseInstanceCount, Name = "dcl_hs_join_phase_instance_count", OperandCount = 0 } },
         { 155, new() { Opcode = Opcode.DclThreadGroup, Name = "dcl_thread_group", OperandCount = 0 } },
         { 156, new() { Opcode = Opcode.DclUAV, Name = "dcl_uav_typed", OperandCount = 1 } },
+        { 157, new() { Opcode = Opcode.DclUAVRaw, Name = "dcl_uav_raw", OperandCount = 1 } },
+        { 158, new() { Opcode = Opcode.DclUAVStructured, Name = "dcl_uav_structured", OperandCount = 1 } },
+        { 159, new() { Opcode = Opcode.DclTGSMRaw, Name = "dcl_tgsm_raw", OperandCount = 1 } },
+        { 160, new() { Opcode = Opcode.DclTGSMStructured, Name = "dcl_tgsm_structured", OperandCount = 1 } },
+        { 161, new() { Opcode = Opcode.DclResourceRaw, Name = "dcl_resource_raw", OperandCount = 1 } },
+        { 162, new() { Opcode = Opcode.DclResourceStructured, Name = "dcl_resource_structured", OperandCount = 1 } },
         { 163, new() { Opcode = Opcode.LdUAVTyped, Name = "ld_uav_typed", OperandCount = 2 } },
         { 164, new() { Opcode = Opcode.StoreUAV, Name = "store_uav_typed", OperandCount = 2 } },
         { 165, new() { Opcode = Opcode.LdRaw, Name = "ld_raw", OperandCount = 3 } },
@@ -207,6 +216,8 @@ public class ShdrParser
         { 175, new() { Opcode = Opcode.AtomicIMin, Name = "atomic_imin", OperandCount = 3 } },
         { 176, new() { Opcode = Opcode.AtomicUMax, Name = "atomic_umax", OperandCount = 3 } },
         { 177, new() { Opcode = Opcode.AtomicUMin, Name = "atomic_umin", OperandCount = 3 } },
+        { 178, new() { Opcode = Opcode.ImmAtomicAlloc, Name = "imm_atomic_alloc", OperandCount = 2 } },
+        { 179, new() { Opcode = Opcode.ImmAtomicConsume, Name = "imm_atomic_consume", OperandCount = 2 } },
         { 180, new() { Opcode = Opcode.ImmAtomicIAdd, Name = "imm_atomic_iadd", OperandCount = 4 } },
         { 181, new() { Opcode = Opcode.ImmAtomicAnd, Name = "imm_atomic_and", OperandCount = 4 } },
         { 182, new() { Opcode = Opcode.ImmAtomicOr, Name = "imm_atomic_or", OperandCount = 4 } },
@@ -218,9 +229,22 @@ public class ShdrParser
         { 188, new() { Opcode = Opcode.ImmAtomicUMax, Name = "imm_atomic_umax", OperandCount = 4 } },
         { 189, new() { Opcode = Opcode.ImmAtomicUMin, Name = "imm_atomic_umin", OperandCount = 4 } },
         { 190, new() { Opcode = Opcode.Sync, Name = "sync", OperandCount = 0 } },
+        { 191, new() { Opcode = Opcode.DAdd, Name = "dadd", OperandCount = 3 } },
+        { 192, new() { Opcode = Opcode.DMax, Name = "dmax", OperandCount = 3 } },
+        { 193, new() { Opcode = Opcode.DMin, Name = "dmin", OperandCount = 3 } },
+        { 194, new() { Opcode = Opcode.DMul, Name = "dmul", OperandCount = 3 } },
+        { 195, new() { Opcode = Opcode.DEq, Name = "deq", OperandCount = 3 } },
+        { 196, new() { Opcode = Opcode.DGe, Name = "dge", OperandCount = 3 } },
+        { 197, new() { Opcode = Opcode.DLt, Name = "dlt", OperandCount = 3 } },
+        { 198, new() { Opcode = Opcode.DNe, Name = "dne", OperandCount = 3 } },
+        { 199, new() { Opcode = Opcode.DMov, Name = "dmov", OperandCount = 2 } },
+        { 200, new() { Opcode = Opcode.DMovC, Name = "dmovc", OperandCount = 4 } },
+        { 201, new() { Opcode = Opcode.DtoF, Name = "dtof", OperandCount = 2 } },
+        { 202, new() { Opcode = Opcode.FtoD, Name = "ftod", OperandCount = 2 } },
         { 203, new() { Opcode = Opcode.EvalSnapped, Name = "eval_snapped", OperandCount = 3 } },
         { 204, new() { Opcode = Opcode.EvalSampleIndex, Name = "eval_sample_index", OperandCount = 3 } },
         { 205, new() { Opcode = Opcode.EvalCentroid, Name = "eval_centroid", OperandCount = 2 } },
+        { 206, new() { Opcode = Opcode.DclGSInstanceCount, Name = "dcl_gs_instance_count", OperandCount = 0 } },
     };
 
     //------------------------------------------------------------------
@@ -743,6 +767,51 @@ private RegisterType DecodeRegisterType(uint type)
                 // dcl_globalFlags
                 //----------------------------------------------------------
                 case 106:
+                    break;
+
+                //----------------------------------------------------------
+                // dcl_hs_fork_phase_instance_count / dcl_hs_join_phase_instance_count
+                // - 1 raw immediate DWORD: instance count
+                //----------------------------------------------------------
+                case 153:
+                case 154:
+                    instruction.ExtraData.Add(reader.ReadUInt32());
+                    break;
+
+                //----------------------------------------------------------
+                // dcl_uav_structured - 1 raw immediate DWORD: structure stride
+                //----------------------------------------------------------
+                case 158:
+                    instruction.ExtraData.Add(reader.ReadUInt32());
+                    break;
+
+                //----------------------------------------------------------
+                // dcl_tgsm_raw - 1 raw immediate DWORD: byte count
+                //----------------------------------------------------------
+                case 159:
+                    instruction.ExtraData.Add(reader.ReadUInt32());
+                    break;
+
+                //----------------------------------------------------------
+                // dcl_tgsm_structured - 2 raw immediate DWORDs: stride, count
+                //----------------------------------------------------------
+                case 160:
+                    instruction.ExtraData.Add(reader.ReadUInt32()); // structure stride
+                    instruction.ExtraData.Add(reader.ReadUInt32()); // element count
+                    break;
+
+                //----------------------------------------------------------
+                // dcl_resource_structured - 1 raw immediate DWORD: structure stride
+                //----------------------------------------------------------
+                case 162:
+                    instruction.ExtraData.Add(reader.ReadUInt32());
+                    break;
+
+                //----------------------------------------------------------
+                // dcl_gs_instance_count - 1 raw immediate DWORD: instance count
+                //----------------------------------------------------------
+                case 206:
+                    instruction.ExtraData.Add(reader.ReadUInt32());
                     break;
 
                 //----------------------------------------------------------

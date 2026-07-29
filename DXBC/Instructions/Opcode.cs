@@ -178,6 +178,21 @@ public enum Opcode
     DclPartitioning,
     DclOutputTopology,
 
+    // ===================== previously missing SM5 declarations/atomics =====================
+
+    DclTessOutputPrimitive,
+    DclHSForkPhaseInstanceCount,
+    DclHSJoinPhaseInstanceCount,
+    DclUAVRaw,
+    DclUAVStructured,
+    DclTGSMRaw,
+    DclTGSMStructured,
+    DclResourceRaw,
+    DclResourceStructured,
+    ImmAtomicAlloc,
+    ImmAtomicConsume,
+    DclGSInstanceCount,
+
     // ===================== UAV atomics =====================
 
     AtomicIAdd,
@@ -230,9 +245,16 @@ public enum Opcode
     // ===================== double precision =====================
 
     DMov,
+    DMovC,
     DAdd,
-    DSub,
+    DMax,
+    DMin,
     DMul,
+    DEq,
+    DGe,
+    DLt,
+    DNe,
+    DSub,
     DDiv,
     DFma,
     DRcp,
