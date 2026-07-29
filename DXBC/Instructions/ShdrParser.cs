@@ -24,6 +24,26 @@ public class ShdrParser
     public uint MajorVersion { get; private set; }
     public ShaderProgramType ProgramType { get; private set; }
 
+    // Human-readable shader model string, e.g. "ps_5_0", "vs_4_1", "cs_5_0".
+    public string ShaderModel =>
+        $"{ProgramTypeAbbreviation(ProgramType)}_{MajorVersion}_{MinorVersion}";
+
+    // Number of instructions actually decoded (distinct from
+    // DeclaredDwordCount, which is the total DWORD length of the program
+    // including the two header DWORDs, not an instruction tally).
+    public int InstructionCount => Instructions.Count;
+
+    private static string ProgramTypeAbbreviation(ShaderProgramType type) => type switch
+    {
+        ShaderProgramType.Pixel => "ps",
+        ShaderProgramType.Vertex => "vs",
+        ShaderProgramType.Geometry => "gs",
+        ShaderProgramType.Hull => "hs",
+        ShaderProgramType.Domain => "ds",
+        ShaderProgramType.Compute => "cs",
+        _ => "unknown"
+    };
+
     public List<Instruction> Instructions { get; } = new();
     public List<string> Warnings { get; } = new();
 

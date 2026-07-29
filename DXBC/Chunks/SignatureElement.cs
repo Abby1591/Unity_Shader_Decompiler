@@ -11,6 +11,7 @@ public class SignatureElement
     public uint Register;
     public byte Mask;
     public byte ReadWriteMask;
+    public uint Stream; // only used by OSG5
 
     public override string ToString()
     {

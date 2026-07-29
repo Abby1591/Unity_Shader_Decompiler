@@ -10,8 +10,16 @@ public class DxbcFile
     public uint TotalLength { get; private set; }
     public List<DxbcChunk> Chunks { get; } = new();
     public IsgnChunk? InputSignature { get; private set; }
+    public OsgnChunk? OutputSignature { get; private set; }
+    public OsgnChunk? PatchConstantSignature { get; private set; }
+    public RdefChunk? ResourceDefinition { get; private set; }
+    public StatChunk? Statistics { get; private set; }
     public ShdrParser? Shader;
     public FourCC ShaderChunkType { get; private set; }
+
+    /// <summary>Chunk types encountered but not (yet) given a dedicated typed parser.
+    /// Their raw bytes remain available via the entry's Data in Chunks.</summary>
+    public List<DxbcChunk> UnknownChunks { get; } = new();
 
     public void Load(string file)
     {
@@ -74,6 +82,41 @@ public class DxbcFile
             InputSignature = new IsgnChunk();
             InputSignature.Read(r);
         }
+        else if (chunk.Name == FourCC.OSGN)
+        {
+            using var ms = new MemoryStream(chunk.Data);
+            using var r = new BinaryReader(ms);
+            OutputSignature = new OsgnChunk();
+            OutputSignature.Read(r, hasStreamIndex: false);
+        }
+        else if (chunk.Name == FourCC.OSG5)
+        {
+            using var ms = new MemoryStream(chunk.Data);
+            using var r = new BinaryReader(ms);
+            OutputSignature = new OsgnChunk();
+            OutputSignature.Read(r, hasStreamIndex: true);
+        }
+        else if (chunk.Name == FourCC.PSGN)
+        {
+            using var ms = new MemoryStream(chunk.Data);
+            using var r = new BinaryReader(ms);
+            PatchConstantSignature = new OsgnChunk();
+            PatchConstantSignature.Read(r, hasStreamIndex: false);
+        }
+        else if (chunk.Name == FourCC.RDEF)
+        {
+            using var ms = new MemoryStream(chunk.Data);
+            using var r = new BinaryReader(ms);
+            ResourceDefinition = new RdefChunk();
+            ResourceDefinition.Read(r);
+        }
+        else if (chunk.Name == FourCC.STAT)
+        {
+            using var ms = new MemoryStream(chunk.Data);
+            using var r = new BinaryReader(ms);
+            Statistics = new StatChunk();
+            Statistics.Read(r);
+        }
         else if (chunk.Name == FourCC.SHDR ||
                  chunk.Name == FourCC.SHEX)
         {
@@ -81,6 +124,13 @@ public class DxbcFile
 
             Shader = new ShdrParser();
             Shader.Parse(chunk.Data);
+        }
+        else
+        {
+            // Unknown/unhandled chunk type: raw bytes are already preserved in
+            // chunk.Data (added to Chunks above), so nothing is lost. Track it
+            // separately too so callers can enumerate exactly what wasn't decoded.
+            UnknownChunks.Add(chunk);
         }
     }
 }
