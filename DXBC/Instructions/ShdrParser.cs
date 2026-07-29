@@ -322,6 +322,7 @@ private OpcodeInfo DecodeOpcode(uint opcode)
         uint token = reader.ReadUInt32();
 
         Operand op = new();
+        op.RawToken = token;
 
         //--------------------------------------------------------
         // bits 0-1
@@ -366,6 +367,7 @@ private OpcodeInfo DecodeOpcode(uint opcode)
 
         uint regType = (token >> 12) & 0xFF;
 
+        op.RawRegisterType = (byte)regType;
         op.RegisterType = DecodeRegisterType(regType);
 
         //--------------------------------------------------------
@@ -419,6 +421,7 @@ private OpcodeInfo DecodeOpcode(uint opcode)
         //--------------------------------------------------------
 
         int indexCount = (int)((token >> 20) & 0x3);
+        op.IndexCount = indexCount;
 
         //--------------------------------------------------------
         // bits 22-24
@@ -463,18 +466,43 @@ private OpcodeInfo DecodeOpcode(uint opcode)
 
         if (op.IsExtended)
         {
-            uint ext = reader.ReadUInt32();
+            uint ext;
 
-            op.Modifier = (ext & 0xFF) switch
+            do
             {
-                0x41 => OperandModifier.Neg,
-                0x81 => OperandModifier.Abs,
-                0xC1 => OperandModifier.AbsNeg,
-                _ => OperandModifier.None
-            };
-
-            while ((ext & 0x80000000) != 0)
                 ext = reader.ReadUInt32();
+                op.ExtensionTokens.Add(ext);
+
+                // bits 0-5: D3D10_SB_EXTENDED_OPERAND_TYPE. Only EMPTY (0) and
+                // MODIFIER (1) are defined for operand extension tokens today
+                // (unlike instruction-level extended opcodes, which also have
+                // resource-dim/return-type variants - see ParseExtendedOpcode).
+                // Structured as a switch, not an inline assumption, so any
+                // future extension type just falls through to "raw token
+                // preserved, nothing decoded" instead of misparsing.
+                uint extensionType = ext & 0x3F;
+
+                switch (extensionType)
+                {
+                    case 1: // D3D10_SB_EXTENDED_OPERAND_MODIFIER
+                        op.Modifier = (ext & 0xFF) switch
+                        {
+                            0x41 => OperandModifier.Neg,
+                            0x81 => OperandModifier.Abs,
+                            0xC1 => OperandModifier.AbsNeg,
+                            _ => OperandModifier.None
+                        };
+                        break;
+
+                    default:
+                        // Unrecognized/future extension type - the raw token
+                        // is already preserved in op.ExtensionTokens above,
+                        // so no information is lost even though we don't
+                        // interpret it yet.
+                        break;
+                }
+            }
+            while ((ext & 0x80000000) != 0);
         }
         
         //--------------------------------------------------------
@@ -490,6 +518,15 @@ private OpcodeInfo DecodeOpcode(uint opcode)
                     op.Indices.Add(reader.ReadUInt32());
                     break;
 
+                case Operand.OperandIndexRepresentation.Immediate64:
+
+                    // 64-bit immediate index (rare in practice - register
+                    // indices this large don't occur - but must still be
+                    // consumed correctly or every later operand desyncs).
+                    ulong idx64 = reader.ReadUInt64();
+                    op.Indices.Add(checked((uint)idx64));
+                    break;
+
                 case Operand.OperandIndexRepresentation.Relative:
 
                     op.RelativeOperands[i] = DecodeOperand(reader);
@@ -502,6 +539,13 @@ private OpcodeInfo DecodeOpcode(uint opcode)
                     op.RelativeOperands[i] = DecodeOperand(reader);
                     break;
 
+                case Operand.OperandIndexRepresentation.Immediate64PlusRelative:
+
+                    ulong idx64b = reader.ReadUInt64();
+                    op.Indices.Add(checked((uint)idx64b));
+                    op.RelativeOperands[i] = DecodeOperand(reader);
+                    break;
+
                 default:
                     throw new InvalidDataException(
                         $"Unknown index representation {op.IndexRepresentation[i]}");
@@ -510,7 +554,9 @@ private OpcodeInfo DecodeOpcode(uint opcode)
 
         if (op.Indices.Count > 0)
             op.RegisterIndex = op.Indices[0];
-        
+
+        op.OriginalRegisterIndex = op.RegisterIndex;
+
         return op;
     }
 
