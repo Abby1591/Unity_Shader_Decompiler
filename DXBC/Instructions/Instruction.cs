@@ -77,4 +77,19 @@ public class Instruction
     // dcl_input_ps only: interpolation mode, encoded in bits 11-14 of
     // the opcode token itself (not a trailing DWORD).
     public Parser.DXBC.IR.InterpolationMode Interpolation = Parser.DXBC.IR.InterpolationMode.Undefined;
+
+    // sync (opcode 190) only: which memory/execution barriers this sync
+    // covers, decoded from the opcode-specific control bits of the token
+    // (D3D11_SB_SYNC_* - bits 11-14). Verified against Microsoft's
+    // d3d11TokenizedProgramFormat.hpp.
+    public bool SyncThreadsInGroup;
+    public bool SyncThreadGroupSharedMemory;
+    public bool SyncUAVMemoryGroup;
+    public bool SyncUAVMemoryGlobal;
+
+    // dcl_resource only: resource dimension (D3D10_SB_RESOURCE_DIMENSION),
+    // bits 11-15 of the opcode token. Also present (raw) as ExtraData[0]
+    // for backward compatibility with existing consumers; this is just a
+    // named accessor so callers don't need to know the ExtraData index.
+    public Parser.DXBC.IR.ResourceDimension? DeclaredResourceDimension;
 }

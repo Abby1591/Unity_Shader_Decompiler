@@ -1,3 +1,5 @@
+using Parser.DXBC.IR;
+
 namespace Parser.DXBC.Instructions;
 
 // D3D10_SB_TOKENIZED_PROGRAM_TYPE - decoded from bits 16-31 of the
@@ -737,6 +739,7 @@ private RegisterType DecodeRegisterType(uint type)
             {
                 uint resourceDim = (token >> 11) & 0xF;
                 instruction.ExtraData.Add(resourceDim);
+                instruction.DeclaredResourceDimension = resourceDim.ToResourceDimension();
             }
             else if (opcodeValue == 90) // dcl_sampler
             {
@@ -751,6 +754,13 @@ private RegisterType DecodeRegisterType(uint type)
             else if (opcodeValue == 98) // dcl_input_ps: interpolation mode, bits 11-14
             {
                 instruction.Interpolation = (Parser.DXBC.IR.InterpolationMode)((token >> 11) & 0xF);
+            }
+            else if (opcodeValue == 190) // sync: D3D11_SB_SYNC_* flags, bits 11-14
+            {
+                instruction.SyncThreadsInGroup = (token & 0x00000800) != 0;
+                instruction.SyncThreadGroupSharedMemory = (token & 0x00001000) != 0;
+                instruction.SyncUAVMemoryGroup = (token & 0x00002000) != 0;
+                instruction.SyncUAVMemoryGlobal = (token & 0x00004000) != 0;
             }
 
             for (int i = 0; i < info.OperandCount; i++)
