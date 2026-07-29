@@ -181,6 +181,8 @@ public abstract class IRStatement
         Exchange,
         CompareStore,
         CompareExchange,
+        Alloc,
+        Consume,
     }
 
     // atomic_* / imm_atomic_* / Interlocked* — read-modify-write on a UAV or

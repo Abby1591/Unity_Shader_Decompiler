@@ -337,6 +337,16 @@ public partial class IRBuilder
             case Opcode.DclDomain: BuildDomain(program, instruction); break;
             case Opcode.DclPartitioning: BuildPartitioning(program, instruction); break;
             case Opcode.DclOutputTopology: BuildOutputTopology(program, instruction); break;
+            case Opcode.DclTessOutputPrimitive: BuildTessOutputPrimitive(program, instruction); break;
+            case Opcode.DclHSForkPhaseInstanceCount: BuildHSForkPhaseInstanceCount(program, instruction); break;
+            case Opcode.DclHSJoinPhaseInstanceCount: BuildHSJoinPhaseInstanceCount(program, instruction); break;
+            case Opcode.DclUAVRaw: BuildUAVRaw(program, instruction); break;
+            case Opcode.DclUAVStructured: BuildUAVStructured(program, instruction); break;
+            case Opcode.DclTGSMRaw: BuildTGSMRaw(program, instruction); break;
+            case Opcode.DclTGSMStructured: BuildTGSMStructured(program, instruction); break;
+            case Opcode.DclResourceRaw: BuildResourceRaw(program, instruction); break;
+            case Opcode.DclResourceStructured: BuildResourceStructured(program, instruction); break;
+            case Opcode.DclGSInstanceCount: BuildGSInstanceCount(program, instruction); break;
 
             // ===================== UAV atomics =====================
 
@@ -359,6 +369,8 @@ public partial class IRBuilder
             case Opcode.ImmAtomicUMax: BuildImmAtomicUMax(program, instruction); break;
             case Opcode.ImmAtomicExch: BuildImmAtomicExch(program, instruction); break;
             case Opcode.ImmAtomicCmpExch: BuildImmAtomicCmpExch(program, instruction); break;
+            case Opcode.ImmAtomicAlloc: BuildImmAtomicAlloc(program, instruction); break;
+            case Opcode.ImmAtomicConsume: BuildImmAtomicConsume(program, instruction); break;
 
             // ===================== synchronization =====================
 
@@ -407,10 +419,17 @@ public partial class IRBuilder
             // ===================== double precision =====================
 
             case Opcode.DMov: BuildDMov(program, instruction); break;
+            case Opcode.DMovC: BuildDMovC(program, instruction); break;
             case Opcode.DAdd: BuildDAdd(program, instruction); break;
             case Opcode.DSub: BuildDSub(program, instruction); break;
             case Opcode.DMul: BuildDMul(program, instruction); break;
             case Opcode.DDiv: BuildDDiv(program, instruction); break;
+            case Opcode.DMax: BuildDMax(program, instruction); break;
+            case Opcode.DMin: BuildDMin(program, instruction); break;
+            case Opcode.DEq: BuildDEq(program, instruction); break;
+            case Opcode.DGe: BuildDGe(program, instruction); break;
+            case Opcode.DLt: BuildDLt(program, instruction); break;
+            case Opcode.DNe: BuildDNe(program, instruction); break;
             case Opcode.DFma: BuildDFma(program, instruction); break;
             case Opcode.DRcp: BuildDRcp(program, instruction); break;
             case Opcode.DSqrt: BuildDSqrt(program, instruction); break;

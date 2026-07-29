@@ -834,6 +834,25 @@ private RegisterType DecodeRegisterType(uint type)
                 //----------------------------------------------------------
                 // dcl_globalFlags
                 //----------------------------------------------------------
+                //----------------------------------------------------------
+                // dcl_tessellator_domain / partitioning / output_primitive
+                // - value is packed directly into opcode-specific control
+                // bits (11+), same pattern as dcl_input_ps interpolation.
+                // Populated as ExtraData[0] since BuildDomain/BuildPartitioning/
+                // BuildOutputTopology already read it from there.
+                //----------------------------------------------------------
+                case 149: // dcl_tessellator_domain, bits 11-12
+                    instruction.ExtraData.Add((token >> 11) & 0x3);
+                    break;
+
+                case 150: // dcl_tessellator_partitioning, bits 11-13
+                    instruction.ExtraData.Add((token >> 11) & 0x7);
+                    break;
+
+                case 151: // dcl_tessellator_output_primitive, bits 11-13
+                    instruction.ExtraData.Add((token >> 11) & 0x7);
+                    break;
+
                 case 106:
                     break;
 

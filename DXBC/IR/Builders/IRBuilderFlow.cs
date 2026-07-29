@@ -454,4 +454,31 @@ public partial class IRBuilder
                 Value = BuildExpression(instruction.Operands[4])
             });
     }
+
+    // imm_atomic_alloc / imm_atomic_consume: increment/decrement a UAV's
+    // hidden associated counter and return the pre-increment value. No
+    // address or value operand (2 operands total: dest, uav) - unlike
+    // every other atomic op, so Address/Value are intentionally left
+    // unset here rather than reusing an operand that doesn't exist.
+    private void BuildImmAtomicAlloc(IRProgram program, Instruction instruction)
+    {
+        program.Statements.Add(
+            new IRStatement.IRAtomicOp
+            {
+                Operation = IRStatement.AtomicOperation.Alloc,
+                ResultDestination = BuildRegister(instruction.Operands[0]),
+                Resource = BuildRegister(instruction.Operands[1])
+            });
+    }
+
+    private void BuildImmAtomicConsume(IRProgram program, Instruction instruction)
+    {
+        program.Statements.Add(
+            new IRStatement.IRAtomicOp
+            {
+                Operation = IRStatement.AtomicOperation.Consume,
+                ResultDestination = BuildRegister(instruction.Operands[0]),
+                Resource = BuildRegister(instruction.Operands[1])
+            });
+    }
 }

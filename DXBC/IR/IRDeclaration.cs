@@ -164,4 +164,62 @@ public abstract class IRDeclaration
     {
         public TessellatorOutputPrimitive Topology { get; init; }
     }
+
+    // ============================================================
+    // Raw/structured resource & UAV/TGSM declarations (opcodes 157-162)
+    // ============================================================
+
+    public sealed class IRUAVRawDeclaration : IRDeclaration
+    {
+        public uint Slot { get; init; }
+    }
+
+    public sealed class IRUAVStructuredDeclaration : IRDeclaration
+    {
+        public uint Slot { get; init; }
+        public uint StructureStride { get; init; }
+    }
+
+    public sealed class IRTGSMRawDeclaration : IRDeclaration
+    {
+        public uint Slot { get; init; }
+        public uint ByteCount { get; init; }
+    }
+
+    public sealed class IRTGSMStructuredDeclaration : IRDeclaration
+    {
+        public uint Slot { get; init; }
+        public uint StructureStride { get; init; }
+        public uint ElementCount { get; init; }
+    }
+
+    public sealed class IRResourceRawDeclaration : IRDeclaration
+    {
+        public uint Slot { get; init; }
+    }
+
+    public sealed class IRResourceStructuredDeclaration : IRDeclaration
+    {
+        public uint Slot { get; init; }
+        public uint StructureStride { get; init; }
+    }
+
+    // ============================================================
+    // Instance/phase counts (opcodes 153, 154, 206)
+    // ============================================================
+
+    public sealed class IRHSForkPhaseInstanceCountDeclaration : IRDeclaration
+    {
+        public uint Count { get; init; }
+    }
+
+    public sealed class IRHSJoinPhaseInstanceCountDeclaration : IRDeclaration
+    {
+        public uint Count { get; init; }
+    }
+
+    public sealed class IRGSInstanceCountDeclaration : IRDeclaration
+    {
+        public uint Count { get; init; }
+    }
 }

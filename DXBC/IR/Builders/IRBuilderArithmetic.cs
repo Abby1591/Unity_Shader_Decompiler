@@ -24,6 +24,19 @@ public partial class IRBuilder
         Emit(program, instruction, expression);
     }
 
+    private void BuildDMovC(IRProgram program, Instruction instruction)
+    {
+        IRExpression expression =
+            new IRExpression.ConditionalExpression
+            {
+                Condition = BuildBoolExpression(instruction.Operands[1]),
+                TrueExpression = BuildDoubleExpression(instruction.Operands[2]),
+                FalseExpression = BuildDoubleExpression(instruction.Operands[3])
+            };
+
+        Emit(program, instruction, expression);
+    }
+
     // ===================== add / sub =====================
 
     private void BuildAdd(IRProgram program, Instruction instruction) =>
@@ -490,4 +503,10 @@ public partial class IRBuilder
             Intrinsic = IRExpression.IRIntrinsic.CastFloat,
             Arguments = { BuildDoubleExpression(instruction.Operands[1]) }
         });
+
+    private void BuildDMax(IRProgram program, Instruction instruction) =>
+        BuildTypedBinaryIntrinsic(program, instruction, IRExpression.IRIntrinsic.Max, BuildDoubleExpression);
+
+    private void BuildDMin(IRProgram program, Instruction instruction) =>
+        BuildTypedBinaryIntrinsic(program, instruction, IRExpression.IRIntrinsic.Min, BuildDoubleExpression);
 }

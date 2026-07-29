@@ -288,4 +288,105 @@ public partial class IRBuilder
 
         program.Declarations.Add(new IRDeclaration.IROutputTopologyDeclaration { Topology = topology });
     }
+
+    // ============================================================
+    // Raw/structured resource & UAV/TGSM declarations
+    // ============================================================
+
+    private void BuildUAVRaw(IRProgram program, Instruction instruction)
+    {
+        program.Declarations.Add(
+            new IRDeclaration.IRUAVRawDeclaration { Slot = instruction.Operands[0].RegisterIndex });
+    }
+
+    private void BuildUAVStructured(IRProgram program, Instruction instruction)
+    {
+        program.Declarations.Add(
+            new IRDeclaration.IRUAVStructuredDeclaration
+            {
+                Slot = instruction.Operands[0].RegisterIndex,
+                StructureStride = instruction.ExtraData.Count > 0 ? instruction.ExtraData[0] : 0
+            });
+    }
+
+    private void BuildTGSMRaw(IRProgram program, Instruction instruction)
+    {
+        program.Declarations.Add(
+            new IRDeclaration.IRTGSMRawDeclaration
+            {
+                Slot = instruction.Operands[0].RegisterIndex,
+                ByteCount = instruction.ExtraData.Count > 0 ? instruction.ExtraData[0] : 0
+            });
+    }
+
+    private void BuildTGSMStructured(IRProgram program, Instruction instruction)
+    {
+        program.Declarations.Add(
+            new IRDeclaration.IRTGSMStructuredDeclaration
+            {
+                Slot = instruction.Operands[0].RegisterIndex,
+                StructureStride = instruction.ExtraData.Count > 0 ? instruction.ExtraData[0] : 0,
+                ElementCount = instruction.ExtraData.Count > 1 ? instruction.ExtraData[1] : 0
+            });
+    }
+
+    private void BuildResourceRaw(IRProgram program, Instruction instruction)
+    {
+        program.Declarations.Add(
+            new IRDeclaration.IRResourceRawDeclaration { Slot = instruction.Operands[0].RegisterIndex });
+    }
+
+    private void BuildResourceStructured(IRProgram program, Instruction instruction)
+    {
+        program.Declarations.Add(
+            new IRDeclaration.IRResourceStructuredDeclaration
+            {
+                Slot = instruction.Operands[0].RegisterIndex,
+                StructureStride = instruction.ExtraData.Count > 0 ? instruction.ExtraData[0] : 0
+            });
+    }
+
+    // ============================================================
+    // Instance/phase counts
+    // ============================================================
+
+    private void BuildHSForkPhaseInstanceCount(IRProgram program, Instruction instruction)
+    {
+        program.Declarations.Add(
+            new IRDeclaration.IRHSForkPhaseInstanceCountDeclaration
+            {
+                Count = instruction.ExtraData.Count > 0 ? instruction.ExtraData[0] : 0
+            });
+    }
+
+    private void BuildHSJoinPhaseInstanceCount(IRProgram program, Instruction instruction)
+    {
+        program.Declarations.Add(
+            new IRDeclaration.IRHSJoinPhaseInstanceCountDeclaration
+            {
+                Count = instruction.ExtraData.Count > 0 ? instruction.ExtraData[0] : 0
+            });
+    }
+
+    private void BuildGSInstanceCount(IRProgram program, Instruction instruction)
+    {
+        program.Declarations.Add(
+            new IRDeclaration.IRGSInstanceCountDeclaration
+            {
+                Count = instruction.ExtraData.Count > 0 ? instruction.ExtraData[0] : 0
+            });
+    }
+
+    // dcl_tessellator_output_primitive (151) genuinely uses this same
+    // TessellatorOutputPrimitive enum/IR class - that part is correct.
+    // Flagging for a later pass: Opcode.DclOutputTopology (92, GS
+    // primitive topology - D3D10_SB_PRIMITIVE_TOPOLOGY: pointlist/
+    // linelist/trianglestrip/etc, a completely different value set) is
+    // ALSO wired to this same BuildOutputTopology/IROutputTopologyDeclaration
+    // pair via the main dispatcher switch - that pairing predates this
+    // change and looks like a mismatch, not something introduced here.
+    private void BuildTessOutputPrimitive(IRProgram program, Instruction instruction)
+    {
+        BuildOutputTopology(program, instruction);
+    }
 }

@@ -69,6 +69,22 @@ public partial class IRBuilder
         BuildComparison(program, instruction, IRExpression.BinaryOperation.GreaterEqual, BuildUIntExpression, swap: true);
 
     // ============================================================
+    // Double-precision comparisons
+    // ============================================================
+
+    private void BuildDEq(IRProgram program, Instruction instruction) =>
+        BuildComparison(program, instruction, IRExpression.BinaryOperation.Equal, BuildDoubleExpression);
+
+    private void BuildDNe(IRProgram program, Instruction instruction) =>
+        BuildComparison(program, instruction, IRExpression.BinaryOperation.NotEqual, BuildDoubleExpression);
+
+    private void BuildDGe(IRProgram program, Instruction instruction) =>
+        BuildComparison(program, instruction, IRExpression.BinaryOperation.GreaterEqual, BuildDoubleExpression);
+
+    private void BuildDLt(IRProgram program, Instruction instruction) =>
+        BuildComparison(program, instruction, IRExpression.BinaryOperation.LessThan, BuildDoubleExpression);
+
+    // ============================================================
     // Derivatives
     // ============================================================
 
