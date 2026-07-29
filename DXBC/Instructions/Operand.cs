@@ -172,7 +172,13 @@ public class Operand
     {
         if (RegisterType == RegisterType.Immediate32 && Immediate32Values != null)
         {
-            return "l(" + string.Join(", ", Immediate32Values.Select(v => BitConverter.Int32BitsToSingle((int)v))) + ")";
+            return "l(" + string.Join(", ", Immediate32Values.Select(v =>
+            {
+                float f = BitConverter.Int32BitsToSingle((int)v);
+
+                // If it's not a normal finite float, print the raw hex instead.
+                return float.IsFinite(f) ? f.ToString("G9") : $"0x{v:X8}";
+            })) + ")";
         }
 
         if (RegisterType == RegisterType.Immediate64 && Immediate64Values != null)
