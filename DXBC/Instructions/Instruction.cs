@@ -13,13 +13,17 @@ public class Instruction
     // refer back to "the Nth instruction" in later IR/decompiler passes.
     public int InstructionIndex;
 
+    // DWORD offset of this instruction within the shader token stream
+    // (i.e. token index, not byte offset). Matches what PIX, RenderDoc,
+    // and Microsoft's own disassembler report, so it's far more useful
+    // for cross-referencing a dump than InstructionIndex alone.
+    public int DwordOffset;
+
     public uint OpcodeToken;
 
     public Opcode Opcode;
 
     public uint OpcodeId;
-    
-    public uint OpcodeControls;
     
     public int Length;
     
@@ -45,6 +49,15 @@ public class Instruction
     // "precise" flags (bits 19-22 of the opcode token) - one bit per
     // component (x/y/z/w) requesting IEEE-precise evaluation.
     public byte Precise;
+
+    // Bits 11-23 of OpcodeToken0 ("opcode-specific controls"), raw and
+    // unmodified. Different opcodes (resinfo, sample, sample_l, ld, sync,
+    // ...) interpret these bits completely differently, and this parser
+    // only decodes the meaning for opcodes it currently understands
+    // (Saturate/Precise/TestBoolean/Interpolation/Sync*/etc.). Storing
+    // the whole raw field means nothing is lost for opcodes whose bit
+    // layout isn't specifically interpreted yet.
+    public uint OpcodeControls;
 
     // Decoded sample_controls (aoffimmi) extended opcode token, present
     // on ld/sample/gather4/etc. Each offset is a signed 4-bit immediate

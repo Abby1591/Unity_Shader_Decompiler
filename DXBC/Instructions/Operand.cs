@@ -12,6 +12,13 @@ public class Operand
     // bits means decode -> optimize -> re-encode doesn't silently drop them.
     public byte RawRegisterType { get; set; }
 
+    // Raw bits 20-30 of the operand token: IndexCount (20-21) and all
+    // three IndexRepresentation fields (22-24, 25-27, 28-30). Bit 31
+    // (Extended) is decoded separately as IsExtended. The fields above
+    // already decode IndexCount/IndexRepresentation individually - this
+    // is the raw bundle kept alongside them for lossless round-tripping.
+    public uint OperandControlField { get; set; }
+
     public uint RegisterIndex { get; set; }
 
     // RegisterIndex as originally decoded, before any later pass (e.g. SSA
@@ -27,6 +34,18 @@ public class Operand
     // RegisterType directly, just less noisy at call sites.
     public bool IsImmediate =>
         RegisterType == RegisterType.Immediate32 || RegisterType == RegisterType.Immediate64;
+
+    // True if this operand is a destination (write) operand rather than a
+    // source. Destination operands can legally carry info source operands
+    // can't (write masks interact with saturation differently, etc.) -
+    // useful for optimization passes to distinguish without re-deriving it
+    // from operand position. NOT set yet: DecodeOperand() doesn't currently
+    // know its position within the instruction's operand list, so every
+    // operand decodes with this false. Wiring it up means passing operand
+    // index + a per-opcode "which operand indices are destinations" table
+    // into DecodeOperand - real work, not a one-liner, so left for when
+    // it's actually needed rather than guessed at now.
+    public bool IsDestinationOperand { get; set; }
 
     public int NumComponents { get; set; }
 
@@ -65,6 +84,12 @@ public class Operand
     public uint[]? Immediate32Values;
     
     public double[]? Immediate64Values;
+
+    // Raw bit patterns behind Immediate64Values, same order. A double has
+    // hundreds of legal NaN encodings that collapse to indistinguishable
+    // values once read as `double`; keeping the raw ulong makes the parser
+    // lossless for exact reassembly even in that edge case.
+    public ulong[]? Immediate64RawBits;
     
     public Operand?[] RelativeOperands = new Operand?[3];
     
@@ -166,7 +191,27 @@ public class Operand
             _ => $"{RegisterType}{RegisterIndex}"
         };
 
-        return reg + GetComponentString();
+        // Second index (e.g. cb3[4], or cb3[r0.x] when relative-indexed)
+        // - previously silently dropped for any operand with more than
+        // one index.
+        if (IndexCount > 1)
+        {
+            string idx = RelativeOperands[1] != null
+                ? RelativeOperands[1]!.ToString()
+                : Index1.ToString();
+
+            reg += $"[{idx}]";
+        }
+
+        string result = reg + GetComponentString();
+
+        return Modifier switch
+        {
+            ShdrParser.OperandModifier.Neg => $"-{result}",
+            ShdrParser.OperandModifier.Abs => $"abs({result})",
+            ShdrParser.OperandModifier.AbsNeg => $"-abs({result})",
+            _ => result
+        };
     }
     
     public enum OperandNumComponents

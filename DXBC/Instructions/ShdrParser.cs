@@ -405,9 +405,14 @@ private OpcodeInfo DecodeOpcode(uint opcode)
             };
 
             op.Immediate64Values = new Double[count];
+            op.Immediate64RawBits = new ulong[count];
 
             for (int i = 0; i < count; i++)
-                op.Immediate64Values[i] = reader.ReadDouble();
+            {
+                ulong bits = reader.ReadUInt64();
+                op.Immediate64RawBits[i] = bits;
+                op.Immediate64Values[i] = BitConverter.UInt64BitsToDouble(bits);
+            }
 
             return op;
         }
@@ -458,6 +463,7 @@ private OpcodeInfo DecodeOpcode(uint opcode)
         //--------------------------------------------------------
 
         op.IsExtended = (token & 0x80000000) != 0;
+        op.OperandControlField = (token >> 20) & 0x7FF;
 
         //--------------------------------------------------------
         // Extension token(s)
@@ -669,6 +675,7 @@ private RegisterType DecodeRegisterType(uint type)
                     Opcode = Opcode.CustomData,
                     Name = "customdata",
                     OpcodeToken = token,
+                    DwordOffset = instructionStart,
                     CustomDataLength = customLength,
                     CustomData = reader.ReadBytes((int)((customLength - 2) * 4))
                 };
@@ -701,6 +708,7 @@ private RegisterType DecodeRegisterType(uint type)
                 Name = info.Name,
                 OpcodeToken = token,
                 Length = length,
+                DwordOffset = instructionStart,
 
                 // bit 13: saturate result
                 Saturate = (token & 0x2000) != 0,
@@ -713,7 +721,11 @@ private RegisterType DecodeRegisterType(uint type)
                 TestBoolean = (InstructionTestBoolean)((token >> 18) & 1),
 
                 // bits 19-22: "precise" flags, one bit per component (xyzw)
-                Precise = (byte)((token >> 19) & 0xF)
+                Precise = (byte)((token >> 19) & 0xF),
+
+                // bits 11-23: raw opcode-specific control bits, meaning
+                // varies per opcode - see field doc comment on Instruction.
+                OpcodeControls = (token >> 11) & 0x1FFF
             };
 
             //------------------------------------------------------------------

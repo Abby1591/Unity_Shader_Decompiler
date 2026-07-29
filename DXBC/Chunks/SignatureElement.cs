@@ -8,6 +8,16 @@ public class SignatureElement
     public uint SystemValue;
     public uint ComponentType;
 
+    // D3D_REGISTER_COMPONENT_TYPE readable form (verified against
+    // Microsoft's d3dcommon.h: 0=unknown, 1=uint32, 2=sint32, 3=float32).
+    public string ComponentTypeName => ComponentType switch
+    {
+        1 => "uint",
+        2 => "int",
+        3 => "float",
+        _ => "unknown"
+    };
+
     public uint Register;
     public byte Mask;
     public byte ReadWriteMask;

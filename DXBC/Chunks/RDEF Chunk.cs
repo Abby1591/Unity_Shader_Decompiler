@@ -12,6 +12,43 @@ public class RdefVariable
     public uint TypeColumns;
     public uint TypeElements;
 
+    // D3D_SHADER_VARIABLE_TYPE (base scalar kind) - only the numeric
+    // subset that actually appears in constant buffers is named here;
+    // everything else falls back to "type<N>" rather than guessing.
+    private static string BaseTypeName(uint kind) => kind switch
+    {
+        0 => "void",
+        1 => "bool",
+        2 => "int",
+        3 => "float",
+        19 => "uint",
+        39 => "double",
+        _ => $"type{kind}"
+    };
+
+    // Readable HLSL-ish type name reconstructed from TypeClass (D3D_SHADER_VARIABLE_CLASS)
+    // + TypeKind (D3D_SHADER_VARIABLE_TYPE) + dimensions. Values verified against
+    // d3dcommon.h's D3D_SHADER_VARIABLE_TYPE/D3D_SHADER_VARIABLE_CLASS enums.
+    public string TypeName
+    {
+        get
+        {
+            string baseName = BaseTypeName(TypeKind);
+
+            string shape = TypeClass switch
+            {
+                0 => baseName,                                              // SVC_SCALAR
+                1 => TypeColumns > 1 ? $"{baseName}{TypeColumns}" : baseName, // SVC_VECTOR
+                2 => $"{baseName}{TypeRows}x{TypeColumns}",                   // SVC_MATRIX_ROWS
+                3 => $"{baseName}{TypeRows}x{TypeColumns}",                   // SVC_MATRIX_COLUMNS
+                5 => "struct",                                               // SVC_STRUCT
+                _ => baseName
+            };
+
+            return TypeElements > 0 ? $"{shape}[{TypeElements}]" : shape;
+        }
+    }
+
     public override string ToString() => $"{Name} off={Offset} size={Size}";
 }
 
@@ -31,7 +68,12 @@ public class RdefResourceBinding
     public string Name = "";
     public uint Type;          // D3D_SHADER_INPUT_TYPE
     public uint ReturnType;    // D3D_RESOURCE_RETURN_TYPE
-    public uint Dimension;     // D3D_SRV_DIMENSION
+
+    public ResourceReturnType? DecodedReturnType => ReturnType.ToResourceReturnType();
+    public uint Dimension;     // D3D_SRV_DIMENSION - NOT the same numbering as
+                                // Parser.DXBC.IR.ResourceDimension (which mirrors
+                                // D3D10_SB_RESOURCE_DIMENSION from dcl_resource's
+                                // bytecode token). Don't cross-cast between them.
     public uint SampleCount;
     public uint BindPoint;
     public uint BindCount;
