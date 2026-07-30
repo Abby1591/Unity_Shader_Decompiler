@@ -82,6 +82,5 @@ Contributing
 - PRs are welcome. If you add an HLSL emitter or CI test, include a small sample blob and a smoke test that validates the output.
 
 If you'd like, I will:
-- Update README.md with this corrected content (I will commit the change). (I will do this now unless you tell me otherwise.)
 - Add an explicit note in the README that `program{i}.hlsl` contains DXBC disassembly until a high-level emitter is implemented.
 - Add a small CI workflow that builds the project and optionally skips disassembly if native D3DCompiler is unavailable.
