@@ -114,6 +114,9 @@ public partial class IRBuilder
     private void BuildIMad(IRProgram program, Instruction instruction) =>
         BuildFusedMultiplyAdd(program, instruction, BuildIntExpression);
 
+    private void BuildUMad(IRProgram program, Instruction instruction) =>
+        BuildFusedMultiplyAdd(program, instruction, BuildUIntExpression);
+
     // ===================== min / max =====================
 
     private void BuildMin(IRProgram program, Instruction instruction) =>
@@ -142,6 +145,16 @@ public partial class IRBuilder
         {
             Operation = IRExpression.UnaryExpression.UnaryOperation.Negate,
             Operand = BuildExpression(instruction.Operands[1])
+        });
+    }
+
+    // ineg: signed integer negate
+    private void BuildINeg(IRProgram program, Instruction instruction)
+    {
+        Emit(program, instruction, new IRExpression.UnaryExpression
+        {
+            Operation = IRExpression.UnaryExpression.UnaryOperation.Negate,
+            Operand = BuildIntExpression(instruction.Operands[1])
         });
     }
 

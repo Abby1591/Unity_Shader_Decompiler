@@ -120,6 +120,10 @@ public partial class IRBuilder
                 BuildEq(program, instruction);
                 break;
 
+            case Opcode.IEq:
+                BuildIeq(program, instruction);
+                break;
+
             case Opcode.Ne:
                 BuildNe(program, instruction);
                 break;
@@ -188,6 +192,10 @@ public partial class IRBuilder
                 BuildOutput(program, instruction);
                 break;
 
+            case Opcode.DclInputSVG: BuildInputSGV(program, instruction); break;
+            case Opcode.DclOutputSIV: BuildOutputSIV(program, instruction); break;
+            case Opcode.DclGlobalFlags: BuildGlobalFlags(program, instruction); break;
+
             case Opcode.DclTemps:
                 BuildTemps(program, instruction);
                 break;
@@ -250,6 +258,22 @@ public partial class IRBuilder
             case Opcode.IMax: BuildIMax(program, instruction); break;
             case Opcode.IMad: BuildIMad(program, instruction); break;
             case Opcode.Not: BuildNot(program, instruction); break;
+            case Opcode.And: BuildAnd(program, instruction); break;
+            case Opcode.Ld: BuildLd(program, instruction); break;
+            case Opcode.RoundNE: BuildRoundNE(program, instruction); break;
+            case Opcode.RoundPI: BuildRoundPI(program, instruction); break;
+            case Opcode.RoundZ: BuildRoundZ(program, instruction); break;
+            case Opcode.INeg: BuildINeg(program, instruction); break;
+            case Opcode.UMad: BuildUMad(program, instruction); break;
+            case Opcode.Nop: BuildNop(program, instruction); break;
+            case Opcode.Retc: BuildRetC(program, instruction); break;
+            case Opcode.SwapC: BuildSwapC(program, instruction); break;
+            case Opcode.UAddC: BuildUAddC(program, instruction); break;
+            case Opcode.USubB: BuildUSubB(program, instruction); break;
+            case Opcode.EvalCentroid: BuildEvalCentroid(program, instruction); break;
+            case Opcode.EvalSampleIndex: BuildEvalSampleIndex(program, instruction); break;
+            case Opcode.EvalSnapped: BuildEvalSnapped(program, instruction); break;
+            case Opcode.CustomData: BuildCustomData(program, instruction); break;
             case Opcode.Or: BuildOr(program, instruction); break;
             case Opcode.Xor: BuildXor(program, instruction); break;
             case Opcode.Ishl: BuildIShl(program, instruction); break;

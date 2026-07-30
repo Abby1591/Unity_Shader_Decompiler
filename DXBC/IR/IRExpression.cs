@@ -288,6 +288,12 @@ public abstract class IRExpression
 
         // resource queries
         CheckAccessFullyMapped,
+
+        // pixel-shader input interpolation (evaluate an input at a
+        // non-default location instead of the pixel center)
+        EvalCentroid,
+        EvalSampleIndex,
+        EvalSnapped,
     }
 
     public sealed class IntrinsicExpression : IRExpression

@@ -126,6 +126,117 @@ public partial class IRBuilder
     }
 
     // ============================================================
+    // Nop / no-op placeholders
+    // ============================================================
+
+    // nop carries no operands and no side effects - correctly parsing and
+    // discarding it (rather than falling through to the "unsupported
+    // opcode" default) is the whole point of handling it explicitly.
+    private void BuildNop(IRProgram program, Instruction instruction)
+    {
+    }
+
+    // customdata (icb - immediate constant buffer) is consumed at parse
+    // time into Instruction.CustomData/CustomDataLength (see ShdrParser)
+    // and referenced by later immediate-constant-buffer operands; it has
+    // no standalone executable IR form, so there is nothing further to
+    // emit here beyond acknowledging the opcode.
+    private void BuildCustomData(IRProgram program, Instruction instruction)
+    {
+    }
+
+    // ============================================================
+    // SwapC - conditional two-way swap
+    // swapc dst0, dst1, cond, src1, src0 => dst0 = cond ? src0 : src1; dst1 = cond ? src1 : src0
+    // ============================================================
+    private void BuildSwapC(IRProgram program, Instruction instruction)
+    {
+        IRExpression condition = BuildBoolExpression(instruction.Operands[2]);
+        IRExpression src1 = BuildExpression(instruction.Operands[3]);
+        IRExpression src0 = BuildExpression(instruction.Operands[4]);
+
+        EmitMulti(
+            program,
+            BuildRegister(instruction.Operands[0]),
+            new IRExpression.ConditionalExpression { Condition = condition, TrueExpression = src0, FalseExpression = src1 },
+            BuildRegister(instruction.Operands[1]),
+            new IRExpression.ConditionalExpression { Condition = condition, TrueExpression = src1, FalseExpression = src0 });
+    }
+
+    // ============================================================
+    // UAddC / USubB - unsigned add/subtract with carry/borrow out
+    // uaddc dst_sum, dst_carry, src0, src1
+    // usubb dst_diff, dst_borrow, src0, src1
+    // ============================================================
+    private void BuildUAddC(IRProgram program, Instruction instruction)
+    {
+        IRExpression left = BuildUIntExpression(instruction.Operands[2]);
+        IRExpression right = BuildUIntExpression(instruction.Operands[3]);
+
+        var sum = new IRExpression.BinaryExpression
+        {
+            Operation = IRExpression.BinaryOperation.Add,
+            Left = left,
+            Right = right
+        };
+
+        // carry-out: 0xFFFFFFFF if the unsigned sum wrapped, else 0
+        var carry = new IRExpression.ConditionalExpression
+        {
+            Condition = new IRExpression.BinaryExpression
+            {
+                Operation = IRExpression.BinaryOperation.LessThan,
+                Left = sum,
+                Right = left
+            },
+            TrueExpression = new IRExpression.ConstantExpression { Kind = IRExpression.ConstantExpression.ConstantKind.UInt, RawValues = new uint[] { 0xFFFFFFFF } },
+            FalseExpression = new IRExpression.ConstantExpression { Kind = IRExpression.ConstantExpression.ConstantKind.UInt, RawValues = new uint[] { 0 } }
+        };
+
+        EmitMulti(program, BuildRegister(instruction.Operands[0]), sum, BuildRegister(instruction.Operands[1]), carry);
+    }
+
+    private void BuildUSubB(IRProgram program, Instruction instruction)
+    {
+        IRExpression left = BuildUIntExpression(instruction.Operands[2]);
+        IRExpression right = BuildUIntExpression(instruction.Operands[3]);
+
+        var diff = new IRExpression.BinaryExpression
+        {
+            Operation = IRExpression.BinaryOperation.Subtract,
+            Left = left,
+            Right = right
+        };
+
+        // borrow-out: 0xFFFFFFFF if src0 < src1 (the subtraction wrapped), else 0
+        var borrow = new IRExpression.ConditionalExpression
+        {
+            Condition = new IRExpression.BinaryExpression
+            {
+                Operation = IRExpression.BinaryOperation.LessThan,
+                Left = left,
+                Right = right
+            },
+            TrueExpression = new IRExpression.ConstantExpression { Kind = IRExpression.ConstantExpression.ConstantKind.UInt, RawValues = new uint[] { 0xFFFFFFFF } },
+            FalseExpression = new IRExpression.ConstantExpression { Kind = IRExpression.ConstantExpression.ConstantKind.UInt, RawValues = new uint[] { 0 } }
+        };
+
+        EmitMulti(program, BuildRegister(instruction.Operands[0]), diff, BuildRegister(instruction.Operands[1]), borrow);
+    }
+
+    // ============================================================
+    // Pixel-shader input evaluation (eval_centroid / eval_sample_index / eval_snapped)
+    // ============================================================
+    private void BuildEvalCentroid(IRProgram program, Instruction instruction) =>
+        BuildUnaryIntrinsic(program, instruction, IRExpression.IRIntrinsic.EvalCentroid);
+
+    private void BuildEvalSampleIndex(IRProgram program, Instruction instruction) =>
+        BuildBinaryIntrinsic(program, instruction, IRExpression.IRIntrinsic.EvalSampleIndex);
+
+    private void BuildEvalSnapped(IRProgram program, Instruction instruction) =>
+        BuildBinaryIntrinsic(program, instruction, IRExpression.IRIntrinsic.EvalSnapped);
+
+    // ============================================================
     // Discard
     // ============================================================
 
