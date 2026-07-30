@@ -19,6 +19,17 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        
+      - name: Create Builds folder (Linux / macOS)
+        if: runner.os != 'Windows'
+        run: |
+          mkdir -p Builds/${{ matrix.os }}
+
+      - name: Create Builds folder (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force -Path "Builds/${{ matrix.os }}" | Out-Null  
 
       - name: Commit / repo info
         run: |
@@ -63,6 +74,19 @@ jobs:
           echo "::group::dotnet build (console + log)"
           dotnet build Parser.csproj --configuration Release --no-restore /bl:build_${{ matrix.os }}.binlog | tee build_${{ matrix.os }}.log
           echo "::endgroup::"
+          
+      - name: Collect build outputs (Linux / macOS)
+        if: runner.os != 'Windows'
+        run: |
+          mkdir -p Builds/${{ matrix.os }}/Logs
+          mkdir -p Builds/${{ matrix.os }}/Output
+
+          cp build_${{ matrix.os }}.log Builds/${{ matrix.os }}/Logs/
+          cp build_${{ matrix.os }}.binlog Builds/${{ matrix.os }}/Logs/
+
+          find . -path "*/bin/Release/*" -type f \
+            ! -name "*.pdb" \
+            -exec cp --parents {} Builds/${{ matrix.os }}/Output \;    
 
       - name: Build (Windows)
         if: runner.os == 'Windows'
@@ -71,6 +95,30 @@ jobs:
           Write-Host "::group::dotnet build (console + log)"
           dotnet build Parser.csproj --configuration Release --no-restore /bl:build_${{ matrix.os }}.binlog | Tee-Object -FilePath build_${{ matrix.os }}.log
           Write-Host "::endgroup::"
+
+            - name: Collect build outputs (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force -Path "Builds/${{ matrix.os }}\Logs" | Out-Null
+          New-Item -ItemType Directory -Force -Path "Builds/${{ matrix.os }}\Output" | Out-Null
+
+          Copy-Item "build_${{ matrix.os }}.log" "Builds/${{ matrix.os }}\Logs\"
+          Copy-Item "build_${{ matrix.os }}.binlog" "Builds/${{ matrix.os }}\Logs\"
+
+          Get-ChildItem -Recurse -Path . -Filter * |
+            Where-Object {
+              $_.FullName -match "\\bin\\Release\\" -and
+              -not $_.PSIsContainer -and
+              $_.Extension -ne ".pdb"
+            } |
+            ForEach-Object {
+              $relative = Resolve-Path -Relative $_.FullName
+              $dest = Join-Path "Builds/${{ matrix.os }}\Output" $relative
+              $dir = Split-Path $dest
+              New-Item -ItemType Directory -Force -Path $dir | Out-Null
+              Copy-Item $_.FullName $dest
+            }
 
       - name: Show build summary & artifacts (Linux / macOS)
         if: runner.os != 'Windows'
@@ -112,13 +160,10 @@ jobs:
           Get-ChildItem -Path "**/bin/Release" -Recurse -ErrorAction SilentlyContinue | Select-Object FullName
           Write-Host "::endgroup::"
 
-      - name: Upload build artifacts and logs
+      - name: Upload build artifacts
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: parser-build-${{ matrix.os }}
-          path: |
-            **/bin/Release/**
-            build_${{ matrix.os }}.log
-            build_${{ matrix.os }}.binlog
-
+          path: Builds/${{ matrix.os }}
+          if-no-files-found: warn
