@@ -72,10 +72,11 @@ jobs:
           dotnet build Parser.csproj --configuration Release --no-restore /bl:build_${{ matrix.os }}.binlog | Tee-Object -FilePath build_${{ matrix.os }}.log
           Write-Host "::endgroup::"
 
-      - name: Show build summary & artifacts
+      - name: Show build summary & artifacts (Linux / macOS)
+        if: runner.os != 'Windows'
         run: |
           echo "::group::Build summary"
-          if grep -q "Build succeeded." build_${{ matrix.os }}.log 2>/dev/null || Select-String -Path build_${{ matrix.os }}.log -Pattern "Build succeeded." -SimpleMatch 2>$null ; then
+          if grep -q "Build succeeded." build_${{ matrix.os }}.log 2>/dev/null; then
             echo "✅ Build succeeded on $RUNNER_OS"
           else
             echo "❌ Build may have failed; check logs"
@@ -83,11 +84,33 @@ jobs:
           echo "Binary log: build_${{ matrix.os }}.binlog"
           echo "::endgroup::"
 
-      - name: List built files
+      - name: Show build summary & artifacts (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          Write-Host "::group::Build summary"
+          if (Select-String -Path build_${{ matrix.os }}.log -Pattern "Build succeeded." -SimpleMatch -Quiet 2>$null) {
+            Write-Host "✅ Build succeeded on $env:RUNNER_OS"
+          } else {
+            Write-Host "❌ Build may have failed; check logs"
+          }
+          Write-Host "Binary log: build_${{ matrix.os }}.binlog"
+          Write-Host "::endgroup::"
+
+      - name: List built files (Linux / macOS)
+        if: runner.os != 'Windows'
         run: |
           echo "::group::Built files (top 200 lines)"
           ls -R **/bin/Release || true
           echo "::endgroup::"
+
+      - name: List built files (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          Write-Host "::group::Built files (top 200 lines)"
+          Get-ChildItem -Path "**/bin/Release" -Recurse -ErrorAction SilentlyContinue | Select-Object FullName
+          Write-Host "::endgroup::"
 
       - name: Upload build artifacts and logs
         if: always()
