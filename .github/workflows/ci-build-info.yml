@@ -1,0 +1,100 @@
+name: CI — Build & Info
+
+on:
+  push:
+    branches: ["main"]
+  pull_request:
+    branches: ["main"]
+
+jobs:
+  build:
+    name: Build on ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+        dotnet-version: ["10.0.x"]
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Commit / repo info
+        run: |
+          echo "::group::Commit info"
+          echo "Ref: $GITHUB_REF"
+          git --no-pager log -1 --pretty=format:"%h %s (%an)"
+          echo "::endgroup::"
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v3
+        with:
+          dotnet-version: ${{ matrix.dotnet-version }}
+
+      - name: Dotnet SDK info
+        run: |
+          echo "::group::dotnet --info"
+          dotnet --info
+          echo "::endgroup::"
+          echo "::group::Installed SDKs"
+          dotnet --list-sdks
+          echo "::endgroup::"
+
+      - name: Cache NuGet packages
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.nuget/packages
+            ~/.local/share/NuGet
+          key: ${{ runner.os }}-nuget-${{ hashFiles('**/*.csproj') }}
+          restore-keys: |
+            ${{ runner.os }}-nuget-
+
+      - name: Restore dependencies
+        run: |
+          echo "::group::dotnet restore"
+          dotnet restore Parser.csproj --verbosity minimal
+          echo "::endgroup::"
+
+      - name: Build (Linux / macOS)
+        if: runner.os != 'Windows'
+        run: |
+          echo "::group::dotnet build (console + log)"
+          dotnet build Parser.csproj --configuration Release --no-restore /bl:build_${{ matrix.os }}.binlog | tee build_${{ matrix.os }}.log
+          echo "::endgroup::"
+
+      - name: Build (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          Write-Host "::group::dotnet build (console + log)"
+          dotnet build Parser.csproj --configuration Release --no-restore /bl:build_${{ matrix.os }}.binlog | Tee-Object -FilePath build_${{ matrix.os }}.log
+          Write-Host "::endgroup::"
+
+      - name: Show build summary & artifacts
+        run: |
+          echo "::group::Build summary"
+          if grep -q "Build succeeded." build_${{ matrix.os }}.log 2>/dev/null || Select-String -Path build_${{ matrix.os }}.log -Pattern "Build succeeded." -SimpleMatch 2>$null ; then
+            echo "✅ Build succeeded on $RUNNER_OS"
+          else
+            echo "❌ Build may have failed; check logs"
+          fi
+          echo "Binary log: build_${{ matrix.os }}.binlog"
+          echo "::endgroup::"
+
+      - name: List built files
+        run: |
+          echo "::group::Built files (top 200 lines)"
+          ls -R **/bin/Release || true
+          echo "::endgroup::"
+
+      - name: Upload build artifacts and logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: parser-build-${{ matrix.os }}
+          path: |
+            **/bin/Release/**
+            build_${{ matrix.os }}.log
+            build_${{ matrix.os }}.binlog
+
