@@ -1,169 +1,160 @@
-name: CI — Build & Info
+name: CI — Build & Publish
 
 on:
   push:
-    branches: ["main"]
+    branches: [ "main" ]
   pull_request:
-    branches: ["main"]
+    branches: [ "main" ]
   workflow_dispatch:
 
 jobs:
   build:
-    name: Build on ${{ matrix.os }}
+    name: 🏗️ ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
+
     strategy:
+      fail-fast: false
       matrix:
-        os: [ubuntu-latest, windows-latest, macos-latest]
-        dotnet-version: ["10.0.x"]
+        os:
+          - ubuntu-latest
+          - windows-latest
+          - macos-latest
+        dotnet:
+          - "10.0.x"
+
+    env:
+      BUILD_DIR: Builds/${{ matrix.os }}
 
     steps:
-      - name: Checkout
+      - name: 📥 Checkout Repository
         uses: actions/checkout@v4
-        
-      - name: Create Builds folder (Linux / macOS)
-        if: runner.os != 'Windows'
-        run: |
-          mkdir -p Builds/${{ matrix.os }}
 
-      - name: Create Builds folder (Windows)
-        if: runner.os == 'Windows'
-        shell: pwsh
-        run: |
-          New-Item -ItemType Directory -Force -Path "Builds/${{ matrix.os }}" | Out-Null  
-
-      - name: Commit / repo info
-        run: |
-          echo "::group::Commit info"
-          echo "Ref: $GITHUB_REF"
-          git --no-pager log -1 --pretty=format:"%h %s (%an)"
-          echo "::endgroup::"
-
-      - name: Setup .NET
-        uses: actions/setup-dotnet@v3
+      - name: 🔧 Setup .NET
+        uses: actions/setup-dotnet@v4
         with:
-          dotnet-version: ${{ matrix.dotnet-version }}
+          dotnet-version: ${{ matrix.dotnet }}
 
-      - name: Dotnet SDK info
+      - name: 📋 Repository Information
+        shell: bash
         run: |
-          echo "::group::dotnet --info"
-          dotnet --info
+          echo "::group::Repository Information"
+          echo "Repository : $GITHUB_REPOSITORY"
+          echo "Branch     : $GITHUB_REF_NAME"
+          echo "Commit     : $(git rev-parse --short HEAD)"
+          git --no-pager log -1 --pretty=format:"Author     : %an%nMessage    : %s%nDate       : %ad"
+          echo
           echo "::endgroup::"
-          echo "::group::Installed SDKs"
+
+      - name: 📦 .NET Information
+        shell: bash
+        run: |
+          echo "::group::.NET SDK Information"
+          dotnet --info
+          echo
+          echo "Installed SDKs"
           dotnet --list-sdks
           echo "::endgroup::"
 
-      - name: Cache NuGet packages
+      - name: 💾 Cache NuGet Packages
         uses: actions/cache@v4
         with:
           path: |
             ~/.nuget/packages
             ~/.local/share/NuGet
+            ~\.nuget\packages
+            ~\AppData\Local\NuGet\v3-cache
           key: ${{ runner.os }}-nuget-${{ hashFiles('**/*.csproj') }}
           restore-keys: |
             ${{ runner.os }}-nuget-
 
-      - name: Restore dependencies
+      - name: 📥 Restore Packages
+        run: dotnet restore Parser.csproj
+
+      - name: 🚀 Publish (Linux/macOS)
+        if: runner.os != 'Windows'
+        shell: bash
         run: |
-          echo "::group::dotnet restore"
-          dotnet restore Parser.csproj --verbosity minimal
+          mkdir -p "$BUILD_DIR/Output"
+          mkdir -p "$BUILD_DIR/Logs"
+
+          echo "::group::Publishing"
+
+          START=$(date +%s)
+
+          dotnet publish Parser.csproj \
+            -c Release \
+            --no-restore \
+            -o "$BUILD_DIR/Output" \
+            /bl:"$BUILD_DIR/Logs/build.binlog" \
+            | tee "$BUILD_DIR/Logs/build.log"
+
+          END=$(date +%s)
+
           echo "::endgroup::"
 
-      - name: Build (Linux / macOS)
-        if: runner.os != 'Windows'
-        run: |
-          echo "::group::dotnet build (console + log)"
-          dotnet build Parser.csproj --configuration Release --no-restore /bl:build_${{ matrix.os }}.binlog | tee build_${{ matrix.os }}.log
-          echo "::endgroup::"
-          
-      - name: Collect build outputs (Linux / macOS)
-        if: runner.os != 'Windows'
-        run: |
-          mkdir -p Builds/${{ matrix.os }}/Logs
-          mkdir -p Builds/${{ matrix.os }}/Output
+          echo "Build completed in $((END-START)) seconds."
 
-          cp build_${{ matrix.os }}.log Builds/${{ matrix.os }}/Logs/
-          cp build_${{ matrix.os }}.binlog Builds/${{ matrix.os }}/Logs/
-
-          find . -path "*/bin/Release/*" -type f \
-            ! -name "*.pdb" \
-            -exec cp --parents {} Builds/${{ matrix.os }}/Output \;    
-
-      - name: Build (Windows)
+      - name: 🚀 Publish (Windows)
         if: runner.os == 'Windows'
         shell: pwsh
         run: |
-          Write-Host "::group::dotnet build (console + log)"
-          dotnet build Parser.csproj --configuration Release --no-restore /bl:build_${{ matrix.os }}.binlog | Tee-Object -FilePath build_${{ matrix.os }}.log
+          New-Item -ItemType Directory -Force -Path "$env:BUILD_DIR\Output" | Out-Null
+          New-Item -ItemType Directory -Force -Path "$env:BUILD_DIR\Logs" | Out-Null
+
+          Write-Host "::group::Publishing"
+
+          $start = Get-Date
+
+          dotnet publish Parser.csproj `
+            -c Release `
+            --no-restore `
+            -o "$env:BUILD_DIR\Output" `
+            /bl:"$env:BUILD_DIR\Logs\build.binlog" |
+            Tee-Object -FilePath "$env:BUILD_DIR\Logs\build.log"
+
+          $elapsed = (Get-Date) - $start
+
           Write-Host "::endgroup::"
 
-      - name: Collect build outputs (Windows)
-        if: runner.os == 'Windows'
-        shell: pwsh
-        run: |
-          New-Item -ItemType Directory -Force -Path "Builds/${{ matrix.os }}\Logs" | Out-Null
-          New-Item -ItemType Directory -Force -Path "Builds/${{ matrix.os }}\Output" | Out-Null
+          Write-Host "Build completed in $($elapsed.TotalSeconds.ToString('0.00')) seconds."
 
-          Copy-Item "build_${{ matrix.os }}.log" "Builds/${{ matrix.os }}\Logs\"
-          Copy-Item "build_${{ matrix.os }}.binlog" "Builds/${{ matrix.os }}\Logs\"
-
-          Get-ChildItem -Recurse -Path . -Filter * |
-            Where-Object {
-              $_.FullName -match "\\bin\\Release\\" -and
-              -not $_.PSIsContainer -and
-              $_.Extension -ne ".pdb"
-            } |
-            ForEach-Object {
-              $relative = Resolve-Path -Relative $_.FullName
-              $dest = Join-Path "Builds/${{ matrix.os }}\Output" $relative
-              $dir = Split-Path $dest
-              New-Item -ItemType Directory -Force -Path $dir | Out-Null
-              Copy-Item $_.FullName $dest
-            }
-
-      - name: Show build summary & artifacts (Linux / macOS)
+      - name: 📂 Published Files (Linux/macOS)
         if: runner.os != 'Windows'
+        shell: bash
         run: |
-          echo "::group::Build summary"
-          if grep -q "Build succeeded." build_${{ matrix.os }}.log 2>/dev/null; then
-            echo "✅ Build succeeded on $RUNNER_OS"
-          else
-            echo "❌ Build may have failed; check logs"
-          fi
-          echo "Binary log: build_${{ matrix.os }}.binlog"
+          echo "::group::Published Files"
+          find "$BUILD_DIR/Output" -type f | sort
           echo "::endgroup::"
 
-      - name: Show build summary & artifacts (Windows)
+      - name: 📂 Published Files (Windows)
         if: runner.os == 'Windows'
         shell: pwsh
         run: |
-          Write-Host "::group::Build summary"
-          if (Select-String -Path build_${{ matrix.os }}.log -Pattern "Build succeeded." -SimpleMatch -Quiet 2>$null) {
-            Write-Host "✅ Build succeeded on $env:RUNNER_OS"
-          } else {
-            Write-Host "❌ Build may have failed; check logs"
-          }
-          Write-Host "Binary log: build_${{ matrix.os }}.binlog"
+          Write-Host "::group::Published Files"
+          Get-ChildItem "$env:BUILD_DIR\Output" -Recurse |
+            Where-Object {!$_.PSIsContainer} |
+            Select-Object FullName
           Write-Host "::endgroup::"
 
-      - name: List built files (Linux / macOS)
-        if: runner.os != 'Windows'
+      - name: ✅ Build Summary
+        if: always()
+        shell: bash
         run: |
-          echo "::group::Built files (top 200 lines)"
-          ls -R **/bin/Release || true
-          echo "::endgroup::"
+          echo "### ✅ Build Complete" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Item | Value |" >> $GITHUB_STEP_SUMMARY
+          echo "|------|-------|" >> $GITHUB_STEP_SUMMARY
+          echo "| OS | $RUNNER_OS |" >> $GITHUB_STEP_SUMMARY
+          echo "| .NET | ${{ matrix.dotnet }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Configuration | Release |" >> $GITHUB_STEP_SUMMARY
+          echo "| Output Folder | \`Builds/${{ matrix.os }}/Output\` |" >> $GITHUB_STEP_SUMMARY
+          echo "| Logs | \`Builds/${{ matrix.os }}/Logs\` |" >> $GITHUB_STEP_SUMMARY
 
-      - name: List built files (Windows)
-        if: runner.os == 'Windows'
-        shell: pwsh
-        run: |
-          Write-Host "::group::Built files (top 200 lines)"
-          Get-ChildItem -Path "**/bin/Release" -Recurse -ErrorAction SilentlyContinue | Select-Object FullName
-          Write-Host "::endgroup::"
-
-      - name: Upload build artifacts
+      - name: 📤 Upload Artifact
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: parser-build-${{ matrix.os }}
-          path: Builds/${{ matrix.os }}
-          if-no-files-found: warn
+          name: Parser-${{ matrix.os }}
+          path: ${{ env.BUILD_DIR }}
+          if-no-files-found: error
+          compression-level: 9
