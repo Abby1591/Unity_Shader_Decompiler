@@ -2,28 +2,6 @@
   "version": 3,
   "targets": {
     "net10.0": {
-      "K4os.Compression.LZ4/1.3.8": {
-        "type": "package",
-        "compile": {
-          "lib/net6.0/K4os.Compression.LZ4.dll": {
-            "related": ".xml"
-          }
-        },
-        "runtime": {
-          "lib/net6.0/K4os.Compression.LZ4.dll": {
-            "related": ".xml"
-          }
-        }
-      },
-      "SevenZip/19.0.0": {
-        "type": "package",
-        "compile": {
-          "lib/netstandard2.0/SevenZip.dll": {}
-        },
-        "runtime": {
-          "lib/netstandard2.0/SevenZip.dll": {}
-        }
-      },
       "SharpGen.Runtime/2.4.2-beta": {
         "type": "package",
         "compile": {
@@ -120,42 +98,6 @@
     }
   },
   "libraries": {
-    "K4os.Compression.LZ4/1.3.8": {
-      "sha512": "LhwlPa7c1zs1OV2XadMtAWdImjLIsqFJPoRcIWAadSRn0Ri1DepK65UbWLPmt4riLqx2d40xjXRk0ogpqNtK7g==",
-      "type": "package",
-      "path": "k4os.compression.lz4/1.3.8",
-      "files": [
-        ".nupkg.metadata",
-        ".signature.p7s",
-        "k4os.compression.lz4.1.3.8.nupkg.sha512",
-        "k4os.compression.lz4.nuspec",
-        "lib/net462/K4os.Compression.LZ4.dll",
-        "lib/net462/K4os.Compression.LZ4.xml",
-        "lib/net5.0/K4os.Compression.LZ4.dll",
-        "lib/net5.0/K4os.Compression.LZ4.xml",
-        "lib/net6.0/K4os.Compression.LZ4.dll",
-        "lib/net6.0/K4os.Compression.LZ4.xml",
-        "lib/netstandard2.0/K4os.Compression.LZ4.dll",
-        "lib/netstandard2.0/K4os.Compression.LZ4.xml",
-        "lib/netstandard2.1/K4os.Compression.LZ4.dll",
-        "lib/netstandard2.1/K4os.Compression.LZ4.xml"
-      ]
-    },
-    "SevenZip/19.0.0": {
-      "sha512": "+Eeb/uvC0REvMlG1auBqlBMiFiPZs+WizlLroHPSKtBh/V7NR/qOocgk+/7S0lNzciYsurMCeJzUL7LYIqVnWw==",
-      "type": "package",
-      "path": "sevenzip/19.0.0",
-      "files": [
-        ".nupkg.metadata",
-        ".signature.p7s",
-        "lib/net20/SevenZip.dll",
-        "lib/netstandard2.0/SevenZip.dll",
-        "pack-package.cmd",
-        "publish-package.cmd",
-        "sevenzip.19.0.0.nupkg.sha512",
-        "sevenzip.nuspec"
-      ]
-    },
     "SharpGen.Runtime/2.4.2-beta": {
       "sha512": "niTtWAUov1F7wZGAlVeEvW+Tnqvg5yTmhI7rxmYu2Utoyu2TbC9tWWpUpMs0PQg5lu5svoYpCAztNjxCqMFP/w==",
       "type": "package",
@@ -272,8 +214,6 @@
   },
   "projectFileDependencyGroups": {
     "net10.0": [
-      "K4os.Compression.LZ4 >= 1.3.8",
-      "SevenZip >= 19.0.0",
       "Vortice.D3DCompiler >= 3.8.3"
     ]
   },
@@ -320,14 +260,6 @@
       "net10.0": {
         "targetAlias": "net10.0",
         "dependencies": {
-          "K4os.Compression.LZ4": {
-            "target": "Package",
-            "version": "[1.3.8, )"
-          },
-          "SevenZip": {
-            "target": "Package",
-            "version": "[19.0.0, )"
-          },
           "Vortice.D3DCompiler": {
             "target": "Package",
             "version": "[3.8.3, )"

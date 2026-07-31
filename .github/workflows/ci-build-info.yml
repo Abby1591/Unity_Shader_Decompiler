@@ -96,7 +96,7 @@ jobs:
           dotnet build Parser.csproj --configuration Release --no-restore /bl:build_${{ matrix.os }}.binlog | Tee-Object -FilePath build_${{ matrix.os }}.log
           Write-Host "::endgroup::"
 
-            - name: Collect build outputs (Windows)
+      - name: Collect build outputs (Windows)
         if: runner.os == 'Windows'
         shell: pwsh
         run: |
