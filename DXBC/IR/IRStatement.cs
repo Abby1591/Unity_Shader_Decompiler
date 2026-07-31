@@ -1,14 +1,41 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace Parser.DXBC.IR;
 
 public abstract class IRStatement
 {
+    private static int _nextId;
+
+    // Unique across the whole IRProgram, assigned in construction order.
+    // Purely for debugging/traceability (e.g. "Statement #52") — never
+    // reused, never reset mid-program.
+    public int Id { get; } = System.Threading.Interlocked.Increment(ref _nextId) - 1;
+
+    // Registers this statement writes (SSA-renameable). Empty for
+    // statements with no register destination (branches, memory stores,
+    // barriers, etc).
+    public virtual IEnumerable<IRRegister> Defines => Enumerable.Empty<IRRegister>();
+
+    // Registers this statement reads — includes registers used only for
+    // dynamic/relative indexing (e.g. the r2 in x0[r2.x] is a use even on
+    // a statement that writes to x0). Empty for statements with no
+    // register operands.
+    public virtual IEnumerable<IRRegister> Uses => Enumerable.Empty<IRRegister>();
+
     public sealed class IRAssignment : IRStatement
     {
         public IRRegister Destination { get; init; } = null!;
         public IRExpression Expression { get; init; } = null!;
+
+        public override IEnumerable<IRRegister> Defines
+        {
+            get { yield return Destination; }
+        }
+
+        public override IEnumerable<IRRegister> Uses =>
+            Destination.IndexRegisterUses().Concat(Expression.CollectRegisterUses());
 
         public override string ToString()
         {
@@ -19,6 +46,8 @@ public abstract class IRStatement
     public sealed class IRIf : IRStatement
     {
         public IRExpression Condition { get; init; } = null!;
+
+        public override IEnumerable<IRRegister> Uses => Condition.CollectRegisterUses();
 
         public override string ToString()
             => $"if ({Condition})";
@@ -49,6 +78,8 @@ public abstract class IRStatement
     {
         public IRExpression? Condition { get; init; }
 
+        public override IEnumerable<IRRegister> Uses => Condition.CollectRegisterUses();
+
         public override string ToString()
             => Condition is null ? "break" : $"breakc ({Condition})";
     }
@@ -57,6 +88,8 @@ public abstract class IRStatement
     public sealed class IRContinue : IRStatement
     {
         public IRExpression? Condition { get; init; }
+
+        public override IEnumerable<IRRegister> Uses => Condition.CollectRegisterUses();
 
         public override string ToString()
             => Condition is null ? "continue" : $"continuec ({Condition})";
@@ -67,6 +100,8 @@ public abstract class IRStatement
     {
         public IRExpression? Condition { get; init; }
 
+        public override IEnumerable<IRRegister> Uses => Condition.CollectRegisterUses();
+
         public override string ToString()
             => Condition is null ? "return" : $"retc ({Condition})";
     }
@@ -75,6 +110,8 @@ public abstract class IRStatement
     {
         public IRExpression Selector { get; init; } = null!;
 
+        public override IEnumerable<IRRegister> Uses => Selector.CollectRegisterUses();
+
         public override string ToString()
             => $"switch ({Selector})";
     }
@@ -82,6 +119,8 @@ public abstract class IRStatement
     public sealed class IRCase : IRStatement
     {
         public IRExpression Value { get; init; } = null!;
+
+        public override IEnumerable<IRRegister> Uses => Value.CollectRegisterUses();
 
         public override string ToString()
             => $"case {Value}";
@@ -100,6 +139,8 @@ public abstract class IRStatement
     public sealed class IRDiscard : IRStatement
     {
         public IRExpression Condition { get; init; } = null!;
+
+        public override IEnumerable<IRRegister> Uses => Condition.CollectRegisterUses();
 
         public override string ToString()
             => $"discard ({Condition})";
@@ -120,6 +161,8 @@ public abstract class IRStatement
 
         public IRExpression? Condition { get; init; }
 
+        public override IEnumerable<IRRegister> Uses => Condition.CollectRegisterUses();
+
         public override string ToString()
             => Condition is null ? $"call {Label}" : $"callc {Label} ({Condition})";
     }
@@ -134,6 +177,13 @@ public abstract class IRStatement
         public IRExpression Address { get; init; } = null!;
 
         public IRExpression Value { get; init; } = null!;
+
+        // No Defines: this writes to a UAV/buffer location, not an
+        // SSA-renameable register.
+        public override IEnumerable<IRRegister> Uses =>
+            Resource.IndexRegisterUses().Append(Resource)
+                .Concat(Address.CollectRegisterUses())
+                .Concat(Value.CollectRegisterUses());
 
         public override string ToString()
             => $"{Resource}[{Address}] = {Value}";
@@ -154,6 +204,13 @@ public abstract class IRStatement
         public List<IRRegister?> Destinations { get; } = new();
 
         public List<IRExpression> Expressions { get; } = new();
+
+        public override IEnumerable<IRRegister> Defines =>
+            Destinations.Where(d => d is not null)!;
+
+        public override IEnumerable<IRRegister> Uses =>
+            Destinations.Where(d => d is not null).SelectMany(d => d!.IndexRegisterUses())
+                .Concat(Expressions.SelectMany(e => e.CollectRegisterUses()));
 
         public override string ToString()
         {
@@ -203,6 +260,15 @@ public abstract class IRStatement
         public IRExpression? CompareValue { get; init; }
 
         public IRRegister? ResultDestination { get; init; }
+
+        public override IEnumerable<IRRegister> Defines =>
+            ResultDestination is null ? Enumerable.Empty<IRRegister>() : new[] { ResultDestination };
+
+        public override IEnumerable<IRRegister> Uses =>
+            Resource.IndexRegisterUses().Append(Resource)
+                .Concat(Address.CollectRegisterUses())
+                .Concat(Value.CollectRegisterUses())
+                .Concat(CompareValue.CollectRegisterUses());
 
         public override string ToString()
         {
@@ -301,10 +367,37 @@ public abstract class IRStatement
 
         public IRExpression? Condition { get; init; }
 
+        public override IEnumerable<IRRegister> Uses => Condition.CollectRegisterUses();
+
         public override string ToString()
         {
             string call = $"interface_call({InterfaceIndex}, {FunctionIndex})";
             return Condition is null ? call : $"{call} if ({Condition})";
         }
+    }
+
+    // ===================== SSA (Phase 6+) =====================
+
+    // A PHI node inserted at a dominance-frontier merge block. Operands is
+    // parallel to the owning IRBlock's Predecessors list *at insertion
+    // time* — Operands[i] is the value coming in from Predecessors[i].
+    // IRPhiInsertion fills every operand with the same pre-renaming
+    // location; SSA renaming (Phase 7) is what turns each one into the
+    // actual reaching definition from that predecessor.
+    public sealed class IRPhi : IRStatement
+    {
+        public IRRegister Destination { get; init; } = null!;
+
+        public List<IRRegister> Operands { get; } = new();
+
+        public override IEnumerable<IRRegister> Defines
+        {
+            get { yield return Destination; }
+        }
+
+        public override IEnumerable<IRRegister> Uses => Operands;
+
+        public override string ToString()
+            => $"{Destination} = phi({string.Join(", ", Operands)})";
     }
 }

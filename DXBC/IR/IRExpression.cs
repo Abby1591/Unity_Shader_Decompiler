@@ -527,3 +527,101 @@ public abstract class IRExpression
     }
 
 }
+
+// Phase 0: walks an expression tree collecting every IRRegister that is
+// read by it — including registers used only for dynamic/relative
+// indexing on another register (e.g. the r2 in cb0[r2.x]). This is the
+// single source of truth IRStatement.Uses builds on, so every new
+// IRExpression subclass needs a case added here or its operands will
+// silently vanish from def/use analysis.
+public static class IRExpressionExtensions
+{
+    public static IEnumerable<IRRegister> CollectRegisterUses(this IRExpression? expr)
+    {
+        switch (expr)
+        {
+            case null:
+            case IRExpression.ConstantExpression:
+                yield break;
+
+            case IRExpression.RegisterExpression re:
+                foreach (IRRegister r in re.Register.IndexRegisterUses())
+                    yield return r;
+                yield return re.Register;
+                break;
+
+            case IRExpression.BinaryExpression be:
+                foreach (IRRegister r in be.Left.CollectRegisterUses()) yield return r;
+                foreach (IRRegister r in be.Right.CollectRegisterUses()) yield return r;
+                break;
+
+            case IRExpression.UnaryExpression ue:
+                foreach (IRRegister r in ue.Operand.CollectRegisterUses()) yield return r;
+                break;
+
+            case IRExpression.IntrinsicExpression ie:
+                foreach (IRExpression arg in ie.Arguments)
+                    foreach (IRRegister r in arg.CollectRegisterUses())
+                        yield return r;
+                break;
+
+            case IRExpression.FusedMultiplyAddExpression fma:
+                foreach (IRRegister r in fma.A.CollectRegisterUses()) yield return r;
+                foreach (IRRegister r in fma.B.CollectRegisterUses()) yield return r;
+                foreach (IRRegister r in fma.C.CollectRegisterUses()) yield return r;
+                break;
+
+            case IRExpression.MultiplyHighExpression mh:
+                foreach (IRRegister r in mh.Left.CollectRegisterUses()) yield return r;
+                foreach (IRRegister r in mh.Right.CollectRegisterUses()) yield return r;
+                break;
+
+            case IRExpression.Multiply64Expression m64:
+                foreach (IRRegister r in m64.Left.CollectRegisterUses()) yield return r;
+                foreach (IRRegister r in m64.Right.CollectRegisterUses()) yield return r;
+                break;
+
+            case IRExpression.BitFieldInsertExpression bfi:
+                foreach (IRRegister r in bfi.Width.CollectRegisterUses()) yield return r;
+                foreach (IRRegister r in bfi.Offset.CollectRegisterUses()) yield return r;
+                foreach (IRRegister r in bfi.Insert.CollectRegisterUses()) yield return r;
+                foreach (IRRegister r in bfi.Base.CollectRegisterUses()) yield return r;
+                break;
+
+            case IRExpression.BitFieldExtractExpression bfe:
+                foreach (IRRegister r in bfe.Width.CollectRegisterUses()) yield return r;
+                foreach (IRRegister r in bfe.Offset.CollectRegisterUses()) yield return r;
+                foreach (IRRegister r in bfe.Value.CollectRegisterUses()) yield return r;
+                break;
+
+            case IRExpression.ConditionalExpression ce:
+                foreach (IRRegister r in ce.Condition.CollectRegisterUses()) yield return r;
+                foreach (IRRegister r in ce.TrueExpression.CollectRegisterUses()) yield return r;
+                foreach (IRRegister r in ce.FalseExpression.CollectRegisterUses()) yield return r;
+                break;
+
+            case IRExpression.DotProductExpression dp:
+                foreach (IRRegister r in dp.Left.CollectRegisterUses()) yield return r;
+                foreach (IRRegister r in dp.Right.CollectRegisterUses()) yield return r;
+                break;
+
+            case IRExpression.TextureOperationExpression tex:
+                foreach (IRRegister r in tex.Resource.IndexRegisterUses()) yield return r;
+                yield return tex.Resource;
+                if (tex.Sampler is not null)
+                {
+                    foreach (IRRegister r in tex.Sampler.IndexRegisterUses()) yield return r;
+                    yield return tex.Sampler;
+                }
+                foreach (IRRegister r in tex.Coordinates.CollectRegisterUses()) yield return r;
+                foreach (IRRegister r in tex.Offset.CollectRegisterUses()) yield return r;
+                foreach (IRRegister r in tex.LOD.CollectRegisterUses()) yield return r;
+                foreach (IRRegister r in tex.Bias.CollectRegisterUses()) yield return r;
+                foreach (IRRegister r in tex.CompareValue.CollectRegisterUses()) yield return r;
+                foreach (IRRegister r in tex.GradX.CollectRegisterUses()) yield return r;
+                foreach (IRRegister r in tex.GradY.CollectRegisterUses()) yield return r;
+                foreach (IRRegister r in tex.SampleIndex.CollectRegisterUses()) yield return r;
+                break;
+        }
+    }
+}

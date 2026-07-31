@@ -37,6 +37,31 @@ public sealed class IRRegister
     // until parser support lands.
     public bool Precise;
 
+    // SSA version number per component (index 0=x,1=y,2=z,3=w), filled in
+    // by SSA renaming (Phase 7). Null until renamed — and stays null for
+    // any component that's read before ever being written (an implicit
+    // function input). Stored per-component rather than as one scalar on
+    // the register because a single instruction can write several
+    // components at once (mov r0.xy, ...) whose version histories then
+    // diverge independently (only r0.x might get redefined later).
+    public int?[] SsaVersion { get; } = new int?[4];
+
+    // Registers referenced by dynamic/relative indexing on this register
+    // (e.g. the r2 in cb0[r2.x + 4]). These are reads regardless of whether
+    // this IRRegister itself is being used or defined — writing to
+    // x0[r2.x] still reads r2.
+    public IEnumerable<IRRegister> IndexRegisterUses()
+    {
+        foreach (IRExpression? relative in RelativeIndices)
+        {
+            if (relative is null)
+                continue;
+
+            foreach (IRRegister r in relative.CollectRegisterUses())
+                yield return r;
+        }
+    }
+
     public override string ToString()
     {
         string name = RegisterType switch
@@ -65,7 +90,7 @@ public sealed class IRRegister
             _ => ""
         };
 
-        string result = name + suffix;
+        string result = name + suffix + SsaSuffix();
 
         result = Modifier switch
         {
@@ -122,6 +147,50 @@ public sealed class IRRegister
         chars[3] = ComponentToChar((byte)((swizzle >> 6) & 3));
 
         return "." + new string(chars);
+    }
+
+    // Debug-display only: "_N" once renamed, so a statement can be printed
+    // as e.g. "r0.x_1 = r0.x_0 + r1.y_2". If the components involved carry
+    // different version numbers (only possible after a multi-component
+    // write whose components later diverge), falls back to listing each
+    // one rather than picking a misleading single number.
+    private string SsaSuffix()
+    {
+        List<int> indices = ComponentMode switch
+        {
+            Operand.OperandComponentMode.Mask => MaskComponentIndices(Mask),
+            Operand.OperandComponentMode.Swizzle => new List<int>
+            {
+                Swizzle & 3, (Swizzle >> 2) & 3, (Swizzle >> 4) & 3, (Swizzle >> 6) & 3
+            },
+            Operand.OperandComponentMode.Select1 => new List<int> { Component },
+            _ => new List<int>()
+        };
+
+        List<int> versions = indices
+            .Select(i => SsaVersion[i])
+            .Where(v => v.HasValue)
+            .Select(v => v!.Value)
+            .Distinct()
+            .ToList();
+
+        if (versions.Count == 0)
+            return "";
+
+        if (versions.Count == 1)
+            return $"_{versions[0]}";
+
+        return "_" + string.Join("", indices.Select(i => SsaVersion[i]?.ToString() ?? "?"));
+    }
+
+    private static List<int> MaskComponentIndices(byte mask)
+    {
+        var result = new List<int>();
+        if ((mask & 1) != 0) result.Add(0);
+        if ((mask & 2) != 0) result.Add(1);
+        if ((mask & 4) != 0) result.Add(2);
+        if ((mask & 8) != 0) result.Add(3);
+        return result;
     }
 
     private static char ComponentToChar(byte c)
