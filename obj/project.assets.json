@@ -223,11 +223,11 @@
   "project": {
     "version": "1.0.0",
     "restore": {
-      "projectUniqueName": "C:\\Users\\Abby\\Software\\Decomp\\Shader\\Parser\\Parser.csproj",
+      "projectUniqueName": "C:\\Users\\Abby\\Software\\Unity Decompilers\\Unity Shader Decompiler\\Parser\\Parser.csproj",
       "projectName": "Parser",
-      "projectPath": "C:\\Users\\Abby\\Software\\Decomp\\Shader\\Parser\\Parser.csproj",
+      "projectPath": "C:\\Users\\Abby\\Software\\Unity Decompilers\\Unity Shader Decompiler\\Parser\\Parser.csproj",
       "packagesPath": "C:\\Users\\Abby\\.nuget\\packages\\",
-      "outputPath": "C:\\Users\\Abby\\Software\\Decomp\\Shader\\Parser\\obj\\",
+      "outputPath": "C:\\Users\\Abby\\Software\\Unity Decompilers\\Unity Shader Decompiler\\Parser\\obj\\",
       "projectStyle": "PackageReference",
       "configFilePaths": [
         "C:\\Users\\Abby\\AppData\\Roaming\\NuGet\\NuGet.Config"
