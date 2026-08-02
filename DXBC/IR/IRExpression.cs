@@ -448,7 +448,33 @@ public abstract class IRExpression
             return $"dot({Left}, {Right})";
         }
     }
+    
+    // Reconstructed by Matrix Pattern Recognition (post-SSA, pre-HLSL-gen)
+    // from a run of N "row dot vector" statements — e.g. the classic
+    // mul/fma/fma/fma sequence per output component — that all read the
+    // same vector and consecutive rows of the same constant-buffer-backed
+    // register. Rows is ordered row0..rowN-1; Vector is shared by every
+    // row. The backend renders this as mul(matrix, vector) (or expands it
+    // back to per-row dot products if it would rather not assume a real
+    // matrix type is available).
+    public sealed class MatrixVectorMultiplyExpression : IRExpression
+    {
+        public List<IRRegister> Rows { get; init; } = new();
 
+        public IRExpression Vector { get; init; } = null!;
+
+        public override IRValueType Type => Vector.Type;
+
+        public override string ToString()
+        {
+            string matrix = Rows.Count > 0
+                ? $"{Rows[0]}..{Rows[^1]}"
+                : "matrix";
+
+            return $"mul({matrix}, {Vector})";
+        }
+    }
+    
     // ===================== texture operations (consolidated) =====================
     // Single expression type covering every texture/buffer read instruction,
     // instead of one sealed class per DXBC opcode. Only the fields relevant
@@ -603,6 +629,15 @@ public static class IRExpressionExtensions
             case IRExpression.DotProductExpression dp:
                 foreach (IRRegister r in dp.Left.CollectRegisterUses()) yield return r;
                 foreach (IRRegister r in dp.Right.CollectRegisterUses()) yield return r;
+                break;
+            
+            case IRExpression.MatrixVectorMultiplyExpression mv:
+                foreach (IRRegister row in mv.Rows)
+                {
+                    foreach (IRRegister r in row.IndexRegisterUses()) yield return r;
+                    yield return row;
+                }
+                foreach (IRRegister r in mv.Vector.CollectRegisterUses()) yield return r;
                 break;
 
             case IRExpression.TextureOperationExpression tex:

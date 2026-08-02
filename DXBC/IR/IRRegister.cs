@@ -37,6 +37,15 @@ public sealed class IRRegister
     // until parser support lands.
     public bool Precise;
 
+    // Human-readable name attached by IRMetadataBinding from the DXBC
+    // container's own reflection chunks (RDEF cbuffer/variable names,
+    // RDEF resource bindings, ISGN/OSGN semantic names). Null until that
+    // pass runs, or for registers it has no metadata for (temps, indexable
+    // temps). When set, ToString() uses it in place of the raw r#/cb#/t#
+    // name — component-mask/swizzle and SSA-version suffixes still apply
+    // on top of it, same as always.
+    public string? SymbolicName;
+    
     // SSA version number per component (index 0=x,1=y,2=z,3=w), filled in
     // by SSA renaming (Phase 7). Null until renamed — and stays null for
     // any component that's read before ever being written (an implicit
@@ -64,7 +73,7 @@ public sealed class IRRegister
 
     public override string ToString()
     {
-        string name = RegisterType switch
+        string name = SymbolicName ?? RegisterType switch
         {
             RegisterType.Temp => $"r{Index}",
             RegisterType.Input => $"v{Index}",

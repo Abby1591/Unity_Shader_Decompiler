@@ -85,6 +85,12 @@ public static class IRExpressionRewriter
                 Right = Rewrite(dp.Right, transform)!,
                 Components = dp.Components,
             },
+            
+            IRExpression.MatrixVectorMultiplyExpression mv => new IRExpression.MatrixVectorMultiplyExpression
+            {
+                Rows = mv.Rows,
+                Vector = Rewrite(mv.Vector, transform)!,
+            },
 
             IRExpression.TextureOperationExpression tex => new IRExpression.TextureOperationExpression
             {
