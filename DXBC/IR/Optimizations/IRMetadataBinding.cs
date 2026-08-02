@@ -33,7 +33,7 @@ public static class IRMetadataBinding
     // Structured=5, ByteAddress=7, and any future SRV-shaped type) shares
     // the t# bind-slot namespace, so it's treated as "resource" by default.
 
-    public static void Run(List<IRBlock> blocks, DxbcFile file)
+    public static void Run(List<IRBlock> blocks, IRProgram program, DxbcFile file)
     {
         RdefChunk? rdef = file.ResourceDefinition;
 
@@ -53,6 +53,59 @@ public static class IRMetadataBinding
                     Bind(reg, cbuffersBySlot, resourceNames, samplerNames, uavNames, inputsByRegister, outputsByRegister);
                 }
             }
+        }
+
+        foreach (IRDeclaration decl in program.Declarations)
+        {
+            BindDeclaration(decl, cbuffersBySlot, resourceNames, samplerNames, uavNames, inputsByRegister, outputsByRegister);
+        }
+    }
+
+    // Same idea as Bind() below, just for the dcl_* metadata objects
+    // instead of register reads/writes — a constant buffer's own
+    // dcl_constantbuffer gets the buffer's name (not a variable's — there's
+    // no offset here, just the buffer as a whole), resources/samplers/UAVs
+    // get their binding name, and inputs/outputs get their semantic.
+    private static void BindDeclaration(
+        IRDeclaration decl,
+        Dictionary<uint, RdefConstantBuffer> cbuffersBySlot,
+        Dictionary<uint, string> resourceNames,
+        Dictionary<uint, string> samplerNames,
+        Dictionary<uint, string> uavNames,
+        Dictionary<uint, SignatureElement> inputsByRegister,
+        Dictionary<uint, SignatureElement> outputsByRegister)
+    {
+        switch (decl)
+        {
+            case IRDeclaration.IRConstantBufferDeclaration cbDecl:
+                if (cbuffersBySlot.TryGetValue(cbDecl.Slot, out RdefConstantBuffer? cb))
+                    cbDecl.SymbolicName = cb.Name;
+                break;
+
+            case IRDeclaration.IRResourceDeclaration resDecl:
+                if (resourceNames.TryGetValue(resDecl.Slot, out string? resName))
+                    resDecl.SymbolicName = resName;
+                break;
+
+            case IRDeclaration.IRSamplerDeclaration sampDecl:
+                if (samplerNames.TryGetValue(sampDecl.Slot, out string? sampName))
+                    sampDecl.SymbolicName = sampName;
+                break;
+
+            case IRDeclaration.IRUAVDeclaration uavDecl:
+                if (uavNames.TryGetValue(uavDecl.Slot, out string? uavName))
+                    uavDecl.SymbolicName = uavName;
+                break;
+
+            case IRDeclaration.IRInputDeclaration inDecl:
+                if (inputsByRegister.TryGetValue(inDecl.Register, out SignatureElement? inElem))
+                    inDecl.SymbolicName = SemanticName(inElem);
+                break;
+
+            case IRDeclaration.IROutputDeclaration outDecl:
+                if (outputsByRegister.TryGetValue(outDecl.Register, out SignatureElement? outElem))
+                    outDecl.SymbolicName = SemanticName(outElem);
+                break;
         }
     }
 

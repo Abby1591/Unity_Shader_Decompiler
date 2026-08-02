@@ -94,15 +94,35 @@ internal class Program
                 var dxbcFile = new DxbcFile();
                 dxbcFile.Load(dxbcPath);
                 
-                var builder = new IRBuilder();
-                IRProgram ir = builder.Build(dxbcFile.Shader!);
-                
-                Console.WriteLine("IR");
-                Console.WriteLine("--");
+                IRPipeline.Result pipelineResult = IRPipeline.Run(dxbcFile);
 
-                foreach (var stmt in ir.Statements)
+                Console.WriteLine("IR (post-optimization, pattern-recognized, metadata-bound)");
+                Console.WriteLine("------------------------------------------------------------");
+
+                foreach (var block in pipelineResult.Blocks)
                 {
-                    Console.WriteLine(stmt);
+                    foreach (var stmt in block.Statements)
+                    {
+                        Console.WriteLine(stmt);
+                    }
+                }
+
+                Console.WriteLine();
+
+                if (!pipelineResult.SsaVerification.IsValid)
+                {
+                    Console.WriteLine("SSA verification FAILED:");
+                    foreach (var error in pipelineResult.SsaVerification.Errors)
+                        Console.WriteLine($"  {error}");
+                    Console.WriteLine();
+                }
+
+                if (pipelineResult.RecognizedLoops.Count > 0)
+                {
+                    Console.WriteLine("Recognized loops:");
+                    foreach (var loop in pipelineResult.RecognizedLoops)
+                        Console.WriteLine($"  {loop}");
+                    Console.WriteLine();
                 }
 
                 Console.WriteLine($"Length      : {dxbcFile.TotalLength}");
@@ -143,7 +163,7 @@ internal class Program
                     Console.WriteLine();
                 }
 
-                Console.WriteLine($"IR statements: {ir.Statements.Count}");
+                Console.WriteLine($"IR statements: {pipelineResult.Program.Statements.Count}");
                 
                 string hlsl = decompiler.Decompile(dxbc);
                 string hlslPath = Path.Combine("Output", $"program{i}.hlsl");

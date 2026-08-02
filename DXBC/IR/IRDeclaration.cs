@@ -2,6 +2,12 @@ namespace Parser.DXBC.IR;
 
 public abstract class IRDeclaration
 {
+    // Human-readable name attached by IRMetadataBinding from RDEF/ISGN/OSGN
+    // — same idea as IRRegister.SymbolicName, just for the dcl_* metadata
+    // rather than register reads/writes. Null until that pass runs, or for
+    // declarations reflection doesn't cover (dcl_temps, dcl_indexRange, ...).
+    public string? SymbolicName;
+
     public sealed class IRConstantBufferDeclaration : IRDeclaration
     {
         public uint Slot { get; init; }
