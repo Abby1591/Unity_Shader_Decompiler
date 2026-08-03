@@ -189,7 +189,7 @@ public sealed class IRRegister
         if (versions.Count == 1)
             return $"_{versions[0]}";
 
-        return "_" + string.Join("", indices.Select(i => SsaVersion[i]?.ToString() ?? "?"));
+        return "_" + string.Join("", versions);
     }
 
     private static List<int> MaskComponentIndices(byte mask)

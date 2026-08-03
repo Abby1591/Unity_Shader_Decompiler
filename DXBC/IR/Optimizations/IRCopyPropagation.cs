@@ -11,7 +11,7 @@ public static class IRCopyPropagation
 {
     public static bool Run(List<IRBlock> blocks)
     {
-        var copies = new Dictionary<IRStorageLocation, IRRegister>();
+        var copies = new Dictionary<(IRStorageLocation Loc, int Version), IRRegister>();
 
         foreach (IRBlock block in blocks)
         {
@@ -26,7 +26,7 @@ public static class IRCopyPropagation
                     if (version is null)
                         continue;
 
-                    copies[loc] = src.Register;
+                    copies[(loc, version.Value)] = src.Register;
                 }
             }
         }
@@ -58,7 +58,8 @@ public static class IRCopyPropagation
         return changed;
     }
 
-    private static IRExpression Substitute(IRExpression expr, Dictionary<IRStorageLocation, IRRegister> copies)
+    private static IRExpression Substitute(
+        IRExpression expr, Dictionary<(IRStorageLocation Loc, int Version), IRRegister> copies)
     {
         if (expr is not IRExpression.RegisterExpression re)
             return expr;
@@ -67,7 +68,12 @@ public static class IRCopyPropagation
         if (locs.Count != 1)
             return expr; // only chase the simple single-component case
 
-        if (!copies.TryGetValue(locs[0], out IRRegister? source))
+        // Same fix as IRConstantPropagation: a location alone doesn't
+        // identify a single SSA value — this read's own version has to
+        // match the version the copy was actually recorded under.
+        int? version = re.Register.SsaVersion[IRStorageLocation.ComponentToIndex(locs[0].Component)];
+
+        if (version is null || !copies.TryGetValue((locs[0], version.Value), out IRRegister? source))
             return expr;
 
         // Don't chase through a copy whose source was itself never

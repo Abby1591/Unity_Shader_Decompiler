@@ -94,7 +94,17 @@ internal class Program
                 var dxbcFile = new DxbcFile();
                 dxbcFile.Load(dxbcPath);
                 
-                IRPipeline.Result pipelineResult = IRPipeline.Run(dxbcFile);
+                bool dumpStages = args.Contains("--dump-stages");
+                IRPipeline.Result pipelineResult = IRPipeline.Run(dxbcFile, dumpStages);
+
+                if (dumpStages)
+                {
+                    foreach (var (phase, text) in pipelineResult.StageDumps)
+                    {
+                        Console.WriteLine($"==== {phase} ====");
+                        Console.WriteLine(text);
+                    }
+                }
 
                 Console.WriteLine("IR (post-optimization, pattern-recognized, metadata-bound)");
                 Console.WriteLine("------------------------------------------------------------");

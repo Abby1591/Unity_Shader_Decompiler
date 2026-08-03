@@ -12,7 +12,7 @@ public static class IRConstantPropagation
 {
     public static bool Run(List<IRBlock> blocks)
     {
-        var constants = new Dictionary<IRStorageLocation, IRExpression.ConstantExpression>();
+        var constants = new Dictionary<(IRStorageLocation Loc, int Version), IRExpression.ConstantExpression>();
 
         foreach (IRBlock block in blocks)
         {
@@ -31,7 +31,7 @@ public static class IRConstantPropagation
                     // just this location, so a later read of one
                     // component of a multi-component constant load
                     // still resolves correctly.
-                    constants[loc] = SingleComponent(c, loc.Component, a.Destination);
+                    constants[(loc, version.Value)] = SingleComponent(c, loc.Component, a.Destination);
                 }
             }
         }
@@ -67,7 +67,7 @@ public static class IRConstantPropagation
     }
 
     private static IRExpression Substitute(
-        IRExpression expr, Dictionary<IRStorageLocation, IRExpression.ConstantExpression> constants)
+        IRExpression expr, Dictionary<(IRStorageLocation Loc, int Version), IRExpression.ConstantExpression> constants)
     {
         if (expr is not IRExpression.RegisterExpression re)
             return expr;
@@ -80,8 +80,15 @@ public static class IRConstantPropagation
 
         foreach (IRStorageLocation loc in IRStorageLocation.ReadLocationsOf(re.Register))
         {
-            if (!constants.TryGetValue(loc, out IRExpression.ConstantExpression? c))
-                return expr; // at least one component isn't known-constant
+            // Every SSA version of the same register+component gets its
+            // own entry — a location alone (without the version) doesn't
+            // identify a single value, so this MUST check the specific
+            // version this read actually carries, not just whether the
+            // bare location is known-constant for *some* version.
+            int? version = re.Register.SsaVersion[IRStorageLocation.ComponentToIndex(loc.Component)];
+
+            if (version is null || !constants.TryGetValue((loc, version.Value), out IRExpression.ConstantExpression? c))
+                return expr; // at least one component isn't known-constant at this exact version
 
             pieces.Add(c);
         }
