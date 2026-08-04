@@ -39,7 +39,7 @@ public abstract class IRStatement
 
         public override string ToString()
         {
-            return $"{Destination} = {Expression}";
+            return $"{Destination.ToStringAs(isDefinition: true)} = {Expression}";
         }
     }
     
@@ -217,7 +217,7 @@ public abstract class IRStatement
             var parts = new string[Destinations.Count];
 
             for (int i = 0; i < Destinations.Count; i++)
-                parts[i] = $"{(Destinations[i]?.ToString() ?? "null")} = {Expressions[i]}";
+                parts[i] = $"{(Destinations[i] != null ? Destinations[i].ToStringAs(isDefinition: true) : "null")} = {Expressions[i]}";
 
             return string.Join(", ", parts);
         }
@@ -279,7 +279,7 @@ public abstract class IRStatement
                 _ => $"{Operation}({Resource}[{Address}], {Value})"
             };
 
-            return ResultDestination is null ? call : $"{ResultDestination} = {call}";
+            return ResultDestination is null ? call : $"{ResultDestination.ToStringAs(isDefinition: true)} = {call}";
         }
     }
 
@@ -398,6 +398,6 @@ public abstract class IRStatement
         public override IEnumerable<IRRegister> Uses => Operands;
 
         public override string ToString()
-            => $"{Destination} = phi({string.Join(", ", Operands)})";
+            => $"{Destination.ToStringAs(isDefinition: true)} = phi({string.Join(", ", Operands)})";
     }
 }

@@ -73,6 +73,13 @@ public sealed class IRRegister
 
     public override string ToString()
     {
+        return ToStringAs(isDefinition: false);
+    }
+
+    // Render register with optional distinction for whether it's being defined
+    // (written to) vs used. This affects SSA suffix rendering.
+    public string ToStringAs(bool isDefinition)
+    {
         string name = SymbolicName ?? RegisterType switch
         {
             RegisterType.Temp => $"r{Index}",
@@ -99,7 +106,7 @@ public sealed class IRRegister
             _ => ""
         };
 
-        string result = name + suffix + SsaSuffix();
+        string result = name + suffix + SsaSuffix(isDefinition);
 
         result = Modifier switch
         {
@@ -159,11 +166,13 @@ public sealed class IRRegister
     }
 
     // Debug-display only: "_N" once renamed, so a statement can be printed
-    // as e.g. "r0.x_1 = r0.x_0 + r1.y_2". If the components involved carry
-    // different version numbers (only possible after a multi-component
-    // write whose components later diverge), falls back to listing each
-    // one rather than picking a misleading single number.
-    private string SsaSuffix()
+    // as e.g. "r0.x_1 = r0.x_0 + r1.y_2". 
+    // Note: SSA versions differ between uses and definitions:
+    // - For USES (right-hand side): show distinct versions of accessed components
+    // - For DEFINITIONS (left-hand side): show per-component versions (no dedup)
+    // Since we can't distinguish context here, we generate both and let the
+    // caller choose which is appropriate via isDefinition parameter.
+    private string SsaSuffix(bool isDefinition = false)
     {
         List<int> indices = ComponentMode switch
         {
@@ -180,8 +189,12 @@ public sealed class IRRegister
             .Select(i => SsaVersion[i])
             .Where(v => v.HasValue)
             .Select(v => v!.Value)
-            .Distinct()
             .ToList();
+
+        // For uses: apply Distinct() to show which distinct versions are live.
+        // For definitions: keep all versions (one per component assigned).
+        if (!isDefinition)
+            versions = versions.Distinct().ToList();
 
         if (versions.Count == 0)
             return "";

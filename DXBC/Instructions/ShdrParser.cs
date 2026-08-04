@@ -319,12 +319,76 @@ private OpcodeInfo DecodeOpcode(uint opcode)
         AbsNeg
     }
 
-    private Operand DecodeOperand(BinaryReader reader)
+    // Determines if the first operand of an opcode is typically a destination.
+    // Most arithmetic, texture sampling, and comparison opcodes write to operand[0].
+    // Control flow (if/else/loop), declarations, and pure sources do not.
+    private static bool IsDestinationOperand(OpcodeInfo info, int operandIndex)
+    {
+        // Only operand 0 can be a destination in most cases
+        if (operandIndex != 0)
+            return false;
+
+        // Flow control and declarations don't have a real destination
+        return info.Opcode switch
+        {
+            // Flow control
+            Opcode.If => false,
+            Opcode.Else => false,
+            Opcode.EndIf => false,
+            Opcode.Loop => false,
+            Opcode.EndLoop => false,
+            Opcode.BreakC => false,
+            Opcode.Ret => false,
+            Opcode.Retc => false,
+            Opcode.Call => false,
+            Opcode.CallC => false,
+            Opcode.Case => false,
+            Opcode.Default => false,
+            Opcode.Switch => false,
+            Opcode.EndSwitch => false,
+            Opcode.Continue => false,
+            Opcode.ContinueC => false,
+            Opcode.Break => false,
+            Opcode.Label => false,
+            Opcode.Discard => false,
+
+            // Declarations - these operands describe what's being declared, not destinations
+            Opcode.DclConstantBuffer => false,
+            Opcode.DclSampler => false,
+            Opcode.DclResource => false,
+            Opcode.DclInput => false,
+            Opcode.DclInputPS => false,
+            Opcode.DclInputSVG => false,
+            Opcode.DclOutput => false,
+            Opcode.DclOutputSIV => false,
+            Opcode.DclTemps => false,
+            Opcode.DclIndexableTemp => false,
+            Opcode.DclUAV => false,
+            Opcode.DclStream => false,
+            Opcode.DclInterface => false,
+            Opcode.DclIndexRange => false,
+            Opcode.DclFunctionBody => false,
+            Opcode.DclFunctionTable => false,
+            Opcode.DclThreadGroup => false,
+            Opcode.DclUAVRaw => false,
+            Opcode.DclUAVStructured => false,
+            Opcode.DclTGSMRaw => false,
+            Opcode.DclTGSMStructured => false,
+            Opcode.DclResourceRaw => false,
+            Opcode.DclResourceStructured => false,
+
+            // Everything else: arithmetic, texture ops, comparisons, etc. typically write to operand[0]
+            _ => true
+        };
+    }
+
+    private Operand DecodeOperand(BinaryReader reader, bool isDestination = false)
     {
         uint token = reader.ReadUInt32();
 
         Operand op = new();
         op.RawToken = token;
+        op.IsDestinationOperand = isDestination;
 
         //--------------------------------------------------------
         // bits 0-1
@@ -537,21 +601,21 @@ private OpcodeInfo DecodeOpcode(uint opcode)
 
                 case Operand.OperandIndexRepresentation.Relative:
 
-                    op.RelativeOperands[i] = DecodeOperand(reader);
+                    op.RelativeOperands[i] = DecodeOperand(reader, isDestination: false);
                     op.Indices.Add(0);
                     break;
 
                 case Operand.OperandIndexRepresentation.Immediate32PlusRelative:
 
                     op.Indices.Add(reader.ReadUInt32());
-                    op.RelativeOperands[i] = DecodeOperand(reader);
+                    op.RelativeOperands[i] = DecodeOperand(reader, isDestination: false);
                     break;
 
                 case Operand.OperandIndexRepresentation.Immediate64PlusRelative:
 
                     ulong idx64b = reader.ReadUInt64();
                     op.Indices.Add(checked((uint)idx64b));
-                    op.RelativeOperands[i] = DecodeOperand(reader);
+                    op.RelativeOperands[i] = DecodeOperand(reader, isDestination: false);
                     break;
 
                 default:
@@ -564,6 +628,14 @@ private OpcodeInfo DecodeOpcode(uint opcode)
             op.RegisterIndex = op.Indices[0];
 
         op.OriginalRegisterIndex = op.RegisterIndex;
+
+        // Safety check: if this is a destination operand with Mask mode and no mask bits
+        // are set, that's likely a decoding error. Set mask to include all components
+        // to avoid the issue where no components are marked as defined by SSA renaming.
+        if (isDestination && op.ComponentMode == Operand.OperandComponentMode.Mask && op.Mask == 0)
+        {
+            op.Mask = 0xF; // All components (xyzw)
+        }
 
         return op;
     }
@@ -779,7 +851,8 @@ private RegisterType DecodeRegisterType(uint type)
             {
                 try
                 {
-                    Operand operand = DecodeOperand(reader);
+                    bool isDestination = IsDestinationOperand(info, i);
+                    Operand operand = DecodeOperand(reader, isDestination);
                     
                     instruction.Operands.Add(operand);
 
