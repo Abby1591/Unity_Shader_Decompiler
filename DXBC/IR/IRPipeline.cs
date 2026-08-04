@@ -84,9 +84,18 @@ public static class IRPipeline
         //    is read-only so it doesn't matter when it runs relative to
         //    the others, but doing it here means it sees the same
         //    simplified shape as everything else.
-        IRShaderPatternRecognition.Run(blocks);
-        Snapshot("05-pattern-recognized", blocks);
-        List<IRLoopPatternRecognition.LoopInfo> loops = IRShaderPatternRecognition.DetectLoops(blocks);
+            IRShaderPatternRecognition.Run(blocks);
+            Snapshot("05-pattern-recognized", blocks);
+            List<IRLoopPatternRecognition.LoopInfo> loops = IRShaderPatternRecognition.DetectLoops(blocks);
+
+            // Pattern recognition can rewrite/discard defs — must re-verify before
+            // leaving SSA, since IRLeaveSsa is the last point version info exists.
+            IRSsaVerificationResult postPatternResult = IRSsaVerifier.Verify(blocks);
+            // Merge any new errors found after pattern recognition into the
+            // earlier SSA verification result so the pipeline's final
+            // SsaVerification reflects the actual state of the final IR.
+            foreach (string err in postPatternResult.Errors)
+                ssaResult.Errors.Add(err);
 
         // 6. Leave SSA (phi elimination) — after this point register
         //    versions are gone, so nothing past here should need dom/SSA
