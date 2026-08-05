@@ -103,6 +103,14 @@ public static class IRPipeline
         IRLeaveSsa.Run(blocks);
         Snapshot("06-left-ssa", blocks);
 
+        // 6b. IRLeaveSsa emits one scalar copy statement per component
+        //     (e.g. r4.w_5=r4.w_3 / r4.z_5=r4.z_3 / r4.y_5=r4.y_3 /
+        //     r4.x_5=r4.x_3). Fuse runs of these — same source register,
+        //     same destination register, consecutive components — into a
+        //     single vector move (r4.wzyx_5 = r4.wzyx_3).
+        IRCopyCoalescing.Run(blocks);
+        Snapshot("06b-copy-coalesced", blocks);
+
         // 7. Attach human-readable names from RDEF/ISGN/OSGN. Last,
         //    deliberately — see IRMetadataBinding.
         IRShaderPatternRecognition.BindMetadata(blocks, program, file);

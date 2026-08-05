@@ -126,6 +126,10 @@ public static class IRControlFlowGraphBuilder
 
         var ifStack = new Stack<int>();
         var ifHasElse = new HashSet<int>();
+        // ifIdx -> block index of the true-body's last block, so its
+        // fallthrough edge can be redirected past the else-body to the
+        // matching endif once that block is known.
+        var pendingTrueExit = new Dictionary<int, int>();
 
         // continue always targets the nearest enclosing LOOP specifically
         // (a switch nested in a loop doesn't intercept continue).
@@ -158,6 +162,19 @@ public static class IRControlFlowGraphBuilder
                     if (i + 1 < blocks.Count)
                         Link(blocks[ifIdx], blocks[i + 1]); // false branch -> else-body
                     ifHasElse.Add(ifIdx);
+
+                    // The generic fallthrough rule (bottom of the previous
+                    // iteration) wrongly linked the true-body's last block
+                    // straight into this else block. Undo that: the true
+                    // branch must skip the else-body entirely and merge at
+                    // endif instead, which we wire up once endif is found.
+                    int trueExit = i - 1;
+                    if (trueExit >= 0)
+                    {
+                        blocks[trueExit].Successors.Remove(blocks[i]);
+                        blocks[i].Predecessors.Remove(blocks[trueExit]);
+                        pendingTrueExit[ifIdx] = trueExit;
+                    }
                     break;
                 }
 
@@ -165,8 +182,15 @@ public static class IRControlFlowGraphBuilder
                 {
                     int ifIdx = ifStack.Pop();
                     if (!ifHasElse.Contains(ifIdx))
+                    {
                         Link(blocks[ifIdx], blocks[i]); // no else: false branch -> endif
+                    }
+                    else if (pendingTrueExit.TryGetValue(ifIdx, out int trueExit))
+                    {
+                        Link(blocks[trueExit], blocks[i]); // true branch -> endif (skip else-body)
+                    }
                     ifHasElse.Remove(ifIdx);
+                    pendingTrueExit.Remove(ifIdx);
                     break;
                 }
 

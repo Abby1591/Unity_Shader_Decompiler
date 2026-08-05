@@ -202,7 +202,10 @@ public sealed class IRRegister
         if (versions.Count == 1)
             return $"_{versions[0]}";
 
-        return "_" + string.Join("", versions);
+        // Comma-separated rather than concatenated: once any component's
+        // version hits double digits, plain concatenation (e.g. "_71066")
+        // is ambiguous and can't be split back into per-component versions.
+        return "_" + string.Join(",", versions);
     }
 
     private static List<int> MaskComponentIndices(byte mask)
