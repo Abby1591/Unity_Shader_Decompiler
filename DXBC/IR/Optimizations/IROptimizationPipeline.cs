@@ -48,6 +48,47 @@ public static class IROptimizationPipeline
 
             changed |= IRSparseConditionalConstantPropagation.Run(blocks);
             onPass?.Invoke($"iter{iterations}-9-SCCP", blocks);
+
+            // These three mutate the CFG itself (edges/blocks), not just
+            // statement text — SCCP proves which side of an if is dead,
+            // branch simplification prunes that edge, CFG cleanup deletes
+            // whatever that leaves unreachable and merges straight-line
+            // runs, and phi simplification cleans up the phis left
+            // pointing at only one live predecessor. Any of the three can
+            // expose more work for the others (a merge can turn a
+            // two-successor if into a plain fallthrough branch-simplification
+            // now sees; deleting a block can make a phi trivial), so they
+            // loop together to their own fixed point before rejoining the
+            // statement-level passes above.
+            bool cfgChanged = false;
+            int cfgIterations = 0;
+            bool cfgPassChanged = true;
+
+            while (cfgPassChanged && cfgIterations++ < 50)
+            {
+                cfgPassChanged = false;
+
+                cfgPassChanged |= IRBranchSimplification.Run(blocks);
+                onPass?.Invoke($"iter{iterations}-10a-BranchSimplification({cfgIterations})", blocks);
+
+                cfgPassChanged |= IRCfgCleanup.Run(blocks);
+                onPass?.Invoke($"iter{iterations}-10b-CfgCleanup({cfgIterations})", blocks);
+
+                cfgPassChanged |= IRPhiSimplification.Run(blocks);
+                onPass?.Invoke($"iter{iterations}-10c-PhiSimplification({cfgIterations})", blocks);
+
+                cfgChanged |= cfgPassChanged;
+            }
+
+            if (cfgChanged)
+            {
+                // Deleting/merging blocks invalidates whatever dominator
+                // tree was computed before this iteration — ValueNumbering
+                // and LoopInvariantCodeMotion both trust `dom` next time
+                // round, so it has to be current before they run again.
+                dom = IRDominatorAnalysis.Compute(blocks);
+                changed = true;
+            }
         }
 
         // Every pass above is supposed to preserve SSA well-formedness —
