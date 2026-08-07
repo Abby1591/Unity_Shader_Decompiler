@@ -300,9 +300,23 @@ internal class Program
                 $"structs={pass.Structs.Count} resources={pass.Resources.Count}");
         }
 
+        PrintFullShaderOutput(project, astShader);
+
         Console.WriteLine();
         Console.WriteLine("Finished.");
     }
+
+    private static void PrintFullShaderOutput(ShaderProject project, HlslShaderNode astShader)
+    {
+        string text = HlslPrettyPrinter.Print(astShader);
+        string outPath = Path.Combine("Output", SafeFileName(astShader.Name) + ".shader");
+        File.WriteAllText(outPath, text);
+        Console.WriteLine();
+        Console.WriteLine($"Stage 13/14: full shader written to {outPath} ({text.Length} chars)");
+    }
+
+    private static string SafeFileName(string name) =>
+        string.Join("_", name.Split(Path.GetInvalidFileNameChars()));
 
     private static void AttachFunction(HlslPassNode pass, HlslFunctionNode function)
     {
