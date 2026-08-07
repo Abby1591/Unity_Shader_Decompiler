@@ -17,6 +17,7 @@ public sealed class ShaderMetadata
     public List<ShaderProperty> Properties { get; init; } = new();
     public List<SubShaderMetadata> SubShaders { get; init; } = new();
     public string Fallback { get; init; } = "";
+    public List<string> Dependencies { get; init; } = new();
     public JsonElement Raw { get; init; }
 
     public static ShaderMetadata Load(string path)
@@ -28,6 +29,7 @@ public sealed class ShaderMetadata
         {
             Name = GetString(root, "name"),
             Fallback = GetString(root, "fallback"),
+            Dependencies = GetDependencies(root),
             Raw = root,
         };
 
@@ -50,6 +52,32 @@ public sealed class ShaderMetadata
         el.TryGetProperty(key, out var v) && v.ValueKind == JsonValueKind.String
             ? v.GetString() ?? ""
             : "";
+
+    // metadata.py passes m_Dependencies through untouched, and its shape
+    // isn't pinned down yet (could be a plain string array, or an array of
+    // {"first": key, "second": value} pairs like Unity's other paired
+    // structures) — handle both rather than guessing wrong and crashing.
+    private static List<string> GetDependencies(JsonElement root)
+    {
+        var result = new List<string>();
+        if (!root.TryGetProperty("dependencies", out var deps) || deps.ValueKind != JsonValueKind.Array)
+            return result;
+
+        foreach (var d in deps.EnumerateArray())
+        {
+            if (d.ValueKind == JsonValueKind.String)
+            {
+                result.Add(d.GetString() ?? "");
+            }
+            else if (d.ValueKind == JsonValueKind.Object)
+            {
+                string? second = d.TryGetProperty("second", out var s) ? s.GetString() : null;
+                result.Add(second ?? d.ToString());
+            }
+        }
+
+        return result;
+    }
 }
 
 public sealed class ShaderProperty

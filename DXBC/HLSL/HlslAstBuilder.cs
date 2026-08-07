@@ -32,6 +32,7 @@ public static class HlslAstBuilder
             Name = metadata.Name,
             Fallback = metadata.Fallback,
         };
+        shader.Dependencies.AddRange(metadata.Dependencies);
 
         foreach (ShaderProperty p in metadata.Properties)
         {

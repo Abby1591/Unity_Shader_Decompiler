@@ -53,6 +53,7 @@ internal class Program
         Console.WriteLine($"Shader: {project.Metadata.Name}");
         Console.WriteLine($"Properties: {project.Metadata.Properties.Count}");
         Console.WriteLine($"SubShaders: {project.Metadata.SubShaders.Count}");
+        Console.WriteLine($"Dependencies: {project.Metadata.Dependencies.Count}");
         Console.WriteLine($"Dummy reference available: {project.DummyShaderSource != null}");
         Console.WriteLine();
 

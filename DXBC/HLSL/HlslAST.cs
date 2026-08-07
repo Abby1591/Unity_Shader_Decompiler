@@ -23,6 +23,7 @@ public sealed class HlslShaderNode
     public List<HlslPropertyNode> Properties { get; } = new();
     public List<HlslSubShaderNode> SubShaders { get; } = new();
     public string Fallback { get; init; } = "";
+    public List<string> Dependencies { get; } = new();
 }
 
 public sealed class HlslPropertyNode
