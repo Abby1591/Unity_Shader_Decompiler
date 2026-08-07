@@ -75,6 +75,7 @@ public static class HlslAstBuilder
                 {
                     Name = pass.Name,
                     RenderStateRaw = pass.RenderState,
+                    State = HlslRenderStateBuilder.Build(pass.RenderState),
                 };
                 foreach (var (k, v) in pass.Tags)
                     passNode.Tags[k] = v;

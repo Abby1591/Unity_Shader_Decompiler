@@ -85,15 +85,100 @@ public sealed class HlslSubShaderNode
     public List<HlslPassNode> Passes { get; } = new();
 }
 
+// Mirrors UnityEngine.Rendering.CullMode.
+public enum HlslCullMode { Off = 0, Front = 1, Back = 2 }
+
+// Mirrors UnityEngine.Rendering.CompareFunction — used for both ZTest and
+// stencil comparison.
+public enum HlslCompareFunction
+{
+    Disabled = 0, Never = 1, Less = 2, Equal = 3, LessEqual = 4,
+    Greater = 5, NotEqual = 6, GreaterEqual = 7, Always = 8,
+}
+
+// Mirrors UnityEngine.Rendering.BlendMode.
+public enum HlslBlendMode
+{
+    Zero = 0, One = 1, DstColor = 2, SrcColor = 3, OneMinusDstColor = 4,
+    SrcAlpha = 5, OneMinusSrcAlpha = 6, DstAlpha = 7, OneMinusDstAlpha = 8,
+    SrcAlphaSaturate = 9, OneMinusSrcColor = 10,
+}
+
+// Mirrors UnityEngine.Rendering.BlendOp.
+public enum HlslBlendOp { Add = 0, Subtract = 1, ReverseSubtract = 2, Min = 3, Max = 4 }
+
+// Mirrors UnityEngine.Rendering.StencilOp.
+public enum HlslStencilOp
+{
+    Keep = 0, Zero = 1, Replace = 2, IncrementSaturate = 3,
+    DecrementSaturate = 4, Invert = 5, IncrementWrap = 6, DecrementWrap = 7,
+}
+
+// Unity's compiled m_FogMode: 0 means "not set" in practice (fog block
+// wasn't authored), rather than a real mode — everything else matches
+// UnityEngine.FogMode.
+public enum HlslFogMode { None = 0, Linear = 1, Exp2 = 2, Exp = 3 }
+
+public sealed class HlslBlendState
+{
+    public HlslBlendMode SrcBlend { get; init; } = HlslBlendMode.One;
+    public HlslBlendMode DstBlend { get; init; } = HlslBlendMode.Zero;
+    public HlslBlendMode SrcBlendAlpha { get; init; } = HlslBlendMode.One;
+    public HlslBlendMode DstBlendAlpha { get; init; } = HlslBlendMode.Zero;
+    public HlslBlendOp BlendOp { get; init; } = HlslBlendOp.Add;
+    public HlslBlendOp BlendOpAlpha { get; init; } = HlslBlendOp.Add;
+
+    // Raw ColorWriteMask bit flags (Red=8,Green=4,Blue=2,Alpha=1, All=15);
+    // null means "not specified" (defaults to All), distinct from 0
+    // ("write nothing") which Unity does allow.
+    public int? ColorMask { get; init; }
+}
+
+public sealed class HlslStencilFaceState
+{
+    public HlslCompareFunction Comp { get; init; } = HlslCompareFunction.Always;
+    public HlslStencilOp Fail { get; init; } = HlslStencilOp.Keep;
+    public HlslStencilOp ZFail { get; init; } = HlslStencilOp.Keep;
+    public HlslStencilOp Pass { get; init; } = HlslStencilOp.Keep;
+}
+
+public sealed class HlslRenderState
+{
+    public HlslCullMode Cull { get; init; } = HlslCullMode.Back;
+    public HlslCompareFunction ZTest { get; init; } = HlslCompareFunction.LessEqual;
+    public bool ZWrite { get; init; } = true;
+    public bool ZClip { get; init; } = true;
+    public bool Lighting { get; init; }
+    public HlslFogMode FogMode { get; init; } = HlslFogMode.None;
+    public bool AlphaToMask { get; init; }
+    public float OffsetFactor { get; init; }
+    public float OffsetUnits { get; init; }
+    public bool Conservative { get; init; }
+
+    public int StencilRef { get; init; }
+    public int StencilReadMask { get; init; } = 255;
+    public int StencilWriteMask { get; init; } = 255;
+    public HlslStencilFaceState StencilFront { get; init; } = new();
+    public HlslStencilFaceState StencilBack { get; init; } = new();
+
+    public bool SeparateBlend { get; init; }
+    public HlslBlendState Blend { get; init; } = new();
+    // Only meaningful when SeparateBlend is true (MRT blending) — index 0
+    // duplicates Blend for the common single-target case.
+    public List<HlslBlendState> BlendTargets { get; } = new();
+}
+
 public sealed class HlslPassNode
 {
     public string Name { get; init; } = "";
     public Dictionary<string, string> Tags { get; } = new();
 
-    // Raw render-state JSON carried through untouched — Stage 6 is
-    // responsible for turning this into Blend/Cull/ZTest/... AST nodes;
-    // Stage 2 just makes sure it travels with the right pass.
+    // Raw render-state JSON, kept for anything Stage 6's typed parse
+    // doesn't cover yet (or as a fallback if parsing throws on an
+    // unexpected shape) — State below is what Stage 13 should actually
+    // print from.
     public JsonElement RenderStateRaw { get; init; }
+    public HlslRenderState State { get; set; } = new();
 
     public HlslFunctionNode? VertexFunction { get; set; }
     public HlslFunctionNode? FragmentFunction { get; set; }
