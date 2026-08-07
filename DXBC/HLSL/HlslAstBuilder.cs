@@ -134,6 +134,7 @@ public static class HlslAstBuilder
         // reorders statements, so this is equivalent to parsing
         // pipelineResult.Program.Statements directly).
         function.Statements = HlslStatementBuilder.Build(function.Body);
+        HlslNameRecovery.Apply(function.Statements);
 
         return function;
     }
