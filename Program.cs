@@ -231,7 +231,9 @@ internal class Program
                     $"program{i}",
                     sp.m_ProgramType,
                     pipelineResult.Program.Declarations,
-                    pipelineResult.Blocks);
+                    pipelineResult.Blocks,
+                    dxbcFile.InputSignature,
+                    dxbcFile.OutputSignature);
 
                 if (function is null)
                 {
@@ -245,7 +247,8 @@ internal class Program
                         HlslPassNode pass = allPasses[passIdx];
                         AttachFunction(pass, function);
 
-                        var resources = HlslAstBuilder.BuildResources(pipelineResult.Program.Declarations);
+                        var resources = HlslAstBuilder.BuildResources(
+                            pipelineResult.Program.Declarations, dxbcFile.ResourceDefinition);
                         foreach (var res in resources)
                         {
                             bool alreadyPresent = pass.Resources.Any(r =>

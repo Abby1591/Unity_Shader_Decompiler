@@ -216,7 +216,16 @@ public enum HlslShaderStage
 
 public sealed class HlslFunctionNode
 {
+    // Canonical per-stage name (Stage 9): vert/frag/geom/hull/domain/comp.
+    // No collision risk between passes — each Pass has its own function
+    // slots, so every pass's vertex function is just called "vert".
     public string Name { get; init; } = "";
+
+    // Original per-subprogram label (e.g. "program3") this was built
+    // from — kept for cross-referencing Program.cs's debug output /
+    // program{i}.hlsl / program{i}.dxbc against the AST.
+    public string SourceName { get; init; } = "";
+
     public HlslShaderStage Stage { get; init; }
 
     public HlslStructNode? InputStruct { get; set; }
@@ -238,6 +247,14 @@ public enum HlslResourceKind
     Uav,
 }
 
+public sealed class HlslCBufferVariable
+{
+    public string Name { get; init; } = "";
+    public string TypeName { get; init; } = "float4"; // reconstructed from RDEF's TypeClass/TypeKind/dims
+    public uint Offset { get; init; }
+    public uint Size { get; init; }
+}
+
 public sealed class HlslResourceNode
 {
     public string Name { get; init; } = "";
@@ -248,6 +265,12 @@ public sealed class HlslResourceNode
     // IRDeclaration carries enough info (ResourceDimension); left null
     // otherwise rather than guessing.
     public string? TypeHint { get; init; }
+
+    // Only populated for Kind == ConstantBuffer, from RDEF (the actual
+    // member layout Unity's compiler produced) — empty if no RDEF match
+    // was found, not an error, just means Stage 7's CBUFFER_START/END
+    // body will come out empty for that buffer.
+    public List<HlslCBufferVariable> Variables { get; } = new();
 }
 
 public sealed class HlslStructNode

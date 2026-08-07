@@ -1,5 +1,6 @@
 using System.Text.Json;
 using AssetStudio;
+using Parser.DXBC.Chunks;
 using Parser.DXBC.IR;
 using Parser.DXBC.Metadata;
 
@@ -90,10 +91,12 @@ public static class HlslAstBuilder
     }
 
     public static HlslFunctionNode? BuildFunction(
-        string name,
+        string sourceName,
         ShaderGpuProgramType programType,
         List<IRDeclaration> declarations,
-        List<IRBlock> blocks)
+        List<IRBlock> blocks,
+        IsgnChunk? inputSignature = null,
+        OsgnChunk? outputSignature = null)
     {
         HlslShaderStage? stage = StageFromProgramType(programType);
         if (stage is null)
@@ -101,17 +104,27 @@ public static class HlslAstBuilder
 
         var function = new HlslFunctionNode
         {
-            Name = name,
+            Name = CanonicalFunctionName(stage.Value),
+            SourceName = sourceName,
             Stage = stage.Value,
         };
 
-        function.InputStruct = BuildStruct($"{name}Input", declarations
-            .OfType<IRDeclaration.IRInputDeclaration>()
-            .Select(d => (Register: d.Register, d.SymbolicName)));
+        // Stage 8: prefer ISGN/OSGN — they carry the actual component
+        // type (float/int/uint) and component count (popcount of Mask)
+        // Unity's compiler produced, not just a semantic name. Falls
+        // back to the Stage 2 declaration-only reconstruction (always
+        // float4) only if a signature chunk wasn't parsed.
+        function.InputStruct = inputSignature is not null
+            ? BuildStructFromSignature($"{sourceName}Input", inputSignature.Elements)
+            : BuildStruct($"{sourceName}Input", declarations
+                .OfType<IRDeclaration.IRInputDeclaration>()
+                .Select(d => (Register: d.Register, d.SymbolicName)));
 
-        function.OutputStruct = BuildStruct($"{name}Output", declarations
-            .OfType<IRDeclaration.IROutputDeclaration>()
-            .Select(d => (Register: d.Register, d.SymbolicName)));
+        function.OutputStruct = outputSignature is not null
+            ? BuildStructFromSignature($"{sourceName}Output", outputSignature.Elements)
+            : BuildStruct($"{sourceName}Output", declarations
+                .OfType<IRDeclaration.IROutputDeclaration>()
+                .Select(d => (Register: d.Register, d.SymbolicName)));
 
         foreach (IRBlock block in blocks)
             function.Body.AddRange(block.Statements);
@@ -119,23 +132,91 @@ public static class HlslAstBuilder
         return function;
     }
 
+    private static string CanonicalFunctionName(HlslShaderStage stage) => stage switch
+    {
+        HlslShaderStage.Vertex => "vert",
+        HlslShaderStage.Fragment => "frag",
+        HlslShaderStage.Geometry => "geom",
+        HlslShaderStage.Hull => "hull",
+        HlslShaderStage.Domain => "domain",
+        HlslShaderStage.Compute => "comp",
+        _ => "main",
+    };
+
+    private static HlslStructNode BuildStructFromSignature(string name, List<SignatureElement> elements)
+    {
+        var s = new HlslStructNode { Name = name };
+
+        foreach (SignatureElement el in elements)
+        {
+            string semantic = $"{el.SemanticName}{el.SemanticIndex}";
+            s.Fields.Add(new HlslFieldNode
+            {
+                Name = ToFieldName(semantic),
+                Semantic = semantic,
+                TypeHint = TypeFromSignatureElement(el),
+            });
+        }
+
+        return s;
+    }
+
+    // Component count from Mask (bitmask of which of .xyzw are actually
+    // used, not necessarily contiguous from x — e.g. 0x0D is xzw) plus
+    // the real base type ISGN/OSGN recorded, instead of assuming float4
+    // for everything.
+    private static string TypeFromSignatureElement(SignatureElement el)
+    {
+        int count = System.Numerics.BitOperations.PopCount(el.Mask);
+        if (count == 0) count = 1;
+
+        string baseName = el.ComponentTypeName == "unknown" ? "float" : el.ComponentTypeName;
+        return count == 1 ? baseName : $"{baseName}{count}";
+    }
+
     // Resources (cbuffers/textures/samplers/UAVs) are pass-scoped in
     // ShaderLab, not function-scoped, even though DXBC declares them once
     // per subprogram — caller merges these into HlslPassNode.Resources
     // per-pass, deduping by (Kind, Slot, Name).
-    public static IEnumerable<HlslResourceNode> BuildResources(List<IRDeclaration> declarations)
+    //
+    // `rdef` (Stage 7) is optional: when given, ConstantBuffer resources
+    // get their actual member list populated by name match against
+    // RdefChunk.ConstantBuffers — IRMetadataBinding (Stage 1) already
+    // guarantees a declaration's SymbolicName equals the RDEF cbuffer
+    // name it was bound from, so this is a plain lookup, not a guess.
+    public static IEnumerable<HlslResourceNode> BuildResources(
+        List<IRDeclaration> declarations, RdefChunk? rdef = null)
     {
         foreach (IRDeclaration decl in declarations)
         {
             switch (decl)
             {
                 case IRDeclaration.IRConstantBufferDeclaration cb:
-                    yield return new HlslResourceNode
+                    var cbNode = new HlslResourceNode
                     {
                         Name = cb.SymbolicName ?? $"cb{cb.Slot}",
                         Kind = HlslResourceKind.ConstantBuffer,
                         Slot = cb.Slot,
                     };
+
+                    RdefConstantBuffer? rdefMatch = rdef?.ConstantBuffers
+                        .FirstOrDefault(r => r.Name == cb.SymbolicName);
+
+                    if (rdefMatch is not null)
+                    {
+                        foreach (RdefVariable v in rdefMatch.Variables)
+                        {
+                            cbNode.Variables.Add(new HlslCBufferVariable
+                            {
+                                Name = v.Name,
+                                TypeName = v.TypeName,
+                                Offset = v.Offset,
+                                Size = v.Size,
+                            });
+                        }
+                    }
+
+                    yield return cbNode;
                     break;
 
                 case IRDeclaration.IRResourceDeclaration res:
