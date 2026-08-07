@@ -36,12 +36,30 @@ public static class HlslAstBuilder
 
         foreach (ShaderProperty p in metadata.Properties)
         {
+            HlslPropertyKind kind = ParsePropertyKind(p.Type);
+            HlslTextureDimension texDim = HlslTextureDimension.Unknown;
+
+            if (kind == HlslPropertyKind.Texture && p.DefaultTexture is { } dt
+                && dt.TryGetProperty("dimension", out var dimEl)
+                && dimEl.ValueKind == JsonValueKind.Number)
+            {
+                int dim = dimEl.GetInt32();
+                texDim = System.Enum.IsDefined(typeof(HlslTextureDimension), dim)
+                    ? (HlslTextureDimension)dim
+                    : HlslTextureDimension.Unknown;
+            }
+
             shader.Properties.Add(new HlslPropertyNode
             {
                 Name = p.Name,
                 Description = p.Description,
                 Type = p.Type,
+                Kind = kind,
+                TextureDimension = texDim,
+                Attributes = p.Attributes,
                 DefaultValue = p.DefaultValue,
+                // Range min/max: see HlslPropertyNode.Range doc comment —
+                // not populated until the field path is confirmed.
             });
         }
 
@@ -199,6 +217,16 @@ public static class HlslAstBuilder
             ResourceDimension.StructuredBuffer => $"{prefix}StructuredBuffer",
             _ => null,
         };
+    }
+
+    private static HlslPropertyKind ParsePropertyKind(string? typeRaw)
+    {
+        if (typeRaw is not null && int.TryParse(typeRaw, out int type)
+            && System.Enum.IsDefined(typeof(HlslPropertyKind), type))
+        {
+            return (HlslPropertyKind)type;
+        }
+        return HlslPropertyKind.Unknown;
     }
 
     private static HlslShaderStage? StageFromProgramType(ShaderGpuProgramType type) => type switch

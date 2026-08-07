@@ -26,12 +26,56 @@ public sealed class HlslShaderNode
     public List<string> Dependencies { get; } = new();
 }
 
+// Mirrors Unity's serialized shader property type enum
+// (m_Type: Color=0, Vector=1, Float=2, Range=3, Texture=4).
+public enum HlslPropertyKind
+{
+    Color = 0,
+    Vector = 1,
+    Float = 2,
+    Range = 3,
+    Texture = 4,
+    Unknown = -1,
+}
+
+// Mirrors Unity's TextureDimension enum for m_DefTexture.m_TexDim.
+// Only meaningful when Kind == Texture.
+public enum HlslTextureDimension
+{
+    Unknown = -1,
+    None = 0,
+    Tex2D = 1,
+    Tex3D = 2,
+    Cube = 3,
+    Tex2DArray = 4,
+    CubeArray = 5,
+}
+
 public sealed class HlslPropertyNode
 {
     public string Name { get; init; } = "";
     public string? Description { get; init; }
+
+    // Kept for backward compat with earlier callers reading the raw
+    // metadata.json numeric type as a string.
     public string? Type { get; init; }
+
+    public HlslPropertyKind Kind { get; init; } = HlslPropertyKind.Unknown;
+    public HlslTextureDimension TextureDimension { get; init; } = HlslTextureDimension.Unknown;
+
+    // Raw attribute strings as Unity stored them (e.g. "HDR", "Toggle",
+    // "NoScaleOffset") — not re-parsed/validated here, just carried
+    // through for Stage 4's printer to emit as [Attr] before the property.
+    public List<string> Attributes { get; init; } = new();
+
     public JsonElement? DefaultValue { get; init; }
+
+    // Only populated for Kind == Range. NOTE: Unity's compiled shader
+    // data doesn't carry an explicit min/max pair we've confirmed a field
+    // path for yet — left null rather than guessing at which DefValue
+    // slot(s) hold it. Fill in once a real Range property sample is
+    // available to check against.
+    public (float Min, float Max)? Range { get; init; }
 }
 
 public sealed class HlslSubShaderNode

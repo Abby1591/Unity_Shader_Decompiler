@@ -86,6 +86,8 @@ public sealed class ShaderProperty
     public string? Description { get; init; }
     public string? Type { get; init; }
     public JsonElement? DefaultValue { get; init; }
+    public List<string> Attributes { get; init; } = new();
+    public JsonElement? DefaultTexture { get; init; }
 
     public static ShaderProperty From(JsonElement el) => new()
     {
@@ -93,6 +95,10 @@ public sealed class ShaderProperty
         Description = el.TryGetProperty("description", out var d) ? d.GetString() : null,
         Type = el.TryGetProperty("type", out var t) ? t.ToString() : null,
         DefaultValue = el.TryGetProperty("defaultValue", out var v) ? v : null,
+        Attributes = el.TryGetProperty("attributes", out var attrs) && attrs.ValueKind == JsonValueKind.Array
+            ? attrs.EnumerateArray().Select(a => a.ToString()).ToList()
+            : new List<string>(),
+        DefaultTexture = el.TryGetProperty("defaultTexture", out var dt) ? dt : null,
     };
 }
 
