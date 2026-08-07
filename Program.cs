@@ -1,9 +1,12 @@
 using System;
 using System.IO;
+using System.Linq;
 using Parser.Decompiler;
 using Parser.DXBC;
 using AssetStudio;
 using Parser.DXBC.IR;
+using Parser.DXBC.Metadata;
+using Parser.DXBC.Hlsl.Ast;
 
 namespace Parser;
 
@@ -11,19 +14,49 @@ internal class Program
 {
     static void Main(string[] args)
     {
-        string blobPath = args.Length > 0 ? args[0] : "../blob.bin";
+        // args[0] is now a folder produced by Extract.py, containing
+        // blob.bin + metadata.json (+ optional dummy.shader). For
+        // backwards compat, a direct path to a blob.bin still works
+        // (metadata/dummy are simply treated as absent in that case).
+        string inputPath = args.Length > 0 ? args[0] : "../Output";
 
-        if (!File.Exists(blobPath))
+        ShaderProject project;
+
+        if (Directory.Exists(inputPath))
         {
-            Console.WriteLine($"Blob not found: {blobPath}");
+            project = ShaderProject.LoadFromFolder(inputPath);
+        }
+        else if (File.Exists(inputPath))
+        {
+            // Legacy path: a bare blob.bin with no sibling metadata.
+            string? dir = Path.GetDirectoryName(Path.GetFullPath(inputPath));
+            string metaCandidate = Path.Combine(dir ?? ".", "metadata.json");
+
+            if (!File.Exists(metaCandidate))
+            {
+                Console.WriteLine(
+                    $"metadata.json not found next to {inputPath}. " +
+                    "Run Extract.py to produce a proper Stage 0 output folder.");
+                return;
+            }
+
+            project = ShaderProject.LoadFromFolder(dir!);
+        }
+        else
+        {
+            Console.WriteLine($"Input not found: {inputPath}");
             return;
         }
 
         Console.WriteLine("Unity Shader Parser");
         Console.WriteLine("-------------------");
+        Console.WriteLine($"Shader: {project.Metadata.Name}");
+        Console.WriteLine($"Properties: {project.Metadata.Properties.Count}");
+        Console.WriteLine($"SubShaders: {project.Metadata.SubShaders.Count}");
+        Console.WriteLine($"Dummy reference available: {project.DummyShaderSource != null}");
         Console.WriteLine();
 
-        byte[] bytes = File.ReadAllBytes(blobPath);
+        byte[] bytes = project.Blob;
 
         Console.WriteLine($"Blob Size: {bytes.Length} bytes");
         Console.WriteLine();
@@ -56,6 +89,21 @@ internal class Program
         Directory.CreateDirectory("Output");
 
         var decompiler = new HlslGenerator();
+
+        // Stage 2 — shell (Shader/SubShaders/Passes/Properties) from
+        // metadata.json alone. Functions get attached to pass slots below
+        // as each subprogram's IR comes back from the pipeline.
+        HlslShaderNode astShader = HlslAstBuilder.BuildShell(project.Metadata);
+
+        // Pass index isn't carried on ShaderSubProgram itself — Unity
+        // assigns subprograms to passes in the order passes/programs were
+        // serialized, so subprogram i's pass is whichever pass has an
+        // open slot for that program's stage, in order. Flatten once so
+        // "next pass needing a vertex/fragment function" is a simple walk.
+        List<HlslPassNode> allPasses = astShader.SubShaders
+            .SelectMany(ss => ss.Passes)
+            .ToList();
+        var nextPassIndexForStage = new Dictionary<HlslShaderStage, int>();
 
         for (int i = 0; i < program.m_SubPrograms.Length; i++)
         {
@@ -174,7 +222,55 @@ internal class Program
                 }
 
                 Console.WriteLine($"IR statements: {pipelineResult.Program.Statements.Count}");
-                
+
+                // Stage 2 — attach this subprogram's function node (+ its
+                // resources) to the next pass slot still waiting for a
+                // function of this stage.
+                HlslFunctionNode? function = HlslAstBuilder.BuildFunction(
+                    $"program{i}",
+                    sp.m_ProgramType,
+                    pipelineResult.Program.Declarations,
+                    pipelineResult.Blocks);
+
+                if (function is null)
+                {
+                    Console.WriteLine($"Stage 2: {sp.m_ProgramType} has no HLSL AST mapping (not DX11 SM4/5), skipped.");
+                }
+                else
+                {
+                    int passIdx = nextPassIndexForStage.GetValueOrDefault(function.Stage, 0);
+                    if (passIdx < allPasses.Count)
+                    {
+                        HlslPassNode pass = allPasses[passIdx];
+                        AttachFunction(pass, function);
+
+                        var resources = HlslAstBuilder.BuildResources(pipelineResult.Program.Declarations);
+                        foreach (var res in resources)
+                        {
+                            bool alreadyPresent = pass.Resources.Any(r =>
+                                r.Kind == res.Kind && r.Slot == res.Slot);
+                            if (!alreadyPresent)
+                                pass.Resources.Add(res);
+                        }
+
+                        if (function.InputStruct is not null) pass.Structs.Add(function.InputStruct);
+                        if (function.OutputStruct is not null) pass.Structs.Add(function.OutputStruct);
+
+                        nextPassIndexForStage[function.Stage] = passIdx + 1;
+
+                        Console.WriteLine(
+                            $"Stage 2: attached {function.Stage} function '{function.Name}' to pass '{pass.Name}' " +
+                            $"(in:{function.InputStruct?.Fields.Count ?? 0} out:{function.OutputStruct?.Fields.Count ?? 0} " +
+                            $"resources+{pass.Resources.Count})");
+                    }
+                    else
+                    {
+                        Console.WriteLine(
+                            $"Stage 2: no pass slot left for {function.Stage} subprogram {i} " +
+                            "(metadata.json has fewer passes than subprograms of this stage — check metadata.py's pass parsing).");
+                    }
+                }
+
                 string hlsl = decompiler.Decompile(dxbc);
                 string hlslPath = Path.Combine("Output", $"program{i}.hlsl");
                 File.WriteAllText(hlslPath, hlsl);
@@ -188,6 +284,32 @@ internal class Program
             Console.WriteLine();
         }
 
+        Console.WriteLine();
+        Console.WriteLine("HLSL AST (Stage 2)");
+        Console.WriteLine("-------------------");
+        Console.WriteLine($"Shader '{astShader.Name}', {astShader.Properties.Count} properties, {astShader.SubShaders.Count} subshaders");
+        foreach (HlslPassNode pass in allPasses)
+        {
+            Console.WriteLine(
+                $"  Pass '{pass.Name}': " +
+                $"vert={pass.VertexFunction?.Name ?? "-"} frag={pass.FragmentFunction?.Name ?? "-"} " +
+                $"structs={pass.Structs.Count} resources={pass.Resources.Count}");
+        }
+
+        Console.WriteLine();
         Console.WriteLine("Finished.");
+    }
+
+    private static void AttachFunction(HlslPassNode pass, HlslFunctionNode function)
+    {
+        switch (function.Stage)
+        {
+            case HlslShaderStage.Vertex: pass.VertexFunction = function; break;
+            case HlslShaderStage.Fragment: pass.FragmentFunction = function; break;
+            case HlslShaderStage.Geometry: pass.GeometryFunction = function; break;
+            case HlslShaderStage.Hull: pass.HullFunction = function; break;
+            case HlslShaderStage.Domain: pass.DomainFunction = function; break;
+            case HlslShaderStage.Compute: pass.ComputeFunction = function; break;
+        }
     }
 }
