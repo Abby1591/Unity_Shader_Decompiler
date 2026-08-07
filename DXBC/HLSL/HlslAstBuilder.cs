@@ -129,6 +129,12 @@ public static class HlslAstBuilder
         foreach (IRBlock block in blocks)
             function.Body.AddRange(block.Statements);
 
+        // Stage 10 — build the structured tree from the same flat,
+        // original-order list just assembled above (IRBlockBuilder never
+        // reorders statements, so this is equivalent to parsing
+        // pipelineResult.Program.Statements directly).
+        function.Statements = HlslStatementBuilder.Build(function.Body);
+
         return function;
     }
 

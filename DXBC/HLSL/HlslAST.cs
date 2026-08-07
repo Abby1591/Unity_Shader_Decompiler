@@ -232,11 +232,15 @@ public sealed class HlslFunctionNode
     public HlslStructNode? OutputStruct { get; set; }
 
     // Populated verbatim from the IR pipeline's output for this
-    // subprogram. Stage 10/11 replaces/augments this with real
-    // HlslStatementNode/HlslExpressionNode trees; kept as IRStatement for
-    // now so Stage 2 doesn't have to duplicate the entire IR just to have
-    // *something* to hang the function body on.
+    // subprogram — kept for anything that wants the flat original-order
+    // list (debug dumps, cross-checking). Statements below (Stage 10) is
+    // the real structured tree; prefer that for anything doing actual
+    // codegen.
     public List<Parser.DXBC.IR.IRStatement> Body { get; } = new();
+
+    // Stage 10 — If/Loop/Switch/etc as real nested nodes instead of a
+    // flat list with begin/end markers you have to track by hand.
+    public HlslBlockStatement Statements { get; set; } = new();
 }
 
 public enum HlslResourceKind
