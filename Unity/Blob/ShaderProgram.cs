@@ -26,7 +26,17 @@ public class ShaderProgram
             if (entry.Segment == segment)
             {
                 reader.BaseStream.Position = entry.Offset;
-                m_SubPrograms[i] = new ShaderSubProgram(reader);
+                try
+                {
+                    m_SubPrograms[i] = new ShaderSubProgram(reader);
+                }
+                catch (Exception)
+                {
+                    // Non-DX11 subprogram formats (e.g. GLES) can lay out the
+                    // header differently than the DX11 path expects; skipping
+                    // a bad subprogram lets the rest of the blob still parse.
+                    m_SubPrograms[i] = null;
+                }
             }
         }
     }

@@ -1,1 +1,0 @@
-// DXBC shader detected

@@ -1,43 +1,3 @@
-C:\Users\Abby\Software\Decomp\Shader\Parser\Parser\bin\Debug\net10.0\Parser.exe
-C:\Users\Abby\Software\Decomp\Shader\Parser\Parser\bin\Debug\net10.0\Parser.deps.json
-C:\Users\Abby\Software\Decomp\Shader\Parser\Parser\bin\Debug\net10.0\Parser.runtimeconfig.json
-C:\Users\Abby\Software\Decomp\Shader\Parser\Parser\bin\Debug\net10.0\Parser.dll
-C:\Users\Abby\Software\Decomp\Shader\Parser\Parser\bin\Debug\net10.0\Parser.pdb
-C:\Users\Abby\Software\Decomp\Shader\Parser\Parser\bin\Debug\net10.0\K4os.Compression.LZ4.dll
-C:\Users\Abby\Software\Decomp\Shader\Parser\Parser\bin\Debug\net10.0\SevenZip.dll
-C:\Users\Abby\Software\Decomp\Shader\Parser\Parser\obj\Debug\net10.0\Parser.csproj.AssemblyReference.cache
-C:\Users\Abby\Software\Decomp\Shader\Parser\Parser\obj\Debug\net10.0\Parser.GeneratedMSBuildEditorConfig.editorconfig
-C:\Users\Abby\Software\Decomp\Shader\Parser\Parser\obj\Debug\net10.0\Parser.AssemblyInfoInputs.cache
-C:\Users\Abby\Software\Decomp\Shader\Parser\Parser\obj\Debug\net10.0\Parser.AssemblyInfo.cs
-C:\Users\Abby\Software\Decomp\Shader\Parser\Parser\obj\Debug\net10.0\Parser.csproj.CoreCompileInputs.cache
-C:\Users\Abby\Software\Decomp\Shader\Parser\Parser\obj\Debug\net10.0\Parser.csproj.Up2Date
-C:\Users\Abby\Software\Decomp\Shader\Parser\Parser\obj\Debug\net10.0\Parser.dll
-C:\Users\Abby\Software\Decomp\Shader\Parser\Parser\obj\Debug\net10.0\refint\Parser.dll
-C:\Users\Abby\Software\Decomp\Shader\Parser\Parser\obj\Debug\net10.0\Parser.pdb
-C:\Users\Abby\Software\Decomp\Shader\Parser\Parser\obj\Debug\net10.0\Parser.genruntimeconfig.cache
-C:\Users\Abby\Software\Decomp\Shader\Parser\Parser\obj\Debug\net10.0\ref\Parser.dll
-C:\Users\Abby\Software\Decomp\Shader\Parser\bin\Debug\net10.0\Parser.exe
-C:\Users\Abby\Software\Decomp\Shader\Parser\bin\Debug\net10.0\Parser.deps.json
-C:\Users\Abby\Software\Decomp\Shader\Parser\bin\Debug\net10.0\Parser.runtimeconfig.json
-C:\Users\Abby\Software\Decomp\Shader\Parser\bin\Debug\net10.0\Parser.dll
-C:\Users\Abby\Software\Decomp\Shader\Parser\bin\Debug\net10.0\Parser.pdb
-C:\Users\Abby\Software\Decomp\Shader\Parser\obj\Debug\net10.0\Parser.csproj.AssemblyReference.cache
-C:\Users\Abby\Software\Decomp\Shader\Parser\obj\Debug\net10.0\Parser.GeneratedMSBuildEditorConfig.editorconfig
-C:\Users\Abby\Software\Decomp\Shader\Parser\obj\Debug\net10.0\Parser.AssemblyInfoInputs.cache
-C:\Users\Abby\Software\Decomp\Shader\Parser\obj\Debug\net10.0\Parser.AssemblyInfo.cs
-C:\Users\Abby\Software\Decomp\Shader\Parser\obj\Debug\net10.0\Parser.csproj.CoreCompileInputs.cache
-C:\Users\Abby\Software\Decomp\Shader\Parser\obj\Debug\net10.0\Parser.csproj.Up2Date
-C:\Users\Abby\Software\Decomp\Shader\Parser\obj\Debug\net10.0\Parser.dll
-C:\Users\Abby\Software\Decomp\Shader\Parser\obj\Debug\net10.0\refint\Parser.dll
-C:\Users\Abby\Software\Decomp\Shader\Parser\obj\Debug\net10.0\Parser.pdb
-C:\Users\Abby\Software\Decomp\Shader\Parser\obj\Debug\net10.0\Parser.genruntimeconfig.cache
-C:\Users\Abby\Software\Decomp\Shader\Parser\obj\Debug\net10.0\ref\Parser.dll
-C:\Users\Abby\Software\Decomp\Shader\Parser\bin\Debug\net10.0\SharpGen.Runtime.dll
-C:\Users\Abby\Software\Decomp\Shader\Parser\bin\Debug\net10.0\SharpGen.Runtime.COM.dll
-C:\Users\Abby\Software\Decomp\Shader\Parser\bin\Debug\net10.0\Vortice.D3DCompiler.dll
-C:\Users\Abby\Software\Decomp\Shader\Parser\bin\Debug\net10.0\Vortice.DirectX.dll
-C:\Users\Abby\Software\Decomp\Shader\Parser\bin\Debug\net10.0\Vortice.Mathematics.dll
-C:\Users\Abby\Software\Decomp\Shader\Parser\obj\Debug\net10.0\Parser.sourcelink.json
 C:\Users\Abby\Software\Unity Decompilers\Unity Shader Decompiler\Parser\bin\Debug\net10.0\Parser.exe
 C:\Users\Abby\Software\Unity Decompilers\Unity Shader Decompiler\Parser\bin\Debug\net10.0\Parser.deps.json
 C:\Users\Abby\Software\Unity Decompilers\Unity Shader Decompiler\Parser\bin\Debug\net10.0\Parser.runtimeconfig.json
@@ -45,6 +5,8 @@ C:\Users\Abby\Software\Unity Decompilers\Unity Shader Decompiler\Parser\bin\Debu
 C:\Users\Abby\Software\Unity Decompilers\Unity Shader Decompiler\Parser\bin\Debug\net10.0\Parser.pdb
 C:\Users\Abby\Software\Unity Decompilers\Unity Shader Decompiler\Parser\bin\Debug\net10.0\SharpGen.Runtime.dll
 C:\Users\Abby\Software\Unity Decompilers\Unity Shader Decompiler\Parser\bin\Debug\net10.0\SharpGen.Runtime.COM.dll
+C:\Users\Abby\Software\Unity Decompilers\Unity Shader Decompiler\Parser\bin\Debug\net10.0\Unity.Abstractions.dll
+C:\Users\Abby\Software\Unity Decompilers\Unity Shader Decompiler\Parser\bin\Debug\net10.0\Unity.Container.dll
 C:\Users\Abby\Software\Unity Decompilers\Unity Shader Decompiler\Parser\bin\Debug\net10.0\Vortice.D3DCompiler.dll
 C:\Users\Abby\Software\Unity Decompilers\Unity Shader Decompiler\Parser\bin\Debug\net10.0\Vortice.DirectX.dll
 C:\Users\Abby\Software\Unity Decompilers\Unity Shader Decompiler\Parser\bin\Debug\net10.0\Vortice.Mathematics.dll
@@ -60,5 +22,3 @@ C:\Users\Abby\Software\Unity Decompilers\Unity Shader Decompiler\Parser\obj\Debu
 C:\Users\Abby\Software\Unity Decompilers\Unity Shader Decompiler\Parser\obj\Debug\net10.0\Parser.pdb
 C:\Users\Abby\Software\Unity Decompilers\Unity Shader Decompiler\Parser\obj\Debug\net10.0\Parser.genruntimeconfig.cache
 C:\Users\Abby\Software\Unity Decompilers\Unity Shader Decompiler\Parser\obj\Debug\net10.0\ref\Parser.dll
-C:\Users\Abby\Software\Unity Decompilers\Unity Shader Decompiler\Parser\bin\Debug\net10.0\Unity.Abstractions.dll
-C:\Users\Abby\Software\Unity Decompilers\Unity Shader Decompiler\Parser\bin\Debug\net10.0\Unity.Container.dll

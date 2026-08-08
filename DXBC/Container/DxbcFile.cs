@@ -26,6 +26,19 @@ public class DxbcFile
         using var stream = File.OpenRead(file);
         using var reader = new BinaryReader(stream);
 
+        Parse(reader);
+    }
+
+    public void Load(byte[] data)
+    {
+        using var stream = new MemoryStream(data);
+        using var reader = new BinaryReader(stream);
+
+        Parse(reader);
+    }
+
+    private void Parse(BinaryReader reader)
+    {
         string magic = Encoding.ASCII.GetString(reader.ReadBytes(4));
 
         if (magic != "DXBC")

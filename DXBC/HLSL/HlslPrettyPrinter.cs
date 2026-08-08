@@ -225,12 +225,16 @@ public static class HlslPrettyPrinter
 
     private static void PrintResource(StringBuilder sb, HlslResourceNode res)
     {
+        string reg = RegisterBinding(res);
+
         switch (res.Kind)
         {
             case HlslResourceKind.ConstantBuffer:
                 // Raw `cbuffer` (not Unity's CBUFFER_START/END macros) so the
-                // output compiles standalone — ShaderLab accepts it too.
-                sb.Append("            cbuffer ").Append(res.Name).Append("\n            {\n");
+                // output compiles standalone — ShaderLab accepts it too. The
+                // register binding pins it to the slot the bytecode actually
+                // reads (dcl_constantbuffer cbN), not declaration order.
+                sb.Append("            cbuffer ").Append(res.Name).Append(" : ").Append(reg).Append("\n            {\n");
                 foreach (HlslCBufferVariable v in res.Variables)
                     sb.Append("                ").Append(v.TypeName).Append(' ').Append(v.Name)
                       .Append(v.ArraySize is { } n ? $"[{n}]" : "").Append(";\n");
@@ -238,18 +242,30 @@ public static class HlslPrettyPrinter
                 break;
 
             case HlslResourceKind.Texture:
-                sb.Append("            ").Append(res.TypeHint ?? "Texture2D").Append(' ').Append(res.Name).Append(";\n");
+                sb.Append("            ").Append(res.TypeHint ?? "Texture2D").Append(' ').Append(res.Name).Append(" : ").Append(reg).Append(";\n");
                 break;
 
             case HlslResourceKind.Sampler:
-                sb.Append("            SamplerState ").Append(res.Name).Append(";\n");
+                sb.Append("            SamplerState ").Append(res.Name).Append(" : ").Append(reg).Append(";\n");
                 break;
 
             case HlslResourceKind.Uav:
-                sb.Append("            ").Append(res.TypeHint ?? "RWTexture2D").Append(' ').Append(res.Name).Append(";\n");
+                sb.Append("            ").Append(res.TypeHint ?? "RWTexture2D").Append(' ').Append(res.Name).Append(" : ").Append(reg).Append(";\n");
                 break;
         }
     }
+
+    // Explicit register slot for a resource, recovered from the bytecode's
+    // dcl_constantbuffer/dcl_resource/dcl_sampler (or the metadata slot map
+    // for cbuffers): register(b0), register(t1), register(s2), ...
+    private static string RegisterBinding(HlslResourceNode res) => res.Kind switch
+    {
+        HlslResourceKind.ConstantBuffer => $"register(b{res.Slot})",
+        HlslResourceKind.Texture => $"register(t{res.Slot})",
+        HlslResourceKind.Sampler => $"register(s{res.Slot})",
+        HlslResourceKind.Uav => $"register(u{res.Slot})",
+        _ => "",
+    };
 
     // ---------- Stage 8: Structs ----------
 

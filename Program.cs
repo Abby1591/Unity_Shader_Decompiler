@@ -123,11 +123,18 @@ internal class Program
             Console.WriteLine($"Version  : {sp.m_Version}");
             Console.WriteLine($"Code Size: {sp.m_ProgramCode.Length}");
 
-            // Save raw Unity shader program
-            string rawPath = Path.Combine("Output", $"program{i}.bin");
-            File.WriteAllBytes(rawPath, sp.m_ProgramCode);
+            // Debug artifacts (program{i}.bin/.dxbc/.hlsl) are opt-in via
+            // --save-subprograms; the default run only writes the final .shader.
+            bool saveSubprograms = args.Contains("--save-subprograms");
 
-            Console.WriteLine($"Saved: {rawPath}");
+            if (saveSubprograms)
+            {
+                // Save raw Unity shader program
+                string rawPath = Path.Combine("Output", $"program{i}.bin");
+                File.WriteAllBytes(rawPath, sp.m_ProgramCode);
+
+                Console.WriteLine($"Saved: {rawPath}");
+            }
 
             try
             {
@@ -135,13 +142,16 @@ internal class Program
 
                 Console.WriteLine($"DXBC Size: {dxbc.Length} bytes");
 
-                string dxbcPath = Path.Combine("Output", $"program{i}.dxbc");
-                File.WriteAllBytes(dxbcPath, dxbc);
-
-                Console.WriteLine($"Saved: {dxbcPath}");
-
                 var dxbcFile = new DxbcFile();
-                dxbcFile.Load(dxbcPath);
+                dxbcFile.Load(dxbc);
+
+                if (saveSubprograms)
+                {
+                    string dxbcPath = Path.Combine("Output", $"program{i}.dxbc");
+                    File.WriteAllBytes(dxbcPath, dxbc);
+
+                    Console.WriteLine($"Saved: {dxbcPath}");
+                }
                 
                 bool dumpStages = args.Contains("--dump-stages");
                 IRPipeline.Result pipelineResult = IRPipeline.Run(dxbcFile, dumpStages);
@@ -300,10 +310,13 @@ internal class Program
                     }
                 }
 
-                string hlsl = decompiler.Decompile(dxbc);
-                string hlslPath = Path.Combine("Output", $"program{i}.hlsl");
-                File.WriteAllText(hlslPath, hlsl);
-                Console.WriteLine($"Saved: {hlslPath}");
+                if (saveSubprograms)
+                {
+                    string hlsl = decompiler.Decompile(dxbc);
+                    string hlslPath = Path.Combine("Output", $"program{i}.hlsl");
+                    File.WriteAllText(hlslPath, hlsl);
+                    Console.WriteLine($"Saved: {hlslPath}");
+                }
             }
             catch (Exception ex)
             {
