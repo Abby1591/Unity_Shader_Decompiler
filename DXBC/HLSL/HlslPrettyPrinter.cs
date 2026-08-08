@@ -308,7 +308,7 @@ public static class HlslPrettyPrinter
         // number" is NOT enough to infer co-write either: versions are
         // per-component counters (see IRSsaRenaming), so x and y can
         // independently reach the same version via separate writes.
-        public Dictionary<(IRStorageLocation Location, int Version), (string Name, string Letters)> DeclaredViews { get; } = new();
+        public Dictionary<(IRStorageLocation Location, int Version), (string Name, List<int> ActiveComponents)> DeclaredViews { get; } = new();
 
         public int TempCounter;
     }
@@ -641,35 +641,46 @@ public static class HlslPrettyPrinter
         {
             int? version = reg.SsaVersion[c];
             if (version is { } v
-                && ctx.DeclaredViews.TryGetValue((LocationOf(reg, c), v), out (string Name, string Letters) entry))
-                return (Comp: c, Name: entry.Name, Letters: entry.Letters);
-            return (Comp: c, Name: ScalarIdentifier(reg, c, ctx), Letters: ComponentLetters[c].ToString());
+                && ctx.DeclaredViews.TryGetValue((LocationOf(reg, c), v), out (string Name, List<int> Active) entry))
+                return (Comp: c, Name: entry.Name, Active: entry.Active);
+            return (Comp: c, Name: ScalarIdentifier(reg, c, ctx), Active: new List<int> { c });
         }).ToList();
 
         string firstName = resolved[0].Name;
-        string firstLetters = resolved[0].Letters;
+        List<int> declared = resolved[0].Active;
         if (resolved.All(r => r.Name == firstName))
         {
-            // A scalar declared name (letters.Length == 1) broadcasts one
+            // A scalar declared name (one active component) broadcasts one
             // value into every slot — HLSL scalars only permit .x repeats,
             // so the swizzle must be all 'x' no matter which logical
             // component (y/z/w) the scalar originally came from. Vector
-            // names keep the source register's own component letters.
-            string readLetters = firstLetters.Length == 1
+            // names swizzle positionally: each read component's slot in
+            // the declared vector comes from IndexOf, not its original
+            // register letter (a float2 declared from components y,z reads
+            // its z-slot as ".y", not ".z").
+            string readLetters = declared.Count == 1
                 ? new string('x', active.Count)
-                : string.Concat(active.Select(c => ComponentLetters[c]));
-            return firstLetters == readLetters
+                : string.Concat(active.Select(c => ComponentLetters[declared.IndexOf(c)]));
+            string declaredLetters = string.Concat(declared.Select(c => ComponentLetters[c]));
+            return declaredLetters == readLetters
                 ? firstName
                 : $"{firstName}.{readLetters}";
         }
 
-        return $"float{active.Count}({string.Join(", ", resolved.Select(r => ComponentView(r.Name, r.Letters, r.Comp)))})";
+        return $"float{active.Count}({string.Join(", ", resolved.Select(r => ComponentView(r.Name, r.Active, r.Comp)))})";
     }
 
     // Renders one component of a declared name: a scalar declaration
-    // stands alone, a vector declaration needs a component suffix.
-    private static string ComponentView(string name, string letters, int component)
-        => letters.Length <= 1 ? name : $"{name}.{ComponentLetters[component]}";
+    // stands alone, a vector declaration needs the component's POSITION
+    // within the declared vector (IndexOf in the active-component list),
+    // not the source register's original component letter — the swizzle
+    // chars must index the declared variable's own slots.
+    private static string ComponentView(string name, List<int> activeComponents, int component)
+    {
+        if (activeComponents.Count <= 1) return name;
+        int pos = activeComponents.IndexOf(component);
+        return $"{name}.{ComponentLetters[pos]}";
+    }
 
     // Resolves a single-component read to the identifier its defining
     // instruction declared (swizzle off the vector if it was co-written),
@@ -680,8 +691,8 @@ public static class HlslPrettyPrinter
         int? version = reg.SsaVersion[component];
 
         if (version is { } v
-            && ctx.DeclaredViews.TryGetValue((LocationOf(reg, component), v), out (string Name, string Letters) entry))
-            return ComponentView(entry.Name, entry.Letters, component);
+            && ctx.DeclaredViews.TryGetValue((LocationOf(reg, component), v), out (string Name, List<int> Active) entry))
+            return ComponentView(entry.Name, entry.Active, component);
 
         return ScalarIdentifier(reg, component, ctx);
     }
@@ -788,7 +799,7 @@ public static class HlslPrettyPrinter
             // version-coincidence hazard only affects the read side.
             if (version is { } vv)
                 foreach (int c in active)
-                    ctx.DeclaredViews[(LocationOf(dest, c), vv)] = (name, letters);
+                    ctx.DeclaredViews[(LocationOf(dest, c), vv)] = (name, active);
 
             yield return ctx.Declared.Add(name)
                 ? $"{DeclType(active.Count)} {name} = {rhs};"
@@ -809,7 +820,7 @@ public static class HlslPrettyPrinter
             int c = active[i];
             string scalarName = ScalarIdentifier(dest, c, ctx);
             if (dest.SsaVersion[c] is { } v)
-                ctx.DeclaredViews[(LocationOf(dest, c), v)] = (scalarName, ComponentLetters[c].ToString());
+                ctx.DeclaredViews[(LocationOf(dest, c), v)] = (scalarName, new List<int> { c });
             string line = $"{scalarName} = {tempName}.{ComponentLetters[i]};";
             yield return ctx.Declared.Add(scalarName) ? $"float {line}" : line;
         }
