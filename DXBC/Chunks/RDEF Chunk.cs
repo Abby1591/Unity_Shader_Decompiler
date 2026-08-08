@@ -172,9 +172,10 @@ public class RdefChunk
             };
 
             long varTableStart = start + rc.varOffset;
+            int varDescSize = majorVer >= 5 ? 40 : 24; // SM5 D3D11_SHADER_VARIABLE_DESC adds StartTexture/TextureSize/StartSampler/SamplerSize
             for (int v = 0; v < rc.varCount; v++)
             {
-                reader.BaseStream.Position = varTableStart + v * 24; // D3D11_SHADER_VARIABLE_DESC packed: name,offset,size,flags,typeOffset,defaultValue,(sm5: +4 more)
+                reader.BaseStream.Position = varTableStart + v * varDescSize;
                 uint varNameOff = reader.ReadUInt32();
                 uint varOffset = reader.ReadUInt32();
                 uint varSize = reader.ReadUInt32();

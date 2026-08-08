@@ -48,5 +48,17 @@ public static class IRDeadCodeElimination
         return changed;
     }
 
-    private static bool IsRemovable(IRStatement stmt) => stmt is IRStatement.IRAssignment or IRStatement.IRPhi;
+    private static bool IsRemovable(IRStatement stmt)
+    {
+        if (stmt is not (IRStatement.IRAssignment or IRStatement.IRPhi))
+            return false;
+
+        // Output-register writes ARE the shader's result — nothing in-function
+        // reads them, so never treat them as dead just because usedLocations
+        // has no entry for them.
+        if (stmt.Defines.Any(r => r.RegisterType == RegisterType.Output))
+            return false;
+
+        return true;
+    }
 }
