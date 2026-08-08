@@ -235,7 +235,18 @@ public static class HlslPrettyPrinter
                 // register binding pins it to the slot the bytecode actually
                 // reads (dcl_constantbuffer cbN), not declaration order.
                 sb.Append("            cbuffer ").Append(res.Name).Append(" : ").Append(reg).Append("\n            {\n");
-                foreach (HlslCBufferVariable v in res.Variables)
+                // HLSL infers each member's byte offset from its textual
+                // declaration order when there's no : packoffset(...), so the
+                // order must match the reflected layout. Sort by real offset;
+                // the synthesized cbN_values fallback array has a fake Offset
+                // (0) and is pure filler for reads that didn't resolve to a
+                // named member, so pin it to the end where it can't shift a
+                // real member's inferred offset.
+                var ordered = res.Variables
+                    .OrderBy(v => v.Name == $"cb{res.Slot}_values" ? 1 : 0)
+                    .ThenBy(v => v.Offset)
+                    .ToList();
+                foreach (HlslCBufferVariable v in ordered)
                     sb.Append("                ").Append(v.TypeName).Append(' ').Append(v.Name)
                       .Append(v.ArraySize is { } n ? $"[{n}]" : "").Append(";\n");
                 sb.Append("            };\n");
