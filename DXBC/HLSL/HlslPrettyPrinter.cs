@@ -313,13 +313,22 @@ public static class HlslPrettyPrinter
         public int TempCounter;
     }
 
-    private static void PrintFunction(StringBuilder sb, HlslFunctionNode fn, Dictionary<int, CbufferMetadata> cbuffers)
+    private static void PrintFunction(StringBuilder sb, HlslFunctionNode fn, Dictionary<(int Slot, string Stage), CbufferMetadata> allCbuffers)
     {
         string outType = fn.OutputStruct?.Name ?? "void";
         string inType = fn.InputStruct?.Name ?? "";
         string inParam = fn.InputStruct is null ? "" : $"{inType} i";
 
         sb.Append("            ").Append(outType).Append(' ').Append(fn.Name).Append('(').Append(inParam).Append(")\n            {\n");
+
+        // Filter the pass-wide cbuffer table down to the ones this stage
+        // actually binds (its own stage, plus any shared "" entries) —
+        // different stages can bind different buffers to the same slot.
+        string stage = fn.Stage.ToString();
+        var cbuffers = new Dictionary<int, CbufferMetadata>();
+        foreach (var (key, cb) in allCbuffers)
+            if (key.Stage == stage || key.Stage == "")
+                cbuffers[key.Slot] = cb;
 
         var ctx = new PrintContext { Cbuffers = cbuffers };
         if (fn.OutputStruct is not null)

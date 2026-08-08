@@ -192,10 +192,13 @@ public sealed class HlslPassNode
     public List<HlslStructNode> Structs { get; } = new();
 
     // Cbuffer layout recovered from the ShaderLab metadata (per-pass
-    // replacement for the stripped RDEF chunk), keyed by register slot.
-    // Stage 13 uses it to render cbN[slot] reads as the real variable
-    // names instead of opaque cbN_values arrays.
-    public Dictionary<int, CbufferMetadata> Cbuffers { get; } = new();
+    // replacement for the stripped RDEF chunk), keyed by (register slot,
+    // stage). Stages bind their own tables, so a slot number alone is
+    // ambiguous — UnityPerDraw and $Globals can both occupy b0 in one
+    // pass, just in different stages. Stage "" is a buffer shared by all
+    // stages. Stage 13 uses it to render cbN[slot] reads as the real
+    // variable names instead of opaque cbN_values arrays.
+    public Dictionary<(int Slot, string Stage), CbufferMetadata> Cbuffers { get; } = new();
 
     public IEnumerable<HlslFunctionNode> Functions()
     {

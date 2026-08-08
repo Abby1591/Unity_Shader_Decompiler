@@ -82,8 +82,8 @@ public static class HlslAstBuilder
                     passNode.Tags[k] = v;
 
                 foreach (CbufferMetadata cb in pass.ConstantBuffers)
-                    if (cb.Slot >= 0 && !passNode.Cbuffers.ContainsKey(cb.Slot))
-                        passNode.Cbuffers[cb.Slot] = cb;
+                    if (cb.Slot >= 0 && !passNode.Cbuffers.ContainsKey((cb.Slot, cb.Stage)))
+                        passNode.Cbuffers[(cb.Slot, cb.Stage)] = cb;
 
                 subShaderNode.Passes.Add(passNode);
             }
@@ -205,7 +205,7 @@ public static class HlslAstBuilder
     // output compiles.
     public static IEnumerable<HlslResourceNode> BuildResources(
         List<IRDeclaration> declarations, RdefChunk? rdef = null, List<IRBlock>? blocks = null,
-        Dictionary<int, CbufferMetadata>? cbuffers = null)
+        Dictionary<(int Slot, string Stage), CbufferMetadata>? cbuffers = null, string stage = "")
     {
         Dictionary<uint, uint> maxCbufferSlot = BuildMaxCbufferSlot(blocks);
 
@@ -242,9 +242,13 @@ public static class HlslAstBuilder
                     // Unity strips RDEF from shipped bytecode, but the
                     // ShaderLab metadata carries the same layout (per-slot
                     // buffer name + per-variable byte offset/type), so we
-                    // can still emit real member names.
+                    // can still emit real member names. The buffer is
+                    // looked up by the current stage first, then the
+                    // all-stages fallback — different stages may bind
+                    // different buffers to the same slot.
                     if (cbuffers is not null
-                        && cbuffers.TryGetValue((int)cb.Slot, out CbufferMetadata? meta)
+                        && (cbuffers.TryGetValue(((int)cb.Slot, stage), out CbufferMetadata? meta)
+                            || cbuffers.TryGetValue(((int)cb.Slot, ""), out meta))
                         && meta.Variables.Count > 0)
                     {
                         var metaNode = new HlslResourceNode

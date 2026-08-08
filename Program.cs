@@ -258,7 +258,7 @@ internal class Program
                         AttachFunction(pass, function);
 
                         var resources = HlslAstBuilder.BuildResources(
-                            pipelineResult.Program.Declarations, dxbcFile.ResourceDefinition, pipelineResult.Blocks, pass.Cbuffers);
+                            pipelineResult.Program.Declarations, dxbcFile.ResourceDefinition, pipelineResult.Blocks, pass.Cbuffers, function.Stage.ToString());
                         foreach (var res in resources)
                         {
                             HlslResourceNode? existing = pass.Resources.FirstOrDefault(r =>
