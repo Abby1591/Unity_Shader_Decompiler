@@ -60,3 +60,5 @@ C:\Users\Abby\Software\Unity Decompilers\Unity Shader Decompiler\Parser\obj\Debu
 C:\Users\Abby\Software\Unity Decompilers\Unity Shader Decompiler\Parser\obj\Debug\net10.0\Parser.pdb
 C:\Users\Abby\Software\Unity Decompilers\Unity Shader Decompiler\Parser\obj\Debug\net10.0\Parser.genruntimeconfig.cache
 C:\Users\Abby\Software\Unity Decompilers\Unity Shader Decompiler\Parser\obj\Debug\net10.0\ref\Parser.dll
+C:\Users\Abby\Software\Unity Decompilers\Unity Shader Decompiler\Parser\bin\Debug\net10.0\Unity.Abstractions.dll
+C:\Users\Abby\Software\Unity Decompilers\Unity Shader Decompiler\Parser\bin\Debug\net10.0\Unity.Container.dll

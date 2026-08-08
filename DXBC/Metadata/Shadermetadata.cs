@@ -135,6 +135,11 @@ public sealed class PassMetadata
     public Dictionary<string, string> Tags { get; init; } = new();
     public JsonElement RenderState { get; init; }
 
+    // Per-pass cbuffer layout recovered from Unity's serialized shader
+    // (m_CommonParameters) — the substitute for the RDEF chunk Unity
+    // strips from shipped bytecode. Keyed by register slot.
+    public List<CbufferMetadata> ConstantBuffers { get; init; } = new();
+
     public static PassMetadata From(JsonElement el)
     {
         var result = new PassMetadata
@@ -147,6 +152,82 @@ public sealed class PassMetadata
             foreach (var t in tags.EnumerateObject())
                 result.Tags[t.Name] = t.Value.ToString();
 
+        if (el.TryGetProperty("constantBuffers", out var cbs) && cbs.ValueKind == JsonValueKind.Array)
+            foreach (var cb in cbs.EnumerateArray())
+                result.ConstantBuffers.Add(CbufferMetadata.From(cb));
+
         return result;
     }
+}
+
+/// <summary>One cbuffer in a pass: register slot -> name + variables.</summary>
+public sealed class CbufferMetadata
+{
+    public int Slot { get; init; } = -1;
+    public string Name { get; init; } = "";
+    public List<CbufferVariableMetadata> Variables { get; init; } = new();
+
+    public static CbufferMetadata From(JsonElement el)
+    {
+        var result = new CbufferMetadata
+        {
+            Slot = el.TryGetProperty("slot", out var s) && s.ValueKind == JsonValueKind.Number
+                ? s.GetInt32()
+                : -1,
+            Name = el.TryGetProperty("name", out var n) ? n.GetString() ?? "" : "",
+        };
+
+        if (el.TryGetProperty("variables", out var vars) && vars.ValueKind == JsonValueKind.Array)
+            foreach (var v in vars.EnumerateArray())
+                result.Variables.Add(CbufferVariableMetadata.From(v));
+
+        return result;
+    }
+}
+
+/// <summary>A variable inside a cbuffer: byte offset + name + shape.</summary>
+public sealed class CbufferVariableMetadata
+{
+    public string Name { get; init; } = "";
+    public int Offset { get; init; }
+    public int Dim { get; init; }        // 1-4 for vectors (float/float2/float3/float4)
+    public int RowCount { get; init; }   // 4 for float4x4 (matrices)
+    public int ArraySize { get; init; }
+    public bool IsMatrix { get; init; }
+
+    public int Rows => Math.Max(RowCount, 4);
+
+    // Byte size of the variable (16 bytes per matrix row / 4 per vector
+    // component, times the array length).
+    public int SizeBytes => (IsMatrix || RowCount > 0)
+        ? Rows * 16 * Math.Max(1, ArraySize)
+        : Math.Max(1, Dim) * 4 * Math.Max(1, ArraySize);
+
+    public string TypeName => (IsMatrix || RowCount > 0)
+        ? (Rows == 4 ? "float4x4" : $"float{Rows}x4")
+        : (Math.Max(1, Dim) switch
+        {
+            1 => "float",
+            2 => "float2",
+            3 => "float3",
+            _ => "float4",
+        });
+
+    public static CbufferVariableMetadata From(JsonElement el) => new()
+    {
+        Name = el.TryGetProperty("name", out var n) ? n.GetString() ?? "" : "",
+        Offset = el.TryGetProperty("offset", out var o) && o.ValueKind == JsonValueKind.Number
+            ? o.GetInt32()
+            : 0,
+        Dim = el.TryGetProperty("dim", out var d) && d.ValueKind == JsonValueKind.Number
+            ? d.GetInt32()
+            : 0,
+        RowCount = el.TryGetProperty("rowCount", out var r) && r.ValueKind == JsonValueKind.Number
+            ? r.GetInt32()
+            : 0,
+        ArraySize = el.TryGetProperty("arraySize", out var a) && a.ValueKind == JsonValueKind.Number
+            ? a.GetInt32()
+            : 0,
+        IsMatrix = el.TryGetProperty("isMatrix", out var m) && m.ValueKind == JsonValueKind.True,
+    };
 }

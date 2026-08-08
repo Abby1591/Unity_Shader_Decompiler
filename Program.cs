@@ -248,13 +248,38 @@ internal class Program
                         AttachFunction(pass, function);
 
                         var resources = HlslAstBuilder.BuildResources(
-                            pipelineResult.Program.Declarations, dxbcFile.ResourceDefinition);
+                            pipelineResult.Program.Declarations, dxbcFile.ResourceDefinition, pipelineResult.Blocks, pass.Cbuffers);
                         foreach (var res in resources)
                         {
-                            bool alreadyPresent = pass.Resources.Any(r =>
+                            HlslResourceNode? existing = pass.Resources.FirstOrDefault(r =>
                                 r.Kind == res.Kind && r.Slot == res.Slot);
-                            if (!alreadyPresent)
+
+                            if (existing is null)
+                            {
                                 pass.Resources.Add(res);
+                            }
+                            else if (res.Kind == HlslResourceKind.ConstantBuffer)
+                            {
+                                // vert/frag subprograms of one pass can touch
+                                // different slots of the same cbuffer, and each
+                                // BuildResources call only sees its own blocks.
+                                // Union the members, keeping the largest array
+                                // size so the RDEF-less float4 fallback covers
+                                // every subprogram's accesses.
+                                foreach (HlslCBufferVariable v in res.Variables)
+                                {
+                                    HlslCBufferVariable? match = existing.Variables.FirstOrDefault(x => x.Name == v.Name);
+                                    if (match is null)
+                                    {
+                                        existing.Variables.Add(v);
+                                    }
+                                    else if (v.ArraySize is { } n && (match.ArraySize is not { } m || n > m))
+                                    {
+                                        existing.Variables.Remove(match);
+                                        existing.Variables.Add(v);
+                                    }
+                                }
+                            }
                         }
 
                         if (function.InputStruct is not null) pass.Structs.Add(function.InputStruct);

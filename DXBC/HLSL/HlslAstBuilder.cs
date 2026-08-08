@@ -81,6 +81,10 @@ public static class HlslAstBuilder
                 foreach (var (k, v) in pass.Tags)
                     passNode.Tags[k] = v;
 
+                foreach (CbufferMetadata cb in pass.ConstantBuffers)
+                    if (cb.Slot >= 0 && !passNode.Cbuffers.ContainsKey(cb.Slot))
+                        passNode.Cbuffers[cb.Slot] = cb;
+
                 subShaderNode.Passes.Add(passNode);
             }
 
@@ -191,29 +195,39 @@ public static class HlslAstBuilder
     // RdefChunk.ConstantBuffers — IRMetadataBinding (Stage 1) already
     // guarantees a declaration's SymbolicName equals the RDEF cbuffer
     // name it was bound from, so this is a plain lookup, not a guess.
+    //
+    // `blocks` is used only when a ConstantBuffer has no RDEF match
+    // (Unity strips reflection from shipped bytecode). Without member
+    // names/types, the body's cbN[slot] references can't resolve to real
+    // fields, so we synthesize one float4 per accessed 16-byte slot —
+    // D3D packs cbuffers on 16-byte register boundaries, so every
+    // cbN[slot] reference maps to element `slot` of that array and the
+    // output compiles.
     public static IEnumerable<HlslResourceNode> BuildResources(
-        List<IRDeclaration> declarations, RdefChunk? rdef = null)
+        List<IRDeclaration> declarations, RdefChunk? rdef = null, List<IRBlock>? blocks = null,
+        Dictionary<int, CbufferMetadata>? cbuffers = null)
     {
+        Dictionary<uint, uint> maxCbufferSlot = BuildMaxCbufferSlot(blocks);
+
         foreach (IRDeclaration decl in declarations)
         {
             switch (decl)
             {
                 case IRDeclaration.IRConstantBufferDeclaration cb:
-                    var cbNode = new HlslResourceNode
-                    {
-                        Name = cb.SymbolicName ?? $"cb{cb.Slot}",
-                        Kind = HlslResourceKind.ConstantBuffer,
-                        Slot = cb.Slot,
-                    };
-
                     RdefConstantBuffer? rdefMatch = rdef?.ConstantBuffers
                         .FirstOrDefault(r => r.Name == cb.SymbolicName);
 
                     if (rdefMatch is not null)
                     {
+                        var rdNode = new HlslResourceNode
+                        {
+                            Name = cb.SymbolicName ?? $"cb{cb.Slot}",
+                            Kind = HlslResourceKind.ConstantBuffer,
+                            Slot = cb.Slot,
+                        };
                         foreach (RdefVariable v in rdefMatch.Variables)
                         {
-                            cbNode.Variables.Add(new HlslCBufferVariable
+                            rdNode.Variables.Add(new HlslCBufferVariable
                             {
                                 Name = v.Name,
                                 TypeName = v.TypeName,
@@ -221,8 +235,38 @@ public static class HlslAstBuilder
                                 Size = v.Size,
                             });
                         }
+                        yield return rdNode;
+                        break;
                     }
 
+                    // Unity strips RDEF from shipped bytecode, but the
+                    // ShaderLab metadata carries the same layout (per-slot
+                    // buffer name + per-variable byte offset/type), so we
+                    // can still emit real member names.
+                    if (cbuffers is not null
+                        && cbuffers.TryGetValue((int)cb.Slot, out CbufferMetadata? meta)
+                        && meta.Variables.Count > 0)
+                    {
+                        var metaNode = new HlslResourceNode
+                        {
+                            Name = SanitizeIdentifier(meta.Name),
+                            Kind = HlslResourceKind.ConstantBuffer,
+                            Slot = cb.Slot,
+                        };
+                        foreach (CbufferVariableMetadata v in meta.Variables)
+                            metaNode.Variables.Add(MakeCbufferVariable(v));
+                        AddCbufferFallback(metaNode, cb.Slot, maxCbufferSlot);
+                        yield return metaNode;
+                        break;
+                    }
+
+                    var cbNode = new HlslResourceNode
+                    {
+                        Name = cb.SymbolicName ?? $"cb{cb.Slot}",
+                        Kind = HlslResourceKind.ConstantBuffer,
+                        Slot = cb.Slot,
+                    };
+                    AddCbufferFallback(cbNode, cb.Slot, maxCbufferSlot);
                     yield return cbNode;
                     break;
 
@@ -257,6 +301,85 @@ public static class HlslAstBuilder
                     break;
             }
         }
+    }
+
+    // Scans the subprogram's IR for cbuffer reads like cb2[10].yyyy and
+    // returns, per cbuffer slot, the highest register index (element) used.
+    // Used to size the synthesized float4 array for RDEF-less cbuffers.
+    private static Dictionary<uint, uint> BuildMaxCbufferSlot(List<IRBlock>? blocks)
+    {
+        var result = new Dictionary<uint, uint>();
+
+        if (blocks is null)
+            return result;
+
+        foreach (IRBlock block in blocks)
+        {
+            foreach (IRStatement stmt in block.Statements)
+            {
+                foreach (IRRegister reg in stmt.Uses.Concat(stmt.Defines))
+                {
+                    if (reg.RegisterType != RegisterType.ConstantBuffer || reg.Indices.Count < 2)
+                        continue;
+
+                    uint slot = reg.Indices[0];
+                    uint elem = reg.Indices[1];
+
+                    // Dynamic reads (cb0[r2.x + 4]) can touch any element up
+                    // to the real cbuffer size, which RDEF-less bytecode
+                    // doesn't tell us — reserve a generous range for them.
+                    if (reg.RelativeIndices.Length > 1 && reg.RelativeIndices[1] is not null)
+                        elem = Math.Max(elem, 64);
+
+                    if (!result.TryGetValue(slot, out uint max) || elem > max)
+                        result[slot] = elem;
+                }
+            }
+        }
+
+        return result;
+    }
+
+    // Converts a ShaderLab-metadata variable into an HLSL cbuffer member.
+    private static HlslCBufferVariable MakeCbufferVariable(CbufferVariableMetadata v) => new()
+    {
+        Name = v.Name,
+        TypeName = v.TypeName,
+        Offset = (uint)v.Offset,
+        Size = (uint)v.SizeBytes,
+        ArraySize = v.ArraySize > 0 ? v.ArraySize : null,
+    };
+
+    // Unity's internal cbuffer name for the per-material block is
+    // "$Globals" — not a legal HLSL identifier. Map to _Globals.
+    private static string SanitizeIdentifier(string name)
+    {
+        if (string.IsNullOrEmpty(name))
+            return name;
+
+        char[] chars = name.Select(c => char.IsLetterOrDigit(c) || c == '_' ? c : '_').ToArray();
+        if (char.IsDigit(chars[0]))
+            chars[0] = '_';
+        return new string(chars);
+    }
+
+    // Safety net: Unity's per-buffer layout is "partial" (some members are
+    // omitted), so a few reads may not resolve to a named variable. Keep a
+    // synthesized float4 array covering every accessed slot so those reads
+    // still compile as cbN_values[slot].
+    private static void AddCbufferFallback(HlslResourceNode node, uint slot, Dictionary<uint, uint> maxCbufferSlot)
+    {
+        if (!maxCbufferSlot.TryGetValue(slot, out uint maxSlot))
+            return;
+
+        node.Variables.Add(new HlslCBufferVariable
+        {
+            Name = $"cb{slot}_values",
+            TypeName = "float4",
+            Offset = 0,
+            Size = (maxSlot + 1) * 16,
+            ArraySize = (int)(maxSlot + 1),
+        });
     }
 
     private static HlslStructNode BuildStruct(string name, IEnumerable<(uint Register, string? SymbolicName)> entries)

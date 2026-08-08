@@ -1,4 +1,5 @@
 using System.Text.Json;
+using Parser.DXBC.Metadata;
 
 namespace Parser.DXBC.Hlsl.Ast;
 
@@ -190,6 +191,12 @@ public sealed class HlslPassNode
     public List<HlslResourceNode> Resources { get; } = new();
     public List<HlslStructNode> Structs { get; } = new();
 
+    // Cbuffer layout recovered from the ShaderLab metadata (per-pass
+    // replacement for the stripped RDEF chunk), keyed by register slot.
+    // Stage 13 uses it to render cbN[slot] reads as the real variable
+    // names instead of opaque cbN_values arrays.
+    public Dictionary<int, CbufferMetadata> Cbuffers { get; } = new();
+
     public IEnumerable<HlslFunctionNode> Functions()
     {
         foreach (var f in new[]
@@ -257,6 +264,11 @@ public sealed class HlslCBufferVariable
     public string TypeName { get; init; } = "float4"; // reconstructed from RDEF's TypeClass/TypeKind/dims
     public uint Offset { get; init; }
     public uint Size { get; init; }
+
+    // When non-null, this variable is a synthesized float4 array (an RDEF-less
+    // cbuffer fallback: one element per accessed 16-byte slot, so the cbN[slot]
+    // references in the body resolve). The printer emits it as `float4 Name[N];`.
+    public int? ArraySize { get; init; }
 }
 
 public sealed class HlslResourceNode

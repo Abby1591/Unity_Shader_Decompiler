@@ -204,7 +204,14 @@ public static class IRControlFlowGraphBuilder
                 {
                     int loopIdx = loopStack.Pop();
                     breakTargetStack.Pop();
-                    Link(blocks[i], blocks[loopIdx]); // back edge
+
+                    // Back edge from the REAL last body block, not this
+                    // EndLoop marker's own single-statement leader block
+                    // (blocks[i] is just the marker). Linking the marker
+                    // made IRLeaveSsa plant phi copies after the EndLoop
+                    // statement, inside the marker block, so the structuring
+                    // pass saw them sitting outside the loop body.
+                    Link(blocks[i - 1], blocks[loopIdx]); // back edge
 
                     foreach (int breakSrc in pendingBreaks[loopIdx])
                         if (i + 1 < blocks.Count)
@@ -260,7 +267,9 @@ public static class IRControlFlowGraphBuilder
                 continue; // unconditional return: no fallthrough, no successors
             }
 
-            // EndLoop's only successor is the back edge already linked above.
+            // The EndLoop marker block is a pure placeholder: the back edge
+            // is linked from blocks[i - 1] (the real loop tail) above, so this
+            // marker must not gain any fallthrough successor here.
             if (first is IRStatement.IREndLoop)
                 continue;
 

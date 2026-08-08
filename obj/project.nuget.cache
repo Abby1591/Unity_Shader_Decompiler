@@ -1,11 +1,12 @@
 {
   "version": 2,
-  "dgSpecHash": "w55bSws43AQ=",
+  "dgSpecHash": "zRnDgxMI/wo=",
   "success": true,
   "projectFilePath": "C:\\Users\\Abby\\Software\\Unity Decompilers\\Unity Shader Decompiler\\Parser\\Parser.csproj",
   "expectedPackageFiles": [
     "C:\\Users\\Abby\\.nuget\\packages\\sharpgen.runtime\\2.4.2-beta\\sharpgen.runtime.2.4.2-beta.nupkg.sha512",
     "C:\\Users\\Abby\\.nuget\\packages\\sharpgen.runtime.com\\2.4.2-beta\\sharpgen.runtime.com.2.4.2-beta.nupkg.sha512",
+    "C:\\Users\\Abby\\.nuget\\packages\\unity\\5.11.10\\unity.5.11.10.nupkg.sha512",
     "C:\\Users\\Abby\\.nuget\\packages\\vortice.d3dcompiler\\3.8.3\\vortice.d3dcompiler.3.8.3.nupkg.sha512",
     "C:\\Users\\Abby\\.nuget\\packages\\vortice.directx\\3.8.3\\vortice.directx.3.8.3.nupkg.sha512",
     "C:\\Users\\Abby\\.nuget\\packages\\vortice.mathematics\\2.1.0\\vortice.mathematics.2.1.0.nupkg.sha512"
