@@ -819,7 +819,7 @@ public static class HlslPrettyPrinter
         // destination width with a trailing trim swizzle — the source
         // lane's first N components are exactly what the positional mask
         // semantics assign.
-        rhs = TrimToWidth(rhs, active.Count, expr, ctx);
+        rhs = TrimToWidth(rhs, active, expr, ctx);
 
         if (dest.RegisterType == RegisterType.Output)
         {
@@ -877,17 +877,24 @@ public static class HlslPrettyPrinter
     // DXBC's per-lane semantics mean the RHS expression naturally renders at
     // its full width (usually float4, via the source swizzle) even when the
     // destination write-mask only consumes two or three components. If the
-    // RHS is genuinely wider than the destination, append a trailing trim
-    // swizzle sized to the destination — the source lane's first N
-    // components are exactly what DXBC's positional mask semantics assign.
+    // RHS is genuinely wider than the destination, append a trailing swizzle
+    // that selects the source components by DESTINATION position.
+    //
+    // A leading-N trim would be wrong: the destination's active components
+    // are its mask positions (e.g. .zw -> [2,3]), and DXBC consumes source
+    // lane values at exactly those positions, so `o.field.zw = r0.zzzw`
+    // needs `r0.zzzw.zw` (z,w) — trimming to `.xy` would silently write
+    // (z,z) into z,w. The `.xyz` masks everyone sees are only correct by
+    // coincidence (their positions are the leading ones).
+    //
     // Parenthesized so the swizzle binds at the top level regardless of the
     // expression's own structure (casts, ternaries, unary prefixes).
-    private static string TrimToWidth(string rhs, int destWidth, IRExpression expr, PrintContext ctx)
+    private static string TrimToWidth(string rhs, List<int> active, IRExpression expr, PrintContext ctx)
     {
         int width = ExpressionWidth(expr, ctx);
-        if (width <= destWidth)
+        if (width <= active.Count)
             return rhs;
-        return $"({rhs}).{ComponentLetters[..destWidth]}";
+        return $"({rhs}).{string.Concat(active.Select(c => ComponentLetters[c]))}";
     }
 
     // Natural component width of a rendered expression — mirrors the width
