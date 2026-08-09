@@ -377,6 +377,20 @@ public static class HlslPrettyPrinter
                 break;
 
             case HlslIfStatement iff:
+            {
+                // Cross-branch phi copies (IRLeaveSsa writes the same
+                // post-merge name at the top level of BOTH arms) must have
+                // their declaration hoisted above the if. Declared per-arm,
+                // the name is scoped to that arm's braces and dies at the
+                // `}` — the sibling arm's write and any post-merge read
+                // would then reference an identifier never in scope.
+                foreach ((string name, int comps) in CrossBranchMergeNames(iff, ctx))
+                {
+                    if (!ctx.Declared.Add(name))
+                        continue; // already in scope — don't redeclare
+                    sb.Append(pad).Append(DeclType(comps)).Append(' ').Append(name).Append(";\n");
+                }
+
                 sb.Append(pad).Append("if (").Append(RenderExpression(iff.Condition, ctx)).Append(")\n");
                 sb.Append(pad).Append("{\n");
                 PrintBlock(sb, iff.Then, indent + 1, ctx);
@@ -388,6 +402,7 @@ public static class HlslPrettyPrinter
                     sb.Append(pad).Append("}\n");
                 }
                 break;
+            }
 
             case HlslLoopStatement loop:
                 sb.Append(pad).Append("[loop]\n").Append(pad).Append("while (true)\n").Append(pad).Append("{\n");
@@ -792,15 +807,25 @@ public static class HlslPrettyPrinter
     {
         string rhs = RenderExpression(expr, ctx);
 
+        List<int> active = MaskIndices(dest.Mask); // destinations are always write-masks, never swizzles
+        if (active.Count == 0)
+            active = new List<int> { 0 };
+
+        // DXBC computes full-lane expressions (the source operand's 4-wide
+        // swizzle) regardless of how many components the destination
+        // write-mask actually consumes, so the rendered RHS is naturally
+        // wider than the destination far more often than not. HLSL rejects
+        // a wide RHS assigned into a narrow L-value, so narrow it to the
+        // destination width with a trailing trim swizzle — the source
+        // lane's first N components are exactly what the positional mask
+        // semantics assign.
+        rhs = TrimToWidth(rhs, active.Count, expr, ctx);
+
         if (dest.RegisterType == RegisterType.Output)
         {
             yield return $"o.{FieldNameFor(dest, ctx)}{MaskOrSwizzleSuffix(dest)} = {rhs};";
             yield break;
         }
-
-        List<int> active = MaskIndices(dest.Mask); // destinations are always write-masks, never swizzles
-        if (active.Count == 0)
-            active = new List<int> { 0 };
 
         bool sameVersion = active.All(c => dest.SsaVersion[c] == dest.SsaVersion[active[0]]);
 
@@ -847,6 +872,189 @@ public static class HlslPrettyPrinter
     }
 
     private static string DeclType(int componentCount) => componentCount == 1 ? "float" : $"float{componentCount}";
+
+    // HLSL (like C) won't assign a wide vector into a narrower L-value, but
+    // DXBC's per-lane semantics mean the RHS expression naturally renders at
+    // its full width (usually float4, via the source swizzle) even when the
+    // destination write-mask only consumes two or three components. If the
+    // RHS is genuinely wider than the destination, append a trailing trim
+    // swizzle sized to the destination — the source lane's first N
+    // components are exactly what DXBC's positional mask semantics assign.
+    // Parenthesized so the swizzle binds at the top level regardless of the
+    // expression's own structure (casts, ternaries, unary prefixes).
+    private static string TrimToWidth(string rhs, int destWidth, IRExpression expr, PrintContext ctx)
+    {
+        int width = ExpressionWidth(expr, ctx);
+        if (width <= destWidth)
+            return rhs;
+        return $"({rhs}).{ComponentLetters[..destWidth]}";
+    }
+
+    // Natural component width of a rendered expression — mirrors the width
+    // each render path actually produces (register read width, constant
+    // arity, the scalar-collapsing intrinsics, texture samples as float4).
+    // Only used to decide whether TrimToWidth must narrow the RHS; when the
+    // width is unknowable (a bare field read with no swizzle info) it
+    // returns 1 so no invalid trim is ever emitted.
+    private static int ExpressionWidth(IRExpression expr, PrintContext ctx) => expr switch
+    {
+        IRExpression.RegisterExpression r => RegisterReadWidth(r.Register, ctx),
+        IRExpression.ConstantExpression c => Math.Max(1, Math.Max(c.RawValues.Length, c.DoubleValues.Length)),
+        IRExpression.BinaryExpression b => Math.Max(ExpressionWidth(b.Left, ctx), ExpressionWidth(b.Right, ctx)),
+        IRExpression.UnaryExpression u => ExpressionWidth(u.Operand, ctx),
+        IRExpression.IntrinsicExpression i => IntrinsicWidth(i, ctx),
+        IRExpression.FusedMultiplyAddExpression f => Math.Max(Math.Max(ExpressionWidth(f.A, ctx), ExpressionWidth(f.B, ctx)), ExpressionWidth(f.C, ctx)),
+        IRExpression.MultiplyHighExpression => 1,
+        IRExpression.Multiply64Expression => 1,
+        IRExpression.BitFieldInsertExpression => 1,
+        IRExpression.BitFieldExtractExpression => 1,
+        IRExpression.ConditionalExpression c => Math.Max(ExpressionWidth(c.TrueExpression, ctx), ExpressionWidth(c.FalseExpression, ctx)),
+        IRExpression.DotProductExpression => 1,
+        IRExpression.MatrixVectorMultiplyExpression mv => Math.Max(1, mv.Rows.Count),
+        IRExpression.TextureOperationExpression tex => TextureOpWidth(tex.Operation),
+        _ => 1,
+    };
+
+    // How many components a register read renders as. Temps render via the
+    // active-component machinery (swizzle/mask/select1 — exact). Inputs,
+    // outputs and cbuffer reads render as `name` + a swizzle suffix, so the
+    // suffix's length is the true width; a bare read (no suffix) has an
+    // unknown width and is left untrimmed rather than guessed at.
+    private static int RegisterReadWidth(IRRegister reg, PrintContext ctx)
+    {
+        if (reg.RegisterType is RegisterType.Temp or RegisterType.IndexableTemp)
+        {
+            List<int> active = ActiveComponents(reg);
+            return active.Count == 0 ? 1 : active.Count;
+        }
+
+        string suffix = MaskOrSwizzleSuffix(reg);
+        return suffix.Length > 1 ? suffix.Length - 1 : 1;
+    }
+
+    // Element-wise intrinsics keep their argument's width; a handful
+    // collapse their result to a scalar; Cross produces a float3.
+    private static int IntrinsicWidth(IRExpression.IntrinsicExpression expr, PrintContext ctx)
+    {
+        switch (expr.Intrinsic)
+        {
+            case IRExpression.IRIntrinsic.Dot:
+            case IRExpression.IRIntrinsic.Length:
+            case IRExpression.IRIntrinsic.Distance:
+            case IRExpression.IRIntrinsic.Determinant:
+            case IRExpression.IRIntrinsic.Any:
+            case IRExpression.IRIntrinsic.All:
+            case IRExpression.IRIntrinsic.CountBits:
+            case IRExpression.IRIntrinsic.ReverseBits:
+            case IRExpression.IRIntrinsic.FirstBitHigh:
+            case IRExpression.IRIntrinsic.FirstBitLow:
+            case IRExpression.IRIntrinsic.CheckAccessFullyMapped:
+                return 1;
+            case IRExpression.IRIntrinsic.Cross:
+                return 3;
+            default:
+                int w = 1;
+                foreach (IRExpression arg in expr.Arguments)
+                    w = Math.Max(w, ExpressionWidth(arg, ctx));
+                return w;
+        }
+    }
+
+    // Texture samples/loads/gathers return float4 in HLSL; the info-style
+    // queries return scalars.
+    private static int TextureOpWidth(IRExpression.TextureOperation op) => op switch
+    {
+        IRExpression.TextureOperation.Sample
+            or IRExpression.TextureOperation.SampleLevel
+            or IRExpression.TextureOperation.SampleGrad
+            or IRExpression.TextureOperation.SampleBias
+            or IRExpression.TextureOperation.SampleCompare
+            or IRExpression.TextureOperation.SampleCompareLevelZero
+            or IRExpression.TextureOperation.Load
+            or IRExpression.TextureOperation.Gather
+            or IRExpression.TextureOperation.GatherCompare => 4,
+        _ => 1,
+    };
+
+    // Names written at the top level of BOTH of an if's arms — the
+    // IRLeaveSsa phi copies that merge a value at this if. These are the
+    // identifiers whose declarations must be hoisted above the if (see the
+    // HlslIfStatement print case). Returns (rendered name, component count
+    // for the declaration type), mirroring the exact naming/typing
+    // RenderAssignmentLines will produce when it prints those same writes.
+    private static List<(string Name, int Components)> CrossBranchMergeNames(HlslIfStatement iff, PrintContext ctx)
+    {
+        var result = new List<(string, int)>();
+        if (iff.Else is null)
+            return result;
+
+        Dictionary<string, int> thenNames = WrittenDeclNames(iff.Then.Statements, ctx);
+        Dictionary<string, int> elseNames = WrittenDeclNames(iff.Else.Statements, ctx);
+
+        foreach ((string name, int comps) in thenNames)
+            if (elseNames.TryGetValue(name, out int elseComps))
+                result.Add((name, Math.Max(comps, elseComps)));
+
+        return result;
+    }
+
+    // Top-level destination names a block's statements declare, mapped to
+    // the component count (declaration type) of the write. Only direct
+    // assignments matter — nested ifs/loops handle their own merges when
+    // they get printed.
+    private static Dictionary<string, int> WrittenDeclNames(List<HlslStatementNode> statements, PrintContext ctx)
+    {
+        var names = new Dictionary<string, int>();
+        foreach (HlslStatementNode stmt in statements)
+        {
+            IEnumerable<IRRegister> dests = stmt switch
+            {
+                HlslAssignmentStatement a => new[] { a.Destination },
+                HlslMultiAssignmentStatement ma => ma.Destinations.Where(d => d is not null).Cast<IRRegister>(),
+                _ => Array.Empty<IRRegister>(),
+            };
+
+            foreach (IRRegister dest in dests)
+                foreach ((string name, int comps) in DestinationDeclNames(dest, ctx))
+                    if (!names.TryGetValue(name, out int prev) || comps > prev)
+                        names[name] = comps;
+        }
+        return names;
+    }
+
+    // The exact identifier(s) and width RenderAssignmentLines would declare
+    // for a destination — shared so the hoisting pre-pass and the emit
+    // path agree on names and types.
+    private static List<(string Name, int Components)> DestinationDeclNames(IRRegister dest, PrintContext ctx)
+    {
+        var result = new List<(string, int)>();
+        if (dest.RegisterType == RegisterType.Output)
+            return result; // outputs are `o.field = rhs`, never locals
+
+        List<int> active = MaskIndices(dest.Mask);
+        if (active.Count == 0)
+            active = new List<int> { 0 };
+
+        bool sameVersion = active.All(c => dest.SsaVersion[c] == dest.SsaVersion[active[0]]);
+
+        if (active.Count == 1 || sameVersion)
+        {
+            string letters = string.Concat(active.Select(c => ComponentLetters[c]));
+            string bare = BaseIdentifier(dest, ctx);
+            int? version = dest.SsaVersion[active[0]];
+            string name = version is { } v ? $"{bare}_{letters}_{v}" : $"{bare}_{letters}";
+            result.Add((name, active.Count));
+        }
+        else
+        {
+            // Divergent component versions — RenderAssignmentLines splits
+            // into one scalar per component, each declared individually.
+            foreach (int c in active)
+                result.Add((ScalarIdentifier(dest, c, ctx), 1));
+        }
+
+        return result;
+    }
 
     // ---------- expressions ----------
 
