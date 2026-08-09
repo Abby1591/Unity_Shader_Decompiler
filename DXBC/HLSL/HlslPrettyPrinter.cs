@@ -642,14 +642,19 @@ public static class HlslPrettyPrinter
     }
 
     // Scalar per-(register,component,version) identifier — always a
-    // legal, unique C-style identifier.
+    // legal, unique C-style identifier. A versionless result is NOT an
+    // implicit input (real function inputs are RegisterType.Input and
+    // render via i.field in RenderRegisterRead, never here); for a temp it
+    // means the register was never written on this reaching path — a
+    // don't-care the phi-fallback guard in RenderAssignmentLines handles
+    // by either dropping the copy or declaring the scalar uninitialized.
     private static string ScalarIdentifier(IRRegister reg, int component, PrintContext ctx)
     {
         string bare = BaseIdentifier(reg, ctx);
         int? version = reg.SsaVersion[component];
         return version is { } v
             ? $"{bare}_{ComponentLetters[component]}_{v}"
-            : $"{bare}_{ComponentLetters[component]}"; // no SSA version yet (implicit input to this function)
+            : $"{bare}_{ComponentLetters[component]}";
     }
 
     // Reads a Temp/IndexableTemp register for use on the RHS of an
@@ -720,7 +725,7 @@ public static class HlslPrettyPrinter
     // Resolves a single-component read to the identifier its defining
     // instruction declared (swizzle off the vector if it was co-written),
     // falling back to the synthetic scalar name when nothing was recorded
-    // (an unrenamed implicit function input).
+    // (a versionless temp — a value never written on this reaching path).
     private static string ResolveComponent(IRRegister reg, int component, PrintContext ctx)
     {
         int? version = reg.SsaVersion[component];
@@ -803,13 +808,66 @@ public static class HlslPrettyPrinter
     // Multiple lines only happen when the written components have
     // diverged to different SSA versions (see below) — the common case
     // is exactly one line.
+    // The single identifier an assignment to `dest` would declare (vector
+    // name when components share a version, scalar name for one component),
+    // or null when the write splits into per-component names. Used by the
+    // phi-fallback-copy guard to check whether the destination is already
+    // in scope before deciding to drop the copy.
+    private static string? SingleDestName(IRRegister dest, List<int> active, PrintContext ctx)
+    {
+        if (dest.RegisterType == RegisterType.Output)
+            return null;
+
+        bool sameVersion = active.All(c => dest.SsaVersion[c] == dest.SsaVersion[active[0]]);
+        if (active.Count > 1 && !sameVersion)
+            return null;
+
+        string letters = string.Concat(active.Select(c => ComponentLetters[c]));
+        string bare = BaseIdentifier(dest, ctx);
+        int? version = dest.SsaVersion[active[0]];
+        return version is { } v ? $"{bare}_{letters}_{v}" : $"{bare}_{letters}";
+    }
+
     private static IEnumerable<string> RenderAssignmentLines(IRRegister dest, IRExpression expr, PrintContext ctx)
     {
-        string rhs = RenderExpression(expr, ctx);
-
         List<int> active = MaskIndices(dest.Mask); // destinations are always write-masks, never swizzles
         if (active.Count == 0)
             active = new List<int> { 0 };
+
+        // Phi-fallback copies (IRLeaveSsa): when the source register was
+        // never written on this path, its SSA version is null. DXBC leaves
+        // such values as don't-care, so emitting the read would produce
+        // phantom identifiers (r8_x) that no instruction declares. If the
+        // destination is already in scope (a hoisted cross-branch merge
+        // name), drop the copy entirely — the variable stays
+        // declared-but-uninitialized on this path, matching DXBC. Otherwise
+        // declare the unversioned source scalars so the assignment still
+        // compiles (it reads garbage, which is the same semantics).
+        if (expr is IRExpression.RegisterExpression { Register: { } src }
+            && src.RegisterType is RegisterType.Temp or RegisterType.IndexableTemp)
+        {
+            List<int> srcActive = ActiveComponents(src);
+            if (srcActive.Count > 0 && srcActive.Any(c => src.SsaVersion[c] is null))
+            {
+                bool allUnversioned = srcActive.All(c => src.SsaVersion[c] is null);
+                if (allUnversioned && dest.RegisterType != RegisterType.Output
+                    && SingleDestName(dest, active, ctx) is { } destName
+                    && ctx.Declared.Contains(destName))
+                {
+                    yield break;
+                }
+                foreach (int c in srcActive)
+                {
+                    if (src.SsaVersion[c] is not null)
+                        continue;
+                    string scalar = ScalarIdentifier(src, c, ctx);
+                    if (ctx.Declared.Add(scalar))
+                        yield return $"float {scalar};";
+                }
+            }
+        }
+
+        string rhs = RenderExpression(expr, ctx);
 
         // DXBC computes full-lane expressions (the source operand's 4-wide
         // swizzle) regardless of how many components the destination
