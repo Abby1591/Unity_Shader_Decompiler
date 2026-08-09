@@ -159,8 +159,16 @@ public static class IRControlFlowGraphBuilder
                 case IRStatement.IRElse:
                 {
                     int ifIdx = ifStack.Peek();
-                    if (i + 1 < blocks.Count)
-                        Link(blocks[ifIdx], blocks[i + 1]); // false branch -> else-body
+
+                    // False branch enters the IRElse marker block itself
+                    // (which falls through to the else-body via the generic
+                    // rule below) rather than jumping straight to the body.
+                    // Linking the marker keeps this single-statement block
+                    // reachable so IRCfgCleanup doesn't delete it as
+                    // unreachable — previously it did, silently flattening
+                    // the else body into the if body (wrong semantics for
+                    // the true path, which then ran the else's copies too).
+                    Link(blocks[ifIdx], blocks[i]); // false branch -> else marker -> else-body
                     ifHasElse.Add(ifIdx);
 
                     // The generic fallthrough rule (bottom of the previous

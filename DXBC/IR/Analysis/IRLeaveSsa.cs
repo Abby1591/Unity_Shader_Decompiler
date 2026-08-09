@@ -23,7 +23,7 @@ public static class IRLeaveSsa
 
             for (int p = 0; p < block.Predecessors.Count; p++)
             {
-                IRBlock pred = block.Predecessors[p];
+                IRBlock pred = ResolveInsertionTarget(block.Predecessors[p]);
                 var copies = new List<IRStatement>();
 
                 foreach (IRStatement.IRPhi phi in phis)
@@ -57,6 +57,38 @@ public static class IRLeaveSsa
 
         pred.Statements.InsertRange(insertIndex, copies);
     }
+
+    // A phi's copy must run on the real control-flow path into the merge
+    // block. Single-statement structural marker blocks (if/else/endif/
+    // loop/switch/case/...) are placeholders a consumer such as
+    // HlslStatementBuilder consumes atomically and then recurses past —
+    // anything planted inside one is never seen again. Follow the marker
+    // chain to the block that actually falls through into it, e.g. the
+    // no-else "if" case, where the false branch's merge predecessor is the
+    // IRIf marker itself and the copy belongs at the end of the block just
+    // before the if. The loop case is a variant of the same shape.
+    private static IRBlock ResolveInsertionTarget(IRBlock pred)
+    {
+        while (pred.Statements.Count == 1 && IsMarker(pred.Statements[0]))
+        {
+            if (pred.Predecessors.Count == 0)
+                break; // nothing real to redirect to (entry block) — leave as-is
+
+            pred = pred.Predecessors[0];
+        }
+
+        return pred;
+    }
+
+    private static bool IsMarker(IRStatement stmt) => stmt is IRStatement.IRIf
+        or IRStatement.IRElse
+        or IRStatement.IREndIf
+        or IRStatement.IRLoop
+        or IRStatement.IREndLoop
+        or IRStatement.IRSwitch
+        or IRStatement.IRCase
+        or IRStatement.IRDefault
+        or IRStatement.IREndSwitch;
 
     // Statements that end a block by deciding where control goes next —
     // the copy has to execute before that decision, even if it means it
