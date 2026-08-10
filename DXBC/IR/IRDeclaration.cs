@@ -31,7 +31,9 @@ public abstract class IRDeclaration
     {
         public uint Register { get; init; }
 
-        // Only set for dcl_input_sgv (system-generated-value inputs, e.g. vertex/instance id)
+        // Only set for dcl_input_sgv (system-generated-value inputs, e.g. vertex/instance id).
+        // This is the instruction-stream NameToken = a D3D10_SB_NAME value
+        // (SystemValueType) — NOT the D3D_NAME numbering signature chunks use.
         public uint? SystemValue { get; init; }
 
         // Only meaningful for dcl_input_ps — see InterpolationMode.cs for why
@@ -43,7 +45,8 @@ public abstract class IRDeclaration
     {
         public uint Register { get; init; }
 
-        // Only set for dcl_output_siv (system-interpreted-value outputs, e.g. SV_Position)
+        // Only set for dcl_output_siv (system-interpreted-value outputs, e.g. SV_Position).
+        // Same D3D10_SB_NAME numbering as IRInputDeclaration.SystemValue.
         public uint? SystemValue { get; init; }
     }
 

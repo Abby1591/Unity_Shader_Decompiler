@@ -1,5 +1,7 @@
 namespace Parser.DXBC.Chunks;
 
+using Parser.DXBC.IR;
+
 public class SignatureElement
 {
     public string SemanticName = "";
@@ -7,6 +9,11 @@ public class SignatureElement
 
     public uint SystemValue;
     public uint ComponentType;
+
+    // Signature-chunk SystemValue fields are D3D_NAME (d3dcommon.h) values —
+    // distinct from the D3D10_SB_NAME numbering the instruction stream uses.
+    // The raw uint is preserved above; this is its readable interpretation.
+    public string SystemValueName => SystemValue.ToSignatureSystemValue().ToString();
 
     // D3D_REGISTER_COMPONENT_TYPE readable form (verified against
     // Microsoft's d3dcommon.h: 0=unknown, 1=uint32, 2=sint32, 3=float32).
@@ -29,6 +36,7 @@ public class SignatureElement
             $"{SemanticName}{SemanticIndex,-2} " +
             $"Reg={Register,-2} " +
             $"Mask=0x{Mask:X2} " +
-            $"Type={ComponentType}";
+            $"Type={ComponentType} " +
+            $"SV={SystemValueName}";
     }
 }
