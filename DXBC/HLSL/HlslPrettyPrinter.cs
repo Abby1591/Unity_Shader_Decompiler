@@ -770,32 +770,46 @@ public static class HlslPrettyPrinter
     // and the scalar-SSA machinery above for temps.
     private static string RenderRegisterRead(IRRegister reg, PrintContext ctx)
     {
-        switch (reg.RegisterType)
+        string rendered = reg.RegisterType switch
         {
-            case RegisterType.Temp:
-            case RegisterType.IndexableTemp:
-                return RenderTempRead(reg, ctx);
+            RegisterType.Temp or RegisterType.IndexableTemp =>
+                RenderTempRead(reg, ctx),
 
-            case RegisterType.Input:
-                return "i." + FieldNameFor(reg, ctx) + MaskOrSwizzleSuffix(reg);
+            RegisterType.Input =>
+                "i." + FieldNameFor(reg, ctx) + MaskOrSwizzleSuffix(reg),
 
-            case RegisterType.Output:
-                return "o." + FieldNameFor(reg, ctx) + MaskOrSwizzleSuffix(reg);
+            RegisterType.Output =>
+                "o." + FieldNameFor(reg, ctx) + MaskOrSwizzleSuffix(reg),
 
-            case RegisterType.ConstantBuffer:
-                return RenderCbufferRead(reg, ctx);
+            RegisterType.ConstantBuffer =>
+                RenderCbufferRead(reg, ctx),
 
-            case RegisterType.Resource:
-            case RegisterType.Sampler:
-            case RegisterType.Uav:
+            RegisterType.Resource or RegisterType.Sampler or RegisterType.Uav =>
                 // Texture/sampler/UAV objects are not vector values — the
                 // DXBC operand swizzle on a resource handle is meaningless
                 // (and t0.xyzw.Sample would never compile).
-                return BaseIdentifier(reg, ctx);
+                BaseIdentifier(reg, ctx),
 
-            default:
-                return BaseIdentifier(reg, ctx) + MaskOrSwizzleSuffix(reg);
-        }
+            _ =>
+                BaseIdentifier(reg, ctx) + MaskOrSwizzleSuffix(reg),
+        };
+
+        return ApplyRegisterModifier(reg.Modifier, rendered);
+    }
+
+    // A DXBC source modifier (negate/abs/absneg) that is dropped here would
+    // silently change the shader's math — e.g. `1.0 - i.vertexColor.a`
+    // decompiling as `(i.cOLOR0.w + 1)`. The modifier lives on the IR register
+    // itself, so it is applied once, in this central read dispatch.
+    private static string ApplyRegisterModifier(ShdrParser.OperandModifier modifier, string rendered)
+    {
+        return modifier switch
+        {
+            ShdrParser.OperandModifier.Neg => $"-{rendered}",
+            ShdrParser.OperandModifier.Abs => $"abs({rendered})",
+            ShdrParser.OperandModifier.AbsNeg => $"-abs({rendered})",
+            _ => rendered,
+        };
     }
 
     private static string FieldNameFor(IRRegister reg, PrintContext ctx)
