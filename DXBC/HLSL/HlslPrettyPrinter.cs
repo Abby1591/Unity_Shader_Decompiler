@@ -293,10 +293,7 @@ public static class HlslPrettyPrinter
 
     // Per-function mutable state the printer threads through recursion:
     // which (identifier) names have already been declared (so re-writes
-    // to the same SSA generation don't re-declare), and a counter for
-    // synthetic temps used to split a single multi-component RHS across
-    // components whose destination versions have diverged (see
-    // RenderMultiVersionAssignment below).
+    // to the same SSA generation don't re-declare).
     private sealed class PrintContext
     {
         public HashSet<string> Declared { get; } = new();
@@ -320,8 +317,6 @@ public static class HlslPrettyPrinter
         // per-component counters (see IRSsaRenaming), so x and y can
         // independently reach the same version via separate writes.
         public Dictionary<(IRStorageLocation Location, int Version), (string Name, List<int> ActiveComponents)> DeclaredViews { get; } = new();
-
-        public int TempCounter;
     }
 
     private static void PrintFunction(StringBuilder sb, HlslFunctionNode fn, Dictionary<(int Slot, string Stage), CbufferMetadata> allCbuffers)
@@ -344,6 +339,8 @@ public static class HlslPrettyPrinter
         var ctx = new PrintContext { Cbuffers = cbuffers };
         if (fn.OutputStruct is not null)
             sb.Append("                ").Append(outType).Append(" o = (").Append(outType).Append(")0;\n");
+
+        HlslSemanticNaming.Apply(fn.Statements, cbuffers);
 
         PrintBlock(sb, fn.Statements, indent: 4, ctx);
 
@@ -552,7 +549,7 @@ public static class HlslPrettyPrinter
     //   - matrix row read                -> name[row] (+ swizzle)
     // Array variables defer to the cbN_values fallback.
     // Returns null when no listed variable covers the read (partial layout).
-    private static string? ResolveCbufferRead(CbufferMetadata cb, IRRegister reg)
+    internal static string? ResolveCbufferRead(CbufferMetadata cb, IRRegister reg)
     {
         int[] comps = ReadComponentIndices(reg).ToArray();
         if (comps.Length == 0)
@@ -815,7 +812,7 @@ public static class HlslPrettyPrinter
     private static string FieldNameFor(IRRegister reg, PrintContext ctx)
     {
         string semantic = reg.SymbolicName ?? BaseIdentifier(reg, ctx);
-        return char.ToLowerInvariant(semantic[0]) + semantic[1..];
+        return HlslAstBuilder.ToFieldName(semantic);
     }
 
     // Emits one or more statement lines for a single destination write.
@@ -881,7 +878,7 @@ public static class HlslPrettyPrinter
             }
         }
 
-        string rhs = RenderExpression(expr, ctx);
+        string rawRhs = RenderExpression(expr, ctx);
 
         // DXBC computes full-lane expressions (the source operand's 4-wide
         // swizzle) regardless of how many components the destination
@@ -891,7 +888,7 @@ public static class HlslPrettyPrinter
         // destination width with a trailing trim swizzle — the source
         // lane's first N components are exactly what the positional mask
         // semantics assign.
-        rhs = TrimToWidth(rhs, active, expr, ctx);
+        string rhs = TrimToWidth(rawRhs, active, expr, ctx);
 
         if (dest.RegisterType == RegisterType.Output)
         {
@@ -924,21 +921,19 @@ public static class HlslPrettyPrinter
             yield break;
         }
 
-        // Components diverged to different versions in one instruction —
-        // evaluate the RHS once into a synthetic vector temp, then split
-        // each component off into its own correctly-versioned scalar so
-        // nothing gets recomputed (matters for texture Sample calls) and
-        // every later read still finds the right identifier.
-        string tempName = $"__t{ctx.TempCounter++}";
-        yield return $"{DeclType(active.Count)} {tempName} = {rhs};";
-
+        // Components diverged to different versions in one instruction.
+        // Split each component directly off the RHS expression rather than
+        // routing through a synthetic vector temp — the RHS is pure (texture
+        // Samples included), so each extract re-reads the same lane the temp
+        // would have held, and each scalar still records its own
+        // correctly-versioned identifier so later reads resolve it.
         for (int i = 0; i < active.Count; i++)
         {
             int c = active[i];
             string scalarName = ScalarIdentifier(dest, c, ctx);
             if (dest.SsaVersion[c] is { } v)
                 ctx.DeclaredViews[(LocationOf(dest, c), v)] = (scalarName, new List<int> { c });
-            string line = $"{scalarName} = {tempName}.{ComponentLetters[i]};";
+            string line = $"{scalarName} = ({rawRhs}).{ComponentLetters[c]};";
             yield return ctx.Declared.Add(scalarName) ? $"float {line}" : line;
         }
     }

@@ -71,7 +71,7 @@ public static class HlslNameRecovery
     private static RegKey KeyOf(IRRegister reg) =>
         new(reg.RegisterType, reg.Index, reg.SsaVersion[0], reg.SsaVersion[1], reg.SsaVersion[2], reg.SsaVersion[3]);
 
-    private static IEnumerable<(IRRegister Dest, IRExpression Expr)> EnumerateAssignments(HlslStatementNode node)
+    internal static IEnumerable<(IRRegister Dest, IRExpression Expr)> EnumerateAssignments(HlslStatementNode node)
     {
         switch (node)
         {
@@ -103,7 +103,7 @@ public static class HlslNameRecovery
         }
     }
 
-    private static IEnumerable<IRRegister> EnumerateAllRegisters(HlslStatementNode node)
+    internal static IEnumerable<IRRegister> EnumerateAllRegisters(HlslStatementNode node)
     {
         switch (node)
         {

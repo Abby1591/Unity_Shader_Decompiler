@@ -407,12 +407,20 @@ public static class HlslAstBuilder
         return s;
     }
 
-    // "POSITION0" -> "position0"-ish isn't useful; strip a trailing
-    // "0" index only when it's the sole occurrence of that semantic is
-    // deferred to Stage 12 (name recovery) — for now just lowercase the
-    // first letter so it reads as a field name rather than a semantic.
-    private static string ToFieldName(string semantic)
-        => char.ToLowerInvariant(semantic[0]) + semantic[1..];
+    // Semantic to field-identifier, in the idiom Unity's own generated HLSL
+    // uses: "SV_x" keeps its "sv_" prefix in camelCase (SV_Position -> sv_Position,
+    // SV_Target0 -> sv_Target0), every other semantic is lowercased
+    // (COLOR0 -> color0, TEXCOORD0 -> texcoord0). The printer's read side must
+    // use the exact same function or the struct field declarations won't resolve.
+    internal static string ToFieldName(string semantic)
+    {
+        if (semantic.StartsWith("SV_"))
+        {
+            if (semantic.Length <= 3) return "sv_";
+            return "sv_" + char.ToUpperInvariant(semantic[3]) + semantic[4..].ToLowerInvariant();
+        }
+        return semantic.ToLowerInvariant();
+    }
 
     private static string? TextureTypeHint(ResourceDimension dimension, bool uav = false)
     {
