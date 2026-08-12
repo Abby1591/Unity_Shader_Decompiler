@@ -85,6 +85,12 @@ public static class IRExpressionRewriter
                 Right = Rewrite(dp.Right, transform)!,
                 Components = dp.Components,
             },
+
+            IRExpression.SwizzleExpression sw => new IRExpression.SwizzleExpression
+            {
+                Value = Rewrite(sw.Value, transform)!,
+                Components = sw.Components,
+            },
             
             IRExpression.MatrixVectorMultiplyExpression mv => new IRExpression.MatrixVectorMultiplyExpression
             {

@@ -338,15 +338,15 @@ internal class Program
                 $"structs={pass.Structs.Count} resources={pass.Resources.Count}");
         }
 
-        PrintFullShaderOutput(project, astShader);
+        PrintFullShaderOutput(project, astShader, !args.Contains("--no-fuse-temps"));
 
         Console.WriteLine();
         Console.WriteLine("Finished.");
     }
 
-    private static void PrintFullShaderOutput(ShaderProject project, HlslShaderNode astShader)
+    private static void PrintFullShaderOutput(ShaderProject project, HlslShaderNode astShader, bool fuseTemps)
     {
-        string text = HlslPrettyPrinter.Print(astShader);
+        string text = HlslPrettyPrinter.Print(astShader, fuseTemps);
         string outPath = Path.Combine("Output", SafeFileName(astShader.Name) + ".shader");
         File.WriteAllText(outPath, text);
         Console.WriteLine();

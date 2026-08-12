@@ -33,7 +33,13 @@ namespace Parser.DXBC.Hlsl.Ast;
 // cosmetic one.
 public static class HlslPrettyPrinter
 {
-    public static string Print(HlslShaderNode shader)
+    // Cap for Stage 13.5 temp fusion: a def is only inlined into its one
+    // consumer when the resulting expression stays under this many IR
+    // nodes. Keeps long transform chains readable instead of collapsing
+    // into one giant nested expression.
+    private const int MaxFuseNodes = 16;
+
+    public static string Print(HlslShaderNode shader, bool fuseTemps = true)
     {
         var sb = new StringBuilder();
         sb.Append("Shader \"").Append(shader.Name).Append("\"\n{\n");
@@ -41,7 +47,7 @@ public static class HlslPrettyPrinter
         PrintProperties(sb, shader.Properties);
 
         foreach (HlslSubShaderNode ss in shader.SubShaders)
-            PrintSubShader(sb, ss);
+            PrintSubShader(sb, ss, fuseTemps);
 
         if (!string.IsNullOrEmpty(shader.Fallback))
             sb.Append("    Fallback \"").Append(shader.Fallback).Append("\"\n");
@@ -111,7 +117,7 @@ public static class HlslPrettyPrinter
 
     // ---------- Stage 5: SubShader ----------
 
-    private static void PrintSubShader(StringBuilder sb, HlslSubShaderNode ss)
+    private static void PrintSubShader(StringBuilder sb, HlslSubShaderNode ss, bool fuseTemps)
     {
         sb.Append("    SubShader\n    {\n");
         PrintTags(sb, ss.Tags, indent: "        ");
@@ -119,7 +125,7 @@ public static class HlslPrettyPrinter
             sb.Append("        LOD ").Append(lod).Append('\n');
 
         foreach (HlslPassNode pass in ss.Passes)
-            PrintPass(sb, pass);
+            PrintPass(sb, pass, fuseTemps);
 
         sb.Append("    }\n");
     }
@@ -135,7 +141,7 @@ public static class HlslPrettyPrinter
 
     // ---------- Stage 6/14: Pass ----------
 
-    private static void PrintPass(StringBuilder sb, HlslPassNode pass)
+    private static void PrintPass(StringBuilder sb, HlslPassNode pass, bool fuseTemps)
     {
         sb.Append("        Pass\n        {\n");
         if (!string.IsNullOrEmpty(pass.Name))
@@ -155,16 +161,16 @@ public static class HlslPrettyPrinter
         if (pass.VertexFunction is not null)
         {
             sb.Append("            #pragma vertex vert\n");
-            PrintFunction(sb, pass.VertexFunction, pass.Cbuffers);
+            PrintFunction(sb, pass.VertexFunction, pass.Cbuffers, fuseTemps);
         }
         if (pass.FragmentFunction is not null)
         {
             sb.Append("            #pragma fragment frag\n");
-            PrintFunction(sb, pass.FragmentFunction, pass.Cbuffers);
+            PrintFunction(sb, pass.FragmentFunction, pass.Cbuffers, fuseTemps);
         }
         foreach (HlslFunctionNode? f in new[] { pass.GeometryFunction, pass.HullFunction, pass.DomainFunction, pass.ComputeFunction })
             if (f is not null)
-                PrintFunction(sb, f, pass.Cbuffers);
+                PrintFunction(sb, f, pass.Cbuffers, fuseTemps);
 
         sb.Append("            ENDHLSL\n");
         sb.Append("        }\n");
@@ -319,7 +325,7 @@ public static class HlslPrettyPrinter
         public Dictionary<(IRStorageLocation Location, int Version), (string Name, List<int> ActiveComponents)> DeclaredViews { get; } = new();
     }
 
-    private static void PrintFunction(StringBuilder sb, HlslFunctionNode fn, Dictionary<(int Slot, string Stage), CbufferMetadata> allCbuffers)
+    private static void PrintFunction(StringBuilder sb, HlslFunctionNode fn, Dictionary<(int Slot, string Stage), CbufferMetadata> allCbuffers, bool fuseTemps)
     {
         string outType = fn.OutputStruct?.Name ?? "void";
         string inType = fn.InputStruct?.Name ?? "";
@@ -341,6 +347,9 @@ public static class HlslPrettyPrinter
             sb.Append("                ").Append(outType).Append(" o = (").Append(outType).Append(")0;\n");
 
         HlslSemanticNaming.Apply(fn.Statements, cbuffers);
+
+        if (fuseTemps)
+            HlslFuseTemps.Apply(fn.Statements, MaxFuseNodes);
 
         PrintBlock(sb, fn.Statements, indent: 4, ctx);
 
@@ -984,6 +993,7 @@ public static class HlslPrettyPrinter
         IRExpression.BitFieldExtractExpression => 1,
         IRExpression.ConditionalExpression c => Math.Max(ExpressionWidth(c.TrueExpression, ctx), ExpressionWidth(c.FalseExpression, ctx)),
         IRExpression.DotProductExpression => 1,
+        IRExpression.SwizzleExpression s => Math.Max(1, s.Components.Count),
         IRExpression.MatrixVectorMultiplyExpression mv => Math.Max(1, mv.Rows.Count),
         IRExpression.TextureOperationExpression tex => TextureOpWidth(tex.Operation),
         _ => 1,
@@ -1142,10 +1152,29 @@ public static class HlslPrettyPrinter
         IRExpression.UnaryExpression u => RenderUnary(u, ctx),
         IRExpression.ConditionalExpression c => $"({RenderExpression(c.Condition, ctx)} ? {RenderExpression(c.TrueExpression, ctx)} : {RenderExpression(c.FalseExpression, ctx)})",
         IRExpression.DotProductExpression d => $"dot({RenderExpression(d.Left, ctx)}, {RenderExpression(d.Right, ctx)})",
+        IRExpression.SwizzleExpression s => RenderSwizzle(s, ctx),
         IRExpression.RegisterExpression r => RenderRegisterRead(r.Register, ctx),
         IRExpression.ConstantExpression => expr.ToString()!,
         _ => expr.ToString()!, // no dedicated renderer yet — fall back to IR debug text rather than crash
     };
+
+    // Lane selection for an inlined single-use temp. Components are source
+    // register component indices relative to the value's own lanes, so a
+    // width-1 value (a scalar def) broadcasts via a scalar swizzle — HLSL
+    // scalars only permit .x repeats, no matter which register lane the
+    // scalar originally came from — and a wider value swizzles positionally.
+    // A `.xxxx` broadcast, not a `float4(x)` constructor, so a scalar bool
+    // (a comparison result) stays a bool4 and never hits the single-
+    // initializer constructor that HLSL rejects.
+    private static string RenderSwizzle(IRExpression.SwizzleExpression s, PrintContext ctx)
+    {
+        string inner = RenderExpression(s.Value, ctx);
+        if (ExpressionWidth(s.Value, ctx) <= 1)
+            return s.Components.Count <= 1
+                ? $"({inner})"
+                : $"({inner}).{new string('x', s.Components.Count)}";
+        return $"({inner}).{string.Concat(s.Components.Select(i => ComponentLetters[i]))}";
+    }
 
     private static string RenderUnary(IRExpression.UnaryExpression u, PrintContext ctx) => u.Operation switch
     {

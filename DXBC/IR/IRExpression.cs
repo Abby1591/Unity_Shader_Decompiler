@@ -448,6 +448,32 @@ public abstract class IRExpression
             return $"dot({Left}, {Right})";
         }
     }
+
+    // Created by Stage 13.5 temp fusion (HlslFuseTemps): when a single-use
+    // assignment is inlined into its one consumer, the consumer's read of
+    // the def may select, repeat, or reorder the def's lanes (a scalar def
+    // broadcast into several lanes, a 3-lane def read as ".xyzx", ...).
+    // Components are the SOURCE register component indices the read
+    // selected (same indices a read swizzle would carry), in output order,
+    // repeated as needed. They are relative to the *value expression's*
+    // own lanes: a contiguous write mask trims the raw expression to those
+    // exact lanes (destActive is restricted to contiguous masks), so source
+    // component c is always the value's lane c. The backend broadcasts when
+    // the value is width 1 and swizzles otherwise.
+    public sealed class SwizzleExpression : IRExpression
+    {
+        public IRExpression Value { get; init; } = null!;
+
+        public List<int> Components { get; init; } = new();
+
+        public override IRValueType Type => Value.Type;
+
+        public override string ToString()
+        {
+            const string letters = "xyzw";
+            return $"({Value}).{string.Concat(Components.Select(i => letters[i]))}";
+        }
+    }
     
     // Reconstructed by Matrix Pattern Recognition (post-SSA, pre-HLSL-gen)
     // from a run of N "row dot vector" statements — e.g. the classic
@@ -629,6 +655,10 @@ public static class IRExpressionExtensions
             case IRExpression.DotProductExpression dp:
                 foreach (IRRegister r in dp.Left.CollectRegisterUses()) yield return r;
                 foreach (IRRegister r in dp.Right.CollectRegisterUses()) yield return r;
+                break;
+
+            case IRExpression.SwizzleExpression sw:
+                foreach (IRRegister r in sw.Value.CollectRegisterUses()) yield return r;
                 break;
             
             case IRExpression.MatrixVectorMultiplyExpression mv:
