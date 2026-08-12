@@ -47,6 +47,7 @@ public static class HlslSemanticNaming
         var matrixChains = new List<MatrixChain>();
         var normalChains = new List<NormalChain>();
         var vectorChains = new List<VectorChain>();
+        var worldNormalChains = new List<WorldNormalChain>();
 
         foreach (var (dest, expr) in assignments)
         {
@@ -81,7 +82,7 @@ public static class HlslSemanticNaming
                     break;
 
                 case IRExpression.DotProductExpression dot:
-                    NameWorldNormalDot(names, dest, dot, cbuffers);
+                    NameWorldNormalDot(names, claimed, dest, dot, cbuffers, worldNormalChains);
                     NameNdotV(names, dest, dot);
                     break;
 
@@ -223,7 +224,7 @@ public static class HlslSemanticNaming
         public bool[] Seen = new bool[4];
     }
 
-    // matMul/matVec accumulator state for a run of mul + mad statements.
+    // mul(matMul/matVec accumulator state for a run of mul + mad statements.
     private sealed class NormalChain
     {
         public string RowPrefix = ""; // e.g. "objectToView"
@@ -231,6 +232,20 @@ public static class HlslSemanticNaming
         public RegKey PrevKey;
         public bool[] SeenRow = new bool[4];
         public bool[] SeenComp = new bool[4];
+    }
+
+    // The three consecutive dot(normal, M[i]) statements (i = 0,1,2) the
+    // compiler emits for mul((float3x3)M, normal) against an RDEF-less
+    // matrix. Named only once all three rows are confirmed.
+    private sealed class WorldNormalChain
+    {
+        public int Buffer;              // cbuffer slot holding the matrix
+        public int RowBase;             // absolute row of M[0]
+        public RegisterType NormalType;
+        public uint NormalIndex;
+        public RegisterType DestType;
+        public uint DestIndex;
+        public RegKey?[] Written = new RegKey?[3]; // per-row component keys
     }
 
     private static void NameMatrixProduct(
@@ -729,14 +744,82 @@ public static class HlslSemanticNaming
 
     private static void NameWorldNormalDot(
         Dictionary<RegKey, string> names,
+        Dictionary<string, RegKey> claimed,
         IRRegister dest,
         IRExpression.DotProductExpression dot,
-        Dictionary<int, CbufferMetadata> cbuffers)
+        Dictionary<int, CbufferMetadata> cbuffers,
+        List<WorldNormalChain> chains)
     {
         if (!ReferencesAny(dot, r => r.RegisterType == RegisterType.Input && (r.SymbolicName ?? "").StartsWith("NORMAL"))) return;
-        if (!ReferencesAny(dot, r => r.RegisterType == RegisterType.ConstantBuffer
-            && CbName(r, cbuffers) is { } sn && sn.StartsWith(WorldToObject, StringComparison.Ordinal))) return;
-        SetName(names, KeyOf(dest), "worldNormal");
+
+        // The canonical named matrix (unity_WorldToObject) is proof enough on
+        // its own — a NORMAL dotted with a named WorldToObject row is
+        // deterministically the world normal, no chain needed.
+        if (ReferencesAny(dot, r => r.RegisterType == RegisterType.ConstantBuffer
+            && CbName(r, cbuffers) is { } sn && sn.StartsWith(WorldToObject, StringComparison.Ordinal)))
+        {
+            SetName(names, KeyOf(dest), "worldNormal");
+            return;
+        }
+
+        // RDEF-less matrix: fire only on the full 3-row run the compiler
+        // emits for mul((float3x3)M, normal) — dot(normal, M[i]) writing
+        // component i of the same register, for i in 0..2, against three
+        // consecutive rows of one cbuffer. A lone dot (e.g. NdotL against a
+        // light vector) must never be named.
+        if (dot.Left is not IRExpression.RegisterExpression l || dot.Right is not IRExpression.RegisterExpression r)
+            return;
+
+        IRExpression.RegisterExpression normal = l;
+        IRExpression.RegisterExpression cb = r;
+        if (normal.Register.RegisterType != RegisterType.Input || !(normal.Register.SymbolicName ?? "").StartsWith("NORMAL"))
+        {
+            normal = r;
+            cb = l;
+        }
+        if (normal.Register.RegisterType != RegisterType.Input || !(normal.Register.SymbolicName ?? "").StartsWith("NORMAL")) return;
+        if (cb.Register.RegisterType != RegisterType.ConstantBuffer) return;
+        if (cb.Register.Indices.Count < 2) return;
+        if (BroadcastComponent(cb.Register) is not null) return; // scalar/broadcast read is not a matrix row
+
+        int buffer = (int)cb.Register.Indices[0];
+        int row = (int)cb.Register.Indices[1];
+        List<int> active = MaskIndices(dest.Mask);
+        if (active.Count != 1) return; // one component per dot
+        int comp = active[0];
+        if (comp is < 0 or > 2) return; // rows 0..2 only — w is the translation row
+        int rowBase = row - comp;
+        if (rowBase < 0) return;
+
+        WorldNormalChain? chain = chains.FirstOrDefault(c =>
+            c.Buffer == buffer && c.RowBase == rowBase
+            && c.NormalType == normal.Register.RegisterType && c.NormalIndex == normal.Register.Index
+            && c.DestType == dest.RegisterType && c.DestIndex == dest.Index);
+        if (chain is null)
+        {
+            chain = new WorldNormalChain
+            {
+                Buffer = buffer,
+                RowBase = rowBase,
+                NormalType = normal.Register.RegisterType,
+                NormalIndex = normal.Register.Index,
+                DestType = dest.RegisterType,
+                DestIndex = dest.Index,
+            };
+            chains.Add(chain);
+        }
+
+        if (chain.Written[comp] is not null)
+            return;
+        chain.Written[comp] = KeyOf(dest);
+
+        if (chain.Written[0] is { } k0 && chain.Written[1] is { } k1 && chain.Written[2] is { } k2)
+        {
+            TrySetName(names, claimed, dest, "worldNormal");
+            SetName(names, k0, "worldNormal");
+            SetName(names, k1, "worldNormal");
+            SetName(names, k2, "worldNormal");
+        }
     }
 
     private static void NameSample(
