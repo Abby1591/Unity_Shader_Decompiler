@@ -1155,23 +1155,46 @@ public static class HlslSemanticNaming
     // i.e. this statement IS the loop's carry-forward step) and the other
     // operand's own definition is a bare Sin call, so a one-shot
     // `x = y + sin(z)` outside a loop never gets mislabeled as an accumulator.
+    // Active component indices for ANY ComponentMode — Mask only populates
+    // Register.Mask when ComponentMode is itself Mask; a swizzled read like
+    // "r6.xyzx" (ComponentMode.Swizzle) leaves Mask at 0, so comparing raw
+    // Mask bytes between a masked destination and a swizzled read always
+    // mismatches even when they cover the same components. Mirrors the
+    // switch IRRegister.SsaSuffix uses internally, exposed for comparisons.
+    private static HashSet<int> ActiveComponentIndices(IRRegister reg)
+    {
+        List<int> indices = reg.ComponentMode switch
+        {
+            Operand.OperandComponentMode.Mask => MaskIndices(reg.Mask),
+            Operand.OperandComponentMode.Swizzle => new List<int>
+            {
+                reg.Swizzle & 3, (reg.Swizzle >> 2) & 3, (reg.Swizzle >> 4) & 3, (reg.Swizzle >> 6) & 3
+            },
+            Operand.OperandComponentMode.Select1 => new List<int> { reg.Component },
+            _ => new List<int>()
+        };
+        return new HashSet<int>(indices);
+    }
+
     private static void NameNoiseAccumulator(
         Dictionary<RegKey, string> names,
         IRRegister dest,
         IRExpression.BinaryExpression add,
         Dictionary<RegKey, IRExpression> defs)
     {
+        HashSet<int> destActive = ActiveComponentIndices(dest);
         foreach (var (self, other) in new[] { (add.Left, add.Right), (add.Right, add.Left) })
         {
             if (self is not IRExpression.RegisterExpression selfReg) continue;
             if (selfReg.Register.RegisterType != dest.RegisterType || selfReg.Register.Index != dest.Index) continue;
             // Index alone only identifies the physical register slot — DXBC's
             // allocator reuses slot numbers constantly for unrelated values,
-            // and Index is shared across all four components. Without also
-            // requiring the same component mask, "r1.z + (r1.y + r1.x)" (an
-            // ordinary unrelated sum that happens to recycle register r1)
-            // false-matches as if r1.z were self-accumulating.
-            if (selfReg.Register.Mask != dest.Mask) continue;
+            // and Index is shared across all four components, so this also
+            // requires the same active component SET (not raw Mask — see
+            // ActiveComponentIndices above) to rule out e.g. "r1.z + (r1.y + r1.x)"
+            // (an ordinary unrelated sum that happens to recycle register r1)
+            // false-matching as if r1.z were self-accumulating.
+            if (!destActive.SetEquals(ActiveComponentIndices(selfReg.Register))) continue;
 
             if (other is IRExpression.IntrinsicExpression { Intrinsic: IRExpression.IRIntrinsic.Sin })
             {
@@ -1279,9 +1302,14 @@ public static class HlslSemanticNaming
             bool agrees = true;
             for (int c = 0; c < 4; c++)
             {
-                int? a = kv[c];
+                // The READ pins a component (non-null version) -> the def key
+                // must pin the same version there. A def key's null positions
+                // are NOT wildcards that let a different component's def match:
+                // e.g. a z-only read (V2=7) must not resolve to an x-only def
+                // (V0=1) even though both are the same physical register.
                 int? b = reg.SsaVersion[c];
-                if (a is not null && b is not null && a != b) { agrees = false; break; }
+                if (b is null) continue;
+                if (kv[c] is null || kv[c] != b) { agrees = false; break; }
             }
             if (agrees) { expr = e; return true; }
         }
