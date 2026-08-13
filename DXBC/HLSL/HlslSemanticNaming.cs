@@ -31,6 +31,25 @@ public static class HlslSemanticNaming
     // constant-buffer reads whose names live only in the metadata (the AST
     // registers themselves carry a null SymbolicName for those).
     public static void Apply(HlslBlockStatement root, Dictionary<int, CbufferMetadata> cbuffers)
+        => Apply(root, cbuffers, stageInputNames: null, stageOutputNames: null);
+
+    // stageInputNames carries the names the VERTEX stage resolved for values
+    // it wrote into its interpolator outputs (TEXCOORD fields). Those same
+    // semantic fields arrive at the FRAGMENT stage as Input registers, so the
+    // fragment pass can seed their names instead of treating e.g.
+    // `i.texcoord3` as an anonymous interpolator. Interpolated values are no
+    // longer unit length (the vertex normalized them per-vertex; rasterization
+    // mixes them), which is why the renormalize-at-the-top-of-frag idiom is so
+    // common — the seeded name is the UN-normalized base name (the "unit"
+    // prefix stripped) and the renormalize rule re-applies the unit prefix.
+    // stageOutputNames is the complementary direction: when a stage writes an
+    // interpolator, the printer records which named value it copied into the
+    // output (by output semantic), and hands that map to the next stage.
+    public static void Apply(
+        HlslBlockStatement root,
+        Dictionary<int, CbufferMetadata> cbuffers,
+        Dictionary<string, string>? stageInputNames,
+        Dictionary<string, string>? stageOutputNames = null)
     {
         List<(IRRegister Dest, IRExpression Expr)> assignments =
             HlslNameRecovery.EnumerateAssignments(root).ToList();
@@ -43,6 +62,18 @@ public static class HlslSemanticNaming
             defs.TryAdd(KeyOf(dest), expr);
 
         var names = new Dictionary<RegKey, string>();
+
+        if (stageInputNames is not null)
+        {
+            foreach (IRRegister reg in HlslNameRecovery.EnumerateAllRegisters(root))
+            {
+                if (reg.RegisterType != RegisterType.Input) continue;
+                if (reg.SymbolicName is not { } sem) continue;
+                if (stageInputNames.TryGetValue(sem, out string? inherited) && inherited is not null)
+                    names.TryAdd(KeyOf(reg), DropUnitPrefix(inherited));
+            }
+        }
+
         var claimed = new Dictionary<string, RegKey>();
         var matrixChains = new List<MatrixChain>();
         var normalChains = new List<NormalChain>();
@@ -56,12 +87,13 @@ public static class HlslSemanticNaming
                 case IRExpression.BinaryExpression { Operation: IRExpression.BinaryOperation.Add } add:
                     NameCameraVector(names, dest, add, cbuffers);
                     AdvanceVectorChains(names, claimed, dest, add, cbuffers, vectorChains);
+                    NameNoiseAccumulator(names, dest, add, defs);
                     break;
 
                 case IRExpression.BinaryExpression mul when mul.Operation == IRExpression.BinaryOperation.Multiply:
                     NameMatrixProduct(names, claimed, dest, mul, cbuffers, matrixChains);
                     NameViewNormalChain(names, claimed, dest, mul, defs, normalChains);
-                    NameNormalizeMul(names, dest, mul, defs);
+                    NameNormalizeMul(names, dest, mul, defs, cbuffers);
                     NameVectorProduct(names, claimed, dest, mul, cbuffers, vectorChains);
                     break;
 
@@ -83,12 +115,36 @@ public static class HlslSemanticNaming
 
                 case IRExpression.DotProductExpression dot:
                     NameWorldNormalDot(names, claimed, dest, dot, cbuffers, worldNormalChains);
-                    NameNdotV(names, dest, dot);
+                    NameLightingDots(names, dest, dot);
                     break;
 
                 case IRExpression.TextureOperationExpression { Operation: IRExpression.TextureOperation.Sample } sample:
                     NameSample(names, dest, sample);
                     break;
+
+                case IRExpression.ConditionalExpression cond:
+                    NameToggleSelect(names, dest, cond, cbuffers, defs);
+                    break;
+            }
+        }
+
+        // Interpolator hand-off: the names resolved above are transient
+        // labels, but a stage that copies a NAMED value into an output
+        // semantic has just told us what semantic "carries" that value for
+        // the next stage. Record it (the printer seeds the receiving stage's
+        // matching input with the same name). Only TEXCOORD fields are
+        // considered — SV_POSITION/COLOR outputs either don't round-trip as
+        // fragment inputs or (COLOR) carry colors with no semantic meaning.
+        if (stageOutputNames is not null)
+        {
+            foreach (var (dest, expr) in assignments)
+            {
+                if (dest.RegisterType != RegisterType.Output) continue;
+                if (dest.SymbolicName is not { } sem
+                    || !sem.StartsWith("TEXCOORD", StringComparison.Ordinal)) continue;
+                if (stageOutputNames.ContainsKey(sem)) continue;
+                if (ResolveValueName(expr, names) is { } v)
+                    stageOutputNames.TryAdd(sem, v);
             }
         }
 
@@ -119,7 +175,7 @@ public static class HlslSemanticNaming
         IRExpression.BinaryExpression add,
         Dictionary<int, CbufferMetadata> cbuffers)
     {
-        (IRRegister? posReg, IRRegister? camReg) = DetectCameraAdd(add, cbuffers);
+        (IRRegister? posReg, IRRegister? camReg) = DetectCameraAdd(add, cbuffers, names);
         if (posReg is null) return;
 
         bool posNeg = posReg.Modifier == ShdrParser.OperandModifier.Neg;
@@ -130,16 +186,24 @@ public static class HlslSemanticNaming
 
     private static (IRRegister? Position, IRRegister? Camera) DetectCameraAdd(
         IRExpression.BinaryExpression add,
-        Dictionary<int, CbufferMetadata> cbuffers)
+        Dictionary<int, CbufferMetadata> cbuffers,
+        Dictionary<RegKey, string> names)
     {
         for (int side = 0; side < 2; side++)
         {
             IRExpression posSide = side == 0 ? add.Left : add.Right;
             IRExpression camSide = side == 0 ? add.Right : add.Left;
 
-            if (posSide is not IRExpression.RegisterExpression { Register: { RegisterType: RegisterType.Temp } pos }) continue;
+            if (posSide is not IRExpression.RegisterExpression { Register: { RegisterType: RegisterType.Temp or RegisterType.Input } pos }) continue;
+            // A Temp position operand may be a locally-computed worldPos (the
+            // same register can get claimed worldPos elsewhere). An Input is
+            // only trusted when cross-stage seeding already declared it to BE
+            // the interpolated worldPos — a UV texcoord input minus the camera
+            // is just a UV artifact, not a view vector.
+            if (pos.RegisterType == RegisterType.Input && RelaxedName(names, pos) != "worldPos") continue;
             if (camSide is not IRExpression.RegisterExpression { Register: { RegisterType: RegisterType.ConstantBuffer } cam }) continue;
-            if (CbName(cam, cbuffers) != CameraPos) continue;
+            if (CbName(cam, cbuffers) is not { } camName
+                || !camName.StartsWith(CameraPos, StringComparison.Ordinal)) continue;
 
             bool posNeg = pos.Modifier == ShdrParser.OperandModifier.Neg;
             bool camNeg = cam.Modifier == ShdrParser.OperandModifier.Neg;
@@ -734,8 +798,16 @@ public static class HlslSemanticNaming
             || baseDef is not IRExpression.BinaryExpression { Operation: IRExpression.BinaryOperation.Add } add)
             return;
 
-        bool hasNamedOperand = ReferencesAny(add, r => r.RegisterType is RegisterType.Temp or RegisterType.IndexableTemp
-            && (r.SymbolicName is not null || RelaxedName(names, r) is not null));
+        // A named operand can be a temp that already picked up a semantic
+        // name from an earlier rule (e.g. nDotV), OR a constant-buffer
+        // variable bound straight from RDEF (e.g. _t) — the latter never
+        // shows up in `names`/RelaxedName because IRMetadataBinding writes
+        // SymbolicName directly onto the register, not through this pass's
+        // dictionary, so it needs its own branch here.
+        bool hasNamedOperand = ReferencesAny(add, r =>
+            (r.RegisterType is RegisterType.Temp or RegisterType.IndexableTemp
+                && (r.SymbolicName is not null || RelaxedName(names, r) is not null))
+            || (r.RegisterType == RegisterType.ConstantBuffer && r.SymbolicName is not null));
         if (!hasNamedOperand) return;
 
         SetName(names, KeyOf(dest), "fresnel");
@@ -873,12 +945,18 @@ public static class HlslSemanticNaming
 
     // dest = lenReg * vecReg, where lenReg's definition is rsqrt(dot(v,v)).
     // Only fires when the vector operand already carries a semantic name, so
-    // the result is unit<thatname> — never an unverified guess.
+    // the result is unit<thatname> — never an unverified guess. A few
+    // canonical Unity idioms additionally fall out of this same shape:
+    //   - normalize(_WorldSpaceLightPos0) — the directional-light direction,
+    //   - normalize(unit<view> + lightDir) — the Blinn-Phong half-vector,
+    //   - normalize(<object normal transformed by the 3 object->world rows>)
+    //     — the vertex-stage world normal recomputed per component.
     private static void NameNormalizeMul(
         Dictionary<RegKey, string> names,
         IRRegister dest,
         IRExpression.BinaryExpression mul,
-        Dictionary<RegKey, IRExpression> defs)
+        Dictionary<RegKey, IRExpression> defs,
+        Dictionary<int, CbufferMetadata> cbuffers)
     {
         for (int side = 0; side < 2; side++)
         {
@@ -897,24 +975,275 @@ public static class HlslSemanticNaming
             if (!SameRegisterValue(d0.Register, d1.Register)) continue;
             if (!SameRegisterValue(vec.Register, d0.Register)) continue;
 
+            // Directional-light direction. _WorldSpaceLightPos0 is a
+            // position/length for point lights, but normalizing it directly
+            // (with no worldPos subtraction) IS the standard directional-only
+            // Unity idiom — a point light would be normalized towards the
+            // light, not away from the surface.
+            if (vec.Register.RegisterType == RegisterType.ConstantBuffer)
+            {
+                if (CbName(vec.Register, cbuffers) is { } cb
+                    && cb.StartsWith("_WorldSpaceLightPos0", StringComparison.Ordinal))
+                    SetName(names, KeyOf(dest), "lightDir");
+                return;
+            }
+
             if (RelaxedName(names, vec.Register) is { } baseName)
+            {
                 SetName(names, KeyOf(dest), UnitPrefix(baseName));
+                return;
+            }
+
+            // half-vector: dest = normalize(unit<view> + lightDir), rendered
+            // as normalize(rsqrt(v,v)*v + lightDir) — the vec here is the sum
+            // itself, computed as fma(view, 1/|view|, lightDir).
+            if (IsHalfVectorSum(vec.Register, defs, names))
+            {
+                SetName(names, KeyOf(dest), "halfVector");
+                return;
+            }
+
+            // Vertex-stage object->world normal recomputed one component at a
+            // time (dot(normal, row) x3 + normalize). Those dot destinations
+            // carry no semantic name of their own, so the composite falls
+            // through both checks above — recognize the row-triple shape.
+            if (IsCompositeObjectSpaceNormal(vec.Register, defs))
+            {
+                SetName(names, KeyOf(dest), "unitWorldNormal");
+                return;
+            }
+
             return;
         }
     }
 
-    // dot of two named unit vectors — the classic NdotV/rim input.
-    private static void NameNdotV(
+    // true when reg's definition is fma(view, 1/|view|, lightDir): the middle
+    // step of the classic half-vector construction normalize(view + lightDir).
+    private static bool IsHalfVectorSum(
+        IRRegister reg,
+        Dictionary<RegKey, IRExpression> defs,
+        Dictionary<RegKey, string> names)
+    {
+        if (!TryGetDef(defs, reg, out IRExpression? def)) return false;
+        if (def is not IRExpression.FusedMultiplyAddExpression fma) return false;
+
+        // Addend is the light direction and the fma re-normalizes A by its own
+        // reciprocal length (B = rsqrt(dot(A, A))): fma(A, 1/|A|, lightDir).
+        if (fma.C is not IRExpression.RegisterExpression cReg) return false;
+        if (BaseName(names, cReg.Register) != "lightDir") return false;
+        if (fma.A is not IRExpression.RegisterExpression aReg) return false;
+
+        if (fma.B is not IRExpression.RegisterExpression bReg) return false;
+        if (!TryGetDef(defs, bReg.Register, out IRExpression? bDef)) return false;
+        if (bDef is not IRExpression.IntrinsicExpression { Intrinsic: IRExpression.IRIntrinsic.Rsqrt } rs) return false;
+        if (rs.Arguments.Count == 0 || rs.Arguments[0] is not IRExpression.RegisterExpression rsc) return false;
+        if (!TryGetDef(defs, rsc.Register, out IRExpression? dotDef)) return false;
+        if (dotDef is not IRExpression.DotProductExpression dot) return false;
+        if (dot.Left is not IRExpression.RegisterExpression dl || dot.Right is not IRExpression.RegisterExpression dr) return false;
+        return SameRegisterValue(dl.Register, dr.Register) && SameRegisterValue(dl.Register, aReg.Register);
+    }
+
+    // true when reg is a composite (per-component SSA versions) whose first
+    // three components are each `dot(i.<NORMAL>, cbufferMatrixRow)` over the
+    // same input normal register against three DISTINCT rows: the canonical
+    // vertex-stage object->world normal transform.
+    private static bool IsCompositeObjectSpaceNormal(IRRegister reg, Dictionary<RegKey, IRExpression> defs)
+    {
+        IRRegister? normal = null;
+        uint?[] row = new uint?[3];
+        for (int c = 0; c < 3; c++)
+        {
+            if (reg.SsaVersion[c] is null) return false;
+            IRRegister probe = ComponentProbe(reg, c);
+            if (!TryGetDef(defs, probe, out IRExpression? cd)) return false;
+            if (cd is not IRExpression.DotProductExpression dot) return false;
+            if (dot.Left is not IRExpression.RegisterExpression l
+                || dot.Right is not IRExpression.RegisterExpression r) return false;
+
+            IRExpression.RegisterExpression inExpr;
+            IRExpression.RegisterExpression cbExpr;
+            if (l.Register.RegisterType == RegisterType.ConstantBuffer
+                && r.Register.RegisterType == RegisterType.Input) { inExpr = r; cbExpr = l; }
+            else if (r.Register.RegisterType == RegisterType.ConstantBuffer
+                && l.Register.RegisterType == RegisterType.Input) { inExpr = l; cbExpr = r; }
+            else return false;
+
+            if (!(inExpr.Register.SymbolicName ?? "").StartsWith("NORMAL", StringComparison.Ordinal)) return false;
+            if (normal is null) normal = inExpr.Register;
+            else if (!SameRegisterValue(normal, inExpr.Register)) return false;
+
+            row[c] = cbExpr.Register.Indices.Count > 1 ? cbExpr.Register.Indices[1] : cbExpr.Register.Index;
+        }
+
+        return row[0] is { } r0 && row[1] is { } r1 && row[2] is { } r2
+            && r0 != r1 && r1 != r2 && r0 != r2;
+    }
+
+    // A single-component read of reg at component c (all other SSA versions
+    // nulled) — the probe shape TryGetDef needs to resolve component c's own
+    // defining instruction rather than its neighbors'.
+    private static IRRegister ComponentProbe(IRRegister src, int c)
+    {
+        var p = new IRRegister
+        {
+            RegisterType = src.RegisterType,
+            Index = src.Index,
+            ComponentMode = Operand.OperandComponentMode.Select1,
+            Component = (byte)c,
+        };
+        foreach (uint i in src.Indices) p.Indices.Add(i);
+        p.SsaVersion[c] = src.SsaVersion[c];
+        return p;
+    }
+
+    // The inverse of the normalize-mul rule: strip the "unit" prefix a
+    // normalized interpolator value carries so the receiving stage treats the
+    // interpolated (no-longer-unit) value under its base name and re-applies
+    // the prefix when it renormalizes.
+    private static string DropUnitPrefix(string name)
+        => name.StartsWith("unit", StringComparison.Ordinal) ? name[4..] : name;
+
+    // First register leaf in an expression that carries a resolved semantic
+    // name — used to discover which named value a stage copies out to a
+    // TEXCOORD output (the interpolator hand-off).
+    private static string? ResolveValueName(IRExpression expr, Dictionary<RegKey, string> names)
+    {
+        foreach (IRRegister r in expr.CollectRegisterUses())
+            if (RelaxedName(names, r) is { } n)
+                return n;
+        return null;
+    }
+
+    // dot between two named lighting vectors — NdotV, NdotL, LdotH, NdotH.
+    // Fires only when both operands resolve to semantic names, and never when
+    // either operand is negated (the negated dot is a DIFFERENT quantity —
+    // e.g. `dot(-V, N)` is -NdotV, not NdotV).
+    private static void NameLightingDots(
         Dictionary<RegKey, string> names,
         IRRegister dest,
         IRExpression.DotProductExpression dot)
     {
         if (dot.Left is not IRExpression.RegisterExpression n || dot.Right is not IRExpression.RegisterExpression v) return;
-        string? nb = BaseName(names, n.Register);
-        string? vb = BaseName(names, v.Register);
-        if (nb is not null && nb.StartsWith("unit", StringComparison.Ordinal)
-            && vb is not null && vb.StartsWith("unit", StringComparison.Ordinal))
-            SetName(names, KeyOf(dest), "nDotV");
+        if (n.Register.Modifier == ShdrParser.OperandModifier.Neg
+            || v.Register.Modifier == ShdrParser.OperandModifier.Neg) return;
+
+        string? na = RelaxedName(names, n.Register);
+        string? vb = RelaxedName(names, v.Register);
+        if (na is null || vb is null) return;
+
+        string? name = ClassifyLightingDot(na, vb);
+        if (name is not null)
+            SetName(names, KeyOf(dest), name);
+    }
+
+    private static string? ClassifyLightingDot(string a, string b)
+    {
+        if (a == "lightDir" && b == "halfVector") return "lDotH";
+        if (b == "lightDir" && a == "halfVector") return "lDotH";
+        if (a == "lightDir" && b.StartsWith("unit", StringComparison.Ordinal)) return "nDotL";
+        if (b == "lightDir" && a.StartsWith("unit", StringComparison.Ordinal)) return "nDotL";
+        if (a == "halfVector" && b.StartsWith("unit", StringComparison.Ordinal)) return "nDotH";
+        if (b == "halfVector" && a.StartsWith("unit", StringComparison.Ordinal)) return "nDotH";
+        if (a.StartsWith("unit", StringComparison.Ordinal) && b.StartsWith("unit", StringComparison.Ordinal)) return "nDotV";
+        return null;
+    }
+
+    // dest = dest_prevVersion + sin(...) — a loop-carried temp that accumulates
+    // a running sum of sin() terms across [loop] iterations (the classic
+    // "sum of sines" procedural-noise idiom). Fires only when one operand is
+    // literally the same physical register as dest (an earlier SSA version —
+    // i.e. this statement IS the loop's carry-forward step) and the other
+    // operand's own definition is a bare Sin call, so a one-shot
+    // `x = y + sin(z)` outside a loop never gets mislabeled as an accumulator.
+    private static void NameNoiseAccumulator(
+        Dictionary<RegKey, string> names,
+        IRRegister dest,
+        IRExpression.BinaryExpression add,
+        Dictionary<RegKey, IRExpression> defs)
+    {
+        foreach (var (self, other) in new[] { (add.Left, add.Right), (add.Right, add.Left) })
+        {
+            if (self is not IRExpression.RegisterExpression selfReg) continue;
+            if (selfReg.Register.RegisterType != dest.RegisterType || selfReg.Register.Index != dest.Index) continue;
+            // Index alone only identifies the physical register slot — DXBC's
+            // allocator reuses slot numbers constantly for unrelated values,
+            // and Index is shared across all four components. Without also
+            // requiring the same component mask, "r1.z + (r1.y + r1.x)" (an
+            // ordinary unrelated sum that happens to recycle register r1)
+            // false-matches as if r1.z were self-accumulating.
+            if (selfReg.Register.Mask != dest.Mask) continue;
+
+            if (other is IRExpression.IntrinsicExpression { Intrinsic: IRExpression.IRIntrinsic.Sin })
+            {
+                SetName(names, KeyOf(dest), "noiseAccum");
+                return;
+            }
+
+            if (other is IRExpression.RegisterExpression otherReg
+                && TryGetDef(defs, otherReg.Register, out IRExpression? otherDef)
+                && otherDef is IRExpression.IntrinsicExpression { Intrinsic: IRExpression.IRIntrinsic.Sin })
+            {
+                SetName(names, KeyOf(dest), "noiseAccum");
+                return;
+            }
+        }
+    }
+
+    // cond ? a : b where cond reads a [Toggle]-style cbuffer float compared
+    // against a literal (Unity toggles are 0/1 floats, so the comparison
+    // survives as `_name == 1` or similar rather than a bool register). The
+    // whole ternary is named after the toggle that drives it — e.g.
+    // `_monochrom == 1 ? mono : color` becomes `monochromSelect` — instead of
+    // leaving the merged value as an anonymous rN.
+    private static void NameToggleSelect(
+        Dictionary<RegKey, string> names,
+        IRRegister dest,
+        IRExpression.ConditionalExpression cond,
+        Dictionary<int, CbufferMetadata> cbuffers,
+        Dictionary<RegKey, IRExpression> defs)
+    {
+        // The comparison is very often hoisted into its own SSA statement
+        // (`r1_w_3 = (_monochrom == 1);` ... `r1_w_3 ? a : b`) rather than
+        // appearing inline as cond.Condition, so resolve one level through
+        // defs before giving up — same reasoning as the Sin lookup above.
+        IRExpression condExpr = cond.Condition;
+        if (condExpr is IRExpression.RegisterExpression condReg
+            && TryGetDef(defs, condReg.Register, out IRExpression? resolved))
+        {
+            condExpr = resolved!;
+        }
+
+        if (condExpr is not IRExpression.BinaryExpression
+            {
+                Operation: IRExpression.BinaryOperation.Equal
+                    or IRExpression.BinaryOperation.NotEqual
+                    or IRExpression.BinaryOperation.GreaterThan
+                    or IRExpression.BinaryOperation.GreaterEqual
+            } cmp)
+        {
+            return;
+        }
+
+        string? toggleName = null;
+        foreach (IRExpression side in new[] { cmp.Left, cmp.Right })
+        {
+            if (side is IRExpression.RegisterExpression { Register.RegisterType: RegisterType.ConstantBuffer } r
+                && CbName(r.Register, cbuffers) is { } name)
+            {
+                toggleName = name;
+                break;
+            }
+        }
+        if (toggleName is null) return;
+
+        // Property names come through as e.g. "_monochrom" — strip the
+        // leading underscore and lowercase the first letter to match this
+        // pass's existing camelCase convention (viewNormal, dirToSurface, ...).
+        string clean = toggleName.TrimStart('_');
+        if (clean.Length == 0) return;
+        string camel = char.ToLowerInvariant(clean[0]) + clean[1..];
+
+        SetName(names, KeyOf(dest), camel + "Select");
     }
 
     private static string? BaseName(Dictionary<RegKey, string> names, IRRegister reg)

@@ -152,6 +152,11 @@ public static class HlslPrettyPrinter
 
         sb.Append("            HLSLPROGRAM\n");
 
+        // Interpolator hand-off map: the vertex stage records which semantic
+        // fields carry named values (worldPos, worldNormal, ...) so the
+        // fragment stage can seed the matching input registers.
+        var stageInterpolators = new Dictionary<string, string>();
+
         foreach (HlslResourceNode res in pass.Resources)
             PrintResource(sb, res);
 
@@ -161,12 +166,12 @@ public static class HlslPrettyPrinter
         if (pass.VertexFunction is not null)
         {
             sb.Append("            #pragma vertex vert\n");
-            PrintFunction(sb, pass.VertexFunction, pass.Cbuffers, fuseTemps);
+            PrintFunction(sb, pass.VertexFunction, pass.Cbuffers, fuseTemps, stageOutputs: stageInterpolators);
         }
         if (pass.FragmentFunction is not null)
         {
             sb.Append("            #pragma fragment frag\n");
-            PrintFunction(sb, pass.FragmentFunction, pass.Cbuffers, fuseTemps);
+            PrintFunction(sb, pass.FragmentFunction, pass.Cbuffers, fuseTemps, stageInputs: stageInterpolators);
         }
         foreach (HlslFunctionNode? f in new[] { pass.GeometryFunction, pass.HullFunction, pass.DomainFunction, pass.ComputeFunction })
             if (f is not null)
@@ -325,7 +330,13 @@ public static class HlslPrettyPrinter
         public Dictionary<(IRStorageLocation Location, int Version), (string Name, List<int> ActiveComponents)> DeclaredViews { get; } = new();
     }
 
-    private static void PrintFunction(StringBuilder sb, HlslFunctionNode fn, Dictionary<(int Slot, string Stage), CbufferMetadata> allCbuffers, bool fuseTemps)
+    private static void PrintFunction(
+        StringBuilder sb,
+        HlslFunctionNode fn,
+        Dictionary<(int Slot, string Stage), CbufferMetadata> allCbuffers,
+        bool fuseTemps,
+        Dictionary<string, string>? stageInputs = null,
+        Dictionary<string, string>? stageOutputs = null)
     {
         string outType = fn.OutputStruct?.Name ?? "void";
         string inType = fn.InputStruct?.Name ?? "";
@@ -346,7 +357,7 @@ public static class HlslPrettyPrinter
         if (fn.OutputStruct is not null)
             sb.Append("                ").Append(outType).Append(" o = (").Append(outType).Append(")0;\n");
 
-        HlslSemanticNaming.Apply(fn.Statements, cbuffers);
+        HlslSemanticNaming.Apply(fn.Statements, cbuffers, stageInputs, stageOutputs);
 
         if (fuseTemps)
             HlslFuseTemps.Apply(fn.Statements, MaxFuseNodes);

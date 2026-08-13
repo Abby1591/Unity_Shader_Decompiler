@@ -235,6 +235,13 @@ public static class HlslFuseTemps
 
         if (dest.RegisterType != RegisterType.Temp)
             return false;
+        // A register that already carries a real semantic name (from
+        // HlslSemanticNaming, which runs before this pass) should keep its
+        // own declared line — inlining it splices the name's whole
+        // expression into whatever consumes it and the name never reaches
+        // the printed output, even though it was computed correctly.
+        if (dest.SymbolicName is not null)
+            return false;
         // Plain rN: Indices[] holds the constant register number (every
         // operand token carries one), which is fine — what disqualifies a
         // def from being inlined is a *dynamic* index (r0[r1.x] style),
@@ -601,4 +608,4 @@ public static class HlslFuseTemps
             }
         }
     }
-}
+}   
