@@ -32,6 +32,7 @@ public static class HlslAstBuilder
         {
             Name = metadata.Name,
             Fallback = metadata.Fallback,
+            CustomEditor = metadata.CustomEditor,
         };
         shader.Dependencies.AddRange(metadata.Dependencies);
 
@@ -59,6 +60,7 @@ public static class HlslAstBuilder
                 TextureDimension = texDim,
                 Attributes = p.Attributes,
                 DefaultValue = p.DefaultValue,
+                DefaultComponents = p.DefaultComponents,
                 // Range min/max: see HlslPropertyNode.Range doc comment —
                 // not populated until the field path is confirmed.
             });

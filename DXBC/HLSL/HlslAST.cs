@@ -24,6 +24,7 @@ public sealed class HlslShaderNode
     public List<HlslPropertyNode> Properties { get; } = new();
     public List<HlslSubShaderNode> SubShaders { get; } = new();
     public string Fallback { get; init; } = "";
+    public string CustomEditor { get; init; } = "";
     public List<string> Dependencies { get; } = new();
 }
 
@@ -70,6 +71,10 @@ public sealed class HlslPropertyNode
     public List<string> Attributes { get; init; } = new();
 
     public JsonElement? DefaultValue { get; init; }
+
+    // Typed default from the Metadata layer (float[4]; components unused by
+    // a Float/Range default are just zeros). Prefer this over DefaultValue.
+    public float[] DefaultComponents { get; init; } = Array.Empty<float>();
 
     // Only populated for Kind == Range. NOTE: Unity's compiled shader
     // data doesn't carry an explicit min/max pair we've confirmed a field

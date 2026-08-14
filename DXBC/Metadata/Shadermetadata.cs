@@ -17,6 +17,8 @@ public sealed class ShaderMetadata
     public List<ShaderProperty> Properties { get; init; } = new();
     public List<SubShaderMetadata> SubShaders { get; init; } = new();
     public string Fallback { get; init; } = "";
+    public string CustomEditor { get; init; } = "";
+    public List<string> Keywords { get; init; } = new();
     public List<string> Dependencies { get; init; } = new();
     public JsonElement Raw { get; init; }
 
@@ -29,9 +31,17 @@ public sealed class ShaderMetadata
         {
             Name = GetString(root, "name"),
             Fallback = GetString(root, "fallback"),
+            CustomEditor = GetString(root, "customEditor"),
             Dependencies = GetDependencies(root),
             Raw = root,
         };
+
+        if (root.TryGetProperty("keywords", out var kw) && kw.ValueKind == JsonValueKind.Array)
+        {
+            foreach (var k in kw.EnumerateArray())
+                if (k.ValueKind == JsonValueKind.String)
+                    meta.Keywords.Add(k.GetString() ?? "");
+        }
 
         if (root.TryGetProperty("properties", out var props) && props.ValueKind == JsonValueKind.Array)
         {
@@ -86,6 +96,13 @@ public sealed class ShaderProperty
     public string? Description { get; init; }
     public string? Type { get; init; }
     public JsonElement? DefaultValue { get; init; }
+
+    // Default value, parsed once here into a typed component array. Unity
+    // serializes it as four scalar slots (m_DefValue_0_..3_); metadata.py
+    // shapes them into {"x":..,"y":..,"z":..,"w":..}, which this turns into
+    // float[4]. Consumers should use this, not touch DefaultValue's JSON.
+    public float[] DefaultComponents { get; init; } = Array.Empty<float>();
+
     public List<string> Attributes { get; init; } = new();
     public JsonElement? DefaultTexture { get; init; }
 
@@ -95,11 +112,27 @@ public sealed class ShaderProperty
         Description = el.TryGetProperty("description", out var d) ? d.GetString() : null,
         Type = el.TryGetProperty("type", out var t) ? t.ToString() : null,
         DefaultValue = el.TryGetProperty("defaultValue", out var v) ? v : null,
+        DefaultComponents = ParseDefaultComponents(el),
         Attributes = el.TryGetProperty("attributes", out var attrs) && attrs.ValueKind == JsonValueKind.Array
             ? attrs.EnumerateArray().Select(a => a.ToString()).ToList()
             : new List<string>(),
         DefaultTexture = el.TryGetProperty("defaultTexture", out var dt) ? dt : null,
     };
+
+    private static float[] ParseDefaultComponents(JsonElement el)
+    {
+        if (!el.TryGetProperty("defaultValue", out var dv) || dv.ValueKind != JsonValueKind.Object)
+            return Array.Empty<float>();
+
+        var comps = new float[4];
+        for (int i = 0; i < 4; i++)
+        {
+            string key = i switch { 0 => "x", 1 => "y", 2 => "z", _ => "w" };
+            if (dv.TryGetProperty(key, out var v) && v.ValueKind == JsonValueKind.Number)
+                comps[i] = v.GetSingle();
+        }
+        return comps;
+    }
 }
 
 public sealed class SubShaderMetadata

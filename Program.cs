@@ -138,6 +138,17 @@ internal class Program
 
             try
             {
+                // The 0x26-byte non-compute header (proven, see
+                // Docs/shader_compiler_analysis.md) — 4 per-class resource
+                // EXTENTS + flag byte, the only RDEF metadata guaranteed to
+                // survive the strip. Used below as a cross-check against the
+                // metadata-driven slot layouts.
+                UnityNonComputeHeader? header = DxbcExtractor.TryParseHeader(sp.m_ProgramCode);
+                if (header is { } h)
+                    Console.WriteLine(
+                        $"Header: tex={h.TextureExtent} cb={h.CbExtent} samp={h.SamplerExtent} " +
+                        $"uav={h.UavExtent} flag={h.Flag} (DXBC@{h.DxbcOffset})");
+
                 byte[] dxbc = DxbcExtractor.Extract(sp);
 
                 Console.WriteLine($"DXBC Size: {dxbc.Length} bytes");
@@ -258,7 +269,7 @@ internal class Program
                         AttachFunction(pass, function);
 
                         var resources = HlslAstBuilder.BuildResources(
-                            pipelineResult.Program.Declarations, dxbcFile.ResourceDefinition, pipelineResult.Blocks, pass.Cbuffers, function.Stage.ToString());
+                            pipelineResult.Program.Declarations, dxbcFile.ResourceDefinition, pipelineResult.Blocks, pass.Cbuffers, function.Stage.ToString()).ToList();
                         foreach (var res in resources)
                         {
                             HlslResourceNode? existing = pass.Resources.FirstOrDefault(r =>
@@ -294,6 +305,27 @@ internal class Program
 
                         if (function.InputStruct is not null) pass.Structs.Add(function.InputStruct);
                         if (function.OutputStruct is not null) pass.Structs.Add(function.OutputStruct);
+
+                        // Cross-check the compiler-proven header extents against
+                        // the metadata/IR-derived slot layout for THIS stage.
+                        // resources was built from this subprogram's own
+                        // declarations, so each extent should match exactly.
+                        if (header is { } hdr)
+                        {
+                            int MaxPlus1(HlslResourceKind kind) =>
+                                resources.Where(r => r.Kind == kind).Select(r => (int)r.Slot)
+                                         .DefaultIfEmpty(-1).Max() + 1;
+                            int cb = MaxPlus1(HlslResourceKind.ConstantBuffer);
+                            int tex = MaxPlus1(HlslResourceKind.Texture);
+                            int samp = MaxPlus1(HlslResourceKind.Sampler);
+                            int uav = MaxPlus1(HlslResourceKind.Uav);
+                            Console.WriteLine(
+                                $"  Header verify ({function.Stage}): " +
+                                $"cb {cb}/{hdr.CbExtent} {(cb == hdr.CbExtent ? "OK" : "MISMATCH")}  " +
+                                $"tex {tex}/{hdr.TextureExtent} {(tex == hdr.TextureExtent ? "OK" : "MISMATCH")}  " +
+                                $"samp {samp}/{hdr.SamplerExtent} {(samp == hdr.SamplerExtent ? "OK" : "MISMATCH")}  " +
+                                $"uav {uav}/{hdr.UavExtent} {(uav == hdr.UavExtent ? "OK" : "MISMATCH")}");
+                        }
 
                         nextPassIndexForStage[function.Stage] = passIdx + 1;
 
@@ -338,15 +370,34 @@ internal class Program
                 $"structs={pass.Structs.Count} resources={pass.Resources.Count}");
         }
 
-        PrintFullShaderOutput(project, astShader, !args.Contains("--no-fuse-temps"));
+        bool surfaceReconstruct = args.Contains("--surface-shaders");
+
+        PrintFullShaderOutput(project, astShader, !args.Contains("--no-fuse-temps"), surfaceReconstruct);
 
         Console.WriteLine();
         Console.WriteLine("Finished.");
     }
 
-    private static void PrintFullShaderOutput(ShaderProject project, HlslShaderNode astShader, bool fuseTemps)
+    private static void PrintFullShaderOutput(ShaderProject project, HlslShaderNode astShader, bool fuseTemps, bool surfaceReconstruct)
     {
         string text = HlslPrettyPrinter.Print(astShader, fuseTemps);
+
+        // Stage 13.5 — surface-shader recognition: when a pass carries the
+        // compiled signature of a `#pragma surface surf ...` source, rewrite
+        // the lit pass back into the canonical CGPROGRAM surface form.
+        // OFF by default: the rewrite is a faithful *readability* pass but
+        // not yet recompile-verified against the original, so it stays
+        // opt-in via --surface-shaders until it is.
+        if (surfaceReconstruct)
+        {
+            string? reconstructed = HlslSurfaceShaderRecognizer.TryReconstruct(text, project.Metadata);
+            if (reconstructed is not null)
+            {
+                text = reconstructed;
+                Console.WriteLine("Stage 13.5: recognized Unity surface-shader boilerplate, rewrote lit pass to #pragma surface form.");
+            }
+        }
+
         string outPath = Path.Combine("Output", SafeFileName(astShader.Name) + ".shader");
         File.WriteAllText(outPath, text);
         Console.WriteLine();

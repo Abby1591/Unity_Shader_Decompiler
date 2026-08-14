@@ -52,6 +52,9 @@ public static class HlslPrettyPrinter
         if (!string.IsNullOrEmpty(shader.Fallback))
             sb.Append("    Fallback \"").Append(shader.Fallback).Append("\"\n");
 
+        if (!string.IsNullOrEmpty(shader.CustomEditor))
+            sb.Append("    CustomEditor \"").Append(shader.CustomEditor).Append("\"\n");
+
         foreach (string dep in shader.Dependencies)
             sb.Append("    Dependency \"").Append(dep).Append("\"\n");
 
@@ -101,6 +104,17 @@ public static class HlslPrettyPrinter
     {
         if (p.Kind == HlslPropertyKind.Texture)
             return "\"\" {}";
+
+        // Typed default (Metadata layer, float[4] — the same {x,y,z,w} the
+        // printer used to read out of the raw JsonElement below).
+        if (p.DefaultComponents.Length == 4)
+        {
+            float x = p.DefaultComponents[0], y = p.DefaultComponents[1],
+                  z = p.DefaultComponents[2], w = p.DefaultComponents[3];
+            return p.Kind is HlslPropertyKind.Color or HlslPropertyKind.Vector
+                ? $"({x},{y},{z},{w})"
+                : x.ToString();
+        }
 
         if (p.DefaultValue is not { } dv || dv.ValueKind != JsonValueKind.Object)
             return "0";
