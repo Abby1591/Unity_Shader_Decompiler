@@ -1,5 +1,4 @@
 using System;
-using AssetStudio;
 
 namespace Parser;
 
@@ -25,25 +24,6 @@ public readonly record struct UnityNonComputeHeader(
 
 public static class DxbcExtractor
 {
-    public static byte[] Extract(ShaderSubProgram subProgram)
-    {
-        int offset = FindDxbc(subProgram.m_ProgramCode);
-
-        if (offset < 0)
-            throw new InvalidOperationException("DXBC not found.");
-
-        byte[] result = new byte[subProgram.m_ProgramCode.Length - offset];
-
-        Buffer.BlockCopy(
-            subProgram.m_ProgramCode,
-            offset,
-            result,
-            0,
-            result.Length);
-
-        return result;
-    }
-
     // Parses the 0x26-byte non-compute header when present. Returns null for
     // the raw-variant layout (strip flags = 6, no header — byte0 == 0x00 and
     // "DXBC" at +1) and for unrecognized formats.
@@ -65,21 +45,5 @@ public static class DxbcExtractor
                 DxbcOffset: hdr);
         }
         return null;
-    }
-
-    private static int FindDxbc(byte[] data)
-    {
-        for (int i = 0; i <= data.Length - 4; i++)
-        {
-            if (data[i] == 'D' &&
-                data[i + 1] == 'X' &&
-                data[i + 2] == 'B' &&
-                data[i + 3] == 'C')
-            {
-                return i;
-            }
-        }
-
-        return -1;
     }
 }

@@ -14,6 +14,12 @@ internal class Program
 {
     static void Main(string[] args)
     {
+        if (args.Contains("--run-spec-tests"))
+        {
+            SpecTestVectors.Run();
+            return;
+        }
+
         // args[0] is now a folder produced by Extract.py, containing
         // blob.bin + metadata.json (+ optional dummy.shader). For
         // backwards compat, a direct path to a blob.bin still works
@@ -138,18 +144,19 @@ internal class Program
 
             try
             {
-                // The 0x26-byte non-compute header (proven, see
-                // Docs/shader_compiler_analysis.md) — 4 per-class resource
-                // EXTENTS + flag byte, the only RDEF metadata guaranteed to
-                // survive the strip. Used below as a cross-check against the
-                // metadata-driven slot layouts.
-                UnityNonComputeHeader? header = DxbcExtractor.TryParseHeader(sp.m_ProgramCode);
+                // §14 classifier: kind + (for non-compute) the 0x26-byte
+                // header of 4 per-class resource EXTENTS + flag byte. The
+                // header is the only RDEF metadata guaranteed to survive the
+                // strip, and doubles as a cross-check against the
+                // metadata-driven slot layouts below.
+                UnityShaderBlob blob = UnityShaderBlob.Parse(sp.m_ProgramCode, "shipped");
+                UnityNonComputeHeader? header = blob.Header;
                 if (header is { } h)
                     Console.WriteLine(
-                        $"Header: tex={h.TextureExtent} cb={h.CbExtent} samp={h.SamplerExtent} " +
+                        $"Blob: kind={blob.Kind} tex={h.TextureExtent} cb={h.CbExtent} samp={h.SamplerExtent} " +
                         $"uav={h.UavExtent} flag={h.Flag} (DXBC@{h.DxbcOffset})");
 
-                byte[] dxbc = DxbcExtractor.Extract(sp);
+                byte[] dxbc = blob.Dxbc;
 
                 Console.WriteLine($"DXBC Size: {dxbc.Length} bytes");
 

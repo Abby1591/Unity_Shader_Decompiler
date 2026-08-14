@@ -79,7 +79,7 @@ public class DxbcFile
         };
         
         chunk.Size = reader.ReadUInt32();
-        if (offset + 8 + chunk.Size > TotalLength)
+        if ((ulong)offset + 8 + chunk.Size > TotalLength)
         {
             throw new InvalidDataException($"Chunk {chunk.Name} extends past end of container.");
         }
