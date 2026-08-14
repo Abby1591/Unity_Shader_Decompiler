@@ -155,6 +155,16 @@ internal class Program
                     Console.WriteLine(
                         $"Blob: kind={blob.Kind} tex={h.TextureExtent} cb={h.CbExtent} samp={h.SamplerExtent} " +
                         $"uav={h.UavExtent} flag={h.Flag} (DXBC@{h.DxbcOffset})");
+                else if (blob.ComputeMetadata is { } cm)
+                {
+                    Console.WriteLine(
+                        $"Blob: kind=Compute version={cm.Version} params={cm.ParamData.OuterCount} shaders={cm.ShaderEntries.Count}");
+                    var e = cm.ShaderEntries.FirstOrDefault();
+                    if (e is not null)
+                        Console.WriteLine(
+                            $"  '{e.Name}' threads=({e.ThreadGroupX},{e.ThreadGroupY},{e.ThreadGroupZ}) " +
+                            $"dxbc={e.Dxbc.Length}B lists={e.ListA.Count}/{e.ListB.Count}/{e.ListC.Count}/{e.ListD.Count}");
+                }
 
                 byte[] dxbc = blob.Dxbc;
 

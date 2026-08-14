@@ -14,6 +14,7 @@ public class DxbcFile
     public OsgnChunk? PatchConstantSignature { get; private set; }
     public RdefChunk? ResourceDefinition { get; private set; }
     public StatChunk? Statistics { get; private set; }
+    public Sfi0Chunk? ShaderInfo { get; private set; }
     public ShdrParser? Shader;
     public FourCC ShaderChunkType { get; private set; }
 
@@ -115,6 +116,20 @@ public class DxbcFile
             using var r = new BinaryReader(ms);
             PatchConstantSignature = new OsgnChunk();
             PatchConstantSignature.Read(r, hasStreamIndex: false);
+        }
+        else if (chunk.Name == FourCC.PCON)
+        {
+            using var ms = new MemoryStream(chunk.Data);
+            using var r = new BinaryReader(ms);
+            PatchConstantSignature = new OsgnChunk();
+            PatchConstantSignature.Read(r, hasStreamIndex: false);
+        }
+        else if (chunk.Name == FourCC.SFI0)
+        {
+            using var ms = new MemoryStream(chunk.Data);
+            using var r = new BinaryReader(ms);
+            ShaderInfo = new Sfi0Chunk();
+            ShaderInfo.Read(r);
         }
         else if (chunk.Name == FourCC.RDEF)
         {
