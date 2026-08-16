@@ -169,6 +169,16 @@ public static class SpecTestVectors
             Throws(() => new DxbcFile().Load(dxbc), "chunk extending past container rejected");
         });
 
+        // ---- §5.4  Misaligned chunk offset rejected (chunks are 4-byte aligned).
+        Case("misaligned chunk offset", () =>
+        {
+            var dxbc = DxbcWithChunk("JUNK", new byte[] { 1 }, offsetOverride: 37);
+            Throws(() => new DxbcFile().Load(dxbc), "chunk offset not 4-byte aligned rejected");
+
+            var blobData = NonComputeBlob(0, 1, 0, 0, dxbc);
+            Throws(() => UnityShaderBlob.Parse(blobData, "test"), "blob wrapping misaligned DXBC rejected");
+        });
+
         // ---- §15.9  Truncated container (TotalLength lies) rejected.
         Case("truncated container", () =>
         {

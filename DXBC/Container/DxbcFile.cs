@@ -71,6 +71,11 @@ public class DxbcFile
             throw new InvalidDataException($"Chunk offset {offset} is outside the DXBC container.");
         }
 
+        if (offset % 4 != 0)
+        {
+            throw new InvalidDataException($"Chunk offset {offset} is not 4-byte aligned.");
+        }
+
         reader.BaseStream.Position = offset;
 
         var chunk = new DxbcChunk

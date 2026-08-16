@@ -20,6 +20,26 @@ internal class Program
             return;
         }
 
+        if (args.Contains("--verify-signatures"))
+        {
+            // §16.9: cross-check our ISGN parse against d3dcompiler's own
+            // signature extraction, across every real shipped subprogram.
+            string root = args.Length > 1 && Directory.Exists(args[1])
+                ? args[1]
+                : FindOutputRoot();
+            SignatureCrossCheck.Run(root);
+            return;
+        }
+
+        if (args.Contains("--strip-survivors"))
+        {
+            // §16.1: which DXBC chunks survive D3DStripShader(flags=7)?
+            // Compile a synthetic shader with real d3dcompiler and observe
+            // the before/after chunk sets per shader type.
+            StripSurvivors.Run(FindOutputRoot());
+            return;
+        }
+
         // args[0] is now a folder produced by Extract.py, containing
         // blob.bin + metadata.json (+ optional dummy.shader). For
         // backwards compat, a direct path to a blob.bin still works
@@ -435,5 +455,24 @@ internal class Program
             case HlslShaderStage.Domain: pass.DomainFunction = function; break;
             case HlslShaderStage.Compute: pass.ComputeFunction = function; break;
         }
+    }
+
+    // Locate the decompiler Output/ folder regardless of the launch directory:
+    // walk up from the executable until a directory with an Output subfolder is
+    // found, falling back to <cwd>/Output.
+    private static string FindOutputRoot()
+    {
+        string cwd = Directory.GetCurrentDirectory();
+        string direct = Path.Combine(cwd, "Output");
+        if (Directory.Exists(direct)) return direct;
+
+        var dir = new DirectoryInfo(AppContext.BaseDirectory);
+        while (dir is not null)
+        {
+            string candidate = Path.Combine(dir.FullName, "Output");
+            if (Directory.Exists(candidate)) return candidate;
+            dir = dir.Parent;
+        }
+        return direct;
     }
 }
