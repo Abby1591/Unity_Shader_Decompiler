@@ -354,6 +354,13 @@ public static class HlslPrettyPrinter
         // a register is packed with multiple disjoint-mask elements.
         public Dictionary<uint, List<SignatureElement>> InputElements { get; init; } = new();
         public Dictionary<uint, List<SignatureElement>> OutputElements { get; init; } = new();
+
+        // Unity source macros whose recognized bytecode idioms were reverted
+        // to macro calls (e.g. UnityObjectToClipPos). The printer emits a
+        // #define for each before the function body so the pass still
+        // compiles standalone. The define body is chosen to reproduce the
+        // bytecode exactly, not a convenience approximation.
+        public HashSet<string> Macros { get; } = new();
     }
 
     private static void PrintFunction(
@@ -394,15 +401,437 @@ public static class HlslPrettyPrinter
         if (fuseTemps)
             HlslFuseTemps.Apply(fn.Statements, MaxFuseNodes);
 
-        PrintBlock(sb, fn.Statements, indent: 4, ctx);
+        // Buffer the body so the Unity macro defines collected during
+        // printing (ctx.Macros) can be emitted ahead of the statements that
+        // use them. Preprocessor directives are legal anywhere in a
+        // function body, so the standalone-compile contract is preserved.
+        var body = new StringBuilder();
+        PrintBlock(body, fn.Statements, indent: 4, ctx);
 
+        foreach (string name in ctx.Macros.OrderBy(n => n))
+            sb.Append("                ").Append(MacroDefine(name)).Append('\n');
+
+        sb.Append(body);
         sb.Append("            }\n");
     }
 
+    // The #define for a recognized source macro. The body is the bytecode's
+    // exact computation — UnityObjectToClipPos expands to mul(UNITY_MATRIX_MVP,
+    // v), and the shipped D3D bytecode (and this decompiled output) uses
+    // unity_MatrixVP, so mul(unity_MatrixVP, v) reproduces the instructions.
+    private static string MacroDefine(string name) => name switch
+    {
+        "UnityObjectToClipPos" => "#define UnityObjectToClipPos(v) mul(unity_MatrixVP, v)",
+        _ => $"#define {name}(v) /* TODO: unrecognized macro {name} */ (v)",
+    };
+
     private static void PrintBlock(StringBuilder sb, HlslBlockStatement block, int indent, PrintContext ctx)
     {
-        foreach (HlslStatementNode stmt in block.Statements)
-            PrintStatement(sb, stmt, indent, ctx);
+        string pad = new(' ', indent * 4);
+        List<HlslStatementNode> stmts = block.Statements;
+        int i = 0;
+        while (i < stmts.Count)
+        {
+            // Runs of consecutive assignment statements are rendered together
+            // so consecutive single-component extracts off the same full
+            // expression can be collapsed into one vector temp (see
+            // CollapseExtractChains) — the bytecode computes the value once
+            // into a register, and re-rendering the RHS per lane multiplies
+            // both the fetch cost and the output size.
+            if (stmts[i] is HlslAssignmentStatement or HlslMultiAssignmentStatement)
+            {
+                int j = i;
+                while (j < stmts.Count && stmts[j] is HlslAssignmentStatement or HlslMultiAssignmentStatement)
+                    j++;
+
+                var lines = new List<string>();
+                for (int k = i; k < j; k++)
+                    lines.AddRange(RenderStatementLines(stmts[k], ctx));
+
+                foreach (string line in CollapseExtractChains(RevertUnityMacros(lines, ctx), ctx))
+                    sb.Append(pad).Append(line).Append('\n');
+                i = j;
+            }
+            else
+            {
+                PrintStatement(sb, stmts[i], indent, ctx);
+                i++;
+            }
+        }
+    }
+
+    private static IEnumerable<string> RenderStatementLines(HlslStatementNode stmt, PrintContext ctx) => stmt switch
+    {
+        HlslAssignmentStatement a => RenderAssignmentLines(a.Destination, a.Expression, ctx),
+        HlslMultiAssignmentStatement ma => ma.Destinations
+            .Zip(ma.Expressions)
+            .Where(p => p.First is not null)
+            .SelectMany(p => RenderAssignmentLines(p.First!, p.Second, ctx)),
+        _ => throw new InvalidOperationException($"not an assignment: {stmt.GetType().Name}"),
+    };
+
+    // Collapses runs of consecutive single-component extracts that render the
+    // SAME full-width RHS, e.g.
+    //
+    //     float r1_x_9 = (t2.Sample(s0, float4(...))).x;
+    //     float r1_y_10 = (t2.Sample(s0, float4(...))).y;
+    //     float r1_z_9 = (t2.Sample(s0, float4(...))).z;
+    //     float r1_w_3 = (t2.Sample(s0, float4(...))).w;
+    //
+    // into
+    //
+    //     float4 r1_xyzw_9 = t2.Sample(s0, float4(...));
+    //     float r1_x_9 = r1_xyzw_9.x;
+    //     float r1_y_10 = r1_xyzw_9.y;
+    //     float r1_z_9 = r1_xyzw_9.z;
+    //     float r1_w_3 = r1_xyzw_9.w;
+    //
+    // This is strictly faithful: every extract computed the identical value
+    // (the rendered RHS is textually the same), the lanes are the destination
+    // register's own lanes (same base name), and the bytecode holds the value
+    // in one register — one materialization + lane reads is what the source
+    // instructions actually did. The temp is named after the destination
+    // register's first lane version (r1_xyzw_9); a name collision with a real
+    // co-write of the same register is impossible going forward (versions only
+    // increase, and a shared co-write version exceeds every lane's) and is
+    // skipped if an earlier declaration already owns it.
+    private static readonly System.Text.RegularExpressions.Regex ExtractChainPattern =
+        new(@"^(?<decl>float )?(?<dest>[A-Za-z_][A-Za-z0-9_]*_[xyzw](?:_[0-9]+)?) = \((?<expr>.+)\)\.(?<comp>[xyzw]);$");
+
+    private static List<string> CollapseExtractChains(List<string> lines, PrintContext ctx)
+    {
+        var result = new List<string>(lines.Count);
+        int i = 0;
+        while (i < lines.Count)
+        {
+            System.Text.RegularExpressions.Match m = ExtractChainPattern.Match(lines[i]);
+            // A chain-eligible line must re-render a "heavy" RHS (a call or
+            // constructor) — a bare register read extract (E = "r4_xyzw_5")
+            // has no `(` and is left alone (it is already as compact as the
+            // direct resolve would be).
+            if (!m.Success || !m.Groups["expr"].Value.Contains('('))
+            {
+                result.Add(lines[i]);
+                i++;
+                continue;
+            }
+
+            int j = i + 1;
+            while (j < lines.Count)
+            {
+                System.Text.RegularExpressions.Match m2 = ExtractChainPattern.Match(lines[j]);
+                if (!m2.Success || m2.Groups["expr"].Value != m.Groups["expr"].Value)
+                    break;
+                j++;
+            }
+
+            if (j - i < 2)
+            {
+                result.Add(lines[i]);
+                i++;
+                continue;
+            }
+
+            // Only collapse when every lane writes the same base register
+            // (r1_x_9, r1_y_10, ... all from r1) so the temp name is the
+            // register's own and the reads are plain lane swizzles.
+            string baseName = ExtractChainPattern.Match(lines[i]).Groups["dest"].Value;
+            bool sameBase = true;
+            for (int k = i + 1; k < j; k++)
+            {
+                string other = ExtractChainPattern.Match(lines[k]).Groups["dest"].Value;
+                if (LaneBaseName(other) != LaneBaseName(baseName))
+                {
+                    sameBase = false;
+                    break;
+                }
+            }
+            if (!sameBase)
+            {
+                result.Add(lines[i]);
+                i++;
+                continue;
+            }
+
+            string temp = TempName(baseName, ctx);
+            if (temp is null)
+            {
+                result.Add(lines[i]);
+                i++;
+                continue;
+            }
+            ctx.Declared.Add(temp);
+
+            result.Add($"float4 {temp} = {m.Groups["expr"].Value};");
+            for (int k = i; k < j; k++)
+            {
+                System.Text.RegularExpressions.Match mk = ExtractChainPattern.Match(lines[k]);
+                string decl = mk.Groups["decl"].Success ? "float " : "";
+                result.Add($"{decl}{mk.Groups["dest"].Value} = {temp}.{mk.Groups["comp"].Value};");
+            }
+            i = j;
+        }
+
+        return result;
+    }
+
+    private static string LaneBaseName(string laneName) =>
+        System.Text.RegularExpressions.Regex.Replace(laneName, @"_[xyzw](?:_[0-9]+)?$", "");
+
+    private static string? TempName(string dest, PrintContext ctx)
+    {
+        // dest is a single-lane name like "r1_x_9" or "r1_x".
+        string bare = LaneBaseName(dest);
+        string version = System.Text.RegularExpressions.Regex.Match(dest, @"_([xyzw])_([0-9]+)$") is { Success: true } m
+            ? m.Groups[2].Value
+            : "";
+        string candidate = version.Length > 0 ? $"{bare}_xyzw_{version}" : $"{bare}_xyzw";
+        return ctx.Declared.Contains(candidate) ? null : candidate;
+    }
+
+    // float4(x, x, x, x) with x a scalar stays as-is: d3dcompiler's strict
+    // mode rejects the single-argument broadcast form float4(x) (X3014:
+    // "incorrect number of arguments"), so there is no shorter faithful form.
+
+    // ---------- Unity source-macro reversion ----------
+    //
+    // The Unity `UnityObjectToClipPos(v)` idiom is `mul(UNITY_MATRIX_MVP, v)`,
+    // which the D3D compiler emits as a row-by-row mad chain:
+    //
+    //     float4 clipPos_xyzw_2 = mad(unity_MatrixVP[0], X.xxxx, (X.yyyy * unity_MatrixVP[1]));
+    //     float4 clipPos_xyzw_3 = mad(unity_MatrixVP[2], X.zzzz, clipPos_xyzw_2);
+    //     o.sv_Position0.xyzw = mad(unity_MatrixVP[3], X.wwww, clipPos_xyzw_3);
+    //
+    // (or fully inlined into one line, or ending in a temp that is copied to
+    // the output). Recognized and reverted to:
+    //
+    //     o.sv_Position0.xyzw = UnityObjectToClipPos(X);
+    //
+    // with `#define UnityObjectToClipPos(v) mul(unity_MatrixVP, v)` emitted
+    // ahead of the body, so the reversion reproduces the bytecode's matrix
+    // multiply exactly. Guards are strict — every row {0,1,2,3} used exactly
+    // once, each multiplied by the matching single lane of the SAME source
+    // register, all chain temps single-use, nothing else in the expression —
+    // and any doubt leaves the statements untouched.
+    private static readonly System.Text.RegularExpressions.Regex ClipPosOutLine =
+        new(@"^o\.sv_Position0\.xyzw = (.+);$");
+    private static readonly System.Text.RegularExpressions.Regex TempDefLine =
+        new(@"^float4 (\w+) = (.+);$");
+    private static readonly System.Text.RegularExpressions.Regex RowRead =
+        new(@"^unity_MatrixVP\[([0-9]+)\]$");
+    private static readonly System.Text.RegularExpressions.Regex LaneSplat =
+        new(@"^(\w+)\.([xyzw])\2\2\2$");
+    private static readonly System.Text.RegularExpressions.Regex SimpleIdentifier =
+        new(@"^[A-Za-z_][A-Za-z0-9_]*$");
+
+    private static List<string> RevertUnityMacros(List<string> lines, PrintContext ctx)
+    {
+        if (lines.Count < 2)
+            return lines;
+
+        var result = new List<string>(lines.Count);
+        int i = 0;
+        while (i < lines.Count)
+        {
+            var outMatch = ClipPosOutLine.Match(lines[i]);
+            if (!outMatch.Success || !TryCollapseClipTransform(lines, outMatch.Groups[1].Value, i, out var srcName, out var usedTemps))
+            {
+                result.Add(lines[i]);
+                i++;
+                continue;
+            }
+
+            ctx.Macros.Add("UnityObjectToClipPos");
+            // The chain temps are now dead — remove their def lines from the
+            // tail of the run (single-use check guarantees no other reference).
+            for (int k = result.Count - 1; k >= 0; k--)
+            {
+                var t = TempDefLine.Match(result[k]);
+                if (!t.Success || !usedTemps.Contains(t.Groups[1].Value))
+                    break;
+                result.RemoveAt(k);
+            }
+            result.Add($"o.sv_Position0.xyzw = UnityObjectToClipPos({srcName});");
+            i++;
+        }
+        return result;
+    }
+
+    // Returns true and sets srcName when lines[i] (o.sv_Position0.xyzw = E;)
+    // is a pure mul(unity_MatrixVP, X) chain over the SAME vector register X.
+    private static bool TryCollapseClipTransform(List<string> lines, string rhs, int i, out string srcName, out HashSet<string> usedTemps)
+    {
+        srcName = "";
+        usedTemps = new HashSet<string>();
+
+        // Build the map of float4 temp defs directly above the final line.
+        var temps = new Dictionary<string, (string Expr, int Line)>();
+        for (int k = i - 1; k >= 0; k--)
+        {
+            var td = TempDefLine.Match(lines[k]);
+            if (!td.Success)
+                break;
+            temps[td.Groups[1].Value] = (td.Groups[2].Value, k);
+        }
+
+        var terms = new List<(int Row, string Src, char Lane)>();
+        if (!ParseRowSum(rhs, temps, usedTemps, i, terms))
+        {
+            return false;
+        }
+        if (terms.Count != 4)
+            return false;
+
+        int[] rows = new int[4];
+        string src = "";
+        foreach (var (row, s, lane) in terms)
+        {
+            if (row < 0 || row > 3)
+                return false;
+            rows[row]++;
+            // lane letter must match the row index (row i * lane i).
+            if (lane != "xyzw"[row])
+                return false;
+            if (src.Length == 0)
+                src = s;
+            else if (src != s)
+                return false; // lanes of different registers — skip
+        }
+        if (rows.Any(r => r != 1))
+            return false;
+        if (!SimpleIdentifier.IsMatch(src))
+            return false;
+
+        // Chain temps must be single-use: each must not appear anywhere in the
+        // run outside its own definition and the consumed chain lines.
+        foreach (string t in usedTemps)
+        {
+            if (!temps.TryGetValue(t, out var td))
+                return false;
+            int total = CountTokenOccurrences(lines, t);
+            int inChain = CountTokenOccurrences(lines, td.Line, i, t);
+            if (total != inChain)
+                return false;
+        }
+
+        srcName = src;
+        return true;
+    }
+
+    // Recursively decomposes a rendered RHS into the set of unity_MatrixVP
+    // row terms it adds. Temp reads are inlined from their definitions.
+    private static bool ParseRowSum(
+        string expr,
+        Dictionary<string, (string Expr, int Line)> temps,
+        HashSet<string> usedTemps,
+        int finalLine,
+        List<(int Row, string Src, char Lane)> terms)
+    {
+        expr = expr.Trim();
+        while (expr.StartsWith('(') && expr.EndsWith(')'))
+            expr = expr[1..^1].Trim();
+
+        // A temp accumulation read → inline its definition.
+        if (SimpleIdentifier.IsMatch(expr) && temps.TryGetValue(expr, out var td))
+        {
+            usedTemps.Add(expr);
+            return ParseRowSum(td.Expr, temps, usedTemps, finalLine, terms);
+        }
+
+        if (expr.StartsWith("mad(") && expr.EndsWith(')'))
+        {
+            List<string> args = SplitTopLevelArgs(expr[4..^1]);
+            if (args.Count != 3)
+                return false;
+            if (!TryRowTerm(args[0], args[1], out var term))
+                return false;
+            terms.Add(term);
+            return ParseRowSum(args[2], temps, usedTemps, finalLine, terms);
+        }
+
+        // A top-level mul is the base row term; a top-level add joins two
+        // sub-sums. After paren-stripping the expr is already unparenthesized.
+        int op = FindTopLevelOperator(expr);
+        if (op < 0)
+            return false;
+        string left = expr[..op].Trim();
+        string right = expr[(op + 1)..].Trim();
+        if (expr[op] == '*')
+            return TryRowTerm(left, right, out var mulTerm) && AddFinalTerm(mulTerm, terms);
+        if (expr[op] == '+')
+            return ParseRowSum(left, temps, usedTemps, finalLine, terms)
+                && ParseRowSum(right, temps, usedTemps, finalLine, terms);
+        return false;
+    }
+
+    private static bool AddFinalTerm((int Row, string Src, char Lane) term, List<(int Row, string Src, char Lane)> terms)
+    {
+        terms.Add(term);
+        return true;
+    }
+
+    // One operand must be a unity_MatrixVP row read and the other a single-lane
+    // splat of a register (X.xxxx) — the row term of the matrix multiply.
+    private static bool TryRowTerm(string a, string b, out (int Row, string Src, char Lane) term)
+    {
+        term = default;
+        var rowMatch = RowRead.Match(a.Trim());
+        var laneMatch = LaneSplat.Match(b.Trim());
+        if (rowMatch.Success && laneMatch.Success)
+        {
+            term = (int.Parse(rowMatch.Groups[1].Value), laneMatch.Groups[1].Value, laneMatch.Groups[2].Value[0]);
+            return true;
+        }
+        rowMatch = RowRead.Match(b.Trim());
+        laneMatch = LaneSplat.Match(a.Trim());
+        if (rowMatch.Success && laneMatch.Success)
+        {
+            term = (int.Parse(rowMatch.Groups[1].Value), laneMatch.Groups[1].Value, laneMatch.Groups[2].Value[0]);
+            return true;
+        }
+        return false;
+    }
+
+    private static List<string> SplitTopLevelArgs(string s)
+    {
+        var parts = new List<string>();
+        int depth = 0;
+        var sb = new System.Text.StringBuilder();
+        foreach (char c in s)
+        {
+            if (c is '(' or '[') depth++;
+            else if (c is ')' or ']') depth--;
+            if (c == ',' && depth == 0) { parts.Add(sb.ToString()); sb.Clear(); }
+            else sb.Append(c);
+        }
+        if (sb.Length > 0) parts.Add(sb.ToString());
+        return parts;
+    }
+
+    // Index of the top-level '*' or '+' operator in an unparenthesized
+    // expression (bracket depth tracked so unity_MatrixVP[1] doesn't count).
+    private static int FindTopLevelOperator(string expr)
+    {
+        int depth = 0;
+        for (int k = 0; k < expr.Length; k++)
+        {
+            char c = expr[k];
+            if (c is '(' or '[') depth++;
+            else if (c is ')' or ']') depth--;
+            else if (depth == 0 && (c is '*' or '+')) return k;
+        }
+        return -1;
+    }
+
+    private static int CountTokenOccurrences(List<string> lines, string token) =>
+        CountTokenOccurrences(lines, 0, lines.Count - 1, token);
+
+    private static int CountTokenOccurrences(List<string> lines, int lo, int hi, string token)
+    {
+        int count = 0;
+        for (int k = lo; k <= hi; k++)
+            count += System.Text.RegularExpressions.Regex.Matches(lines[k], $"\\b{token}\\b").Count;
+        return count;
     }
 
     private static void PrintStatement(StringBuilder sb, HlslStatementNode stmt, int indent, PrintContext ctx)
@@ -411,20 +840,6 @@ public static class HlslPrettyPrinter
 
         switch (stmt)
         {
-            case HlslAssignmentStatement a:
-                foreach (string line in RenderAssignmentLines(a.Destination, a.Expression, ctx))
-                    sb.Append(pad).Append(line).Append('\n');
-                break;
-
-            case HlslMultiAssignmentStatement ma:
-                for (int i = 0; i < ma.Destinations.Count; i++)
-                {
-                    if (ma.Destinations[i] is not { } dest) continue;
-                    foreach (string line in RenderAssignmentLines(dest, ma.Expressions[i], ctx))
-                        sb.Append(pad).Append(line).Append('\n');
-                }
-                break;
-
             case HlslIfStatement iff:
             {
                 // Cross-branch phi copies (IRLeaveSsa writes the same
