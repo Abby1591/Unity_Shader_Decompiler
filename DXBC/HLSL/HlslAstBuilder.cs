@@ -61,8 +61,14 @@ public static class HlslAstBuilder
                 Attributes = p.Attributes,
                 DefaultValue = p.DefaultValue,
                 DefaultComponents = p.DefaultComponents,
-                // Range min/max: see HlslPropertyNode.Range doc comment —
-                // not populated until the field path is confirmed.
+                // Range bounds are serialized into the same DefaultValue slot
+                // array as {x:default, y:min, z:max} for m_Type==3 — confirmed
+                // against PicaVoxel PBR Range(0,1) and Toon "Outline"
+                // Range(0.002,0.03) reference sources. Null when the metadata
+                // carried no default (then no bounds are known at all).
+                Range = kind == HlslPropertyKind.Range && p.DefaultComponents.Length >= 3
+                    ? (p.DefaultComponents[1], p.DefaultComponents[2])
+                    : null,
             });
         }
 

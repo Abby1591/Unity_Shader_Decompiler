@@ -76,11 +76,10 @@ public sealed class HlslPropertyNode
     // a Float/Range default are just zeros). Prefer this over DefaultValue.
     public float[] DefaultComponents { get; init; } = Array.Empty<float>();
 
-    // Only populated for Kind == Range. NOTE: Unity's compiled shader
-    // data doesn't carry an explicit min/max pair we've confirmed a field
-    // path for yet — left null rather than guessing at which DefValue
-    // slot(s) hold it. Fill in once a real Range property sample is
-    // available to check against.
+    // Only populated for Kind == Range. Unity serializes a Range property's
+    // min/max into the metadata DefaultValue slots {x:default, y:min, z:max}
+    // (m_Type==3), so bounds = (DefaultComponents[1], DefaultComponents[2]).
+    // Null when the metadata carried no default — then no bounds are known.
     public (float Min, float Max)? Range { get; init; }
 }
 

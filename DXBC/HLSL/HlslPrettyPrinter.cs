@@ -17,8 +17,8 @@ namespace Parser.DXBC.Hlsl.Ast;
 // IMPORTANT — things this printer does NOT invent, and instead flags
 // with a `/* TODO ... */` comment in the emitted text so it's visible
 // in the output, not just buried in source comments:
-//   - Range property bounds (HlslPropertyNode.Range is null — see Stage 4
-//     notes; no confirmed field path for min/max yet)
+//   - Range property bounds when the metadata carried no default value
+//     (no slots → no min/max to recover; falls back to Float)
 //   - The handful of TextureOperation kinds without a confirmed 1:1 HLSL
 //     method mapping (Lod, ResInfo, SampleInfo, SamplePos, BufInfo)
 //   - DistanceVector / MaskedSumOfAbsoluteDifferences intrinsics (no
@@ -87,8 +87,9 @@ public static class HlslPrettyPrinter
         HlslPropertyKind.Vector => "Vector",
         HlslPropertyKind.Float => "Float",
         HlslPropertyKind.Range when p.Range is { } r => $"Range({r.Min}, {r.Max})",
-        // No confirmed source for Range bounds yet (see Stage 4) — emit
-        // as Float rather than fabricate a (0,1) that might be wrong.
+        // Range with no recovered bounds (metadata carried no default value,
+        // so min/max slots are absent) — emit as Float rather than
+        // fabricate a (0,1) that might be wrong.
         HlslPropertyKind.Range => "Float /* TODO: Range bounds not recovered */",
         HlslPropertyKind.Texture => p.TextureDimension switch
         {
@@ -419,9 +420,12 @@ public static class HlslPrettyPrinter
     // exact computation — UnityObjectToClipPos expands to mul(UNITY_MATRIX_MVP,
     // v), and the shipped D3D bytecode (and this decompiled output) uses
     // unity_MatrixVP, so mul(unity_MatrixVP, v) reproduces the instructions.
+    // UnityObjectToWorldPos appends w=1, which is exactly what the bytecode's
+    // bare `+ unity_ObjectToWorld[3]` translation tail implies.
     private static string MacroDefine(string name) => name switch
     {
         "UnityObjectToClipPos" => "#define UnityObjectToClipPos(v) mul(unity_MatrixVP, v)",
+        "UnityObjectToWorldPos" => "#define UnityObjectToWorldPos(v) mul(unity_ObjectToWorld, float4(v, 1.0))",
         _ => $"#define {name}(v) /* TODO: unrecognized macro {name} */ (v)",
     };
 
@@ -619,10 +623,19 @@ public static class HlslPrettyPrinter
         new(@"^float4 (\w+) = (.+);$");
     private static readonly System.Text.RegularExpressions.Regex RowRead =
         new(@"^unity_MatrixVP\[([0-9]+)\]$");
+    private static readonly System.Text.RegularExpressions.Regex ObjectToWorldRowRead =
+        new(@"^unity_ObjectToWorld\[([0-9]+)\]$");
     private static readonly System.Text.RegularExpressions.Regex LaneSplat =
-        new(@"^(\w+)\.([xyzw])\2\2\2$");
+        new(@"^([A-Za-z_][A-Za-z0-9_]*(\.[A-Za-z_][A-Za-z0-9_]*)?)\.([xyzw])\3\3\3$");
     private static readonly System.Text.RegularExpressions.Regex SimpleIdentifier =
         new(@"^[A-Za-z_][A-Za-z0-9_]*$");
+    private static readonly System.Text.RegularExpressions.Regex SimpleSource =
+        new(@"^[A-Za-z_][A-Za-z0-9_]*(\.[A-Za-z_][A-Za-z0-9_]*)?$");
+    // `LHS = (mad(unity_ObjectToWorld[3].xyzx, SRC.wwww, T.xyzx)).xyz;` — a
+    // re-derivation of the translation-add tail. Since the chain's final add is
+    // bare (SRC.w folded to 1), this equals `LHS = <final>.xyz;`.
+    private static readonly System.Text.RegularExpressions.Regex RecomputeLine =
+        new(@"^(?<lhs>[^=]+?) = \(mad\(unity_ObjectToWorld\[3\]\.xyzx, (?<src>[^,]+?)\.wwww, (?<t>[^,]+?)\.xyzx\)\)\.xyz;$");
 
     private static List<string> RevertUnityMacros(List<string> lines, PrintContext ctx)
     {
@@ -630,28 +643,57 @@ public static class HlslPrettyPrinter
             return lines;
 
         var result = new List<string>(lines.Count);
+        var rewrites = new Dictionary<string, string>();
         int i = 0;
         while (i < lines.Count)
         {
-            var outMatch = ClipPosOutLine.Match(lines[i]);
-            if (!outMatch.Success || !TryCollapseClipTransform(lines, outMatch.Groups[1].Value, i, out var srcName, out var usedTemps))
+            // A translation-tail re-derivation flagged by an earlier worldPos
+            // collapse: `LHS = ... T.xyzx ... .xyz` → `LHS = final.xyz`.
+            if (rewrites.TryGetValue(lines[i], out var rewrite))
             {
-                result.Add(lines[i]);
+                result.Add(rewrite);
                 i++;
                 continue;
             }
 
-            ctx.Macros.Add("UnityObjectToClipPos");
-            // The chain temps are now dead — remove their def lines from the
-            // tail of the run (single-use check guarantees no other reference).
-            for (int k = result.Count - 1; k >= 0; k--)
+            var outMatch = ClipPosOutLine.Match(lines[i]);
+            if (outMatch.Success && TryCollapseClipTransform(lines, outMatch.Groups[1].Value, i, out var srcName, out var usedTemps))
             {
-                var t = TempDefLine.Match(result[k]);
-                if (!t.Success || !usedTemps.Contains(t.Groups[1].Value))
-                    break;
-                result.RemoveAt(k);
+                ctx.Macros.Add("UnityObjectToClipPos");
+                // The chain temps are now dead — remove their def lines from the
+                // tail of the run (single-use check guarantees no other reference).
+                for (int k = result.Count - 1; k >= 0; k--)
+                {
+                    var t = TempDefLine.Match(result[k]);
+                    if (!t.Success || !usedTemps.Contains(t.Groups[1].Value))
+                        break;
+                    result.RemoveAt(k);
+                }
+                result.Add($"o.sv_Position0.xyzw = UnityObjectToClipPos({srcName});");
+                i++;
+                continue;
             }
-            result.Add($"o.sv_Position0.xyzw = UnityObjectToClipPos({srcName});");
+
+            // UnityObjectToWorldPos: `float4 W = <mul chain over xyz> + unity_ObjectToWorld[3];`
+            var worldMatch = TempDefLine.Match(lines[i]);
+            if (worldMatch.Success && TryCollapseObjectToWorldPos(lines, worldMatch.Groups[2].Value, i, worldMatch.Groups[1].Value, out var worldSrc, out var worldTemps, out var worldRewrites))
+            {
+                ctx.Macros.Add("UnityObjectToWorldPos");
+                foreach (var kv in worldRewrites)
+                    rewrites[kv.Key] = kv.Value;
+                for (int k = result.Count - 1; k >= 0; k--)
+                {
+                    var t = TempDefLine.Match(result[k]);
+                    if (!t.Success || !worldTemps.Contains(t.Groups[1].Value))
+                        break;
+                    result.RemoveAt(k);
+                }
+                result.Add($"float4 {worldMatch.Groups[1].Value} = UnityObjectToWorldPos({worldSrc}.xyz);");
+                i++;
+                continue;
+            }
+
+            result.Add(lines[i]);
             i++;
         }
         return result;
@@ -779,14 +821,14 @@ public static class HlslPrettyPrinter
         var laneMatch = LaneSplat.Match(b.Trim());
         if (rowMatch.Success && laneMatch.Success)
         {
-            term = (int.Parse(rowMatch.Groups[1].Value), laneMatch.Groups[1].Value, laneMatch.Groups[2].Value[0]);
+            term = (int.Parse(rowMatch.Groups[1].Value), laneMatch.Groups[1].Value, laneMatch.Groups[3].Value[0]);
             return true;
         }
         rowMatch = RowRead.Match(b.Trim());
         laneMatch = LaneSplat.Match(a.Trim());
         if (rowMatch.Success && laneMatch.Success)
         {
-            term = (int.Parse(rowMatch.Groups[1].Value), laneMatch.Groups[1].Value, laneMatch.Groups[2].Value[0]);
+            term = (int.Parse(rowMatch.Groups[1].Value), laneMatch.Groups[1].Value, laneMatch.Groups[3].Value[0]);
             return true;
         }
         return false;
@@ -821,6 +863,173 @@ public static class HlslPrettyPrinter
             else if (depth == 0 && (c is '*' or '+')) return k;
         }
         return -1;
+    }
+
+    // Returns true and sets srcName when lines[i] (`float4 NAME = E;`) computes
+    // mul(unity_ObjectToWorld, SRC) over lanes x,y,z plus the translation row —
+    // Unity's UnityObjectToWorldPos. The bare `+ unity_ObjectToWorld[3]` tail
+    // proves the w multiplier folded to the constant 1, so the macro's appended
+    // 1.0 reproduces the bytecode exactly.
+    private static bool TryCollapseObjectToWorldPos(List<string> lines, string rhs, int i, string finalName, out string srcName, out HashSet<string> usedTemps, out Dictionary<string, string> rewrites)
+    {
+        srcName = "";
+        usedTemps = new HashSet<string>();
+        rewrites = new Dictionary<string, string>();
+
+        // Build the map of float4 temp defs directly above the final line.
+        var temps = new Dictionary<string, (string Expr, int Line)>();
+        for (int k = i - 1; k >= 0; k--)
+        {
+            var td = TempDefLine.Match(lines[k]);
+            if (!td.Success)
+                break;
+            temps[td.Groups[1].Value] = (td.Groups[2].Value, k);
+        }
+
+        var terms = new List<(int Row, string Src, char Lane)>();
+        bool hasTranslation = false;
+        if (!ParseObjectToWorldSum(rhs, temps, usedTemps, terms, ref hasTranslation))
+            return false;
+        if (!hasTranslation || terms.Count != 3)
+            return false;
+
+        int[] rows = new int[3];
+        string src = "";
+        foreach (var (row, s, lane) in terms)
+        {
+            if (row < 0 || row > 2)
+                return false;
+            rows[row]++;
+            // lane letter must match the row index (row i * lane i), and only
+            // lanes x,y,z appear — the w row is the folded translation.
+            if (lane != "xyz"[row])
+                return false;
+            if (src.Length == 0)
+                src = s;
+            else if (src != s)
+                return false; // lanes of different registers — skip
+        }
+        if (rows.Any(r => r != 1))
+            return false;
+        if (!SimpleSource.IsMatch(src))
+            return false;
+
+        // Chain temps must be single-use: each must not appear anywhere in the
+        // run outside its own definition and the consumed chain lines — except
+        // for a re-derivation of the translation tail (`LHS = ... T.xyzx ...
+        // .xyz`), which is equal to `LHS = finalName.xyz` and gets rewritten.
+        foreach (string t in usedTemps)
+        {
+            if (!temps.TryGetValue(t, out var td))
+                return false;
+            int total = CountTokenOccurrences(lines, t);
+            int inChain = CountTokenOccurrences(lines, td.Line, i, t);
+            if (total < inChain)
+                return false;
+            for (int k = 0; k < lines.Count; k++)
+            {
+                if (k >= td.Line && k <= i)
+                    continue;
+                int occ = CountTokenOccurrences(lines, k, k, t);
+                if (occ == 0)
+                    continue;
+                if (occ != 1 || !TryParseRecompute(lines[k], t, src, finalName, out var rep))
+                    return false;
+                rewrites[lines[k]] = rep;
+            }
+        }
+
+        srcName = src;
+        return true;
+    }
+
+    // Recognizes a translation-tail re-derivation `LHS = (mad(unity_ObjectToWorld
+    // [3].xyzx, SRC.wwww, T.xyzx)).xyz;` and rewrites it to `LHS = <final>.xyz;`.
+    private static bool TryParseRecompute(string line, string t, string src, string finalName, out string replacement)
+    {
+        replacement = "";
+        var m = RecomputeLine.Match(line);
+        if (!m.Success || m.Groups["t"].Value != t || m.Groups["src"].Value != src)
+            return false;
+        replacement = $"{m.Groups["lhs"].Value} = {finalName}.xyz;";
+        return true;
+    }
+
+    // Recursively decomposes a rendered RHS into the set of unity_ObjectToWorld
+    // row terms it sums (rows 0..2, lanes x..z) plus the translation tail
+    // `+ unity_ObjectToWorld[3]`. Temp reads are inlined from their definitions.
+    private static bool ParseObjectToWorldSum(
+        string expr,
+        Dictionary<string, (string Expr, int Line)> temps,
+        HashSet<string> usedTemps,
+        List<(int Row, string Src, char Lane)> terms,
+        ref bool hasTranslation)
+    {
+        expr = expr.Trim();
+        while (expr.StartsWith('(') && expr.EndsWith(')'))
+            expr = expr[1..^1].Trim();
+
+        // A temp accumulation read → inline its definition.
+        if (SimpleIdentifier.IsMatch(expr) && temps.TryGetValue(expr, out var td))
+        {
+            usedTemps.Add(expr);
+            return ParseObjectToWorldSum(td.Expr, temps, usedTemps, terms, ref hasTranslation);
+        }
+
+        if (expr.StartsWith("mad(") && expr.EndsWith(')'))
+        {
+            List<string> args = SplitTopLevelArgs(expr[4..^1]);
+            if (args.Count != 3)
+                return false;
+            if (!TryObjectToWorldRowTerm(args[0], args[1], out var term))
+                return false;
+            terms.Add(term);
+            return ParseObjectToWorldSum(args[2], temps, usedTemps, terms, ref hasTranslation);
+        }
+
+        // After paren-stripping the expr is already unparenthesized.
+        int op = FindTopLevelOperator(expr);
+        if (op < 0)
+            return false;
+        string left = expr[..op].Trim();
+        string right = expr[(op + 1)..].Trim();
+        if (expr[op] == '*')
+            return TryObjectToWorldRowTerm(left, right, out var mulTerm) && AddFinalTerm(mulTerm, terms);
+        if (expr[op] == '+')
+        {
+            // The translation tail: `... + unity_ObjectToWorld[3]`. A bare add
+            // (no w-lane multiplier) is the proof w folded to the constant 1.
+            if (right == "unity_ObjectToWorld[3]")
+            {
+                hasTranslation = true;
+                return ParseObjectToWorldSum(left, temps, usedTemps, terms, ref hasTranslation);
+            }
+            return ParseObjectToWorldSum(left, temps, usedTemps, terms, ref hasTranslation)
+                && ParseObjectToWorldSum(right, temps, usedTemps, terms, ref hasTranslation);
+        }
+        return false;
+    }
+
+    // One operand must be a unity_ObjectToWorld row read and the other a
+    // single-lane splat of a register (X.xxxx) — the row term of the multiply.
+    private static bool TryObjectToWorldRowTerm(string a, string b, out (int Row, string Src, char Lane) term)
+    {
+        term = default;
+        var rowMatch = ObjectToWorldRowRead.Match(a.Trim());
+        var laneMatch = LaneSplat.Match(b.Trim());
+        if (rowMatch.Success && laneMatch.Success)
+        {
+            term = (int.Parse(rowMatch.Groups[1].Value), laneMatch.Groups[1].Value, laneMatch.Groups[3].Value[0]);
+            return true;
+        }
+        rowMatch = ObjectToWorldRowRead.Match(b.Trim());
+        laneMatch = LaneSplat.Match(a.Trim());
+        if (rowMatch.Success && laneMatch.Success)
+        {
+            term = (int.Parse(rowMatch.Groups[1].Value), laneMatch.Groups[1].Value, laneMatch.Groups[3].Value[0]);
+            return true;
+        }
+        return false;
     }
 
     private static int CountTokenOccurrences(List<string> lines, string token) =>
