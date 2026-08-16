@@ -40,6 +40,38 @@ internal class Program
             return;
         }
 
+        if (args.Contains("--recompile-verify"))
+        {
+            // Recompile each decompiled HLSLPROGRAM pass with real
+            // d3dcompiler and match its signatures against the shipped
+            // bytecode — the gate that --surface-shaders waits on.
+            string shader = args.Length > 1 && File.Exists(args[1])
+                ? args[1]
+                : Path.Combine(FindOutputRoot(), "PicaVoxel_PicaVoxel Diffuse.shader");
+            RecompileVerify.Run(shader);
+            return;
+        }
+
+        if (args.Contains("--recompile-verify-all"))
+        {
+            // Aggregate health across every decompiled .shader in the
+            // Output root: one compile-rate + unmatched count instead of
+            // 39 ad-hoc single-file runs.
+            RecompileVerify.RunAll(FindOutputRoot());
+            return;
+        }
+
+        if (args.Contains("--disasm"))
+        {
+            // Dump every non-compute subprogram's DXBC disassembly to a
+            // sibling <name>.disasm.txt for bytecode-level inspection.
+            string target = args.Length > 1 && Directory.Exists(args[1])
+                ? args[1]
+                : FindOutputRoot();
+            RecompileVerify.DumpDisasm(target);
+            return;
+        }
+
         // args[0] is now a folder produced by Extract.py, containing
         // blob.bin + metadata.json (+ optional dummy.shader). For
         // backwards compat, a direct path to a blob.bin still works
@@ -407,7 +439,7 @@ internal class Program
                 $"structs={pass.Structs.Count} resources={pass.Resources.Count}");
         }
 
-        bool surfaceReconstruct = args.Contains("--surface-shaders");
+        bool surfaceReconstruct = !args.Contains("--no-surface-shaders");
 
         PrintFullShaderOutput(project, astShader, !args.Contains("--no-fuse-temps"), surfaceReconstruct);
 
@@ -422,9 +454,11 @@ internal class Program
         // Stage 13.5 — surface-shader recognition: when a pass carries the
         // compiled signature of a `#pragma surface surf ...` source, rewrite
         // the lit pass back into the canonical CGPROGRAM surface form.
-        // OFF by default: the rewrite is a faithful *readability* pass but
-        // not yet recompile-verified against the original, so it stays
-        // opt-in via --surface-shaders until it is.
+        // ON by default since the recompile-verify gate went green (every
+        // decompiled pass compiles and matches its shipped signature, so the
+        // rewrite sits on verified bytecode-faithful HLSL). The original
+        // HLSLPROGRAM passes are kept as a comment in the output, so the
+        // verified form remains present. Opt out with --no-surface-shaders.
         if (surfaceReconstruct)
         {
             string? reconstructed = HlslSurfaceShaderRecognizer.TryReconstruct(text, project.Metadata);

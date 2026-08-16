@@ -246,6 +246,15 @@ public sealed class HlslFunctionNode
     public HlslStructNode? InputStruct { get; set; }
     public HlslStructNode? OutputStruct { get; set; }
 
+    // ISGN/OSGN elements grouped by register index. A register can be
+    // split across two elements with disjoint masks (packed attributes —
+    // e.g. TEXCOORD0.xy + TEXCOORD1.zw sharing register o1), and the struct
+    // already declares one field per element. The printer consults this map
+    // to route a component write/read to the element whose mask covers it,
+    // so `o1.zw` becomes `o.texcoord1.xy`, not the invalid `o.texcoord0.zw`.
+    public Dictionary<uint, List<Parser.DXBC.Chunks.SignatureElement>> InputElementsByRegister { get; } = new();
+    public Dictionary<uint, List<Parser.DXBC.Chunks.SignatureElement>> OutputElementsByRegister { get; } = new();
+
     // Populated verbatim from the IR pipeline's output for this
     // subprogram — kept for anything that wants the flat original-order
     // list (debug dumps, cross-checking). Statements below (Stage 10) is

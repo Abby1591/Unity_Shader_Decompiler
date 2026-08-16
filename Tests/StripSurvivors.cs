@@ -89,6 +89,7 @@ public static class StripSurvivors
     private static void RunShippedScan(string outputRoot)
     {
         var counts = new Dictionary<string, int>();
+        var flagHistogram = new Dictionary<byte, int>();
         int dxbcContainers = 0;
 
         foreach (string dir in Directory.GetDirectories(outputRoot))
@@ -118,6 +119,12 @@ public static class StripSurvivors
                 if (blob.Kind != UnityShaderBlobKind.NonCompute) continue;
 
                 dxbcContainers++;
+                var header = DxbcExtractor.TryParseHeader(sub.m_ProgramCode);
+                if (header is { } h)
+                {
+                    flagHistogram.TryGetValue(h.Flag, out int n);
+                    flagHistogram[h.Flag] = n + 1;
+                }
                 var file = new DxbcFile();
                 file.Load(blob.Dxbc);
                 foreach (string name in file.Chunks.Select(c => c.Name.ToString()).Distinct())
@@ -131,6 +138,8 @@ public static class StripSurvivors
         Console.WriteLine($"shipped scan: {dxbcContainers} DXBC containers");
         foreach (string name in counts.Keys.OrderBy(x => x))
             Console.WriteLine($"  {name}: present in {counts[name]} container(s)");
+        Console.WriteLine("  header flag byte histogram: " +
+            string.Join(", ", flagHistogram.OrderBy(kv => kv.Key).Select(kv => $"0x{kv.Key:X2}={kv.Value}")));
         Console.WriteLine();
     }
 

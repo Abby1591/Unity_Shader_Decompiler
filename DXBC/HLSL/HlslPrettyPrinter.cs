@@ -1,5 +1,6 @@
 using System.Text;
 using System.Text.Json;
+using Parser.DXBC.Chunks;
 using Parser.DXBC.Instructions;
 using Parser.DXBC.IR;
 using Parser.DXBC.IR.Analysis;
@@ -342,6 +343,17 @@ public static class HlslPrettyPrinter
         // per-component counters (see IRSsaRenaming), so x and y can
         // independently reach the same version via separate writes.
         public Dictionary<(IRStorageLocation Location, int Version), (string Name, List<int> ActiveComponents)> DeclaredViews { get; } = new();
+
+        // Shader stage of the function being printed — needed for
+        // stage-sensitive HLSL (e.g. implicit-LOD Sample is invalid in a
+        // vertex shader, which must use SampleLevel(..., 0)).
+        public HlslShaderStage Stage { get; init; }
+
+        // ISGN/OSGN elements grouped by register index, used to route
+        // input/output component accesses to the correct struct field when
+        // a register is packed with multiple disjoint-mask elements.
+        public Dictionary<uint, List<SignatureElement>> InputElements { get; init; } = new();
+        public Dictionary<uint, List<SignatureElement>> OutputElements { get; init; } = new();
     }
 
     private static void PrintFunction(
@@ -367,7 +379,13 @@ public static class HlslPrettyPrinter
             if (key.Stage == stage || key.Stage == "")
                 cbuffers[key.Slot] = cb;
 
-        var ctx = new PrintContext { Cbuffers = cbuffers };
+        var ctx = new PrintContext
+        {
+            Cbuffers = cbuffers,
+            Stage = fn.Stage,
+            InputElements = fn.InputElementsByRegister,
+            OutputElements = fn.OutputElementsByRegister,
+        };
         if (fn.OutputStruct is not null)
             sb.Append("                ").Append(outType).Append(" o = (").Append(outType).Append(")0;\n");
 
@@ -436,10 +454,28 @@ public static class HlslPrettyPrinter
             }
 
             case HlslLoopStatement loop:
+            {
+                // Names first written at the loop body's top level. A
+                // declaration that lands inside the loop's braces is scoped
+                // to the loop; a name that is also live out of the loop
+                // (read or written after it) then references an identifier
+                // that never comes back into scope. Hoist the declaration
+                // above the loop. Hoisting loop-local names too is harmless
+                // (they are always written in the body, never unused) and
+                // is the only way to catch loop-carried names without a
+                // full dataflow pass.
+                foreach ((string name, int comps) in LoopCarriedDeclNames(loop, ctx))
+                {
+                    if (!ctx.Declared.Add(name))
+                        continue; // already in scope — don't redeclare
+                    sb.Append(pad).Append(DeclType(comps)).Append(' ').Append(name).Append(";\n");
+                }
+
                 sb.Append(pad).Append("[loop]\n").Append(pad).Append("while (true)\n").Append(pad).Append("{\n");
                 PrintBlock(sb, loop.Body, indent + 1, ctx);
                 sb.Append(pad).Append("}\n");
                 break;
+            }
 
             case HlslSwitchStatement sw:
                 sb.Append(pad).Append("switch (").Append(RenderExpression(sw.Selector, ctx)).Append(")\n").Append(pad).Append("{\n");
@@ -626,8 +662,12 @@ public static class HlslPrettyPrinter
         if (best.ArraySize > 0)
             return null; // array reads: defer to cbN_values fallback
 
-        if (bestSize == distinct.Length * 4 && rel == 0)
-            return best.Name; // read covers the whole variable
+        // Read covers the whole variable — but only when the read is NOT a
+        // broadcast (repeated components). A swizzle like .xxyz on a float3
+        // ADDS a component and must keep its suffix; dropping it narrows the
+        // expression (float3) so a later .w read on the result breaks.
+        if (comps.Length == distinct.Length && bestSize == distinct.Length * 4 && rel == 0)
+            return best.Name;
 
         int vsc = (int)(rel / 4);
         string letters2 = string.Concat(comps.Select(c => ComponentLetters[vsc + (c - distinct[0])]));
@@ -807,10 +847,10 @@ public static class HlslPrettyPrinter
                 RenderTempRead(reg, ctx),
 
             RegisterType.Input =>
-                "i." + FieldNameFor(reg, ctx) + MaskOrSwizzleSuffix(reg),
+                RenderSignatureField(reg, "i", ctx.InputElements, ctx),
 
             RegisterType.Output =>
-                "o." + FieldNameFor(reg, ctx) + MaskOrSwizzleSuffix(reg),
+                RenderSignatureField(reg, "o", ctx.OutputElements, ctx),
 
             RegisterType.ConstantBuffer =>
                 RenderCbufferRead(reg, ctx),
@@ -847,6 +887,123 @@ public static class HlslPrettyPrinter
     {
         string semantic = reg.SymbolicName ?? BaseIdentifier(reg, ctx);
         return HlslAstBuilder.ToFieldName(semantic);
+    }
+
+    private static string ElementFieldName(SignatureElement el)
+        => HlslAstBuilder.ToFieldName($"{el.SemanticName}{el.SemanticIndex}");
+
+    // Component letter a register position maps to WITHIN a signature
+    // element: the number of element-owned register components below it.
+    // A write of register position z owned by TEXCOORD1 (mask 0xC = zw) is
+    // TEXCOORD1's local x, since TEXCOORD1 only occupies two lanes.
+    private static char ElementLocalLetter(SignatureElement el, int registerPosition)
+    {
+        int below = System.Numerics.BitOperations.PopCount((uint)(el.Mask & ((1 << registerPosition) - 1)));
+        return ComponentLetters[below];
+    }
+
+    private static string ElementLocalSuffix(SignatureElement el, List<int> positions)
+        => "." + string.Concat(positions.Select(p => ElementLocalLetter(el, p)));
+
+    // Renders an input/output register access as a struct-field reference
+    // (i.field.swizzle / o.field.swizzle). A register PACKED across multiple
+    // signature elements with disjoint masks has each component routed to
+    // the element whose mask covers it, with letters remapped into that
+    // element's own component space. Multi-element reads build a
+    // constructor; multi-element writes are split by RenderOutputWrite.
+    private static string RenderSignatureField(IRRegister reg, string prefix, Dictionary<uint, List<SignatureElement>> byRegister, PrintContext ctx)
+    {
+        List<int> positions = ActiveComponents(reg);
+        if (byRegister.TryGetValue(reg.Index, out List<SignatureElement>? elements) && elements.Count > 1)
+        {
+            if (TryCoveringElement(elements, positions) is { } cover)
+                return $"{prefix}.{ElementFieldName(cover)}{ElementLocalSuffix(cover, positions)}";
+
+            // Positions span multiple elements — build a constructor whose
+            // lanes are the per-position field reads, in output order.
+            return $"float{positions.Count}({string.Join(", ", positions.Select(p => RoutePosition(reg, elements, p, prefix, ctx)))})";
+        }
+
+        return prefix + "." + FieldNameFor(reg, ctx) + MaskOrSwizzleSuffix(reg);
+    }
+
+    private static string RoutePosition(IRRegister reg, List<SignatureElement> elements, int position, string prefix, PrintContext ctx)
+    {
+        foreach (SignatureElement el in elements)
+            if ((el.Mask & (1 << position)) != 0)
+                return $"{prefix}.{ElementFieldName(el)}{ElementLocalSuffix(el, new List<int> { position })}";
+        return $"{prefix}.{FieldNameFor(reg, ctx)}.{ComponentLetters[position]}";
+    }
+
+    private static SignatureElement? TryCoveringElement(List<SignatureElement> elements, List<int> positions)
+    {
+        foreach (SignatureElement el in elements)
+        {
+            bool all = positions.Count > 0;
+            foreach (int p in positions)
+                all &= (el.Mask & (1 << p)) != 0;
+            if (all)
+                return el;
+        }
+        return null;
+    }
+
+    // (element, register positions it owns) groups for an output write's
+    // active positions, preserving position order.
+    private static List<(SignatureElement Element, List<int> Positions)> GroupOutputPositions(List<SignatureElement> elements, List<int> active)
+    {
+        var groups = new List<(SignatureElement, List<int>)>();
+        foreach (int p in active)
+        {
+            SignatureElement? el = elements.FirstOrDefault(e => (e.Mask & (1 << p)) != 0);
+            if (el is null)
+                continue;
+            var group = groups.FirstOrDefault(g => g.Item1 == el);
+            if (group.Item1 is null)
+            {
+                group = (el, new List<int>());
+                groups.Add(group);
+            }
+            group.Item2.Add(p);
+        }
+        return groups;
+    }
+
+    // Emits an output-register write, routing each written component to the
+    // struct field whose signature element owns it (packed registers split
+    // into one statement per element). The RHS is the trimmed-to-width value
+    // when a single element covers everything; a split takes its per-group
+    // lanes straight off the full-width expression.
+    private static IEnumerable<string> RenderOutputWrite(IRRegister dest, string rhs, string rawRhs, PrintContext ctx)
+    {
+        List<int> active = MaskIndices(dest.Mask);
+        if (active.Count == 0)
+            active = new List<int> { 0 };
+
+        if (ctx.OutputElements.TryGetValue(dest.Index, out List<SignatureElement>? elements) && elements.Count > 1)
+        {
+            List<(SignatureElement Element, List<int> Positions)> groups = GroupOutputPositions(elements, active);
+            if (groups.Count == 1 && groups[0].Positions.Count == active.Count)
+            {
+                var (el, pos) = groups[0];
+                yield return $"o.{ElementFieldName(el)}{ElementLocalSuffix(el, pos)} = {rhs};";
+            }
+            else if (groups.Count > 1)
+            {
+                foreach ((SignatureElement el, List<int> pos) in groups)
+                {
+                    string slice = string.Concat(pos.Select(p => ComponentLetters[p]));
+                    yield return $"o.{ElementFieldName(el)}{ElementLocalSuffix(el, pos)} = ({rawRhs}).{slice};";
+                }
+            }
+            else
+            {
+                yield return $"o.{FieldNameFor(dest, ctx)}{MaskOrSwizzleSuffix(dest)} = {rhs};";
+            }
+            yield break;
+        }
+
+        yield return $"o.{FieldNameFor(dest, ctx)}{MaskOrSwizzleSuffix(dest)} = {rhs};";
     }
 
     // Emits one or more statement lines for a single destination write.
@@ -926,7 +1083,8 @@ public static class HlslPrettyPrinter
 
         if (dest.RegisterType == RegisterType.Output)
         {
-            yield return $"o.{FieldNameFor(dest, ctx)}{MaskOrSwizzleSuffix(dest)} = {rhs};";
+            foreach (string line in RenderOutputWrite(dest, rhs, rawRhs, ctx))
+                yield return line;
             yield break;
         }
 
@@ -967,9 +1125,43 @@ public static class HlslPrettyPrinter
             string scalarName = ScalarIdentifier(dest, c, ctx);
             if (dest.SsaVersion[c] is { } v)
                 ctx.DeclaredViews[(LocationOf(dest, c), v)] = (scalarName, new List<int> { c });
-            string line = $"{scalarName} = ({rawRhs}).{ComponentLetters[c]};";
+            string line = $"{scalarName} = {ExtractComponent(expr, c, ctx)};";
             yield return ctx.Declared.Add(scalarName) ? $"float {line}" : line;
         }
+    }
+
+    // Renders a single ORIGINAL-register-position component of an
+    // expression's value. Temp register reads compact sparse lanes into
+    // fewer-wide constructors (float2 holding positions z,w), so swizzling
+    // the rendered value by the original letter (.z) would be invalid —
+    // extract through the register's own declared names instead, which
+    // resolve the position regardless of the lane count. Non-temp renders
+    // (fields, cbuffers, intrinsics) are always full-width, so a plain
+    // letter swizzle on the rendered value is correct there.
+    private static string ExtractComponent(IRExpression expr, int component, PrintContext ctx)
+    {
+        IRExpression inner = expr;
+        int pos = component;
+        while (inner is IRExpression.SwizzleExpression sw)
+        {
+            pos = sw.Components[pos];
+            inner = sw.Value;
+        }
+        if (inner is IRExpression.RegisterExpression { Register: { } r }
+            && r.RegisterType is RegisterType.Temp or RegisterType.IndexableTemp)
+        {
+            // A swizzle-mode source reads components by output position
+            // (ActiveComponents[p]); a Select1 source is one fixed
+            // component; a mask source is position-aligned.
+            int source = r.ComponentMode switch
+            {
+                Operand.OperandComponentMode.Swizzle => ActiveComponents(r)[pos],
+                Operand.OperandComponentMode.Select1 => r.Component,
+                _ => pos,
+            };
+            return ResolveComponent(r, source, ctx);
+        }
+        return $"({RenderExpression(expr, ctx)}).{ComponentLetters[component]}";
     }
 
     private static string DeclType(int componentCount) => componentCount == 1 ? "float" : $"float{componentCount}";
@@ -1107,6 +1299,23 @@ public static class HlslPrettyPrinter
         return result;
     }
 
+    // Names first written at the top level of a loop body that are not yet
+    // in scope (see the HlslLoopStatement print case). Only names not
+    // already declared are candidates — an existing declaration is already
+    // visible inside the loop.
+    private static Dictionary<string, int> LoopCarriedDeclNames(HlslLoopStatement loop, PrintContext ctx)
+    {
+        var names = new Dictionary<string, int>();
+        foreach ((string name, int comps) in WrittenDeclNames(loop.Body.Statements, ctx))
+        {
+            if (ctx.Declared.Contains(name))
+                continue;
+            if (!names.TryGetValue(name, out int prev) || comps > prev)
+                names[name] = comps;
+        }
+        return names;
+    }
+
     // Top-level destination names a block's statements declare, mapped to
     // the component count (declaration type) of the write. Only direct
     // assignments matter — nested ifs/loops handle their own merges when
@@ -1173,6 +1382,7 @@ public static class HlslPrettyPrinter
         IRExpression.FusedMultiplyAddExpression f => $"mad({RenderExpression(f.A, ctx)}, {RenderExpression(f.B, ctx)}, {RenderExpression(f.C, ctx)})",
         IRExpression.MatrixVectorMultiplyExpression mv => RenderMatrixMultiply(mv, ctx),
         IRExpression.TextureOperationExpression tex => RenderTextureOp(tex, ctx),
+        IRExpression.BinaryExpression b when IsBitwise(b.Operation) => RenderBitwise(b, ctx),
         IRExpression.BinaryExpression b => $"({RenderExpression(b.Left, ctx)} {BinaryOpText(b.Operation)} {RenderExpression(b.Right, ctx)})",
         IRExpression.UnaryExpression u => RenderUnary(u, ctx),
         IRExpression.ConditionalExpression c => $"({RenderExpression(c.Condition, ctx)} ? {RenderExpression(c.TrueExpression, ctx)} : {RenderExpression(c.FalseExpression, ctx)})",
@@ -1198,7 +1408,33 @@ public static class HlslPrettyPrinter
             return s.Components.Count <= 1
                 ? $"({inner})"
                 : $"({inner}).{new string('x', s.Components.Count)}";
+
+        // A temp read compacts sparse lanes (float2 holding original
+        // positions z,w), so the requested ORIGINAL positions must be mapped
+        // into the compacted lanes (IndexOf) — swizzling the compacted value
+        // by the original letters (.z) would be an invalid subscript. Only a
+        // direct MASK-mode register read can compact: swizzle-mode reads
+        // render the full 4-wide value (r0_w_7.xxxx), and a nested swizzle's
+        // output is already leading-positioned.
+        if (s.Value is IRExpression.RegisterExpression { Register: { } r }
+            && r.RegisterType is RegisterType.Temp or RegisterType.IndexableTemp
+            && r.ComponentMode == Operand.OperandComponentMode.Mask
+            && MaskIndices(r.Mask) is { } active
+            && !IsLeading(active))
+        {
+            string letters = string.Concat(s.Components.Select(p => ComponentLetters[active.IndexOf(p)]));
+            return $"({inner}).{letters}";
+        }
+
         return $"({inner}).{string.Concat(s.Components.Select(i => ComponentLetters[i]))}";
+    }
+
+    private static bool IsLeading(List<int> components)
+    {
+        for (int i = 0; i < components.Count; i++)
+            if (components[i] != i)
+                return false;
+        return true;
     }
 
     private static string RenderUnary(IRExpression.UnaryExpression u, PrintContext ctx) => u.Operation switch
@@ -1209,6 +1445,46 @@ public static class HlslPrettyPrinter
         IRExpression.UnaryExpression.UnaryOperation.Absolute => $"abs({RenderExpression(u.Operand, ctx)})",
         _ => RenderExpression(u.Operand, ctx),
     };
+
+    private static bool IsBitwise(IRExpression.BinaryOperation op) => op switch
+    {
+        IRExpression.BinaryOperation.BitwiseAnd
+            or IRExpression.BinaryOperation.BitwiseOr
+            or IRExpression.BinaryOperation.BitwiseXor
+            or IRExpression.BinaryOperation.LeftShift
+            or IRExpression.BinaryOperation.SignedRightShift
+            or IRExpression.BinaryOperation.UnsignedRightShift => true,
+        _ => false,
+    };
+
+    // True when the expression renders as an HLSL bool (a comparison or a
+    // swizzle/negation of one). Bitwise ops in DXBC operate on raw float
+    // register bits (the `and r0, r0, l(0x3f800000)` boolean-mask trick),
+    // and HLSL rejects `&`/`|` on floats — so we reinterpret both sides as
+    // ints, bitwise-op them, and reinterpret back. Comparisons must first
+    // be cast to float (asint() does not accept bool).
+    private static bool IsComparisonish(IRExpression e) => e switch
+    {
+        IRExpression.BinaryExpression b => b.Operation is IRExpression.BinaryOperation.Equal
+            or IRExpression.BinaryOperation.NotEqual
+            or IRExpression.BinaryOperation.GreaterEqual
+            or IRExpression.BinaryOperation.GreaterThan
+            or IRExpression.BinaryOperation.LessThan
+            or IRExpression.BinaryOperation.LessEqual,
+        IRExpression.UnaryExpression u => u.Operation == IRExpression.UnaryExpression.UnaryOperation.LogicalNot,
+        IRExpression.SwizzleExpression s => IsComparisonish(s.Value),
+        _ => false,
+    };
+
+    private static string RenderBitwise(IRExpression.BinaryExpression b, PrintContext ctx)
+    {
+        string Op(IRExpression side)
+        {
+            string s = RenderExpression(side, ctx);
+            return IsComparisonish(side) ? $"(float)({s})" : s;
+        }
+        return $"asfloat(asint({Op(b.Left)}) {BinaryOpText(b.Operation)} asint({Op(b.Right)}))";
+    }
 
     private static string BinaryOpText(IRExpression.BinaryOperation op) => op switch
     {
@@ -1342,6 +1618,11 @@ public static class HlslPrettyPrinter
 
         return tex.Operation switch
         {
+            IRExpression.TextureOperation.Sample when ctx.Stage == HlslShaderStage.Vertex =>
+                // Implicit-LOD Sample does not exist in a vertex shader —
+                // the bytecode's `sample` is sample_l(implicit 0), which is
+                // SampleLevel(..., 0) and is valid in both vs_4_0 and vs_5_0.
+                $"{resource}.SampleLevel({Args(sampler, coord, "0", offset)})",
             IRExpression.TextureOperation.Sample =>
                 $"{resource}.Sample({Args(sampler, coord, offset)})",
             IRExpression.TextureOperation.SampleLevel =>

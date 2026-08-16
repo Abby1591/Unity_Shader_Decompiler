@@ -1262,7 +1262,11 @@ public static class HlslSemanticNaming
         // Property names come through as e.g. "_monochrom" — strip the
         // leading underscore and lowercase the first letter to match this
         // pass's existing camelCase convention (viewNormal, dirToSurface, ...).
+        // A single-component cbuffer read resolves as "member.y", so take the
+        // member base name — never embed a '.' in a derived identifier.
         string clean = toggleName.TrimStart('_');
+        int dot = clean.IndexOf('.');
+        if (dot > 0) clean = clean[..dot];
         if (clean.Length == 0) return;
         string camel = char.ToLowerInvariant(clean[0]) + clean[1..];
 

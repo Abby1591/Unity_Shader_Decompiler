@@ -132,6 +132,11 @@ public static class HlslAstBuilder
                 .OfType<IRDeclaration.IROutputDeclaration>()
                 .Select(d => (Register: d.Register, d.SymbolicName)));
 
+        if (inputSignature is not null)
+            GroupSignatureByRegister(function.InputElementsByRegister, inputSignature.Elements);
+        if (outputSignature is not null)
+            GroupSignatureByRegister(function.OutputElementsByRegister, outputSignature.Elements);
+
         foreach (IRBlock block in blocks)
             function.Body.AddRange(block.Statements);
 
@@ -172,6 +177,16 @@ public static class HlslAstBuilder
         }
 
         return s;
+    }
+
+    private static void GroupSignatureByRegister(Dictionary<uint, List<SignatureElement>> byRegister, List<SignatureElement> elements)
+    {
+        foreach (SignatureElement el in elements)
+        {
+            if (!byRegister.TryGetValue(el.Register, out List<SignatureElement>? list))
+                byRegister[el.Register] = list = new List<SignatureElement>();
+            list.Add(el);
+        }
     }
 
     // Component count from Mask (bitmask of which of .xyzw are actually
