@@ -412,7 +412,10 @@ public static class HlslPrettyPrinter
         foreach (string name in ctx.Macros.OrderBy(n => n))
             sb.Append("                ").Append(MacroDefine(name)).Append('\n');
 
-        sb.Append(body);
+        // Whole-function pass: scalar lane splits whose uses are all clean
+        // collapses back into vector swizzle uses (see CollapseScalarLanes).
+        // Must run after PrintBlock so every use in the body is visible.
+        sb.Append(CollapseScalarLanes(body.ToString()));
         sb.Append("            }\n");
     }
 
@@ -591,6 +594,183 @@ public static class HlslPrettyPrinter
             : "";
         string candidate = version.Length > 0 ? $"{bare}_xyzw_{version}" : $"{bare}_xyzw";
         return ctx.Declared.Contains(candidate) ? null : candidate;
+    }
+
+    // ---------- Scalar-lane collapsing ----------
+    //
+    // When the bytecode consumes the lanes of a vector individually, the
+    // leave-SSA materialization renders the value as a vector temp plus four
+    // scalar lane reads:
+    //
+    //     float4 r5_xyzw_5 = (r4_y_9.xxxx * unity_ObjectToWorld[1]);
+    //     float r5_x_5 = r5_xyzw_5.x;
+    //     float r5_y_4 = r5_xyzw_5.y;
+    //     float r5_z_4 = r5_xyzw_5.z;
+    //     float r5_w_1 = r5_xyzw_5.w;
+    //     float4 r5_xyzw_6 = mad(unity_ObjectToWorld[0], r4_x_7.xxxx, float4(r5_x_5, r5_y_4, r5_z_4, r5_w_1));
+    //
+    // Every downstream use of those scalars is equivalent to the same use of
+    // the vector's lanes, so when all uses are one of
+    //   (a) a float2/3/4(...) constructor whose every argument is a lane of
+    //       this vector     -> V.xyzw (or the matching swizzle; plain V when
+    //                            the swizzle is the identity xyzw)
+    //   (b) a same-lane splat like r5_y_4.xxxx   -> V.yyyy
+    //   (c) a bare scalar reference              -> V.y
+    // the whole detour collapses: constructors/splats/refs are rewritten and
+    // the four split declarations are dropped. Strictly faithful — each case
+    // selects exactly the same lanes of the same register. Runs once per
+    // function body (temp names repeat across vertex/fragment stages), so
+    // uses anywhere in the same body are visible; any unexpected use aborts
+    // the whole group and leaves it untouched.
+    private static readonly System.Text.RegularExpressions.Regex ScalarSplitGroupPattern =
+        new(@"^float (?<sx>\w+_x_\d+) = (?<V>\w+_xyzw_\d+)\.x;" +
+            @"\nfloat (?<sy>\w+_y_\d+) = \k<V>\.y;" +
+            @"\nfloat (?<sz>\w+_z_\d+) = \k<V>\.z;" +
+            @"\nfloat (?<sw>\w+_w_\d+) = \k<V>\.w;$");
+
+    private static readonly System.Text.RegularExpressions.Regex ScalarCtorPattern =
+        new(@"float(?:2|3|4)\(\s*(?<args>[^()]+?)\s*\)");
+
+    private static readonly System.Text.RegularExpressions.Regex ScalarNamePattern =
+        new(@"\b\w+_[xyzw]_\d+\b");
+
+    private static readonly System.Text.RegularExpressions.Regex ScalarSplatPattern =
+        new(@"\.[xyzw]+");
+
+    private static string CollapseScalarLanes(string body)
+    {
+        // Fixpoint: each single pass collapses the vector->scalar splits whose
+        // uses are all clean. A pass that rewrites a scalar-copy chain (e.g.
+        // r5_x_6 = r4_x_4 -> r5_x_6 = r4_xyzw_4.x) can leave a fresh 4-line
+        // group behind for the next pass, so iterate until stable. Every pass
+        // only removes lines and rewrites uses to vector lane reads — the text
+        // strictly shrinks, so this terminates.
+        while (true)
+        {
+            string next = CollapseScalarLanesOnce(body);
+            if (next == body)
+                return body;
+            body = next;
+        }
+    }
+
+    private static string CollapseScalarLanesOnce(string body)
+    {
+        string[] lines = body.Split('\n');
+        var drop = new bool[lines.Length];
+        var edits = new Dictionary<int, List<(int Start, int Len, string Rep)>>();
+        int i = 0;
+        while (i + 3 < lines.Length)
+        {
+            string four = string.Join("\n",
+                new[] { lines[i], lines[i + 1], lines[i + 2], lines[i + 3] }.Select(l => l.Trim()));
+            System.Text.RegularExpressions.Match m = ScalarSplitGroupPattern.Match(four);
+            if (!m.Success)
+            {
+                i++;
+                continue;
+            }
+
+            string V = m.Groups["V"].Value;
+            string sx = m.Groups["sx"].Value, sy = m.Groups["sy"].Value,
+                   sz = m.Groups["sz"].Value, sw = m.Groups["sw"].Value;
+            var lane = new Dictionary<string, char> { { sx, 'x' }, { sy, 'y' }, { sz, 'z' }, { sw, 'w' } };
+
+            bool clean = true;
+            var groupEdits = new List<(int Line, int Start, int Len, string Rep)>();
+            for (int k = 0; k < lines.Length && clean; k++)
+            {
+                if (k >= i && k <= i + 3)
+                    continue;
+                string t = lines[k];
+
+                // (a) whole-constructor units first, so their args aren't
+                // re-processed as bare refs below.
+                var covered = new List<(int Start, int Len)>();
+                foreach (System.Text.RegularExpressions.Match cm in ScalarCtorPattern.Matches(t))
+                {
+                    string[] args = cm.Groups["args"].Value.Split(',').Select(a => a.Trim()).ToArray();
+                    if (args.All(a => lane.ContainsKey(a)))
+                    {
+                        string swz = string.Concat(args.Select(a => lane[a]));
+                        groupEdits.Add((k, cm.Index, cm.Length, swz == "xyzw" ? V : $"{V}.{swz}"));
+                        covered.Add((cm.Index, cm.Length));
+                    }
+                }
+
+                // (b)+(c) individual occurrences.
+                foreach (System.Text.RegularExpressions.Match nm in ScalarNamePattern.Matches(t))
+                {
+                    if (!lane.TryGetValue(nm.Value, out char lc))
+                        continue;
+                    if (covered.Any(c => nm.Index >= c.Start && nm.Index < c.Start + c.Len))
+                        continue;
+
+                    int after = nm.Index + nm.Value.Length;
+                    if (after < t.Length && t[after] == '.')
+                    {
+                        System.Text.RegularExpressions.Match sm = ScalarSplatPattern.Match(t, after);
+                        if (!sm.Success || sm.Index != after)
+                        {
+                            clean = false;
+                            break;
+                        }
+                        string suffix = sm.Value.Substring(1);
+                        if (suffix.Any(c => c != suffix[0]))
+                        {
+                            clean = false; // mixed swizzle on a scalar — not a clean lane splat
+                            break;
+                        }
+                        groupEdits.Add((k, nm.Index, sm.Index + sm.Length - nm.Index, $"{V}.{new string(lc, suffix.Length)}"));
+                    }
+                    else if (after < t.Length &&
+                             (char.IsLetterOrDigit(t[after]) || t[after] == '_' || t[after] == '[' || t[after] == '('))
+                    {
+                        clean = false; // unexpected attachment — leave the group alone
+                        break;
+                    }
+                    else
+                    {
+                        groupEdits.Add((k, nm.Index, nm.Value.Length, $"{V}.{lc}"));
+                    }
+                }
+            }
+
+            if (clean)
+            {
+                drop[i] = drop[i + 1] = drop[i + 2] = drop[i + 3] = true;
+                foreach ((int li, int st, int ln, string rep) in groupEdits)
+                {
+                    if (!edits.TryGetValue(li, out var list))
+                        edits[li] = list = new List<(int, int, string)>();
+                    list.Add((st, ln, rep));
+                }
+            }
+            i += 4;
+        }
+
+        var sb = new StringBuilder(body.Length);
+        bool first = true;
+        for (int k = 0; k < lines.Length; k++)
+        {
+            if (drop[k])
+                continue;
+            // Skip the empty element produced by the input's trailing '\n';
+            // it is restored below so the output's line structure matches.
+            if (k == lines.Length - 1 && lines[k].Length == 0)
+                continue;
+            string line = lines[k];
+            if (edits.TryGetValue(k, out var list))
+                foreach ((int st, int ln, string rep) in list.OrderByDescending(e => e.Start))
+                    line = line.Substring(0, st) + rep + line.Substring(st + ln);
+            if (!first)
+                sb.Append('\n');
+            sb.Append(line);
+            first = false;
+        }
+        if (body.Length > 0 && body[body.Length - 1] == '\n')
+            sb.Append('\n');
+        return sb.ToString();
     }
 
     // float4(x, x, x, x) with x a scalar stays as-is: d3dcompiler's strict

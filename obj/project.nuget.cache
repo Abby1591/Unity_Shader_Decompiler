@@ -1,8 +1,8 @@
 {
   "version": 2,
-  "dgSpecHash": "zRnDgxMI/wo=",
+  "dgSpecHash": "JSTpUlkEYps=",
   "success": true,
-  "projectFilePath": "C:\\Users\\Abby\\Software\\Unity Decompilers\\Unity Shader Decompiler\\Parser\\Parser.csproj",
+  "projectFilePath": "C:\\Users\\Abby\\Software\\Unity Decompilers\\Unity Shader Decompiler\\Shader Decompiler\\Shader Decompiler.csproj",
   "expectedPackageFiles": [
     "C:\\Users\\Abby\\.nuget\\packages\\sharpgen.runtime\\2.4.2-beta\\sharpgen.runtime.2.4.2-beta.nupkg.sha512",
     "C:\\Users\\Abby\\.nuget\\packages\\sharpgen.runtime.com\\2.4.2-beta\\sharpgen.runtime.com.2.4.2-beta.nupkg.sha512",

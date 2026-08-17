@@ -56,8 +56,13 @@ internal class Program
         {
             // Aggregate health across every decompiled .shader in the
             // Output root: one compile-rate + unmatched count instead of
-            // 39 ad-hoc single-file runs.
-            RecompileVerify.RunAll(FindOutputRoot());
+            // 39 ad-hoc single-file runs. Optional [1] root argument so the
+            // gate can be pointed at any Output folder (defaults to the
+            // canonical repo-root Output).
+            string root = args.Length > 1 && Directory.Exists(args[1])
+                ? args[1]
+                : FindOutputRoot();
+            RecompileVerify.RunAll(root);
             return;
         }
 
@@ -76,13 +81,39 @@ internal class Program
         // blob.bin + metadata.json (+ optional dummy.shader). For
         // backwards compat, a direct path to a blob.bin still works
         // (metadata/dummy are simply treated as absent in that case).
-        string inputPath = args.Length > 0 ? args[0] : "../Output";
+        // No-args default: the HOLO_Holo input folder in the repo-root
+        // Output (every shader — including HOLO_Holo — lives in its own
+        // folder there; no loose flat blob.bin at the Output root).
+        string inputPath = args.Length > 0 ? args[0] : "../Output/HOLO_Holo";
+
+        // Output root for the generated .shader (+ opt-in program*.bin/
+        // .dxbc/.hlsl artifacts). Defaults to the project-local Output/ so
+        // the results are visible inside the IDE workspace; --out-root
+        // overrides it (used to regenerate the canonical repo-root Output
+        // that the verification gates read).
+        string outRoot = ProjectOutputRoot();
+        int outRootFlag = Array.IndexOf(args, "--out-root");
+        if (outRootFlag >= 0 && outRootFlag + 1 < args.Length)
+            outRoot = args[outRootFlag + 1];
 
         ShaderProject project;
 
         if (Directory.Exists(inputPath))
         {
-            project = ShaderProject.LoadFromFolder(inputPath);
+            try
+            {
+                project = ShaderProject.LoadFromFolder(inputPath);
+            }
+            catch (FileNotFoundException ex)
+            {
+                Console.WriteLine(
+                    $"{ex.Message}. The default input folder '{inputPath}' needs " +
+                    "blob.bin + metadata.json produced by Extract.py. Run " +
+                    "`python Extract.py shaders_json/<name>.json --out-dir Output " +
+                    "(--flat for a single root-level shader)` first, or pass the " +
+                    "path to a folder/blob explicitly.");
+                return;
+            }
         }
         else if (File.Exists(inputPath))
         {
@@ -145,7 +176,7 @@ internal class Program
 
         program.Read(reader, 0);
 
-        Directory.CreateDirectory("Output");
+        Directory.CreateDirectory(outRoot);
 
         var decompiler = new HlslGenerator();
 
@@ -188,7 +219,7 @@ internal class Program
             if (saveSubprograms)
             {
                 // Save raw Unity shader program
-                string rawPath = Path.Combine("Output", $"program{i}.bin");
+                string rawPath = Path.Combine(outRoot, $"program{i}.bin");
                 File.WriteAllBytes(rawPath, sp.m_ProgramCode);
 
                 Console.WriteLine($"Saved: {rawPath}");
@@ -227,7 +258,7 @@ internal class Program
 
                 if (saveSubprograms)
                 {
-                    string dxbcPath = Path.Combine("Output", $"program{i}.dxbc");
+                    string dxbcPath = Path.Combine(outRoot, $"program{i}.dxbc");
                     File.WriteAllBytes(dxbcPath, dxbc);
 
                     Console.WriteLine($"Saved: {dxbcPath}");
@@ -414,7 +445,7 @@ internal class Program
                 if (saveSubprograms)
                 {
                     string hlsl = decompiler.Decompile(dxbc);
-                    string hlslPath = Path.Combine("Output", $"program{i}.hlsl");
+                    string hlslPath = Path.Combine(outRoot, $"program{i}.hlsl");
                     File.WriteAllText(hlslPath, hlsl);
                     Console.WriteLine($"Saved: {hlslPath}");
                 }
@@ -441,13 +472,13 @@ internal class Program
 
         bool surfaceReconstruct = !args.Contains("--no-surface-shaders");
 
-        PrintFullShaderOutput(project, astShader, !args.Contains("--no-fuse-temps"), surfaceReconstruct);
+        PrintFullShaderOutput(project, astShader, !args.Contains("--no-fuse-temps"), surfaceReconstruct, outRoot);
 
         Console.WriteLine();
         Console.WriteLine("Finished.");
     }
 
-    private static void PrintFullShaderOutput(ShaderProject project, HlslShaderNode astShader, bool fuseTemps, bool surfaceReconstruct)
+    private static void PrintFullShaderOutput(ShaderProject project, HlslShaderNode astShader, bool fuseTemps, bool surfaceReconstruct, string outRoot)
     {
         string text = HlslPrettyPrinter.Print(astShader, fuseTemps);
 
@@ -469,14 +500,14 @@ internal class Program
             }
         }
 
-        string outPath = Path.Combine("Output", SafeFileName(astShader.Name) + ".shader");
+        string outPath = Path.Combine(outRoot, SafeFileName(astShader.Name) + ".shader");
         File.WriteAllText(outPath, text);
         Console.WriteLine();
         Console.WriteLine($"Stage 13/14: full shader written to {outPath} ({text.Length} chars)");
     }
 
     private static string SafeFileName(string name) =>
-        string.Join("_", name.Split(Path.GetInvalidFileNameChars()));
+        string.Join("_", name.Split(Path.GetInvalidFileNameChars())).TrimEnd(' ', '.');
 
     private static void AttachFunction(HlslPassNode pass, HlslFunctionNode function)
     {
@@ -491,14 +522,16 @@ internal class Program
         }
     }
 
-    // Locate the decompiler Output/ folder regardless of the launch directory:
-    // walk up from the executable until a directory with an Output subfolder is
-    // found, falling back to <cwd>/Output.
+    // Locate the decompiler Output/ folder regardless of the launch directory.
+    // The executable lives under the repo tree, so walk up from it to find the
+    // canonical repo-root Output first (this is deterministic — the same
+    // folder no matter where the process was launched). Only fall back to
+    // <cwd>/Output when the executable is not under the repo at all. Keeping
+    // this shared by reads AND writes avoids a second, stale Output folder
+    // appearing next to the project when the tool is launched from Parser/.
     private static string FindOutputRoot()
     {
         string cwd = Directory.GetCurrentDirectory();
-        string direct = Path.Combine(cwd, "Output");
-        if (Directory.Exists(direct)) return direct;
 
         var dir = new DirectoryInfo(AppContext.BaseDirectory);
         while (dir is not null)
@@ -507,6 +540,26 @@ internal class Program
             if (Directory.Exists(candidate)) return candidate;
             dir = dir.Parent;
         }
-        return direct;
+
+        return Path.Combine(cwd, "Output");
+    }
+
+    // Project-local Output root: the Output/ folder INSIDE the C# project
+    // (the folder that owns the .csproj), found by walking up from the
+    // executable. This is where generated .shader files are written so they
+    // show up in an IDE whose workspace root is the project itself.
+    // Deterministic regardless of launch directory — the exe is always built
+    // under <project>/bin/<config>/<tfm>.
+    private static string ProjectOutputRoot()
+    {
+        var dir = new DirectoryInfo(AppContext.BaseDirectory);
+        while (dir is not null)
+        {
+            if (Directory.EnumerateFiles(dir.FullName, "*.csproj").Any())
+                return Path.Combine(dir.FullName, "Output");
+            dir = dir.Parent;
+        }
+
+        return FindOutputRoot();
     }
 }

@@ -80,7 +80,10 @@ def main():
 
     parser_exe = Path(args.parser)
     out_root = Path(args.out_root)
-    parser_out = REPO_ROOT / "Parser" / "Output"
+    # The parser resolves its output via ProjectOutputRoot(): it walks up from
+    # the executable to the C# project folder's Output/ regardless of launch
+    # cwd, so the .shader lands in <project>/Output (visible in the IDE).
+    parser_out = REPO_ROOT / "Shader Decompiler" / "Output"
     parser_out.mkdir(exist_ok=True)
 
     if not parser_exe.exists():
@@ -107,10 +110,9 @@ def main():
 
         meta = load_metadata(blob_folder)
 
-        # Stage 1+: decompile. Run with cwd = Parser so the parser's relative
-        # "Output" path resolves to Parser/Output; the bin/metadata/dummy
-        # extraction stays in the root Output/ folder.
-        r = run([str(parser_exe), str(blob_folder)], REPO_ROOT / "Parser")
+        # Stage 1+: decompile. The parser writes the final .shader into the
+        # C# project's Output/ (ProjectOutputRoot), independent of launch cwd.
+        r = run([str(parser_exe), str(blob_folder)], REPO_ROOT / "Shader Decompiler")
         log = r.stdout + r.stderr
         if r.returncode != 0 or "Unhandled exception" in log:
             print(f"[{label}] FAIL: decompiler crashed (exit {r.returncode})")
