@@ -135,14 +135,9 @@ public class ShaderSubProgram
                         }
                         break;
                     case ShaderGpuProgramType.SPIRV:
-                        try
-                        {
-                            sb.Append(SpirVShaderConverter.Convert(m_ProgramCode));
-                        }
-                        catch (Exception e)
-                        {
-                            sb.Append($"// disassembly error {e.Message}\n");
-                        }
+                        // SPIR-V disassembly was removed with the vendored Unity\Spirv
+                        // grammar; the decompiler only processes DX11 subprograms.
+                        sb.Append("// shader disassembly not supported on SPIRV");
                         break;
                     case ShaderGpuProgramType.ConsoleVS:
                     case ShaderGpuProgramType.ConsoleFS:
