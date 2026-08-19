@@ -539,13 +539,25 @@ private static string InterfaceKey(List<Parser.DXBC.Chunks.SignatureElement>? el
             // Pair by interpolator hand-off; deduplicate byte-identical
             // (vertex, fragment) program pairs. Iteration order is the
             // serialized subprogram order, so the first pair is the one the
-            // previous streaming code attached to the shell pass.
+            // previous streaming code attached to the shell pass. The vertex
+            // output must be a subset of the fragment input: the rasterizer
+            // can add system values the vertex never writes (SV_IsFrontFace,
+            // SV_Position, SV_Coverage, ...), which appear only on the
+            // fragment side.
             var pairs = new List<(SubprogramCandidate V, SubprogramCandidate F)>();
             var seen = new HashSet<(string, string)>();
             foreach (SubprogramCandidate v in verts)
+            {
+                string[] vertOut = v.SigOut.Split(';', StringSplitOptions.RemoveEmptyEntries);
+                if (vertOut.Length == 0)
+                    continue; // a vertex always writes interpolators; don't match an empty output
                 foreach (SubprogramCandidate f in frags)
-                    if (v.SigOut == f.SigIn && seen.Add((v.Hash, f.Hash)))
+                {
+                    if (vertOut.All(f.SigIn.Split(';', StringSplitOptions.RemoveEmptyEntries).Contains)
+                        && seen.Add((v.Hash, f.Hash)))
                         pairs.Add((v, f));
+                }
+            }
 
             // First pair fills the shell pass; the rest get clones.
             for (int pi = 0; pi < pairs.Count; pi++)

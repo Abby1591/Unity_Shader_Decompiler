@@ -217,6 +217,97 @@ Shader "Toon/Basic"
             }
             ENDHLSL
         }
+        Pass
+        {
+            Tags { "RenderType"="Opaque" }
+            Cull Off
+            ZTest LEqual
+            ZWrite On
+            HLSLPROGRAM
+            cbuffer _Globals : register(b0)
+            {
+                float4 _MainTex_ST;
+                float4 _Color;
+                float4 cb0_values[4];
+            };
+            cbuffer UnityPerDraw : register(b1)
+            {
+                float4x4 unity_ObjectToWorld;
+                float4 cb1_values[4];
+            };
+            cbuffer UnityPerFrame : register(b2)
+            {
+                float4x4 unity_MatrixV;
+                float4x4 unity_MatrixVP;
+                float4 cb2_values[21];
+            };
+            SamplerState s0 : register(s0);
+            SamplerState s1 : register(s1);
+            Texture2D t0 : register(t0);
+            TextureCube t1 : register(t1);
+            struct program2Input
+            {
+                float4 position0 : POSITION0;
+                float2 texcoord0 : TEXCOORD0;
+                float3 normal0 : NORMAL0;
+            };
+            struct program2Output
+            {
+                float4 sv_Position0 : SV_POSITION0;
+                float2 texcoord0 : TEXCOORD0;
+                float3 texcoord1 : TEXCOORD1;
+            };
+            struct program7Input
+            {
+                float4 sv_Position0 : SV_POSITION0;
+                float2 texcoord0 : TEXCOORD0;
+                float texcoord2 : TEXCOORD2;
+                float3 texcoord1 : TEXCOORD1;
+            };
+            struct program7Output
+            {
+                float4 sv_Target0 : SV_Target0;
+            };
+            #pragma vertex vert
+            program2Output vert(program2Input i)
+            {
+                program2Output o = (program2Output)0;
+                #define UnityObjectToClipPos(v) mul(unity_MatrixVP, v)
+                #define UnityObjectToWorldPos(v) mul(unity_ObjectToWorld, float4(v, 1.0))
+                float4 worldPos_xyzw_4 = UnityObjectToWorldPos(i.position0.xyz);
+                o.sv_Position0.xyzw = UnityObjectToClipPos(worldPos_xyzw_4);
+                o.texcoord0.xy = (mad(i.texcoord0.xyxx, _MainTex_ST.xyxx, _MainTex_ST.zwzz)).xy;
+                float3 objectToView1_xyz_5 = ((unity_ObjectToWorld[1].yyyy * unity_MatrixV[1].xyzx)).xyz;
+                float3 objectToView1_xyz_6 = (mad(unity_MatrixV[0].xyzx, unity_ObjectToWorld[1].xxxx, objectToView1_xyz_5.xyzx)).xyz;
+                float3 objectToView1_xyz_7 = (mad(unity_MatrixV[2].xyzx, unity_ObjectToWorld[1].zzzz, objectToView1_xyz_6.xyzx)).xyz;
+                float3 objectToView1_xyz_8 = (mad(unity_MatrixV[3].xyzx, unity_ObjectToWorld[1].wwww, objectToView1_xyz_7.xyzx)).xyz;
+                float3 viewNormal_xyz_9 = ((objectToView1_xyz_8.xyzx * i.normal0.yyyy)).xyz;
+                float3 objectToView0_xyz_4 = ((unity_ObjectToWorld[0].yyyy * unity_MatrixV[1].xyzx)).xyz;
+                float3 objectToView0_xyz_5 = (mad(unity_MatrixV[0].xyzx, unity_ObjectToWorld[0].xxxx, objectToView0_xyz_4.xyzx)).xyz;
+                float3 objectToView0_xyz_6 = (mad(unity_MatrixV[2].xyzx, unity_ObjectToWorld[0].zzzz, objectToView0_xyz_5.xyzx)).xyz;
+                float3 objectToView0_xyz_7 = (mad(unity_MatrixV[3].xyzx, unity_ObjectToWorld[0].wwww, objectToView0_xyz_6.xyzx)).xyz;
+                float3 viewNormal_xyz_10 = (mad(objectToView0_xyz_7.xyzx, i.normal0.xxxx, viewNormal_xyz_9.xyzx)).xyz;
+                float3 objectToView2_xyz_8 = ((unity_ObjectToWorld[2].yyyy * unity_MatrixV[1].xyzx)).xyz;
+                float3 objectToView2_xyz_9 = (mad(unity_MatrixV[0].xyzx, unity_ObjectToWorld[2].xxxx, objectToView2_xyz_8.xyzx)).xyz;
+                float3 objectToView2_xyz_10 = (mad(unity_MatrixV[2].xyzx, unity_ObjectToWorld[2].zzzz, objectToView2_xyz_9.xyzx)).xyz;
+                float3 objectToView2_xyz_11 = (mad(unity_MatrixV[3].xyzx, unity_ObjectToWorld[2].wwww, objectToView2_xyz_10.xyzx)).xyz;
+                o.texcoord1.xyz = (mad(objectToView2_xyz_11.xyzx, i.normal0.zzzz, viewNormal_xyz_10.xyzx)).xyz;
+                return o;
+            }
+            #pragma fragment frag
+            program7Output frag(program7Input i)
+            {
+                program7Output o = (program7Output)0;
+                float4 r0_xyzw_1 = t1.Sample(s1, i.texcoord1.xyzx);
+                float4 r1_xyzw_1 = t0.Sample(s0, i.texcoord0.xyxx);
+                float4 r1_xyzw_2 = (r1_xyzw_1 * _Color);
+                o.sv_Target0.w = r1_xyzw_2.w;
+                float TEXCOORD0_w_2 = i.texcoord2.x;
+                o.sv_Target0.xyz = (mad(TEXCOORD0_w_2.xxxx, (mad(((r0_xyzw_1.xyzx + r0_xyzw_1.xyzx)).xyzx, r1_xyzw_2.xyzx, -cb1_values[0].xyzx)).xyzx, cb1_values[0].xyzx)).xyz;
+                return o;
+            }
+            ENDHLSL
+        }
     }
     Fallback "VertexLit"
 }

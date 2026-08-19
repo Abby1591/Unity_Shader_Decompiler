@@ -481,6 +481,125 @@ Shader "ShurikenMagic/TransparentRim"
                 float texcoord3 : TEXCOORD3;
                 float3 texcoord1 : TEXCOORD1;
             };
+            struct program17Input
+            {
+                float4 sv_Position0 : SV_POSITION0;
+                float3 texcoord0 : TEXCOORD0;
+                float texcoord3 : TEXCOORD3;
+                float3 texcoord1 : TEXCOORD1;
+                float3 texcoord2 : TEXCOORD2;
+            };
+            struct program17Output
+            {
+                float4 sv_Target0 : SV_Target0;
+            };
+            #pragma vertex vert
+            program9Output vert(program9Input i)
+            {
+                program9Output o = (program9Output)0;
+                float4 worldPos_xyzw_2 = mad(cb1_values[0].xyzw, i.position0.xxxx, (i.position0.yyyy * cb1_values[1].xyzw));
+                float4 worldPos_xyzw_3 = mad(cb1_values[2].xyzw, i.position0.zzzz, worldPos_xyzw_2);
+                float4 worldPos_xyzw_1 = (worldPos_xyzw_3 + cb1_values[3].xyzw);
+                o.texcoord1.xyz = (mad(cb1_values[3].xyzx, i.position0.wwww, worldPos_xyzw_3.xyzx)).xyz;
+                float4 clipPos_xyzw_4 = (worldPos_xyzw_1.yyyy * cb2_values[18].xyzw);
+                float4 clipPos_xyzw_5 = mad(cb2_values[17].xyzw, worldPos_xyzw_1.xxxx, clipPos_xyzw_4);
+                float4 clipPos_xyzw_6 = mad(cb2_values[19].xyzw, worldPos_xyzw_1.zzzz, clipPos_xyzw_5);
+                float4 clipPos_xyzw_7 = mad(cb2_values[20].xyzw, worldPos_xyzw_1.wwww, clipPos_xyzw_6);
+                o.sv_Position0.xyzw = clipPos_xyzw_7;
+                o.texcoord3.x = mad(max((((clipPos_xyzw_7.z / unity_WorldToObject[1].y) + 1) * unity_WorldToObject[1].z), 0), cb3_values[1].z, cb3_values[1].w);
+                float worldNormal_x_12 = dot(i.normal0.xyzx, cb1_values[4].xyzx);
+                float worldNormal_y_8 = dot(i.normal0.xyzx, cb1_values[5].xyzx);
+                float worldNormal_z_8 = dot(i.normal0.xyzx, cb1_values[6].xyzx);
+                float r0_w_8 = dot(float4(worldNormal_x_12, worldNormal_y_8, worldNormal_z_8, worldNormal_x_12), float4(worldNormal_x_12, worldNormal_y_8, worldNormal_z_8, worldNormal_x_12));
+                float r0_w_9 = rsqrt(r0_w_8);
+                o.texcoord0.xyz = ((r0_w_9.xxxx * float4(worldNormal_x_12, worldNormal_y_8, worldNormal_z_8, worldNormal_x_12))).xyz;
+                return o;
+            }
+            #pragma fragment frag
+            program17Output frag(program17Input i)
+            {
+                program17Output o = (program17Output)0;
+                float3 viewDir_xyz_1 = ((-i.texcoord1.xyzx + _WorldSpaceCameraPos.xyzx)).xyz;
+                float r0_w_1 = dot(viewDir_xyz_1.xyzx, viewDir_xyz_1.xyzx);
+                float r0_w_2 = rsqrt(r0_w_1);
+                float4 r0_xyzw_6 = ((log2((dot(((r0_w_2.xxxx * viewDir_xyz_1.xyzx)).xyzx, i.texcoord0.xyzx) + 1))).xxxx * cb0_values[5].xyxx);
+                float r0_x_6 = r0_xyzw_6.x;
+                float r0_y_3 = r0_xyzw_6.y;
+                float4 r0_xyzw_7 = exp2(float4(r0_x_6, r0_y_3, r0_x_6, r0_x_6));
+                float r0_x_7 = r0_xyzw_7.x;
+                float r0_y_4 = r0_xyzw_7.y;
+                float4 r0_xyzw_8 = (r0_x_7.xxxx * _RimColor.xxyz);
+                float r0_x_8 = r0_xyzw_8.x;
+                float r0_z_3 = r0_xyzw_8.z;
+                float r0_w_3 = r0_xyzw_8.w;
+                o.sv_Target0.w = (r0_y_4 * _AllPower);
+                float3 r1_xyz_1 = ((_InnerColorPower.xxxx * _InnerColor.xyzx)).xyz;
+                float4 r0_xyzw_9 = mad(float4(r0_x_8, r0_z_3, r0_w_3, r0_x_8), _AllPower.xxxx, ((r1_xyz_1.xyzx + r1_xyz_1.xyzx)).xyzx);
+                float r0_x_9 = r0_xyzw_9.x;
+                float r0_y_5 = r0_xyzw_9.y;
+                float r0_z_4 = r0_xyzw_9.z;
+                float4 r0_xyzw_10 = (float4(r0_x_9, r0_y_5, r0_z_4, r0_x_9) + -cb2_values[0].xyzx);
+                float r0_x_10 = r0_xyzw_10.x;
+                float r0_y_6 = r0_xyzw_10.y;
+                float r0_z_5 = r0_xyzw_10.z;
+                float TEXCOORD0_w_4 = i.texcoord3.x;
+                o.sv_Target0.xyz = (mad(TEXCOORD0_w_4.xxxx, float4(r0_x_10, r0_y_6, r0_z_5, r0_x_10), cb2_values[0].xyzx)).xyz;
+                return o;
+            }
+            ENDHLSL
+        }
+        Pass
+        {
+            Tags { "LIGHTMODE"="FORWARDBASE" "QUEUE"="Transparent" }
+            Cull Back
+            ZTest LEqual
+            ZWrite Off
+            Blend SrcAlpha OneMinusSrcColor
+            HLSLPROGRAM
+            cbuffer UnityPerDraw : register(b0)
+            {
+                float4x4 unity_ObjectToWorld;
+                float4x4 unity_WorldToObject;
+                float4 _RimColor;
+                float _RimPower;
+                float _AlphaPower;
+                float _InnerColorPower;
+                float _AllPower;
+                float4 _InnerColor;
+                float4 cb0_values[8];
+            };
+            cbuffer UnityPerFrame : register(b1)
+            {
+                float3 _WorldSpaceCameraPos;
+                float4x4 unity_MatrixVP;
+                float4 cb1_values[7];
+            };
+            cbuffer cb2 : register(b2)
+            {
+                float4 cb2_values[21];
+            };
+            cbuffer cb3 : register(b3)
+            {
+                float4 cb3_values[2];
+            };
+            struct program9Input
+            {
+                float4 position0 : POSITION0;
+                float4 tangent0 : TANGENT0;
+                float3 normal0 : NORMAL0;
+                float4 texcoord0 : TEXCOORD0;
+                float4 texcoord1 : TEXCOORD1;
+                float4 texcoord2 : TEXCOORD2;
+                float4 texcoord3 : TEXCOORD3;
+                float4 color0 : COLOR0;
+            };
+            struct program9Output
+            {
+                float4 sv_Position0 : SV_POSITION0;
+                float3 texcoord0 : TEXCOORD0;
+                float texcoord3 : TEXCOORD3;
+                float3 texcoord1 : TEXCOORD1;
+            };
             struct program16Input
             {
                 float4 sv_Position0 : SV_POSITION0;
@@ -518,11 +637,151 @@ Shader "ShurikenMagic/TransparentRim"
             program16Output frag(program16Input i)
             {
                 program16Output o = (program16Output)0;
+                float3 r0_xyz_1 = ((-i.texcoord1.xyzx + _WorldSpaceCameraPos.xyzx)).xyz;
+                float r0_w_1 = dot(r0_xyz_1.xyzx, r0_xyz_1.xyzx);
+                float r0_w_2 = rsqrt(r0_w_1);
+                float4 r0_xyzw_6 = ((log2((dot(((r0_w_2.xxxx * r0_xyz_1.xyzx)).xyzx, i.texcoord0.xyzx) + 1))).xxxx * cb0_values[5].xyxx);
+                float r0_x_6 = r0_xyzw_6.x;
+                float r0_y_3 = r0_xyzw_6.y;
+                float4 r0_xyzw_7 = exp2(float4(r0_x_6, r0_y_3, r0_x_6, r0_x_6));
+                float r0_x_7 = r0_xyzw_7.x;
+                float r0_y_4 = r0_xyzw_7.y;
+                float4 r0_xyzw_8 = (r0_x_7.xxxx * _RimColor.xxyz);
+                float r0_x_8 = r0_xyzw_8.x;
+                float r0_z_3 = r0_xyzw_8.z;
+                float r0_w_3 = r0_xyzw_8.w;
+                o.sv_Target0.w = (r0_y_4 * _AllPower);
+                float3 r1_xyz_1 = ((_InnerColorPower.xxxx * _InnerColor.xyzx)).xyz;
+                float4 r0_xyzw_9 = mad(float4(r0_x_8, r0_z_3, r0_w_3, r0_x_8), _AllPower.xxxx, ((r1_xyz_1.xyzx + r1_xyz_1.xyzx)).xyzx);
+                float r0_x_9 = r0_xyzw_9.x;
+                float r0_y_5 = r0_xyzw_9.y;
+                float r0_z_4 = r0_xyzw_9.z;
+                float4 r0_xyzw_10 = (float4(r0_x_9, r0_y_5, r0_z_4, r0_x_9) + -cb2_values[0].xyzx);
+                float r0_x_10 = r0_xyzw_10.x;
+                float r0_y_6 = r0_xyzw_10.y;
+                float r0_z_5 = r0_xyzw_10.z;
+                float TEXCOORD0_w_4 = i.texcoord3.x;
+                o.sv_Target0.xyz = (mad(TEXCOORD0_w_4.xxxx, float4(r0_x_10, r0_y_6, r0_z_5, r0_x_10), cb2_values[0].xyzx)).xyz;
+                return o;
+            }
+            ENDHLSL
+        }
+        Pass
+        {
+            Tags { "LIGHTMODE"="FORWARDBASE" "QUEUE"="Transparent" }
+            Cull Back
+            ZTest LEqual
+            ZWrite Off
+            Blend SrcAlpha OneMinusSrcColor
+            HLSLPROGRAM
+            cbuffer UnityPerDraw : register(b0)
+            {
+                float4x4 unity_ObjectToWorld;
+                float4x4 unity_WorldToObject;
+                float4 _RimColor;
+                float _RimPower;
+                float _AlphaPower;
+                float _InnerColorPower;
+                float _AllPower;
+                float4 _InnerColor;
+                float4 cb0_values[46];
+            };
+            cbuffer UnityPerFrame : register(b1)
+            {
+                float3 _WorldSpaceCameraPos;
+                float4x4 unity_MatrixVP;
+                float4 cb1_values[7];
+            };
+            cbuffer cb2 : register(b2)
+            {
+                float4 cb2_values[21];
+            };
+            struct program8Input
+            {
+                float4 position0 : POSITION0;
+                float4 tangent0 : TANGENT0;
+                float3 normal0 : NORMAL0;
+                float4 texcoord0 : TEXCOORD0;
+                float4 texcoord1 : TEXCOORD1;
+                float4 texcoord2 : TEXCOORD2;
+                float4 texcoord3 : TEXCOORD3;
+                float4 color0 : COLOR0;
+            };
+            struct program8Output
+            {
+                float4 sv_Position0 : SV_POSITION0;
+                float3 texcoord0 : TEXCOORD0;
+                float3 texcoord1 : TEXCOORD1;
+                float3 texcoord2 : TEXCOORD2;
+            };
+            struct program17Input
+            {
+                float4 sv_Position0 : SV_POSITION0;
+                float3 texcoord0 : TEXCOORD0;
+                float texcoord3 : TEXCOORD3;
+                float3 texcoord1 : TEXCOORD1;
+                float3 texcoord2 : TEXCOORD2;
+            };
+            struct program17Output
+            {
+                float4 sv_Target0 : SV_Target0;
+            };
+            #pragma vertex vert
+            program8Output vert(program8Input i)
+            {
+                program8Output o = (program8Output)0;
+                float4 worldPos_xyzw_2 = mad(cb1_values[0].xyzw, i.position0.xxxx, (i.position0.yyyy * cb1_values[1].xyzw));
+                float4 worldPos_xyzw_3 = mad(cb1_values[2].xyzw, i.position0.zzzz, worldPos_xyzw_2);
+                float4 worldPos_xyzw_1 = (worldPos_xyzw_3 + cb1_values[3].xyzw);
+                float3 r0_xyz_4 = (mad(cb1_values[3].xyzx, i.position0.wwww, worldPos_xyzw_3.xyzx)).xyz;
+                float4 clipPos_xyzw_2 = mad(cb2_values[17].xyzw, worldPos_xyzw_1.xxxx, (worldPos_xyzw_1.yyyy * cb2_values[18].xyzw));
+                float4 clipPos_xyzw_3 = mad(cb2_values[19].xyzw, worldPos_xyzw_1.zzzz, clipPos_xyzw_2);
+                o.sv_Position0.xyzw = mad(cb2_values[20].xyzw, worldPos_xyzw_1.wwww, clipPos_xyzw_3);
+                float worldNormal_x_2 = dot(i.normal0.xyzx, cb1_values[4].xyzx);
+                float worldNormal_y_2 = dot(i.normal0.xyzx, cb1_values[5].xyzx);
+                float worldNormal_z_2 = dot(i.normal0.xyzx, cb1_values[6].xyzx);
+                float r0_w_4 = dot(float4(worldNormal_x_2, worldNormal_y_2, worldNormal_z_2, worldNormal_x_2), float4(worldNormal_x_2, worldNormal_y_2, worldNormal_z_2, worldNormal_x_2));
+                float r0_w_5 = rsqrt(r0_w_4);
+                float3 unitWorldNormal_xyz_3 = ((r0_w_5.xxxx * float4(worldNormal_x_2, worldNormal_y_2, worldNormal_z_2, worldNormal_x_2))).xyz;
+                o.texcoord0.xyz = (unitWorldNormal_xyz_3.xyzx).xyz;
+                o.texcoord1.xyz = (r0_xyz_4.xyzx).xyz;
+                float r0_w_6 = (unitWorldNormal_xyz_3.y * unitWorldNormal_xyz_3.y);
+                float r0_w_7 = mad(unitWorldNormal_xyz_3.x, unitWorldNormal_xyz_3.x, -r0_w_6);
+                float4 r2_xyzw_4 = (unitWorldNormal_xyz_3.yzzx * unitWorldNormal_xyz_3.xyzz);
+                float r3_x_1 = dot(cb0_values[42].xyzw, r2_xyzw_4);
+                float r3_y_1 = dot(cb0_values[43].xyzw, r2_xyzw_4);
+                float r3_z_1 = dot(cb0_values[44].xyzw, r2_xyzw_4);
+                float r1_w_2 = 1;
+                float r3_x_2 = dot(cb0_values[39].xyzw, float4(unitWorldNormal_xyz_3.x, unitWorldNormal_xyz_3.y, unitWorldNormal_xyz_3.z, r1_w_2));
+                float r3_y_2 = dot(cb0_values[40].xyzw, float4(unitWorldNormal_xyz_3.x, unitWorldNormal_xyz_3.y, unitWorldNormal_xyz_3.z, r1_w_2));
+                float r3_z_2 = dot(cb0_values[41].xyzw, float4(unitWorldNormal_xyz_3.x, unitWorldNormal_xyz_3.y, unitWorldNormal_xyz_3.z, r1_w_2));
+                float3 r2_xyz_9 = (((log2((max((((mad(cb0_values[45].xyzx, r0_w_7.xxxx, float4(r3_x_1, r3_y_1, r3_z_1, r3_x_1))).xyzx + float4(r3_x_2, r3_y_2, r3_z_2, r3_x_2))).xyzx, float4(0, 0, 0, 0))).xyzx)).xyzx * float4(0.41666666, 0.41666666, 0.41666666, 0))).xyz;
+                float4 r3_xyzw_3 = (-r0_xyz_4.yyyy + unity_WorldToObject[0]);
+                float4 r3_xyzw_4 = (r3_xyzw_3 * r3_xyzw_3);
+                float4 r5_xyzw_1 = (-r0_xyz_4.xxxx + unity_ObjectToWorld[3]);
+                float4 r0_xyzw_5 = (-r0_xyz_4.zzzz + unity_WorldToObject[1]);
+                float4 r1_xyzw_4 = mad(r0_xyzw_5, unitWorldNormal_xyz_3.zzzz, mad(r5_xyzw_1, unitWorldNormal_xyz_3.xxxx, (unitWorldNormal_xyz_3.yyyy * r3_xyzw_3)));
+                float4 r3_xyzw_5 = mad(r5_xyzw_1, r5_xyzw_1, r3_xyzw_4);
+                float4 r0_xyzw_6 = mad(r0_xyzw_5, r0_xyzw_5, r3_xyzw_5);
+                float4 r0_xyzw_7 = max(r0_xyzw_6, float4(1E-06, 1E-06, 1E-06, 1E-06));
+                float4 r3_xyzw_6 = rsqrt(r0_xyzw_7);
+                float4 r0_xyzw_8 = mad(r0_xyzw_7, unity_WorldToObject[2], float4(1, 1, 1, 1));
+                float4 r0_xyzw_9 = (float4(1, 1, 1, 1) / r0_xyzw_8);
+                float4 r1_xyzw_5 = (r1_xyzw_4 * r3_xyzw_6);
+                float4 r1_xyzw_6 = max(r1_xyzw_5, float4(0, 0, 0, 0));
+                float4 r0_xyzw_10 = (r0_xyzw_9 * r1_xyzw_6);
+                float3 r0_xyz_12 = (mad(cb0_values[10].xyzx, r0_xyzw_10.wwww, (mad(cb0_values[9].xyzx, r0_xyzw_10.zzzz, (mad(unity_WorldToObject[3].xyzx, r0_xyzw_10.xxxx, ((r0_xyzw_10.yyyy * cb0_values[8].xyzx)).xyzx)).xyzx)).xyzx)).xyz;
+                o.texcoord2.xyz = (((max((mad((exp2(r2_xyz_9.xyzx)).xyzx, float4(1.055, 1.055, 1.055, 0), float4(-0.055, -0.055, -0.055, 0))).xyzx, float4(0, 0, 0, 0))).xyzx + r0_xyz_12.xyzx)).xyz;
+                return o;
+            }
+            #pragma fragment frag
+            program17Output frag(program17Input i)
+            {
+                program17Output o = (program17Output)0;
                 float3 viewDir_xyz_1 = ((-i.texcoord1.xyzx + _WorldSpaceCameraPos.xyzx)).xyz;
                 float r0_w_1 = dot(viewDir_xyz_1.xyzx, viewDir_xyz_1.xyzx);
                 float r0_w_2 = rsqrt(r0_w_1);
-                float3 unitViewDir_xyz_2 = ((r0_w_2.xxxx * viewDir_xyz_1.xyzx)).xyz;
-                float4 r0_xyzw_6 = ((log2((dot(unitViewDir_xyz_2.xyzx, i.texcoord0.xyzx) + 1))).xxxx * cb0_values[5].xyxx);
+                float4 r0_xyzw_6 = ((log2((dot(((r0_w_2.xxxx * viewDir_xyz_1.xyzx)).xyzx, i.texcoord0.xyzx) + 1))).xxxx * cb0_values[5].xyxx);
                 float r0_x_6 = r0_xyzw_6.x;
                 float r0_y_3 = r0_xyzw_6.y;
                 float4 r0_xyzw_7 = exp2(float4(r0_x_6, r0_y_3, r0_x_6, r0_x_6));
@@ -727,6 +986,134 @@ Shader "ShurikenMagic/TransparentRim"
                 float3 texcoord1 : TEXCOORD1;
                 float3 texcoord2 : TEXCOORD2;
             };
+            struct program17Input
+            {
+                float4 sv_Position0 : SV_POSITION0;
+                float3 texcoord0 : TEXCOORD0;
+                float texcoord3 : TEXCOORD3;
+                float3 texcoord1 : TEXCOORD1;
+                float3 texcoord2 : TEXCOORD2;
+            };
+            struct program17Output
+            {
+                float4 sv_Target0 : SV_Target0;
+            };
+            #pragma vertex vert
+            program7Output vert(program7Input i)
+            {
+                program7Output o = (program7Output)0;
+                float4 worldPos_xyzw_2 = mad(cb1_values[0].xyzw, i.position0.xxxx, (i.position0.yyyy * cb1_values[1].xyzw));
+                float4 worldPos_xyzw_3 = mad(cb1_values[2].xyzw, i.position0.zzzz, worldPos_xyzw_2);
+                float4 worldPos_xyzw_1 = (worldPos_xyzw_3 + cb1_values[3].xyzw);
+                o.texcoord1.xyz = (mad(cb1_values[3].xyzx, i.position0.wwww, worldPos_xyzw_3.xyzx)).xyz;
+                float4 clipPos_xyzw_4 = (worldPos_xyzw_1.yyyy * cb2_values[18].xyzw);
+                float4 clipPos_xyzw_5 = mad(cb2_values[17].xyzw, worldPos_xyzw_1.xxxx, clipPos_xyzw_4);
+                float4 clipPos_xyzw_6 = mad(cb2_values[19].xyzw, worldPos_xyzw_1.zzzz, clipPos_xyzw_5);
+                o.sv_Position0.xyzw = mad(cb2_values[20].xyzw, worldPos_xyzw_1.wwww, clipPos_xyzw_6);
+                float worldNormal_x_7 = dot(i.normal0.xyzx, cb1_values[4].xyzx);
+                float worldNormal_y_7 = dot(i.normal0.xyzx, cb1_values[5].xyzx);
+                float worldNormal_z_7 = dot(i.normal0.xyzx, cb1_values[6].xyzx);
+                float r0_w_7 = dot(float4(worldNormal_x_7, worldNormal_y_7, worldNormal_z_7, worldNormal_x_7), float4(worldNormal_x_7, worldNormal_y_7, worldNormal_z_7, worldNormal_x_7));
+                float r0_w_8 = rsqrt(r0_w_7);
+                float3 unitWorldNormal_xyz_8 = ((r0_w_8.xxxx * float4(worldNormal_x_7, worldNormal_y_7, worldNormal_z_7, worldNormal_x_7))).xyz;
+                o.texcoord0.xyz = (unitWorldNormal_xyz_8.xyzx).xyz;
+                float4 r2_xyzw_1 = (unitWorldNormal_xyz_8.yzzx * unitWorldNormal_xyz_8.xyzz);
+                float r3_x_1 = dot(cb0_values[42].xyzw, r2_xyzw_1);
+                float r3_y_1 = dot(cb0_values[43].xyzw, r2_xyzw_1);
+                float r3_z_1 = dot(cb0_values[44].xyzw, r2_xyzw_1);
+                float4 r1_xyzw_4 = mad(cb0_values[45].xyzx, (mad(unitWorldNormal_xyz_8.x, unitWorldNormal_xyz_8.x, (unitWorldNormal_xyz_8.y * unitWorldNormal_xyz_8.y))).xxxx, float4(r3_x_1, r3_y_1, r3_z_1, r3_x_1));
+                float r1_x_4 = r1_xyzw_4.x;
+                float r1_y_2 = r1_xyzw_4.y;
+                float r1_z_2 = r1_xyzw_4.z;
+                float r0_w_9 = 1;
+                float r2_x_2 = dot(cb0_values[39].xyzw, float4(unitWorldNormal_xyz_8.x, unitWorldNormal_xyz_8.y, unitWorldNormal_xyz_8.z, r0_w_9));
+                float r2_y_2 = dot(cb0_values[40].xyzw, float4(unitWorldNormal_xyz_8.x, unitWorldNormal_xyz_8.y, unitWorldNormal_xyz_8.z, r0_w_9));
+                float r2_z_2 = dot(cb0_values[41].xyzw, float4(unitWorldNormal_xyz_8.x, unitWorldNormal_xyz_8.y, unitWorldNormal_xyz_8.z, r0_w_9));
+                float3 r0_xyz_13 = (exp2((((log2((max(((float4(r1_x_4, r1_y_2, r1_z_2, r1_x_4) + float4(r2_x_2, r2_y_2, r2_z_2, r2_x_2))).xyzx, float4(0, 0, 0, 0))).xyzx)).xyzx * float4(0.41666666, 0.41666666, 0.41666666, 0))).xyzx)).xyz;
+                o.texcoord2.xyz = (max((mad(r0_xyz_13.xyzx, float4(1.055, 1.055, 1.055, 0), float4(-0.055, -0.055, -0.055, 0))).xyzx, float4(0, 0, 0, 0))).xyz;
+                return o;
+            }
+            #pragma fragment frag
+            program17Output frag(program17Input i)
+            {
+                program17Output o = (program17Output)0;
+                float3 viewDir_xyz_1 = ((-i.texcoord1.xyzx + _WorldSpaceCameraPos.xyzx)).xyz;
+                float r0_w_1 = dot(viewDir_xyz_1.xyzx, viewDir_xyz_1.xyzx);
+                float r0_w_2 = rsqrt(r0_w_1);
+                float4 r0_xyzw_6 = ((log2((dot(((r0_w_2.xxxx * viewDir_xyz_1.xyzx)).xyzx, i.texcoord0.xyzx) + 1))).xxxx * cb0_values[5].xyxx);
+                float r0_x_6 = r0_xyzw_6.x;
+                float r0_y_3 = r0_xyzw_6.y;
+                float4 r0_xyzw_7 = exp2(float4(r0_x_6, r0_y_3, r0_x_6, r0_x_6));
+                float r0_x_7 = r0_xyzw_7.x;
+                float r0_y_4 = r0_xyzw_7.y;
+                float4 r0_xyzw_8 = (r0_x_7.xxxx * _RimColor.xxyz);
+                float r0_x_8 = r0_xyzw_8.x;
+                float r0_z_3 = r0_xyzw_8.z;
+                float r0_w_3 = r0_xyzw_8.w;
+                o.sv_Target0.w = (r0_y_4 * _AllPower);
+                float3 r1_xyz_1 = ((_InnerColorPower.xxxx * _InnerColor.xyzx)).xyz;
+                float4 r0_xyzw_9 = mad(float4(r0_x_8, r0_z_3, r0_w_3, r0_x_8), _AllPower.xxxx, ((r1_xyz_1.xyzx + r1_xyz_1.xyzx)).xyzx);
+                float r0_x_9 = r0_xyzw_9.x;
+                float r0_y_5 = r0_xyzw_9.y;
+                float r0_z_4 = r0_xyzw_9.z;
+                float4 r0_xyzw_10 = (float4(r0_x_9, r0_y_5, r0_z_4, r0_x_9) + -cb2_values[0].xyzx);
+                float r0_x_10 = r0_xyzw_10.x;
+                float r0_y_6 = r0_xyzw_10.y;
+                float r0_z_5 = r0_xyzw_10.z;
+                float TEXCOORD0_w_4 = i.texcoord3.x;
+                o.sv_Target0.xyz = (mad(TEXCOORD0_w_4.xxxx, float4(r0_x_10, r0_y_6, r0_z_5, r0_x_10), cb2_values[0].xyzx)).xyz;
+                return o;
+            }
+            ENDHLSL
+        }
+        Pass
+        {
+            Tags { "LIGHTMODE"="FORWARDBASE" "QUEUE"="Transparent" }
+            Cull Back
+            ZTest LEqual
+            ZWrite Off
+            Blend SrcAlpha OneMinusSrcColor
+            HLSLPROGRAM
+            cbuffer UnityPerDraw : register(b0)
+            {
+                float4x4 unity_ObjectToWorld;
+                float4x4 unity_WorldToObject;
+                float4 _RimColor;
+                float _RimPower;
+                float _AlphaPower;
+                float _InnerColorPower;
+                float _AllPower;
+                float4 _InnerColor;
+                float4 cb0_values[46];
+            };
+            cbuffer UnityPerFrame : register(b1)
+            {
+                float3 _WorldSpaceCameraPos;
+                float4x4 unity_MatrixVP;
+                float4 cb1_values[7];
+            };
+            cbuffer cb2 : register(b2)
+            {
+                float4 cb2_values[21];
+            };
+            struct program7Input
+            {
+                float4 position0 : POSITION0;
+                float4 tangent0 : TANGENT0;
+                float3 normal0 : NORMAL0;
+                float4 texcoord0 : TEXCOORD0;
+                float4 texcoord1 : TEXCOORD1;
+                float4 texcoord2 : TEXCOORD2;
+                float4 texcoord3 : TEXCOORD3;
+                float4 color0 : COLOR0;
+            };
+            struct program7Output
+            {
+                float4 sv_Position0 : SV_POSITION0;
+                float3 texcoord0 : TEXCOORD0;
+                float3 texcoord1 : TEXCOORD1;
+                float3 texcoord2 : TEXCOORD2;
+            };
             struct program15Input
             {
                 float4 sv_Position0 : SV_POSITION0;
@@ -771,6 +1158,318 @@ Shader "ShurikenMagic/TransparentRim"
                 float r2_z_2 = dot(cb0_values[41].xyzw, float4(unitWorldNormal_xyz_8.x, unitWorldNormal_xyz_8.y, unitWorldNormal_xyz_8.z, r0_w_9));
                 float3 r0_xyz_13 = (exp2((((log2((max(((float4(r1_x_4, r1_y_2, r1_z_2, r1_x_4) + float4(r2_x_2, r2_y_2, r2_z_2, r2_x_2))).xyzx, float4(0, 0, 0, 0))).xyzx)).xyzx * float4(0.41666666, 0.41666666, 0.41666666, 0))).xyzx)).xyz;
                 o.texcoord2.xyz = (max((mad(r0_xyz_13.xyzx, float4(1.055, 1.055, 1.055, 0), float4(-0.055, -0.055, -0.055, 0))).xyzx, float4(0, 0, 0, 0))).xyz;
+                return o;
+            }
+            #pragma fragment frag
+            program15Output frag(program15Input i)
+            {
+                program15Output o = (program15Output)0;
+                float3 r0_xyz_1 = ((-i.texcoord1.xyzx + _WorldSpaceCameraPos.xyzx)).xyz;
+                float r0_w_1 = dot(r0_xyz_1.xyzx, r0_xyz_1.xyzx);
+                float r0_w_2 = rsqrt(r0_w_1);
+                float4 r0_xyzw_6 = ((log2((dot(((r0_w_2.xxxx * r0_xyz_1.xyzx)).xyzx, i.texcoord0.xyzx) + 1))).xxxx * cb0_values[5].xyxx);
+                float r0_x_6 = r0_xyzw_6.x;
+                float r0_y_3 = r0_xyzw_6.y;
+                float4 r0_xyzw_7 = exp2(float4(r0_x_6, r0_y_3, r0_x_6, r0_x_6));
+                float r0_x_7 = r0_xyzw_7.x;
+                float r0_y_4 = r0_xyzw_7.y;
+                float4 r0_xyzw_8 = (r0_x_7.xxxx * _RimColor.xxyz);
+                float r0_x_8 = r0_xyzw_8.x;
+                float r0_z_3 = r0_xyzw_8.z;
+                float r0_w_3 = r0_xyzw_8.w;
+                o.sv_Target0.w = (r0_y_4 * _AllPower);
+                float3 r1_xyz_1 = ((_InnerColorPower.xxxx * _InnerColor.xyzx)).xyz;
+                o.sv_Target0.xyz = (mad(float4(r0_x_8, r0_z_3, r0_w_3, r0_x_8), _AllPower.xxxx, ((r1_xyz_1.xyzx + r1_xyz_1.xyzx)).xyzx)).xyz;
+                return o;
+            }
+            ENDHLSL
+        }
+        Pass
+        {
+            Tags { "LIGHTMODE"="FORWARDBASE" "QUEUE"="Transparent" }
+            Cull Back
+            ZTest LEqual
+            ZWrite Off
+            Blend SrcAlpha OneMinusSrcColor
+            HLSLPROGRAM
+            cbuffer UnityPerDraw : register(b0)
+            {
+                float4x4 unity_ObjectToWorld;
+                float4x4 unity_WorldToObject;
+                float4 _RimColor;
+                float _RimPower;
+                float _AlphaPower;
+                float _InnerColorPower;
+                float _AllPower;
+                float4 _InnerColor;
+                float4 cb0_values[8];
+            };
+            cbuffer UnityPerFrame : register(b1)
+            {
+                float3 _WorldSpaceCameraPos;
+                float4x4 unity_MatrixVP;
+                float4 cb1_values[21];
+            };
+            cbuffer cb2 : register(b2)
+            {
+                float4 cb2_values[1];
+            };
+            struct program6Input
+            {
+                float4 position0 : POSITION0;
+                float4 tangent0 : TANGENT0;
+                float3 normal0 : NORMAL0;
+                float4 texcoord0 : TEXCOORD0;
+                float4 texcoord1 : TEXCOORD1;
+                float4 texcoord2 : TEXCOORD2;
+                float4 texcoord3 : TEXCOORD3;
+                float4 color0 : COLOR0;
+            };
+            struct program6Output
+            {
+                float4 sv_Position0 : SV_POSITION0;
+                float3 texcoord0 : TEXCOORD0;
+                float3 texcoord1 : TEXCOORD1;
+            };
+            struct program17Input
+            {
+                float4 sv_Position0 : SV_POSITION0;
+                float3 texcoord0 : TEXCOORD0;
+                float texcoord3 : TEXCOORD3;
+                float3 texcoord1 : TEXCOORD1;
+                float3 texcoord2 : TEXCOORD2;
+            };
+            struct program17Output
+            {
+                float4 sv_Target0 : SV_Target0;
+            };
+            #pragma vertex vert
+            program6Output vert(program6Input i)
+            {
+                program6Output o = (program6Output)0;
+                #define UnityObjectToClipPos(v) mul(unity_MatrixVP, v)
+                #define UnityObjectToWorldPos(v) mul(unity_ObjectToWorld, float4(v, 1.0))
+                float4 worldPos_xyzw_1 = UnityObjectToWorldPos(i.position0.xyz);
+                o.texcoord1.xyz = worldPos_xyzw_1.xyz;
+                o.sv_Position0.xyzw = UnityObjectToClipPos(worldPos_xyzw_1);
+                float worldNormal_x_7 = dot(i.normal0.xyzx, unity_WorldToObject[0].xyzx);
+                float worldNormal_y_7 = dot(i.normal0.xyzx, unity_WorldToObject[1].xyzx);
+                float worldNormal_z_7 = dot(i.normal0.xyzx, unity_WorldToObject[2].xyzx);
+                float r0_w_7 = dot(float4(worldNormal_x_7, worldNormal_y_7, worldNormal_z_7, worldNormal_x_7), float4(worldNormal_x_7, worldNormal_y_7, worldNormal_z_7, worldNormal_x_7));
+                float r0_w_8 = rsqrt(r0_w_7);
+                o.texcoord0.xyz = ((r0_w_8.xxxx * float4(worldNormal_x_7, worldNormal_y_7, worldNormal_z_7, worldNormal_x_7))).xyz;
+                return o;
+            }
+            #pragma fragment frag
+            program17Output frag(program17Input i)
+            {
+                program17Output o = (program17Output)0;
+                float3 viewDir_xyz_1 = ((-i.texcoord1.xyzx + _WorldSpaceCameraPos.xyzx)).xyz;
+                float r0_w_1 = dot(viewDir_xyz_1.xyzx, viewDir_xyz_1.xyzx);
+                float r0_w_2 = rsqrt(r0_w_1);
+                float4 r0_xyzw_6 = ((log2((dot(((r0_w_2.xxxx * viewDir_xyz_1.xyzx)).xyzx, i.texcoord0.xyzx) + 1))).xxxx * cb0_values[5].xyxx);
+                float r0_x_6 = r0_xyzw_6.x;
+                float r0_y_3 = r0_xyzw_6.y;
+                float4 r0_xyzw_7 = exp2(float4(r0_x_6, r0_y_3, r0_x_6, r0_x_6));
+                float r0_x_7 = r0_xyzw_7.x;
+                float r0_y_4 = r0_xyzw_7.y;
+                float4 r0_xyzw_8 = (r0_x_7.xxxx * _RimColor.xxyz);
+                float r0_x_8 = r0_xyzw_8.x;
+                float r0_z_3 = r0_xyzw_8.z;
+                float r0_w_3 = r0_xyzw_8.w;
+                o.sv_Target0.w = (r0_y_4 * _AllPower);
+                float3 r1_xyz_1 = ((_InnerColorPower.xxxx * _InnerColor.xyzx)).xyz;
+                float4 r0_xyzw_9 = mad(float4(r0_x_8, r0_z_3, r0_w_3, r0_x_8), _AllPower.xxxx, ((r1_xyz_1.xyzx + r1_xyz_1.xyzx)).xyzx);
+                float r0_x_9 = r0_xyzw_9.x;
+                float r0_y_5 = r0_xyzw_9.y;
+                float r0_z_4 = r0_xyzw_9.z;
+                float4 r0_xyzw_10 = (float4(r0_x_9, r0_y_5, r0_z_4, r0_x_9) + -cb2_values[0].xyzx);
+                float r0_x_10 = r0_xyzw_10.x;
+                float r0_y_6 = r0_xyzw_10.y;
+                float r0_z_5 = r0_xyzw_10.z;
+                float TEXCOORD0_w_4 = i.texcoord3.x;
+                o.sv_Target0.xyz = (mad(TEXCOORD0_w_4.xxxx, float4(r0_x_10, r0_y_6, r0_z_5, r0_x_10), cb2_values[0].xyzx)).xyz;
+                return o;
+            }
+            ENDHLSL
+        }
+        Pass
+        {
+            Tags { "LIGHTMODE"="FORWARDBASE" "QUEUE"="Transparent" }
+            Cull Back
+            ZTest LEqual
+            ZWrite Off
+            Blend SrcAlpha OneMinusSrcColor
+            HLSLPROGRAM
+            cbuffer UnityPerDraw : register(b0)
+            {
+                float4x4 unity_ObjectToWorld;
+                float4x4 unity_WorldToObject;
+                float4 _RimColor;
+                float _RimPower;
+                float _AlphaPower;
+                float _InnerColorPower;
+                float _AllPower;
+                float4 _InnerColor;
+                float4 cb0_values[8];
+            };
+            cbuffer UnityPerFrame : register(b1)
+            {
+                float3 _WorldSpaceCameraPos;
+                float4x4 unity_MatrixVP;
+                float4 cb1_values[21];
+            };
+            cbuffer cb2 : register(b2)
+            {
+                float4 cb2_values[1];
+            };
+            struct program6Input
+            {
+                float4 position0 : POSITION0;
+                float4 tangent0 : TANGENT0;
+                float3 normal0 : NORMAL0;
+                float4 texcoord0 : TEXCOORD0;
+                float4 texcoord1 : TEXCOORD1;
+                float4 texcoord2 : TEXCOORD2;
+                float4 texcoord3 : TEXCOORD3;
+                float4 color0 : COLOR0;
+            };
+            struct program6Output
+            {
+                float4 sv_Position0 : SV_POSITION0;
+                float3 texcoord0 : TEXCOORD0;
+                float3 texcoord1 : TEXCOORD1;
+            };
+            struct program16Input
+            {
+                float4 sv_Position0 : SV_POSITION0;
+                float3 texcoord0 : TEXCOORD0;
+                float texcoord3 : TEXCOORD3;
+                float3 texcoord1 : TEXCOORD1;
+            };
+            struct program16Output
+            {
+                float4 sv_Target0 : SV_Target0;
+            };
+            #pragma vertex vert
+            program6Output vert(program6Input i)
+            {
+                program6Output o = (program6Output)0;
+                #define UnityObjectToClipPos(v) mul(unity_MatrixVP, v)
+                #define UnityObjectToWorldPos(v) mul(unity_ObjectToWorld, float4(v, 1.0))
+                float4 worldPos_xyzw_1 = UnityObjectToWorldPos(i.position0.xyz);
+                o.texcoord1.xyz = worldPos_xyzw_1.xyz;
+                o.sv_Position0.xyzw = UnityObjectToClipPos(worldPos_xyzw_1);
+                float worldNormal_x_7 = dot(i.normal0.xyzx, unity_WorldToObject[0].xyzx);
+                float worldNormal_y_7 = dot(i.normal0.xyzx, unity_WorldToObject[1].xyzx);
+                float worldNormal_z_7 = dot(i.normal0.xyzx, unity_WorldToObject[2].xyzx);
+                float r0_w_7 = dot(float4(worldNormal_x_7, worldNormal_y_7, worldNormal_z_7, worldNormal_x_7), float4(worldNormal_x_7, worldNormal_y_7, worldNormal_z_7, worldNormal_x_7));
+                float r0_w_8 = rsqrt(r0_w_7);
+                o.texcoord0.xyz = ((r0_w_8.xxxx * float4(worldNormal_x_7, worldNormal_y_7, worldNormal_z_7, worldNormal_x_7))).xyz;
+                return o;
+            }
+            #pragma fragment frag
+            program16Output frag(program16Input i)
+            {
+                program16Output o = (program16Output)0;
+                float3 viewDir_xyz_1 = ((-i.texcoord1.xyzx + _WorldSpaceCameraPos.xyzx)).xyz;
+                float r0_w_1 = dot(viewDir_xyz_1.xyzx, viewDir_xyz_1.xyzx);
+                float r0_w_2 = rsqrt(r0_w_1);
+                float4 r0_xyzw_6 = ((log2((dot(((r0_w_2.xxxx * viewDir_xyz_1.xyzx)).xyzx, i.texcoord0.xyzx) + 1))).xxxx * cb0_values[5].xyxx);
+                float r0_x_6 = r0_xyzw_6.x;
+                float r0_y_3 = r0_xyzw_6.y;
+                float4 r0_xyzw_7 = exp2(float4(r0_x_6, r0_y_3, r0_x_6, r0_x_6));
+                float r0_x_7 = r0_xyzw_7.x;
+                float r0_y_4 = r0_xyzw_7.y;
+                float4 r0_xyzw_8 = (r0_x_7.xxxx * _RimColor.xxyz);
+                float r0_x_8 = r0_xyzw_8.x;
+                float r0_z_3 = r0_xyzw_8.z;
+                float r0_w_3 = r0_xyzw_8.w;
+                o.sv_Target0.w = (r0_y_4 * _AllPower);
+                float3 r1_xyz_1 = ((_InnerColorPower.xxxx * _InnerColor.xyzx)).xyz;
+                float4 r0_xyzw_9 = mad(float4(r0_x_8, r0_z_3, r0_w_3, r0_x_8), _AllPower.xxxx, ((r1_xyz_1.xyzx + r1_xyz_1.xyzx)).xyzx);
+                float r0_x_9 = r0_xyzw_9.x;
+                float r0_y_5 = r0_xyzw_9.y;
+                float r0_z_4 = r0_xyzw_9.z;
+                float4 r0_xyzw_10 = (float4(r0_x_9, r0_y_5, r0_z_4, r0_x_9) + -cb2_values[0].xyzx);
+                float r0_x_10 = r0_xyzw_10.x;
+                float r0_y_6 = r0_xyzw_10.y;
+                float r0_z_5 = r0_xyzw_10.z;
+                float TEXCOORD0_w_4 = i.texcoord3.x;
+                o.sv_Target0.xyz = (mad(TEXCOORD0_w_4.xxxx, float4(r0_x_10, r0_y_6, r0_z_5, r0_x_10), cb2_values[0].xyzx)).xyz;
+                return o;
+            }
+            ENDHLSL
+        }
+        Pass
+        {
+            Tags { "LIGHTMODE"="FORWARDBASE" "QUEUE"="Transparent" }
+            Cull Back
+            ZTest LEqual
+            ZWrite Off
+            Blend SrcAlpha OneMinusSrcColor
+            HLSLPROGRAM
+            cbuffer UnityPerDraw : register(b0)
+            {
+                float4x4 unity_ObjectToWorld;
+                float4x4 unity_WorldToObject;
+                float4 _RimColor;
+                float _RimPower;
+                float _AlphaPower;
+                float _InnerColorPower;
+                float _AllPower;
+                float4 _InnerColor;
+                float4 cb0_values[8];
+            };
+            cbuffer UnityPerFrame : register(b1)
+            {
+                float3 _WorldSpaceCameraPos;
+                float4x4 unity_MatrixVP;
+                float4 cb1_values[21];
+            };
+            struct program6Input
+            {
+                float4 position0 : POSITION0;
+                float4 tangent0 : TANGENT0;
+                float3 normal0 : NORMAL0;
+                float4 texcoord0 : TEXCOORD0;
+                float4 texcoord1 : TEXCOORD1;
+                float4 texcoord2 : TEXCOORD2;
+                float4 texcoord3 : TEXCOORD3;
+                float4 color0 : COLOR0;
+            };
+            struct program6Output
+            {
+                float4 sv_Position0 : SV_POSITION0;
+                float3 texcoord0 : TEXCOORD0;
+                float3 texcoord1 : TEXCOORD1;
+            };
+            struct program15Input
+            {
+                float4 sv_Position0 : SV_POSITION0;
+                float3 texcoord0 : TEXCOORD0;
+                float3 texcoord1 : TEXCOORD1;
+                float3 texcoord2 : TEXCOORD2;
+            };
+            struct program15Output
+            {
+                float4 sv_Target0 : SV_Target0;
+            };
+            #pragma vertex vert
+            program6Output vert(program6Input i)
+            {
+                program6Output o = (program6Output)0;
+                #define UnityObjectToClipPos(v) mul(unity_MatrixVP, v)
+                #define UnityObjectToWorldPos(v) mul(unity_ObjectToWorld, float4(v, 1.0))
+                float4 worldPos_xyzw_1 = UnityObjectToWorldPos(i.position0.xyz);
+                o.texcoord1.xyz = worldPos_xyzw_1.xyz;
+                o.sv_Position0.xyzw = UnityObjectToClipPos(worldPos_xyzw_1);
+                float worldNormal_x_7 = dot(i.normal0.xyzx, unity_WorldToObject[0].xyzx);
+                float worldNormal_y_7 = dot(i.normal0.xyzx, unity_WorldToObject[1].xyzx);
+                float worldNormal_z_7 = dot(i.normal0.xyzx, unity_WorldToObject[2].xyzx);
+                float r0_w_7 = dot(float4(worldNormal_x_7, worldNormal_y_7, worldNormal_z_7, worldNormal_x_7), float4(worldNormal_x_7, worldNormal_y_7, worldNormal_z_7, worldNormal_x_7));
+                float r0_w_8 = rsqrt(r0_w_7);
+                o.texcoord0.xyz = ((r0_w_8.xxxx * float4(worldNormal_x_7, worldNormal_y_7, worldNormal_z_7, worldNormal_x_7))).xyz;
                 return o;
             }
             #pragma fragment frag
@@ -1492,6 +2191,290 @@ Shader "ShurikenMagic/TransparentRim"
                 float3 texcoord1 : TEXCOORD1;
                 float2 texcoord2 : TEXCOORD2;
             };
+            struct program39Input
+            {
+                float4 sv_Position0 : SV_POSITION0;
+                float3 texcoord0 : TEXCOORD0;
+                float3 texcoord1 : TEXCOORD1;
+                float2 texcoord2 : TEXCOORD2;
+                float texcoord3 : TEXCOORD3;
+            };
+            struct program39Output
+            {
+                float4 sv_Target0 : SV_Target0;
+            };
+            #pragma vertex vert
+            program23Output vert(program23Input i)
+            {
+                program23Output o = (program23Output)0;
+                float4 worldPos_xyzw_2 = mad(cb1_values[0].xyzw, i.position0.xxxx, (i.position0.yyyy * cb1_values[1].xyzw));
+                float4 worldPos_xyzw_3 = mad(cb1_values[2].xyzw, i.position0.zzzz, worldPos_xyzw_2);
+                float4 worldPos_xyzw_1 = (worldPos_xyzw_3 + cb1_values[3].xyzw);
+                float4 clipPos_xyzw_2 = mad(cb2_values[17].xyzw, worldPos_xyzw_1.xxxx, (worldPos_xyzw_1.yyyy * cb2_values[18].xyzw));
+                float4 clipPos_xyzw_3 = mad(cb2_values[19].xyzw, worldPos_xyzw_1.zzzz, clipPos_xyzw_2);
+                o.sv_Position0.xyzw = mad(cb2_values[20].xyzw, worldPos_xyzw_1.wwww, clipPos_xyzw_3);
+                float worldNormal_x_2 = dot(i.normal0.xyzx, cb1_values[4].xyzx);
+                float worldNormal_y_2 = dot(i.normal0.xyzx, cb1_values[5].xyzx);
+                float worldNormal_z_2 = dot(i.normal0.xyzx, cb1_values[6].xyzx);
+                float r1_w_2 = dot(float4(worldNormal_x_2, worldNormal_y_2, worldNormal_z_2, worldNormal_x_2), float4(worldNormal_x_2, worldNormal_y_2, worldNormal_z_2, worldNormal_x_2));
+                float r1_w_3 = rsqrt(r1_w_2);
+                o.texcoord0.xyz = ((r1_w_3.xxxx * float4(worldNormal_x_2, worldNormal_y_2, worldNormal_z_2, worldNormal_x_2))).xyz;
+                o.texcoord1.xyz = (mad(cb1_values[3].xyzx, i.position0.wwww, worldPos_xyzw_3.xyzx)).xyz;
+                float4 r0_xyzw_4 = mad(cb1_values[3].xyzw, i.position0.wwww, worldPos_xyzw_3);
+                o.texcoord2.xy = (mad(unity_WorldToObject[3].xyxx, r0_xyzw_4.wwww, (mad(unity_WorldToObject[2].xyxx, r0_xyzw_4.zzzz, (mad(unity_WorldToObject[0].xyxx, r0_xyzw_4.xxxx, ((r0_xyzw_4.yyyy * unity_WorldToObject[1].xyxx)).xyxx)).xyxx)).xyxx)).xy;
+                return o;
+            }
+            #pragma fragment frag
+            program39Output frag(program39Input i)
+            {
+                program39Output o = (program39Output)0;
+                float3 viewDir_xyz_1 = ((-i.texcoord1.xyzx + _WorldSpaceCameraPos.xyzx)).xyz;
+                float r0_w_1 = dot(viewDir_xyz_1.xyzx, viewDir_xyz_1.xyzx);
+                float r0_w_2 = rsqrt(r0_w_1);
+                float3 unitViewDir_xyz_2 = ((r0_w_2.xxxx * viewDir_xyz_1.xyzx)).xyz;
+                o.sv_Target0.w = (exp2((log2((dot(unitViewDir_xyz_2.xyzx, i.texcoord0.xyzx) + 1)) * cb0_values[9].y)) * cb0_values[10].x);
+                o.sv_Target0.xyz = (float4(0, 0, 0, 0)).xyz;
+                return o;
+            }
+            ENDHLSL
+        }
+        Pass
+        {
+            Tags { "LIGHTMODE"="FORWARDADD" "QUEUE"="Transparent" }
+            Cull Back
+            ZTest LEqual
+            ZWrite Off
+            Blend SrcAlpha One
+            HLSLPROGRAM
+            cbuffer UnityPerDraw : register(b0)
+            {
+                float4x4 unity_ObjectToWorld;
+                float4x4 unity_WorldToObject;
+                float4 _RimColor;
+                float _RimPower;
+                float _AlphaPower;
+                float _InnerColorPower;
+                float _AllPower;
+                float4 _InnerColor;
+                float4 cb0_values[11];
+            };
+            cbuffer UnityPerFrame : register(b1)
+            {
+                float3 _WorldSpaceCameraPos;
+                float4x4 unity_MatrixVP;
+                float4 cb1_values[7];
+            };
+            cbuffer cb2 : register(b2)
+            {
+                float4 cb2_values[21];
+            };
+            struct program23Input
+            {
+                float4 position0 : POSITION0;
+                float4 tangent0 : TANGENT0;
+                float3 normal0 : NORMAL0;
+                float4 texcoord0 : TEXCOORD0;
+                float4 texcoord1 : TEXCOORD1;
+                float4 texcoord2 : TEXCOORD2;
+                float4 texcoord3 : TEXCOORD3;
+                float4 color0 : COLOR0;
+            };
+            struct program23Output
+            {
+                float4 sv_Position0 : SV_POSITION0;
+                float3 texcoord0 : TEXCOORD0;
+                float3 texcoord1 : TEXCOORD1;
+                float2 texcoord2 : TEXCOORD2;
+            };
+            struct program37Input
+            {
+                float4 sv_Position0 : SV_POSITION0;
+                float3 texcoord0 : TEXCOORD0;
+                float texcoord3 : TEXCOORD3;
+                float3 texcoord1 : TEXCOORD1;
+                float4 texcoord2 : TEXCOORD2;
+            };
+            struct program37Output
+            {
+                float4 sv_Target0 : SV_Target0;
+            };
+            #pragma vertex vert
+            program23Output vert(program23Input i)
+            {
+                program23Output o = (program23Output)0;
+                float4 worldPos_xyzw_2 = mad(cb1_values[0].xyzw, i.position0.xxxx, (i.position0.yyyy * cb1_values[1].xyzw));
+                float4 worldPos_xyzw_3 = mad(cb1_values[2].xyzw, i.position0.zzzz, worldPos_xyzw_2);
+                float4 worldPos_xyzw_1 = (worldPos_xyzw_3 + cb1_values[3].xyzw);
+                float4 clipPos_xyzw_2 = mad(cb2_values[17].xyzw, worldPos_xyzw_1.xxxx, (worldPos_xyzw_1.yyyy * cb2_values[18].xyzw));
+                float4 clipPos_xyzw_3 = mad(cb2_values[19].xyzw, worldPos_xyzw_1.zzzz, clipPos_xyzw_2);
+                o.sv_Position0.xyzw = mad(cb2_values[20].xyzw, worldPos_xyzw_1.wwww, clipPos_xyzw_3);
+                float worldNormal_x_2 = dot(i.normal0.xyzx, cb1_values[4].xyzx);
+                float worldNormal_y_2 = dot(i.normal0.xyzx, cb1_values[5].xyzx);
+                float worldNormal_z_2 = dot(i.normal0.xyzx, cb1_values[6].xyzx);
+                float r1_w_2 = dot(float4(worldNormal_x_2, worldNormal_y_2, worldNormal_z_2, worldNormal_x_2), float4(worldNormal_x_2, worldNormal_y_2, worldNormal_z_2, worldNormal_x_2));
+                float r1_w_3 = rsqrt(r1_w_2);
+                o.texcoord0.xyz = ((r1_w_3.xxxx * float4(worldNormal_x_2, worldNormal_y_2, worldNormal_z_2, worldNormal_x_2))).xyz;
+                o.texcoord1.xyz = (mad(cb1_values[3].xyzx, i.position0.wwww, worldPos_xyzw_3.xyzx)).xyz;
+                float4 r0_xyzw_4 = mad(cb1_values[3].xyzw, i.position0.wwww, worldPos_xyzw_3);
+                o.texcoord2.xy = (mad(unity_WorldToObject[3].xyxx, r0_xyzw_4.wwww, (mad(unity_WorldToObject[2].xyxx, r0_xyzw_4.zzzz, (mad(unity_WorldToObject[0].xyxx, r0_xyzw_4.xxxx, ((r0_xyzw_4.yyyy * unity_WorldToObject[1].xyxx)).xyxx)).xyxx)).xyxx)).xy;
+                return o;
+            }
+            #pragma fragment frag
+            program37Output frag(program37Input i)
+            {
+                program37Output o = (program37Output)0;
+                float3 viewDir_xyz_1 = ((-i.texcoord1.xyzx + _WorldSpaceCameraPos.xyzx)).xyz;
+                float r0_w_1 = dot(viewDir_xyz_1.xyzx, viewDir_xyz_1.xyzx);
+                float r0_w_2 = rsqrt(r0_w_1);
+                float3 unitViewDir_xyz_2 = ((r0_w_2.xxxx * viewDir_xyz_1.xyzx)).xyz;
+                o.sv_Target0.w = (exp2((log2((dot(unitViewDir_xyz_2.xyzx, i.texcoord0.xyzx) + 1)) * cb0_values[9].y)) * cb0_values[10].x);
+                o.sv_Target0.xyz = (float4(0, 0, 0, 0)).xyz;
+                return o;
+            }
+            ENDHLSL
+        }
+        Pass
+        {
+            Tags { "LIGHTMODE"="FORWARDADD" "QUEUE"="Transparent" }
+            Cull Back
+            ZTest LEqual
+            ZWrite Off
+            Blend SrcAlpha One
+            HLSLPROGRAM
+            cbuffer UnityPerDraw : register(b0)
+            {
+                float4x4 unity_ObjectToWorld;
+                float4x4 unity_WorldToObject;
+                float4 _RimColor;
+                float _RimPower;
+                float _AlphaPower;
+                float _InnerColorPower;
+                float _AllPower;
+                float4 _InnerColor;
+                float4 cb0_values[11];
+            };
+            cbuffer UnityPerFrame : register(b1)
+            {
+                float3 _WorldSpaceCameraPos;
+                float4x4 unity_MatrixVP;
+                float4 cb1_values[7];
+            };
+            cbuffer cb2 : register(b2)
+            {
+                float4 cb2_values[21];
+            };
+            struct program23Input
+            {
+                float4 position0 : POSITION0;
+                float4 tangent0 : TANGENT0;
+                float3 normal0 : NORMAL0;
+                float4 texcoord0 : TEXCOORD0;
+                float4 texcoord1 : TEXCOORD1;
+                float4 texcoord2 : TEXCOORD2;
+                float4 texcoord3 : TEXCOORD3;
+                float4 color0 : COLOR0;
+            };
+            struct program23Output
+            {
+                float4 sv_Position0 : SV_POSITION0;
+                float3 texcoord0 : TEXCOORD0;
+                float3 texcoord1 : TEXCOORD1;
+                float2 texcoord2 : TEXCOORD2;
+            };
+            struct program35Input
+            {
+                float4 sv_Position0 : SV_POSITION0;
+                float3 texcoord0 : TEXCOORD0;
+                float texcoord3 : TEXCOORD3;
+                float3 texcoord1 : TEXCOORD1;
+                float3 texcoord2 : TEXCOORD2;
+            };
+            struct program35Output
+            {
+                float4 sv_Target0 : SV_Target0;
+            };
+            #pragma vertex vert
+            program23Output vert(program23Input i)
+            {
+                program23Output o = (program23Output)0;
+                float4 worldPos_xyzw_2 = mad(cb1_values[0].xyzw, i.position0.xxxx, (i.position0.yyyy * cb1_values[1].xyzw));
+                float4 worldPos_xyzw_3 = mad(cb1_values[2].xyzw, i.position0.zzzz, worldPos_xyzw_2);
+                float4 worldPos_xyzw_1 = (worldPos_xyzw_3 + cb1_values[3].xyzw);
+                float4 clipPos_xyzw_2 = mad(cb2_values[17].xyzw, worldPos_xyzw_1.xxxx, (worldPos_xyzw_1.yyyy * cb2_values[18].xyzw));
+                float4 clipPos_xyzw_3 = mad(cb2_values[19].xyzw, worldPos_xyzw_1.zzzz, clipPos_xyzw_2);
+                o.sv_Position0.xyzw = mad(cb2_values[20].xyzw, worldPos_xyzw_1.wwww, clipPos_xyzw_3);
+                float worldNormal_x_2 = dot(i.normal0.xyzx, cb1_values[4].xyzx);
+                float worldNormal_y_2 = dot(i.normal0.xyzx, cb1_values[5].xyzx);
+                float worldNormal_z_2 = dot(i.normal0.xyzx, cb1_values[6].xyzx);
+                float r1_w_2 = dot(float4(worldNormal_x_2, worldNormal_y_2, worldNormal_z_2, worldNormal_x_2), float4(worldNormal_x_2, worldNormal_y_2, worldNormal_z_2, worldNormal_x_2));
+                float r1_w_3 = rsqrt(r1_w_2);
+                o.texcoord0.xyz = ((r1_w_3.xxxx * float4(worldNormal_x_2, worldNormal_y_2, worldNormal_z_2, worldNormal_x_2))).xyz;
+                o.texcoord1.xyz = (mad(cb1_values[3].xyzx, i.position0.wwww, worldPos_xyzw_3.xyzx)).xyz;
+                float4 r0_xyzw_4 = mad(cb1_values[3].xyzw, i.position0.wwww, worldPos_xyzw_3);
+                o.texcoord2.xy = (mad(unity_WorldToObject[3].xyxx, r0_xyzw_4.wwww, (mad(unity_WorldToObject[2].xyxx, r0_xyzw_4.zzzz, (mad(unity_WorldToObject[0].xyxx, r0_xyzw_4.xxxx, ((r0_xyzw_4.yyyy * unity_WorldToObject[1].xyxx)).xyxx)).xyxx)).xyxx)).xy;
+                return o;
+            }
+            #pragma fragment frag
+            program35Output frag(program35Input i)
+            {
+                program35Output o = (program35Output)0;
+                float3 r0_xyz_1 = ((-i.texcoord1.xyzx + _WorldSpaceCameraPos.xyzx)).xyz;
+                float r0_w_1 = dot(r0_xyz_1.xyzx, r0_xyz_1.xyzx);
+                float r0_w_2 = rsqrt(r0_w_1);
+                o.sv_Target0.w = (exp2((log2((dot(((r0_w_2.xxxx * r0_xyz_1.xyzx)).xyzx, i.texcoord0.xyzx) + 1)) * cb0_values[9].y)) * cb0_values[10].x);
+                o.sv_Target0.xyz = (float4(0, 0, 0, 0)).xyz;
+                return o;
+            }
+            ENDHLSL
+        }
+        Pass
+        {
+            Tags { "LIGHTMODE"="FORWARDADD" "QUEUE"="Transparent" }
+            Cull Back
+            ZTest LEqual
+            ZWrite Off
+            Blend SrcAlpha One
+            HLSLPROGRAM
+            cbuffer UnityPerDraw : register(b0)
+            {
+                float4x4 unity_ObjectToWorld;
+                float4x4 unity_WorldToObject;
+                float4 _RimColor;
+                float _RimPower;
+                float _AlphaPower;
+                float _InnerColorPower;
+                float _AllPower;
+                float4 _InnerColor;
+                float4 cb0_values[11];
+            };
+            cbuffer UnityPerFrame : register(b1)
+            {
+                float3 _WorldSpaceCameraPos;
+                float4x4 unity_MatrixVP;
+                float4 cb1_values[7];
+            };
+            cbuffer cb2 : register(b2)
+            {
+                float4 cb2_values[21];
+            };
+            struct program23Input
+            {
+                float4 position0 : POSITION0;
+                float4 tangent0 : TANGENT0;
+                float3 normal0 : NORMAL0;
+                float4 texcoord0 : TEXCOORD0;
+                float4 texcoord1 : TEXCOORD1;
+                float4 texcoord2 : TEXCOORD2;
+                float4 texcoord3 : TEXCOORD3;
+                float4 color0 : COLOR0;
+            };
+            struct program23Output
+            {
+                float4 sv_Position0 : SV_POSITION0;
+                float3 texcoord0 : TEXCOORD0;
+                float3 texcoord1 : TEXCOORD1;
+                float2 texcoord2 : TEXCOORD2;
+            };
             struct program34Input
             {
                 float4 sv_Position0 : SV_POSITION0;
@@ -1528,11 +2511,10 @@ Shader "ShurikenMagic/TransparentRim"
             program34Output frag(program34Input i)
             {
                 program34Output o = (program34Output)0;
-                float3 viewDir_xyz_1 = ((-i.texcoord1.xyzx + _WorldSpaceCameraPos.xyzx)).xyz;
-                float r0_w_1 = dot(viewDir_xyz_1.xyzx, viewDir_xyz_1.xyzx);
+                float3 r0_xyz_1 = ((-i.texcoord1.xyzx + _WorldSpaceCameraPos.xyzx)).xyz;
+                float r0_w_1 = dot(r0_xyz_1.xyzx, r0_xyz_1.xyzx);
                 float r0_w_2 = rsqrt(r0_w_1);
-                float3 unitViewDir_xyz_2 = ((r0_w_2.xxxx * viewDir_xyz_1.xyzx)).xyz;
-                o.sv_Target0.w = (exp2((log2((dot(unitViewDir_xyz_2.xyzx, i.texcoord0.xyzx) + 1)) * cb0_values[9].y)) * cb0_values[10].x);
+                o.sv_Target0.w = (exp2((log2((dot(((r0_w_2.xxxx * r0_xyz_1.xyzx)).xyzx, i.texcoord0.xyzx) + 1)) * cb0_values[9].y)) * cb0_values[10].x);
                 o.sv_Target0.xyz = (float4(0, 0, 0, 0)).xyz;
                 return o;
             }
@@ -1773,6 +2755,299 @@ Shader "ShurikenMagic/TransparentRim"
                 float3 texcoord1 : TEXCOORD1;
                 float4 texcoord2 : TEXCOORD2;
             };
+            struct program39Input
+            {
+                float4 sv_Position0 : SV_POSITION0;
+                float3 texcoord0 : TEXCOORD0;
+                float3 texcoord1 : TEXCOORD1;
+                float2 texcoord2 : TEXCOORD2;
+                float texcoord3 : TEXCOORD3;
+            };
+            struct program39Output
+            {
+                float4 sv_Target0 : SV_Target0;
+            };
+            #pragma vertex vert
+            program21Output vert(program21Input i)
+            {
+                program21Output o = (program21Output)0;
+                float4 worldPos_xyzw_2 = mad(cb1_values[0].xyzw, i.position0.xxxx, (i.position0.yyyy * cb1_values[1].xyzw));
+                float4 worldPos_xyzw_3 = mad(cb1_values[2].xyzw, i.position0.zzzz, worldPos_xyzw_2);
+                float4 worldPos_xyzw_1 = (worldPos_xyzw_3 + cb1_values[3].xyzw);
+                float4 clipPos_xyzw_2 = mad(cb2_values[17].xyzw, worldPos_xyzw_1.xxxx, (worldPos_xyzw_1.yyyy * cb2_values[18].xyzw));
+                float4 clipPos_xyzw_3 = mad(cb2_values[19].xyzw, worldPos_xyzw_1.zzzz, clipPos_xyzw_2);
+                o.sv_Position0.xyzw = mad(cb2_values[20].xyzw, worldPos_xyzw_1.wwww, clipPos_xyzw_3);
+                float worldNormal_x_2 = dot(i.normal0.xyzx, cb1_values[4].xyzx);
+                float worldNormal_y_2 = dot(i.normal0.xyzx, cb1_values[5].xyzx);
+                float worldNormal_z_2 = dot(i.normal0.xyzx, cb1_values[6].xyzx);
+                float r1_w_2 = dot(float4(worldNormal_x_2, worldNormal_y_2, worldNormal_z_2, worldNormal_x_2), float4(worldNormal_x_2, worldNormal_y_2, worldNormal_z_2, worldNormal_x_2));
+                float r1_w_3 = rsqrt(r1_w_2);
+                o.texcoord0.xyz = ((r1_w_3.xxxx * float4(worldNormal_x_2, worldNormal_y_2, worldNormal_z_2, worldNormal_x_2))).xyz;
+                o.texcoord1.xyz = (mad(cb1_values[3].xyzx, i.position0.wwww, worldPos_xyzw_3.xyzx)).xyz;
+                float4 r0_xyzw_4 = mad(cb1_values[3].xyzw, i.position0.wwww, worldPos_xyzw_3);
+                float4 r1_xyzw_3 = (r0_xyzw_4.yyyy * unity_WorldToObject[1]);
+                float4 r1_xyzw_4 = mad(unity_WorldToObject[0], r0_xyzw_4.xxxx, r1_xyzw_3);
+                float4 r1_xyzw_5 = mad(unity_WorldToObject[2], r0_xyzw_4.zzzz, r1_xyzw_4);
+                o.texcoord2.xyzw = mad(unity_WorldToObject[3], r0_xyzw_4.wwww, r1_xyzw_5);
+                return o;
+            }
+            #pragma fragment frag
+            program39Output frag(program39Input i)
+            {
+                program39Output o = (program39Output)0;
+                float3 viewDir_xyz_1 = ((-i.texcoord1.xyzx + _WorldSpaceCameraPos.xyzx)).xyz;
+                float r0_w_1 = dot(viewDir_xyz_1.xyzx, viewDir_xyz_1.xyzx);
+                float r0_w_2 = rsqrt(r0_w_1);
+                float3 unitViewDir_xyz_2 = ((r0_w_2.xxxx * viewDir_xyz_1.xyzx)).xyz;
+                o.sv_Target0.w = (exp2((log2((dot(unitViewDir_xyz_2.xyzx, i.texcoord0.xyzx) + 1)) * cb0_values[9].y)) * cb0_values[10].x);
+                o.sv_Target0.xyz = (float4(0, 0, 0, 0)).xyz;
+                return o;
+            }
+            ENDHLSL
+        }
+        Pass
+        {
+            Tags { "LIGHTMODE"="FORWARDADD" "QUEUE"="Transparent" }
+            Cull Back
+            ZTest LEqual
+            ZWrite Off
+            Blend SrcAlpha One
+            HLSLPROGRAM
+            cbuffer UnityPerDraw : register(b0)
+            {
+                float4x4 unity_ObjectToWorld;
+                float4x4 unity_WorldToObject;
+                float4 _RimColor;
+                float _RimPower;
+                float _AlphaPower;
+                float _InnerColorPower;
+                float _AllPower;
+                float4 _InnerColor;
+                float4 cb0_values[11];
+            };
+            cbuffer UnityPerFrame : register(b1)
+            {
+                float3 _WorldSpaceCameraPos;
+                float4x4 unity_MatrixVP;
+                float4 cb1_values[7];
+            };
+            cbuffer cb2 : register(b2)
+            {
+                float4 cb2_values[21];
+            };
+            struct program21Input
+            {
+                float4 position0 : POSITION0;
+                float4 tangent0 : TANGENT0;
+                float3 normal0 : NORMAL0;
+                float4 texcoord0 : TEXCOORD0;
+                float4 texcoord1 : TEXCOORD1;
+                float4 texcoord2 : TEXCOORD2;
+                float4 texcoord3 : TEXCOORD3;
+                float4 color0 : COLOR0;
+            };
+            struct program21Output
+            {
+                float4 sv_Position0 : SV_POSITION0;
+                float3 texcoord0 : TEXCOORD0;
+                float3 texcoord1 : TEXCOORD1;
+                float4 texcoord2 : TEXCOORD2;
+            };
+            struct program37Input
+            {
+                float4 sv_Position0 : SV_POSITION0;
+                float3 texcoord0 : TEXCOORD0;
+                float texcoord3 : TEXCOORD3;
+                float3 texcoord1 : TEXCOORD1;
+                float4 texcoord2 : TEXCOORD2;
+            };
+            struct program37Output
+            {
+                float4 sv_Target0 : SV_Target0;
+            };
+            #pragma vertex vert
+            program21Output vert(program21Input i)
+            {
+                program21Output o = (program21Output)0;
+                float4 worldPos_xyzw_2 = mad(cb1_values[0].xyzw, i.position0.xxxx, (i.position0.yyyy * cb1_values[1].xyzw));
+                float4 worldPos_xyzw_3 = mad(cb1_values[2].xyzw, i.position0.zzzz, worldPos_xyzw_2);
+                float4 worldPos_xyzw_1 = (worldPos_xyzw_3 + cb1_values[3].xyzw);
+                float4 clipPos_xyzw_2 = mad(cb2_values[17].xyzw, worldPos_xyzw_1.xxxx, (worldPos_xyzw_1.yyyy * cb2_values[18].xyzw));
+                float4 clipPos_xyzw_3 = mad(cb2_values[19].xyzw, worldPos_xyzw_1.zzzz, clipPos_xyzw_2);
+                o.sv_Position0.xyzw = mad(cb2_values[20].xyzw, worldPos_xyzw_1.wwww, clipPos_xyzw_3);
+                float worldNormal_x_2 = dot(i.normal0.xyzx, cb1_values[4].xyzx);
+                float worldNormal_y_2 = dot(i.normal0.xyzx, cb1_values[5].xyzx);
+                float worldNormal_z_2 = dot(i.normal0.xyzx, cb1_values[6].xyzx);
+                float r1_w_2 = dot(float4(worldNormal_x_2, worldNormal_y_2, worldNormal_z_2, worldNormal_x_2), float4(worldNormal_x_2, worldNormal_y_2, worldNormal_z_2, worldNormal_x_2));
+                float r1_w_3 = rsqrt(r1_w_2);
+                o.texcoord0.xyz = ((r1_w_3.xxxx * float4(worldNormal_x_2, worldNormal_y_2, worldNormal_z_2, worldNormal_x_2))).xyz;
+                o.texcoord1.xyz = (mad(cb1_values[3].xyzx, i.position0.wwww, worldPos_xyzw_3.xyzx)).xyz;
+                float4 r0_xyzw_4 = mad(cb1_values[3].xyzw, i.position0.wwww, worldPos_xyzw_3);
+                float4 r1_xyzw_3 = (r0_xyzw_4.yyyy * unity_WorldToObject[1]);
+                float4 r1_xyzw_4 = mad(unity_WorldToObject[0], r0_xyzw_4.xxxx, r1_xyzw_3);
+                float4 r1_xyzw_5 = mad(unity_WorldToObject[2], r0_xyzw_4.zzzz, r1_xyzw_4);
+                o.texcoord2.xyzw = mad(unity_WorldToObject[3], r0_xyzw_4.wwww, r1_xyzw_5);
+                return o;
+            }
+            #pragma fragment frag
+            program37Output frag(program37Input i)
+            {
+                program37Output o = (program37Output)0;
+                float3 viewDir_xyz_1 = ((-i.texcoord1.xyzx + _WorldSpaceCameraPos.xyzx)).xyz;
+                float r0_w_1 = dot(viewDir_xyz_1.xyzx, viewDir_xyz_1.xyzx);
+                float r0_w_2 = rsqrt(r0_w_1);
+                float3 unitViewDir_xyz_2 = ((r0_w_2.xxxx * viewDir_xyz_1.xyzx)).xyz;
+                o.sv_Target0.w = (exp2((log2((dot(unitViewDir_xyz_2.xyzx, i.texcoord0.xyzx) + 1)) * cb0_values[9].y)) * cb0_values[10].x);
+                o.sv_Target0.xyz = (float4(0, 0, 0, 0)).xyz;
+                return o;
+            }
+            ENDHLSL
+        }
+        Pass
+        {
+            Tags { "LIGHTMODE"="FORWARDADD" "QUEUE"="Transparent" }
+            Cull Back
+            ZTest LEqual
+            ZWrite Off
+            Blend SrcAlpha One
+            HLSLPROGRAM
+            cbuffer UnityPerDraw : register(b0)
+            {
+                float4x4 unity_ObjectToWorld;
+                float4x4 unity_WorldToObject;
+                float4 _RimColor;
+                float _RimPower;
+                float _AlphaPower;
+                float _InnerColorPower;
+                float _AllPower;
+                float4 _InnerColor;
+                float4 cb0_values[11];
+            };
+            cbuffer UnityPerFrame : register(b1)
+            {
+                float3 _WorldSpaceCameraPos;
+                float4x4 unity_MatrixVP;
+                float4 cb1_values[7];
+            };
+            cbuffer cb2 : register(b2)
+            {
+                float4 cb2_values[21];
+            };
+            struct program21Input
+            {
+                float4 position0 : POSITION0;
+                float4 tangent0 : TANGENT0;
+                float3 normal0 : NORMAL0;
+                float4 texcoord0 : TEXCOORD0;
+                float4 texcoord1 : TEXCOORD1;
+                float4 texcoord2 : TEXCOORD2;
+                float4 texcoord3 : TEXCOORD3;
+                float4 color0 : COLOR0;
+            };
+            struct program21Output
+            {
+                float4 sv_Position0 : SV_POSITION0;
+                float3 texcoord0 : TEXCOORD0;
+                float3 texcoord1 : TEXCOORD1;
+                float4 texcoord2 : TEXCOORD2;
+            };
+            struct program35Input
+            {
+                float4 sv_Position0 : SV_POSITION0;
+                float3 texcoord0 : TEXCOORD0;
+                float texcoord3 : TEXCOORD3;
+                float3 texcoord1 : TEXCOORD1;
+                float3 texcoord2 : TEXCOORD2;
+            };
+            struct program35Output
+            {
+                float4 sv_Target0 : SV_Target0;
+            };
+            #pragma vertex vert
+            program21Output vert(program21Input i)
+            {
+                program21Output o = (program21Output)0;
+                float4 worldPos_xyzw_2 = mad(cb1_values[0].xyzw, i.position0.xxxx, (i.position0.yyyy * cb1_values[1].xyzw));
+                float4 worldPos_xyzw_3 = mad(cb1_values[2].xyzw, i.position0.zzzz, worldPos_xyzw_2);
+                float4 worldPos_xyzw_1 = (worldPos_xyzw_3 + cb1_values[3].xyzw);
+                float4 clipPos_xyzw_2 = mad(cb2_values[17].xyzw, worldPos_xyzw_1.xxxx, (worldPos_xyzw_1.yyyy * cb2_values[18].xyzw));
+                float4 clipPos_xyzw_3 = mad(cb2_values[19].xyzw, worldPos_xyzw_1.zzzz, clipPos_xyzw_2);
+                o.sv_Position0.xyzw = mad(cb2_values[20].xyzw, worldPos_xyzw_1.wwww, clipPos_xyzw_3);
+                float worldNormal_x_2 = dot(i.normal0.xyzx, cb1_values[4].xyzx);
+                float worldNormal_y_2 = dot(i.normal0.xyzx, cb1_values[5].xyzx);
+                float worldNormal_z_2 = dot(i.normal0.xyzx, cb1_values[6].xyzx);
+                float r1_w_2 = dot(float4(worldNormal_x_2, worldNormal_y_2, worldNormal_z_2, worldNormal_x_2), float4(worldNormal_x_2, worldNormal_y_2, worldNormal_z_2, worldNormal_x_2));
+                float r1_w_3 = rsqrt(r1_w_2);
+                o.texcoord0.xyz = ((r1_w_3.xxxx * float4(worldNormal_x_2, worldNormal_y_2, worldNormal_z_2, worldNormal_x_2))).xyz;
+                o.texcoord1.xyz = (mad(cb1_values[3].xyzx, i.position0.wwww, worldPos_xyzw_3.xyzx)).xyz;
+                float4 r0_xyzw_4 = mad(cb1_values[3].xyzw, i.position0.wwww, worldPos_xyzw_3);
+                float4 r1_xyzw_3 = (r0_xyzw_4.yyyy * unity_WorldToObject[1]);
+                float4 r1_xyzw_4 = mad(unity_WorldToObject[0], r0_xyzw_4.xxxx, r1_xyzw_3);
+                float4 r1_xyzw_5 = mad(unity_WorldToObject[2], r0_xyzw_4.zzzz, r1_xyzw_4);
+                o.texcoord2.xyzw = mad(unity_WorldToObject[3], r0_xyzw_4.wwww, r1_xyzw_5);
+                return o;
+            }
+            #pragma fragment frag
+            program35Output frag(program35Input i)
+            {
+                program35Output o = (program35Output)0;
+                float3 r0_xyz_1 = ((-i.texcoord1.xyzx + _WorldSpaceCameraPos.xyzx)).xyz;
+                float r0_w_1 = dot(r0_xyz_1.xyzx, r0_xyz_1.xyzx);
+                float r0_w_2 = rsqrt(r0_w_1);
+                o.sv_Target0.w = (exp2((log2((dot(((r0_w_2.xxxx * r0_xyz_1.xyzx)).xyzx, i.texcoord0.xyzx) + 1)) * cb0_values[9].y)) * cb0_values[10].x);
+                o.sv_Target0.xyz = (float4(0, 0, 0, 0)).xyz;
+                return o;
+            }
+            ENDHLSL
+        }
+        Pass
+        {
+            Tags { "LIGHTMODE"="FORWARDADD" "QUEUE"="Transparent" }
+            Cull Back
+            ZTest LEqual
+            ZWrite Off
+            Blend SrcAlpha One
+            HLSLPROGRAM
+            cbuffer UnityPerDraw : register(b0)
+            {
+                float4x4 unity_ObjectToWorld;
+                float4x4 unity_WorldToObject;
+                float4 _RimColor;
+                float _RimPower;
+                float _AlphaPower;
+                float _InnerColorPower;
+                float _AllPower;
+                float4 _InnerColor;
+                float4 cb0_values[11];
+            };
+            cbuffer UnityPerFrame : register(b1)
+            {
+                float3 _WorldSpaceCameraPos;
+                float4x4 unity_MatrixVP;
+                float4 cb1_values[7];
+            };
+            cbuffer cb2 : register(b2)
+            {
+                float4 cb2_values[21];
+            };
+            struct program21Input
+            {
+                float4 position0 : POSITION0;
+                float4 tangent0 : TANGENT0;
+                float3 normal0 : NORMAL0;
+                float4 texcoord0 : TEXCOORD0;
+                float4 texcoord1 : TEXCOORD1;
+                float4 texcoord2 : TEXCOORD2;
+                float4 texcoord3 : TEXCOORD3;
+                float4 color0 : COLOR0;
+            };
+            struct program21Output
+            {
+                float4 sv_Position0 : SV_POSITION0;
+                float3 texcoord0 : TEXCOORD0;
+                float3 texcoord1 : TEXCOORD1;
+                float4 texcoord2 : TEXCOORD2;
+            };
             struct program34Input
             {
                 float4 sv_Position0 : SV_POSITION0;
@@ -1812,11 +3087,10 @@ Shader "ShurikenMagic/TransparentRim"
             program34Output frag(program34Input i)
             {
                 program34Output o = (program34Output)0;
-                float3 viewDir_xyz_1 = ((-i.texcoord1.xyzx + _WorldSpaceCameraPos.xyzx)).xyz;
-                float r0_w_1 = dot(viewDir_xyz_1.xyzx, viewDir_xyz_1.xyzx);
+                float3 r0_xyz_1 = ((-i.texcoord1.xyzx + _WorldSpaceCameraPos.xyzx)).xyz;
+                float r0_w_1 = dot(r0_xyz_1.xyzx, r0_xyz_1.xyzx);
                 float r0_w_2 = rsqrt(r0_w_1);
-                float3 unitViewDir_xyz_2 = ((r0_w_2.xxxx * viewDir_xyz_1.xyzx)).xyz;
-                o.sv_Target0.w = (exp2((log2((dot(unitViewDir_xyz_2.xyzx, i.texcoord0.xyzx) + 1)) * cb0_values[9].y)) * cb0_values[10].x);
+                o.sv_Target0.w = (exp2((log2((dot(((r0_w_2.xxxx * r0_xyz_1.xyzx)).xyzx, i.texcoord0.xyzx) + 1)) * cb0_values[9].y)) * cb0_values[10].x);
                 o.sv_Target0.xyz = (float4(0, 0, 0, 0)).xyz;
                 return o;
             }
@@ -2063,6 +3337,290 @@ Shader "ShurikenMagic/TransparentRim"
                 float3 texcoord1 : TEXCOORD1;
                 float3 texcoord2 : TEXCOORD2;
             };
+            struct program39Input
+            {
+                float4 sv_Position0 : SV_POSITION0;
+                float3 texcoord0 : TEXCOORD0;
+                float3 texcoord1 : TEXCOORD1;
+                float2 texcoord2 : TEXCOORD2;
+                float texcoord3 : TEXCOORD3;
+            };
+            struct program39Output
+            {
+                float4 sv_Target0 : SV_Target0;
+            };
+            #pragma vertex vert
+            program20Output vert(program20Input i)
+            {
+                program20Output o = (program20Output)0;
+                float4 worldPos_xyzw_2 = mad(cb1_values[0].xyzw, i.position0.xxxx, (i.position0.yyyy * cb1_values[1].xyzw));
+                float4 worldPos_xyzw_3 = mad(cb1_values[2].xyzw, i.position0.zzzz, worldPos_xyzw_2);
+                float4 worldPos_xyzw_1 = (worldPos_xyzw_3 + cb1_values[3].xyzw);
+                float4 clipPos_xyzw_2 = mad(cb2_values[17].xyzw, worldPos_xyzw_1.xxxx, (worldPos_xyzw_1.yyyy * cb2_values[18].xyzw));
+                float4 clipPos_xyzw_3 = mad(cb2_values[19].xyzw, worldPos_xyzw_1.zzzz, clipPos_xyzw_2);
+                o.sv_Position0.xyzw = mad(cb2_values[20].xyzw, worldPos_xyzw_1.wwww, clipPos_xyzw_3);
+                float worldNormal_x_2 = dot(i.normal0.xyzx, cb1_values[4].xyzx);
+                float worldNormal_y_2 = dot(i.normal0.xyzx, cb1_values[5].xyzx);
+                float worldNormal_z_2 = dot(i.normal0.xyzx, cb1_values[6].xyzx);
+                float r1_w_2 = dot(float4(worldNormal_x_2, worldNormal_y_2, worldNormal_z_2, worldNormal_x_2), float4(worldNormal_x_2, worldNormal_y_2, worldNormal_z_2, worldNormal_x_2));
+                float r1_w_3 = rsqrt(r1_w_2);
+                o.texcoord0.xyz = ((r1_w_3.xxxx * float4(worldNormal_x_2, worldNormal_y_2, worldNormal_z_2, worldNormal_x_2))).xyz;
+                o.texcoord1.xyz = (mad(cb1_values[3].xyzx, i.position0.wwww, worldPos_xyzw_3.xyzx)).xyz;
+                float4 r0_xyzw_4 = mad(cb1_values[3].xyzw, i.position0.wwww, worldPos_xyzw_3);
+                o.texcoord2.xyz = (mad(unity_WorldToObject[3].xyzx, r0_xyzw_4.wwww, (mad(unity_WorldToObject[2].xyzx, r0_xyzw_4.zzzz, (mad(unity_WorldToObject[0].xyzx, r0_xyzw_4.xxxx, ((r0_xyzw_4.yyyy * unity_WorldToObject[1].xyzx)).xyzx)).xyzx)).xyzx)).xyz;
+                return o;
+            }
+            #pragma fragment frag
+            program39Output frag(program39Input i)
+            {
+                program39Output o = (program39Output)0;
+                float3 viewDir_xyz_1 = ((-i.texcoord1.xyzx + _WorldSpaceCameraPos.xyzx)).xyz;
+                float r0_w_1 = dot(viewDir_xyz_1.xyzx, viewDir_xyz_1.xyzx);
+                float r0_w_2 = rsqrt(r0_w_1);
+                float3 unitViewDir_xyz_2 = ((r0_w_2.xxxx * viewDir_xyz_1.xyzx)).xyz;
+                o.sv_Target0.w = (exp2((log2((dot(unitViewDir_xyz_2.xyzx, i.texcoord0.xyzx) + 1)) * cb0_values[9].y)) * cb0_values[10].x);
+                o.sv_Target0.xyz = (float4(0, 0, 0, 0)).xyz;
+                return o;
+            }
+            ENDHLSL
+        }
+        Pass
+        {
+            Tags { "LIGHTMODE"="FORWARDADD" "QUEUE"="Transparent" }
+            Cull Back
+            ZTest LEqual
+            ZWrite Off
+            Blend SrcAlpha One
+            HLSLPROGRAM
+            cbuffer UnityPerDraw : register(b0)
+            {
+                float4x4 unity_ObjectToWorld;
+                float4x4 unity_WorldToObject;
+                float4 _RimColor;
+                float _RimPower;
+                float _AlphaPower;
+                float _InnerColorPower;
+                float _AllPower;
+                float4 _InnerColor;
+                float4 cb0_values[11];
+            };
+            cbuffer UnityPerFrame : register(b1)
+            {
+                float3 _WorldSpaceCameraPos;
+                float4x4 unity_MatrixVP;
+                float4 cb1_values[7];
+            };
+            cbuffer cb2 : register(b2)
+            {
+                float4 cb2_values[21];
+            };
+            struct program20Input
+            {
+                float4 position0 : POSITION0;
+                float4 tangent0 : TANGENT0;
+                float3 normal0 : NORMAL0;
+                float4 texcoord0 : TEXCOORD0;
+                float4 texcoord1 : TEXCOORD1;
+                float4 texcoord2 : TEXCOORD2;
+                float4 texcoord3 : TEXCOORD3;
+                float4 color0 : COLOR0;
+            };
+            struct program20Output
+            {
+                float4 sv_Position0 : SV_POSITION0;
+                float3 texcoord0 : TEXCOORD0;
+                float3 texcoord1 : TEXCOORD1;
+                float3 texcoord2 : TEXCOORD2;
+            };
+            struct program37Input
+            {
+                float4 sv_Position0 : SV_POSITION0;
+                float3 texcoord0 : TEXCOORD0;
+                float texcoord3 : TEXCOORD3;
+                float3 texcoord1 : TEXCOORD1;
+                float4 texcoord2 : TEXCOORD2;
+            };
+            struct program37Output
+            {
+                float4 sv_Target0 : SV_Target0;
+            };
+            #pragma vertex vert
+            program20Output vert(program20Input i)
+            {
+                program20Output o = (program20Output)0;
+                float4 worldPos_xyzw_2 = mad(cb1_values[0].xyzw, i.position0.xxxx, (i.position0.yyyy * cb1_values[1].xyzw));
+                float4 worldPos_xyzw_3 = mad(cb1_values[2].xyzw, i.position0.zzzz, worldPos_xyzw_2);
+                float4 worldPos_xyzw_1 = (worldPos_xyzw_3 + cb1_values[3].xyzw);
+                float4 clipPos_xyzw_2 = mad(cb2_values[17].xyzw, worldPos_xyzw_1.xxxx, (worldPos_xyzw_1.yyyy * cb2_values[18].xyzw));
+                float4 clipPos_xyzw_3 = mad(cb2_values[19].xyzw, worldPos_xyzw_1.zzzz, clipPos_xyzw_2);
+                o.sv_Position0.xyzw = mad(cb2_values[20].xyzw, worldPos_xyzw_1.wwww, clipPos_xyzw_3);
+                float worldNormal_x_2 = dot(i.normal0.xyzx, cb1_values[4].xyzx);
+                float worldNormal_y_2 = dot(i.normal0.xyzx, cb1_values[5].xyzx);
+                float worldNormal_z_2 = dot(i.normal0.xyzx, cb1_values[6].xyzx);
+                float r1_w_2 = dot(float4(worldNormal_x_2, worldNormal_y_2, worldNormal_z_2, worldNormal_x_2), float4(worldNormal_x_2, worldNormal_y_2, worldNormal_z_2, worldNormal_x_2));
+                float r1_w_3 = rsqrt(r1_w_2);
+                o.texcoord0.xyz = ((r1_w_3.xxxx * float4(worldNormal_x_2, worldNormal_y_2, worldNormal_z_2, worldNormal_x_2))).xyz;
+                o.texcoord1.xyz = (mad(cb1_values[3].xyzx, i.position0.wwww, worldPos_xyzw_3.xyzx)).xyz;
+                float4 r0_xyzw_4 = mad(cb1_values[3].xyzw, i.position0.wwww, worldPos_xyzw_3);
+                o.texcoord2.xyz = (mad(unity_WorldToObject[3].xyzx, r0_xyzw_4.wwww, (mad(unity_WorldToObject[2].xyzx, r0_xyzw_4.zzzz, (mad(unity_WorldToObject[0].xyzx, r0_xyzw_4.xxxx, ((r0_xyzw_4.yyyy * unity_WorldToObject[1].xyzx)).xyzx)).xyzx)).xyzx)).xyz;
+                return o;
+            }
+            #pragma fragment frag
+            program37Output frag(program37Input i)
+            {
+                program37Output o = (program37Output)0;
+                float3 viewDir_xyz_1 = ((-i.texcoord1.xyzx + _WorldSpaceCameraPos.xyzx)).xyz;
+                float r0_w_1 = dot(viewDir_xyz_1.xyzx, viewDir_xyz_1.xyzx);
+                float r0_w_2 = rsqrt(r0_w_1);
+                float3 unitViewDir_xyz_2 = ((r0_w_2.xxxx * viewDir_xyz_1.xyzx)).xyz;
+                o.sv_Target0.w = (exp2((log2((dot(unitViewDir_xyz_2.xyzx, i.texcoord0.xyzx) + 1)) * cb0_values[9].y)) * cb0_values[10].x);
+                o.sv_Target0.xyz = (float4(0, 0, 0, 0)).xyz;
+                return o;
+            }
+            ENDHLSL
+        }
+        Pass
+        {
+            Tags { "LIGHTMODE"="FORWARDADD" "QUEUE"="Transparent" }
+            Cull Back
+            ZTest LEqual
+            ZWrite Off
+            Blend SrcAlpha One
+            HLSLPROGRAM
+            cbuffer UnityPerDraw : register(b0)
+            {
+                float4x4 unity_ObjectToWorld;
+                float4x4 unity_WorldToObject;
+                float4 _RimColor;
+                float _RimPower;
+                float _AlphaPower;
+                float _InnerColorPower;
+                float _AllPower;
+                float4 _InnerColor;
+                float4 cb0_values[11];
+            };
+            cbuffer UnityPerFrame : register(b1)
+            {
+                float3 _WorldSpaceCameraPos;
+                float4x4 unity_MatrixVP;
+                float4 cb1_values[7];
+            };
+            cbuffer cb2 : register(b2)
+            {
+                float4 cb2_values[21];
+            };
+            struct program20Input
+            {
+                float4 position0 : POSITION0;
+                float4 tangent0 : TANGENT0;
+                float3 normal0 : NORMAL0;
+                float4 texcoord0 : TEXCOORD0;
+                float4 texcoord1 : TEXCOORD1;
+                float4 texcoord2 : TEXCOORD2;
+                float4 texcoord3 : TEXCOORD3;
+                float4 color0 : COLOR0;
+            };
+            struct program20Output
+            {
+                float4 sv_Position0 : SV_POSITION0;
+                float3 texcoord0 : TEXCOORD0;
+                float3 texcoord1 : TEXCOORD1;
+                float3 texcoord2 : TEXCOORD2;
+            };
+            struct program35Input
+            {
+                float4 sv_Position0 : SV_POSITION0;
+                float3 texcoord0 : TEXCOORD0;
+                float texcoord3 : TEXCOORD3;
+                float3 texcoord1 : TEXCOORD1;
+                float3 texcoord2 : TEXCOORD2;
+            };
+            struct program35Output
+            {
+                float4 sv_Target0 : SV_Target0;
+            };
+            #pragma vertex vert
+            program20Output vert(program20Input i)
+            {
+                program20Output o = (program20Output)0;
+                float4 worldPos_xyzw_2 = mad(cb1_values[0].xyzw, i.position0.xxxx, (i.position0.yyyy * cb1_values[1].xyzw));
+                float4 worldPos_xyzw_3 = mad(cb1_values[2].xyzw, i.position0.zzzz, worldPos_xyzw_2);
+                float4 worldPos_xyzw_1 = (worldPos_xyzw_3 + cb1_values[3].xyzw);
+                float4 clipPos_xyzw_2 = mad(cb2_values[17].xyzw, worldPos_xyzw_1.xxxx, (worldPos_xyzw_1.yyyy * cb2_values[18].xyzw));
+                float4 clipPos_xyzw_3 = mad(cb2_values[19].xyzw, worldPos_xyzw_1.zzzz, clipPos_xyzw_2);
+                o.sv_Position0.xyzw = mad(cb2_values[20].xyzw, worldPos_xyzw_1.wwww, clipPos_xyzw_3);
+                float worldNormal_x_2 = dot(i.normal0.xyzx, cb1_values[4].xyzx);
+                float worldNormal_y_2 = dot(i.normal0.xyzx, cb1_values[5].xyzx);
+                float worldNormal_z_2 = dot(i.normal0.xyzx, cb1_values[6].xyzx);
+                float r1_w_2 = dot(float4(worldNormal_x_2, worldNormal_y_2, worldNormal_z_2, worldNormal_x_2), float4(worldNormal_x_2, worldNormal_y_2, worldNormal_z_2, worldNormal_x_2));
+                float r1_w_3 = rsqrt(r1_w_2);
+                o.texcoord0.xyz = ((r1_w_3.xxxx * float4(worldNormal_x_2, worldNormal_y_2, worldNormal_z_2, worldNormal_x_2))).xyz;
+                o.texcoord1.xyz = (mad(cb1_values[3].xyzx, i.position0.wwww, worldPos_xyzw_3.xyzx)).xyz;
+                float4 r0_xyzw_4 = mad(cb1_values[3].xyzw, i.position0.wwww, worldPos_xyzw_3);
+                o.texcoord2.xyz = (mad(unity_WorldToObject[3].xyzx, r0_xyzw_4.wwww, (mad(unity_WorldToObject[2].xyzx, r0_xyzw_4.zzzz, (mad(unity_WorldToObject[0].xyzx, r0_xyzw_4.xxxx, ((r0_xyzw_4.yyyy * unity_WorldToObject[1].xyzx)).xyzx)).xyzx)).xyzx)).xyz;
+                return o;
+            }
+            #pragma fragment frag
+            program35Output frag(program35Input i)
+            {
+                program35Output o = (program35Output)0;
+                float3 r0_xyz_1 = ((-i.texcoord1.xyzx + _WorldSpaceCameraPos.xyzx)).xyz;
+                float r0_w_1 = dot(r0_xyz_1.xyzx, r0_xyz_1.xyzx);
+                float r0_w_2 = rsqrt(r0_w_1);
+                o.sv_Target0.w = (exp2((log2((dot(((r0_w_2.xxxx * r0_xyz_1.xyzx)).xyzx, i.texcoord0.xyzx) + 1)) * cb0_values[9].y)) * cb0_values[10].x);
+                o.sv_Target0.xyz = (float4(0, 0, 0, 0)).xyz;
+                return o;
+            }
+            ENDHLSL
+        }
+        Pass
+        {
+            Tags { "LIGHTMODE"="FORWARDADD" "QUEUE"="Transparent" }
+            Cull Back
+            ZTest LEqual
+            ZWrite Off
+            Blend SrcAlpha One
+            HLSLPROGRAM
+            cbuffer UnityPerDraw : register(b0)
+            {
+                float4x4 unity_ObjectToWorld;
+                float4x4 unity_WorldToObject;
+                float4 _RimColor;
+                float _RimPower;
+                float _AlphaPower;
+                float _InnerColorPower;
+                float _AllPower;
+                float4 _InnerColor;
+                float4 cb0_values[11];
+            };
+            cbuffer UnityPerFrame : register(b1)
+            {
+                float3 _WorldSpaceCameraPos;
+                float4x4 unity_MatrixVP;
+                float4 cb1_values[7];
+            };
+            cbuffer cb2 : register(b2)
+            {
+                float4 cb2_values[21];
+            };
+            struct program20Input
+            {
+                float4 position0 : POSITION0;
+                float4 tangent0 : TANGENT0;
+                float3 normal0 : NORMAL0;
+                float4 texcoord0 : TEXCOORD0;
+                float4 texcoord1 : TEXCOORD1;
+                float4 texcoord2 : TEXCOORD2;
+                float4 texcoord3 : TEXCOORD3;
+                float4 color0 : COLOR0;
+            };
+            struct program20Output
+            {
+                float4 sv_Position0 : SV_POSITION0;
+                float3 texcoord0 : TEXCOORD0;
+                float3 texcoord1 : TEXCOORD1;
+                float3 texcoord2 : TEXCOORD2;
+            };
             struct program34Input
             {
                 float4 sv_Position0 : SV_POSITION0;
@@ -2099,11 +3657,10 @@ Shader "ShurikenMagic/TransparentRim"
             program34Output frag(program34Input i)
             {
                 program34Output o = (program34Output)0;
-                float3 viewDir_xyz_1 = ((-i.texcoord1.xyzx + _WorldSpaceCameraPos.xyzx)).xyz;
-                float r0_w_1 = dot(viewDir_xyz_1.xyzx, viewDir_xyz_1.xyzx);
+                float3 r0_xyz_1 = ((-i.texcoord1.xyzx + _WorldSpaceCameraPos.xyzx)).xyz;
+                float r0_w_1 = dot(r0_xyz_1.xyzx, r0_xyz_1.xyzx);
                 float r0_w_2 = rsqrt(r0_w_1);
-                float3 unitViewDir_xyz_2 = ((r0_w_2.xxxx * viewDir_xyz_1.xyzx)).xyz;
-                o.sv_Target0.w = (exp2((log2((dot(unitViewDir_xyz_2.xyzx, i.texcoord0.xyzx) + 1)) * cb0_values[9].y)) * cb0_values[10].x);
+                o.sv_Target0.w = (exp2((log2((dot(((r0_w_2.xxxx * r0_xyz_1.xyzx)).xyzx, i.texcoord0.xyzx) + 1)) * cb0_values[9].y)) * cb0_values[10].x);
                 o.sv_Target0.xyz = (float4(0, 0, 0, 0)).xyz;
                 return o;
             }
