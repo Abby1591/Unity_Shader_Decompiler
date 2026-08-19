@@ -1,0 +1,139 @@
+Shader "Hidden/BrightPassFilter2"
+{
+    Properties
+    {
+        _MainTex ("Base (RGB)", 2D) = "" {}
+    }
+    SubShader
+    {
+        LOD 0
+        Pass
+        {
+            Cull Off
+            ZTest Always
+            ZWrite Off
+            HLSLPROGRAM
+            cbuffer UnityPerDraw : register(b0)
+            {
+                float4x4 unity_ObjectToWorld;
+                float4 _Threshhold;
+                float4 cb0_values[4];
+            };
+            cbuffer UnityPerFrame : register(b1)
+            {
+                float4x4 unity_MatrixVP;
+                float4 cb1_values[21];
+            };
+            SamplerState s0 : register(s0);
+            Texture2D t0 : register(t0);
+            struct program1Input
+            {
+                float4 position0 : POSITION0;
+                float2 texcoord0 : TEXCOORD0;
+            };
+            struct program1Output
+            {
+                float4 sv_Position0 : SV_POSITION0;
+                float2 texcoord0 : TEXCOORD0;
+            };
+            struct program3Input
+            {
+                float4 sv_Position0 : SV_POSITION0;
+                float2 texcoord0 : TEXCOORD0;
+            };
+            struct program3Output
+            {
+                float4 sv_Target0 : SV_Target0;
+            };
+            #pragma vertex vert
+            program1Output vert(program1Input i)
+            {
+                program1Output o = (program1Output)0;
+                #define UnityObjectToClipPos(v) mul(unity_MatrixVP, v)
+                #define UnityObjectToWorldPos(v) mul(unity_ObjectToWorld, float4(v, 1.0))
+                float4 worldPos_xyzw_4 = UnityObjectToWorldPos(i.position0.xyz);
+                o.sv_Position0.xyzw = UnityObjectToClipPos(worldPos_xyzw_4);
+                o.texcoord0.xy = (i.texcoord0.xyxx).xy;
+                return o;
+            }
+            #pragma fragment frag
+            program3Output frag(program3Input i)
+            {
+                program3Output o = (program3Output)0;
+                float4 r0_xyzw_1 = t0.Sample(s0, i.texcoord0.xyxx);
+                o.sv_Target0.w = r0_xyzw_1.w;
+                o.sv_Target0.xyz = (max(((r0_xyzw_1.xyzx + -_Threshhold.xxxx)).xyzx, float4(0, 0, 0, 0))).xyz;
+                return o;
+            }
+            ENDHLSL
+        }
+        Pass
+        {
+            Cull Off
+            ZTest Always
+            ZWrite Off
+            HLSLPROGRAM
+            cbuffer UnityPerDraw : register(b0)
+            {
+                float4x4 unity_ObjectToWorld;
+                float4 _Threshhold;
+                float4 cb0_values[4];
+            };
+            cbuffer UnityPerFrame : register(b1)
+            {
+                float4x4 unity_MatrixVP;
+                float4 cb1_values[21];
+            };
+            SamplerState s0 : register(s0);
+            Texture2D t0 : register(t0);
+            struct program1Input
+            {
+                float4 position0 : POSITION0;
+                float2 texcoord0 : TEXCOORD0;
+            };
+            struct program1Output
+            {
+                float4 sv_Position0 : SV_POSITION0;
+                float2 texcoord0 : TEXCOORD0;
+            };
+            struct program4Input
+            {
+                float4 sv_Position0 : SV_POSITION0;
+                float2 texcoord0 : TEXCOORD0;
+            };
+            struct program4Output
+            {
+                float4 sv_Target0 : SV_Target0;
+            };
+            #pragma vertex vert
+            program1Output vert(program1Input i)
+            {
+                program1Output o = (program1Output)0;
+                #define UnityObjectToClipPos(v) mul(unity_MatrixVP, v)
+                #define UnityObjectToWorldPos(v) mul(unity_ObjectToWorld, float4(v, 1.0))
+                float4 worldPos_xyzw_4 = UnityObjectToWorldPos(i.position0.xyz);
+                o.sv_Position0.xyzw = UnityObjectToClipPos(worldPos_xyzw_4);
+                o.texcoord0.xy = (i.texcoord0.xyxx).xy;
+                return o;
+            }
+            #pragma fragment frag
+            program4Output frag(program4Input i)
+            {
+                program4Output o = (program4Output)0;
+                float4 r0_xyzw_1 = t0.Sample(s0, i.texcoord0.xyxx);
+                o.sv_Target0.w = r0_xyzw_1.w;
+                o.sv_Target0.xyz = (max(((r0_xyzw_1.xyzx + -_Threshhold.xyzx)).xyzx, float4(0, 0, 0, 0))).xyz;
+                return o;
+            }
+            ENDHLSL
+        }
+        Pass
+        {
+            Cull Off
+            ZTest Always
+            ZWrite Off
+            HLSLPROGRAM
+            ENDHLSL
+        }
+    }
+}
