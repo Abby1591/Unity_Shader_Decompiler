@@ -1,6 +1,7 @@
 using System;
 using System.IO;
 using System.Linq;
+using System.Security.Cryptography;
 using Parser.Decompiler;
 using Parser.DXBC;
 using AssetStudio;
@@ -185,15 +186,18 @@ internal class Program
         // as each subprogram's IR comes back from the pipeline.
         HlslShaderNode astShader = HlslAstBuilder.BuildShell(project.Metadata);
 
-        // Pass index isn't carried on ShaderSubProgram itself — Unity
-        // assigns subprograms to passes in the order passes/programs were
-        // serialized, so subprogram i's pass is whichever pass has an
-        // open slot for that program's stage, in order. Flatten once so
-        // "next pass needing a vertex/fragment function" is a simple walk.
+        // Stage 2 — subprogram functions are collected (not attached yet):
+        // Unity serializes subprograms pass-by-pass, grouping each pass's
+        // programs by stage (all vertex variants, then all fragment
+        // variants, ...), with GLES programs first and DX11 after within a
+        // stage group. A pass boundary is therefore a stage regression
+        // (fragment -> vertex) in the serialized order. We collect every
+        // mappable function with the data needed to recover those groups
+        // and pair vertex/fragment variants by signature afterwards.
         List<HlslPassNode> allPasses = astShader.SubShaders
             .SelectMany(ss => ss.Passes)
             .ToList();
-        var nextPassIndexForStage = new Dictionary<HlslShaderStage, int>();
+        var candidates = new List<SubprogramCandidate>();
 
         for (int i = 0; i < program.m_SubPrograms.Length; i++)
         {
@@ -345,9 +349,10 @@ internal class Program
 
                 Console.WriteLine($"IR statements: {pipelineResult.Program.Statements.Count}");
 
-                // Stage 2 — attach this subprogram's function node (+ its
-                // resources) to the next pass slot still waiting for a
-                // function of this stage.
+                // Stage 2 — build this subprogram's function node. The pass
+                // it belongs to and the variant it pairs with are resolved
+                // after the loop (see BuildVariantPasses), so just stash the
+                // function + the data the pairing needs.
                 HlslFunctionNode? function = HlslAstBuilder.BuildFunction(
                     $"program{i}",
                     sp.m_ProgramType,
@@ -362,84 +367,19 @@ internal class Program
                 }
                 else
                 {
-                    int passIdx = nextPassIndexForStage.GetValueOrDefault(function.Stage, 0);
-                    if (passIdx < allPasses.Count)
+                    candidates.Add(new SubprogramCandidate
                     {
-                        HlslPassNode pass = allPasses[passIdx];
-                        AttachFunction(pass, function);
-
-                        var resources = HlslAstBuilder.BuildResources(
-                            pipelineResult.Program.Declarations, dxbcFile.ResourceDefinition, pipelineResult.Blocks, pass.Cbuffers, function.Stage.ToString()).ToList();
-                        foreach (var res in resources)
-                        {
-                            HlslResourceNode? existing = pass.Resources.FirstOrDefault(r =>
-                                r.Kind == res.Kind && r.Slot == res.Slot);
-
-                            if (existing is null)
-                            {
-                                pass.Resources.Add(res);
-                            }
-                            else if (res.Kind == HlslResourceKind.ConstantBuffer)
-                            {
-                                // vert/frag subprograms of one pass can touch
-                                // different slots of the same cbuffer, and each
-                                // BuildResources call only sees its own blocks.
-                                // Union the members, keeping the largest array
-                                // size so the RDEF-less float4 fallback covers
-                                // every subprogram's accesses.
-                                foreach (HlslCBufferVariable v in res.Variables)
-                                {
-                                    HlslCBufferVariable? match = existing.Variables.FirstOrDefault(x => x.Name == v.Name);
-                                    if (match is null)
-                                    {
-                                        existing.Variables.Add(v);
-                                    }
-                                    else if (v.ArraySize is { } n && (match.ArraySize is not { } m || n > m))
-                                    {
-                                        existing.Variables.Remove(match);
-                                        existing.Variables.Add(v);
-                                    }
-                                }
-                            }
-                        }
-
-                        if (function.InputStruct is not null) pass.Structs.Add(function.InputStruct);
-                        if (function.OutputStruct is not null) pass.Structs.Add(function.OutputStruct);
-
-                        // Cross-check the compiler-proven header extents against
-                        // the metadata/IR-derived slot layout for THIS stage.
-                        // resources was built from this subprogram's own
-                        // declarations, so each extent should match exactly.
-                        if (header is { } hdr)
-                        {
-                            int MaxPlus1(HlslResourceKind kind) =>
-                                resources.Where(r => r.Kind == kind).Select(r => (int)r.Slot)
-                                         .DefaultIfEmpty(-1).Max() + 1;
-                            int cb = MaxPlus1(HlslResourceKind.ConstantBuffer);
-                            int tex = MaxPlus1(HlslResourceKind.Texture);
-                            int samp = MaxPlus1(HlslResourceKind.Sampler);
-                            int uav = MaxPlus1(HlslResourceKind.Uav);
-                            Console.WriteLine(
-                                $"  Header verify ({function.Stage}): " +
-                                $"cb {cb}/{hdr.CbExtent} {(cb == hdr.CbExtent ? "OK" : "MISMATCH")}  " +
-                                $"tex {tex}/{hdr.TextureExtent} {(tex == hdr.TextureExtent ? "OK" : "MISMATCH")}  " +
-                                $"samp {samp}/{hdr.SamplerExtent} {(samp == hdr.SamplerExtent ? "OK" : "MISMATCH")}  " +
-                                $"uav {uav}/{hdr.UavExtent} {(uav == hdr.UavExtent ? "OK" : "MISMATCH")}");
-                        }
-
-                        nextPassIndexForStage[function.Stage] = passIdx + 1;
-
-                        Console.WriteLine(
-                            $"Stage 2: attached {function.Stage} function '{function.Name}' to pass '{pass.Name}' " +
-                            $"(in:{function.InputStruct?.Fields.Count ?? 0} out:{function.OutputStruct?.Fields.Count ?? 0} " +
-                            $"resources+{pass.Resources.Count})");
-                    }
-                    else
-                    {
-                        Console.WriteLine(
-                            $"Stage 2: no pass slot left for {function.Stage} subprogram {i} " +
-                            "(metadata.json has fewer passes than subprograms of this stage — check metadata.py's pass parsing).");
-                    }
+                        SubIndex = i,
+                        Stage = function.Stage,
+                        Function = function,
+                        Pipeline = pipelineResult,
+                        Dxbc = dxbcFile,
+                        DxbcBytes = dxbc,
+                        Header = header,
+                        SigIn = InterfaceKey(dxbcFile.InputSignature?.Elements),
+                        SigOut = InterfaceKey(dxbcFile.OutputSignature?.Elements),
+                    });
+                    Console.WriteLine($"Stage 2: collected {function.Stage} function '{function.Name}' (subprogram {i}).");
                 }
 
                 if (saveSubprograms)
@@ -459,10 +399,17 @@ internal class Program
         }
 
         Console.WriteLine();
+
+        // Stage 2b — recover the pass each candidate belongs to from the
+        // serialization order and emit one pass per distinct compiled
+        // (vertex, fragment) variant pair.
+        BuildVariantPasses(astShader, allPasses, candidates);
+
+        Console.WriteLine();
         Console.WriteLine("HLSL AST (Stage 2)");
         Console.WriteLine("-------------------");
         Console.WriteLine($"Shader '{astShader.Name}', {astShader.Properties.Count} properties, {astShader.SubShaders.Count} subshaders");
-        foreach (HlslPassNode pass in allPasses)
+        foreach (HlslPassNode pass in astShader.SubShaders.SelectMany(ss => ss.Passes))
         {
             Console.WriteLine(
                 $"  Pass '{pass.Name}': " +
@@ -508,6 +455,245 @@ internal class Program
 
     private static string SafeFileName(string name) =>
         string.Join("_", name.Split(Path.GetInvalidFileNameChars())).TrimEnd(' ', '.');
+
+    // One mappable subprogram: the built function node plus everything
+    // needed to group it into a pass and pair it with its counterpart
+    // stage by interpolator hand-off (OSGN(vert) == ISGN(frag)).
+    private sealed class SubprogramCandidate
+    {
+        public required int SubIndex;
+        public required HlslShaderStage Stage;
+        public required HlslFunctionNode Function;
+        public required IRPipeline.Result Pipeline;
+        public required DxbcFile Dxbc;
+        public required byte[] DxbcBytes;
+        public UnityNonComputeHeader? Header;
+        public required string SigIn;
+        public required string SigOut;
+        public string Hash = "";
+    }
+
+// Signature identity for variant pairing. The vertex/fragment hand-off is
+// the rasterized interpolator set, so the key is the exact ordered element
+// sequence of the signature chunk: semantic name, index, system value and
+// register. Component counts are deliberately excluded — a vertex writes
+// every lane of an interpolator (OSGN mask) while the fragment reads only
+// the lanes it uses (ISGN mask), so the two can legitimately differ for
+// the same variant. Register numbers must match too — the rasterizer
+// interpolates by register, so two programs with the same semantics in
+// different registers do not link.
+private static string InterfaceKey(List<Parser.DXBC.Chunks.SignatureElement>? elements) =>
+        elements is null
+            ? ""
+            : string.Join(";", elements.Select(e =>
+                $"{e.SemanticName}:{e.SemanticIndex}:{e.SystemValue}:r{e.Register}"));
+
+    // Stage rank in Unity's per-pass serialization order. A new pass begins
+    // when the stage rank regresses in the serialized subprogram sequence.
+    private static int StageRank(HlslShaderStage s) => s switch
+    {
+        HlslShaderStage.Vertex => 0,
+        HlslShaderStage.Hull => 1,
+        HlslShaderStage.Domain => 2,
+        HlslShaderStage.Geometry => 3,
+        HlslShaderStage.Fragment => 4,
+        HlslShaderStage.Compute => 5,
+        _ => 9,
+    };
+
+    // Stage 2b — the reverse of Unity's subprogram serialization. The blob
+    // stores, per pass, all vertex variants, then all fragment variants
+    // (GLES first, DX11 after within each stage block). The pass a
+    // subprogram belongs to is recoverable from the stage sequence alone:
+    // a stage regression (fragment -> vertex) starts the next pass. Within
+    // a pass group, a vertex variant pairs with the fragment variant whose
+    // input signature equals its output signature; byte-identical pairs are
+    // deduplicated (multiple keyword sets can compile to the same program).
+    // The first pair of each group fills the metadata shell pass (keeping
+    // the pre-existing output for pass 0); every further pair becomes a
+    // cloned pass with the same tags/render state right after the shell.
+    private static void BuildVariantPasses(
+        HlslShaderNode astShader, List<HlslPassNode> allPasses, List<SubprogramCandidate> candidates)
+    {
+        if (candidates.Count == 0)
+            return;
+
+        foreach (SubprogramCandidate c in candidates)
+            c.Hash = Convert.ToHexString(SHA256.HashData(c.DxbcBytes));
+
+        var groups = new List<List<SubprogramCandidate>>();
+        foreach (SubprogramCandidate c in candidates)
+        {
+            if (groups.Count == 0)
+            {
+                groups.Add(new List<SubprogramCandidate> { c });
+                continue;
+            }
+            if (StageRank(c.Stage) < StageRank(groups[^1][^1].Stage))
+                groups.Add(new List<SubprogramCandidate> { c });
+            else
+                groups[^1].Add(c);
+        }
+
+        var subshaderByPass = new Dictionary<HlslPassNode, HlslSubShaderNode>();
+        foreach (HlslSubShaderNode ss in astShader.SubShaders)
+            foreach (HlslPassNode p in ss.Passes)
+                subshaderByPass[p] = ss;
+
+        int totalPasses = 0;
+
+        for (int gi = 0; gi < groups.Count; gi++)
+        {
+            List<SubprogramCandidate> group = groups[gi];
+            HlslPassNode shell = gi < allPasses.Count
+                ? allPasses[gi]
+                : allPasses[^1]; // more groups than metadata passes: reuse the last shell
+
+            var verts = group.Where(c => c.Stage == HlslShaderStage.Vertex).ToList();
+            var frags = group.Where(c => c.Stage == HlslShaderStage.Fragment).ToList();
+            var others = group.Where(c => c.Stage is not (HlslShaderStage.Vertex or HlslShaderStage.Fragment)).ToList();
+
+            // Pair by interpolator hand-off; deduplicate byte-identical
+            // (vertex, fragment) program pairs. Iteration order is the
+            // serialized subprogram order, so the first pair is the one the
+            // previous streaming code attached to the shell pass.
+            var pairs = new List<(SubprogramCandidate V, SubprogramCandidate F)>();
+            var seen = new HashSet<(string, string)>();
+            foreach (SubprogramCandidate v in verts)
+                foreach (SubprogramCandidate f in frags)
+                    if (v.SigOut == f.SigIn && seen.Add((v.Hash, f.Hash)))
+                        pairs.Add((v, f));
+
+            // First pair fills the shell pass; the rest get clones.
+            for (int pi = 0; pi < pairs.Count; pi++)
+            {
+                var (v, f) = pairs[pi];
+                HlslPassNode pass = pi == 0 ? shell : ClonePass(shell);
+                if (!ReferenceEquals(pass, shell))
+                {
+                    HlslSubShaderNode ss = subshaderByPass[shell];
+                    int insertAt = ss.Passes.IndexOf(shell) + 1;
+                    ss.Passes.Insert(insertAt, pass);
+                    subshaderByPass[pass] = ss;
+                }
+
+                AttachPassProgram(pass, v);
+                AttachPassProgram(pass, f);
+                totalPasses++;
+            }
+
+            // Stage functions that pair by position, not signature
+            // (geometry/hull/domain/compute), attach to the shell pass.
+            foreach (SubprogramCandidate o in others)
+            {
+                AttachPassProgram(shell, o);
+                totalPasses++;
+            }
+
+            if (pairs.Count == 0 && others.Count == 0)
+            {
+                Console.WriteLine($"  Pass group {gi}: {verts.Count} verts x {frags.Count} frags produced no renderable variant (skipped).");
+            }
+            else
+            {
+                int unpaired = verts.Count(v => !pairs.Any(p => ReferenceEquals(p.V, v)))
+                             + frags.Count(f => !pairs.Any(p => ReferenceEquals(p.F, f)));
+                Console.WriteLine(
+                    $"  Pass group {gi}: {verts.Count} verts x {frags.Count} frags => {pairs.Count} distinct variant pass(es) " +
+                    $"({unpaired} unpaired duplicate(s) folded)");
+            }
+        }
+
+        Console.WriteLine($"BuildVariantPasses: {groups.Count} pass group(s), {totalPasses} pass(es) emitted total.");
+    }
+
+    // Attaches one candidate's function, resources and structs to a pass,
+    // unioning cbuffer members the way the previous streaming loop did.
+    private static void AttachPassProgram(HlslPassNode pass, SubprogramCandidate c)
+    {
+        AttachFunction(pass, c.Function);
+
+        var resources = HlslAstBuilder.BuildResources(
+            c.Pipeline.Program.Declarations, c.Dxbc.ResourceDefinition, c.Pipeline.Blocks, pass.Cbuffers, c.Stage.ToString()).ToList();
+        foreach (HlslResourceNode res in resources)
+        {
+            HlslResourceNode? existing = pass.Resources.FirstOrDefault(r =>
+                r.Kind == res.Kind && r.Slot == res.Slot);
+
+            if (existing is null)
+            {
+                pass.Resources.Add(res);
+            }
+            else if (res.Kind == HlslResourceKind.ConstantBuffer)
+            {
+                // vert/frag subprograms of one pass can touch different
+                // slots of the same cbuffer, and each BuildResources call
+                // only sees its own blocks. Union the members, keeping the
+                // largest array size so the RDEF-less float4 fallback
+                // covers every subprogram's accesses.
+                foreach (HlslCBufferVariable v in res.Variables)
+                {
+                    HlslCBufferVariable? match = existing.Variables.FirstOrDefault(x => x.Name == v.Name);
+                    if (match is null)
+                    {
+                        existing.Variables.Add(v);
+                    }
+                    else if (v.ArraySize is { } n && (match.ArraySize is not { } m || n > m))
+                    {
+                        existing.Variables.Remove(match);
+                        existing.Variables.Add(v);
+                    }
+                }
+            }
+        }
+
+        if (c.Function.InputStruct is not null) pass.Structs.Add(c.Function.InputStruct);
+        if (c.Function.OutputStruct is not null) pass.Structs.Add(c.Function.OutputStruct);
+
+        // Cross-check the compiler-proven header extents against the
+        // metadata/IR-derived slot layout for THIS stage. resources was
+        // built from this subprogram's own declarations, so each extent
+        // should match exactly.
+        if (c.Header is { } hdr)
+        {
+            int MaxPlus1(HlslResourceKind kind) =>
+                resources.Where(r => r.Kind == kind).Select(r => (int)r.Slot)
+                         .DefaultIfEmpty(-1).Max() + 1;
+            int cb = MaxPlus1(HlslResourceKind.ConstantBuffer);
+            int tex = MaxPlus1(HlslResourceKind.Texture);
+            int samp = MaxPlus1(HlslResourceKind.Sampler);
+            int uav = MaxPlus1(HlslResourceKind.Uav);
+            Console.WriteLine(
+                $"  Header verify ({c.Stage} subprogram {c.SubIndex}): " +
+                $"cb {cb}/{hdr.CbExtent} {(cb == hdr.CbExtent ? "OK" : "MISMATCH")}  " +
+                $"tex {tex}/{hdr.TextureExtent} {(tex == hdr.TextureExtent ? "OK" : "MISMATCH")}  " +
+                $"samp {samp}/{hdr.SamplerExtent} {(samp == hdr.SamplerExtent ? "OK" : "MISMATCH")}  " +
+                $"uav {uav}/{hdr.UavExtent} {(uav == hdr.UavExtent ? "OK" : "MISMATCH")}");
+        }
+
+        Console.WriteLine(
+            $"Stage 2: attached {c.Stage} function '{c.Function.Name}' to pass '{pass.Name}' " +
+            $"(in:{c.Function.InputStruct?.Fields.Count ?? 0} out:{c.Function.OutputStruct?.Fields.Count ?? 0} " +
+            $"resources+{pass.Resources.Count})");
+    }
+
+    // A variant pass: same name/tags/render state and the same per-pass
+    // cbuffer layout as the shell pass it was cloned from, but its own
+    // function slots/resources/structs (filled by AttachPassProgram).
+    private static HlslPassNode ClonePass(HlslPassNode src)
+    {
+        var clone = new HlslPassNode
+        {
+            Name = src.Name,
+            RenderStateRaw = src.RenderStateRaw,
+            State = src.State,
+        };
+        foreach (var (k, v) in src.Tags)
+            clone.Tags[k] = v;
+        foreach (var (k, v) in src.Cbuffers)
+            clone.Cbuffers[k] = v;
+        return clone;
+    }
 
     private static void AttachFunction(HlslPassNode pass, HlslFunctionNode function)
     {

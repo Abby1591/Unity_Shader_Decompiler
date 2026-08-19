@@ -313,7 +313,12 @@ public static class HlslAstBuilder
                         Name = samp.SymbolicName ?? $"s{samp.Slot}",
                         Kind = HlslResourceKind.Sampler,
                         Slot = samp.Slot,
-                        TypeHint = "SamplerState",
+                        // A sampler used by a comparison operation (sample_c,
+                        // sample_c_lz, gather_c) must be a SamplerComparisonState
+                        // — the plain SamplerState has no SampleCmp overload.
+                        TypeHint = ComparisonSamplers(blocks).Contains(samp.Slot)
+                            ? "SamplerComparisonState"
+                            : "SamplerState",
                     };
                     break;
 
@@ -365,6 +370,148 @@ public static class HlslAstBuilder
         }
 
         return result;
+    }
+
+    // Sampler slots used by comparison texture operations in the given IR.
+    // These must be declared SamplerComparisonState, not SamplerState, or
+    // d3dcompiler rejects the SampleCmp/GatherCmp call with X3013.
+    private static HashSet<uint> ComparisonSamplers(List<IRBlock>? blocks)
+    {
+        var result = new HashSet<uint>();
+        if (blocks is null)
+            return result;
+        foreach (IRBlock block in blocks)
+        {
+            foreach (IRStatement stmt in block.Statements)
+            {
+                foreach (IRExpression expr in AllExpressions(stmt))
+                {
+                    if (expr is not IRExpression.TextureOperationExpression tex)
+                        continue;
+                    if (tex.Operation is not (
+                            IRExpression.TextureOperation.SampleCompare
+                            or IRExpression.TextureOperation.SampleCompareLevelZero
+                            or IRExpression.TextureOperation.GatherCompare))
+                        continue;
+                    if (tex.Sampler is { } s && s.RegisterType == RegisterType.Sampler)
+                        result.Add(s.Index);
+                }
+            }
+        }
+        return result;
+    }
+
+    // Depth-first walk of every sub-expression in a statement (mirrors
+    // IRExpressionRewriter's traversal so new node types stay in sync).
+    private static IEnumerable<IRExpression> AllExpressions(IRStatement stmt)
+    {
+        switch (stmt)
+        {
+            case IRStatement.IRAssignment ins:
+                foreach (IRExpression sub in AllExpressions(ins.Expression))
+                    yield return sub;
+                break;
+            case IRStatement.IRIf ifs:
+                foreach (IRExpression sub in AllExpressions(ifs.Condition))
+                    yield return sub;
+                break;
+            case IRStatement.IRBreak br: foreach (IRExpression sub in AllExpressions(br.Condition)) yield return sub; break;
+            case IRStatement.IRContinue cont: foreach (IRExpression sub in AllExpressions(cont.Condition)) yield return sub; break;
+            case IRStatement.IRReturn ret: foreach (IRExpression sub in AllExpressions(ret.Condition)) yield return sub; break;
+            case IRStatement.IRSwitch sw: foreach (IRExpression sub in AllExpressions(sw.Selector)) yield return sub; break;
+            case IRStatement.IRCase cs: foreach (IRExpression sub in AllExpressions(cs.Value)) yield return sub; break;
+            case IRStatement.IRDiscard disc: foreach (IRExpression sub in AllExpressions(disc.Condition)) yield return sub; break;
+            case IRStatement.IRCall call: foreach (IRExpression sub in AllExpressions(call.Condition)) yield return sub; break;
+            case IRStatement.IRMemoryStore store:
+                foreach (IRExpression sub in AllExpressions(store.Address)) yield return sub;
+                foreach (IRExpression sub in AllExpressions(store.Value)) yield return sub;
+                break;
+            case IRStatement.IRMultiAssignment multi:
+                foreach (IRExpression e in multi.Expressions)
+                    foreach (IRExpression sub in AllExpressions(e))
+                        yield return sub;
+                break;
+            case IRStatement.IRAtomicOp at:
+                foreach (IRExpression sub in AllExpressions(at.Address)) yield return sub;
+                foreach (IRExpression sub in AllExpressions(at.Value)) yield return sub;
+                foreach (IRExpression sub in AllExpressions(at.CompareValue)) yield return sub;
+                break;
+            case IRStatement.IRInterfaceCall ic: foreach (IRExpression sub in AllExpressions(ic.Condition)) yield return sub; break;
+            case IRStatement.IRPhi: yield break;
+            default:
+                yield break;
+        }
+    }
+
+    private static IEnumerable<IRExpression> AllExpressions(IRExpression? expr)
+    {
+        if (expr is null)
+            yield break;
+        yield return expr;
+        switch (expr)
+        {
+            case IRExpression.BinaryExpression be:
+                foreach (IRExpression sub in AllExpressions(be.Left)) yield return sub;
+                foreach (IRExpression sub in AllExpressions(be.Right)) yield return sub;
+                break;
+            case IRExpression.UnaryExpression ue:
+                foreach (IRExpression sub in AllExpressions(ue.Operand)) yield return sub;
+                break;
+            case IRExpression.IntrinsicExpression ie:
+                foreach (IRExpression arg in ie.Arguments)
+                    foreach (IRExpression sub in AllExpressions(arg))
+                        yield return sub;
+                break;
+            case IRExpression.FusedMultiplyAddExpression fma:
+                foreach (IRExpression sub in AllExpressions(fma.A)) yield return sub;
+                foreach (IRExpression sub in AllExpressions(fma.B)) yield return sub;
+                foreach (IRExpression sub in AllExpressions(fma.C)) yield return sub;
+                break;
+            case IRExpression.MultiplyHighExpression mh:
+                foreach (IRExpression sub in AllExpressions(mh.Left)) yield return sub;
+                foreach (IRExpression sub in AllExpressions(mh.Right)) yield return sub;
+                break;
+            case IRExpression.Multiply64Expression m64:
+                foreach (IRExpression sub in AllExpressions(m64.Left)) yield return sub;
+                foreach (IRExpression sub in AllExpressions(m64.Right)) yield return sub;
+                break;
+            case IRExpression.BitFieldInsertExpression bfi:
+                foreach (IRExpression sub in AllExpressions(bfi.Width)) yield return sub;
+                foreach (IRExpression sub in AllExpressions(bfi.Offset)) yield return sub;
+                foreach (IRExpression sub in AllExpressions(bfi.Insert)) yield return sub;
+                foreach (IRExpression sub in AllExpressions(bfi.Base)) yield return sub;
+                break;
+            case IRExpression.BitFieldExtractExpression bfe:
+                foreach (IRExpression sub in AllExpressions(bfe.Width)) yield return sub;
+                foreach (IRExpression sub in AllExpressions(bfe.Offset)) yield return sub;
+                foreach (IRExpression sub in AllExpressions(bfe.Value)) yield return sub;
+                break;
+            case IRExpression.ConditionalExpression ce:
+                foreach (IRExpression sub in AllExpressions(ce.Condition)) yield return sub;
+                foreach (IRExpression sub in AllExpressions(ce.TrueExpression)) yield return sub;
+                foreach (IRExpression sub in AllExpressions(ce.FalseExpression)) yield return sub;
+                break;
+            case IRExpression.DotProductExpression dp:
+                foreach (IRExpression sub in AllExpressions(dp.Left)) yield return sub;
+                foreach (IRExpression sub in AllExpressions(dp.Right)) yield return sub;
+                break;
+            case IRExpression.SwizzleExpression sw:
+                foreach (IRExpression sub in AllExpressions(sw.Value)) yield return sub;
+                break;
+            case IRExpression.MatrixVectorMultiplyExpression mv:
+                foreach (IRExpression sub in AllExpressions(mv.Vector)) yield return sub;
+                break;
+            case IRExpression.TextureOperationExpression tex:
+                foreach (IRExpression sub in AllExpressions(tex.Coordinates)) yield return sub;
+                foreach (IRExpression sub in AllExpressions(tex.Offset)) yield return sub;
+                foreach (IRExpression sub in AllExpressions(tex.LOD)) yield return sub;
+                foreach (IRExpression sub in AllExpressions(tex.Bias)) yield return sub;
+                foreach (IRExpression sub in AllExpressions(tex.CompareValue)) yield return sub;
+                foreach (IRExpression sub in AllExpressions(tex.GradX)) yield return sub;
+                foreach (IRExpression sub in AllExpressions(tex.GradY)) yield return sub;
+                foreach (IRExpression sub in AllExpressions(tex.SampleIndex)) yield return sub;
+                break;
+        }
     }
 
     // Converts a ShaderLab-metadata variable into an HLSL cbuffer member.

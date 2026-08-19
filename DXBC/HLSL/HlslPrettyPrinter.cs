@@ -183,16 +183,16 @@ public static class HlslPrettyPrinter
         if (pass.VertexFunction is not null)
         {
             sb.Append("            #pragma vertex vert\n");
-            PrintFunction(sb, pass.VertexFunction, pass.Cbuffers, fuseTemps, stageOutputs: stageInterpolators);
+            PrintFunction(sb, pass.VertexFunction, pass.Cbuffers, fuseTemps, stageOutputs: stageInterpolators, resources: pass.Resources);
         }
         if (pass.FragmentFunction is not null)
         {
             sb.Append("            #pragma fragment frag\n");
-            PrintFunction(sb, pass.FragmentFunction, pass.Cbuffers, fuseTemps, stageInputs: stageInterpolators);
+            PrintFunction(sb, pass.FragmentFunction, pass.Cbuffers, fuseTemps, stageInputs: stageInterpolators, resources: pass.Resources);
         }
         foreach (HlslFunctionNode? f in new[] { pass.GeometryFunction, pass.HullFunction, pass.DomainFunction, pass.ComputeFunction })
             if (f is not null)
-                PrintFunction(sb, f, pass.Cbuffers, fuseTemps);
+                PrintFunction(sb, f, pass.Cbuffers, fuseTemps, resources: pass.Resources);
 
         sb.Append("            ENDHLSL\n");
         sb.Append("        }\n");
@@ -285,7 +285,9 @@ public static class HlslPrettyPrinter
                 break;
 
             case HlslResourceKind.Sampler:
-                sb.Append("            SamplerState ").Append(res.Name).Append(" : ").Append(reg).Append(";\n");
+                // TypeHint distinguishes a comparison sampler (used by
+                // SampleCmp/GatherCmp) from a regular one.
+                sb.Append("            ").Append(res.TypeHint ?? "SamplerState").Append(' ').Append(res.Name).Append(" : ").Append(reg).Append(";\n");
                 break;
 
             case HlslResourceKind.Uav:
@@ -363,6 +365,11 @@ public static class HlslPrettyPrinter
         // compiles standalone. The define body is chosen to reproduce the
         // bytecode exactly, not a convenience approximation.
         public HashSet<string> Macros { get; } = new();
+
+        // Texture resource type by register slot (e.g. "Texture2D",
+        // "TextureCube"), so a texture op can render its coordinate with the
+        // component count the intrinsic demands.
+        public Dictionary<int, string> TextureTypeBySlot { get; } = new();
     }
 
     private static void PrintFunction(
@@ -371,7 +378,8 @@ public static class HlslPrettyPrinter
         Dictionary<(int Slot, string Stage), CbufferMetadata> allCbuffers,
         bool fuseTemps,
         Dictionary<string, string>? stageInputs = null,
-        Dictionary<string, string>? stageOutputs = null)
+        Dictionary<string, string>? stageOutputs = null,
+        List<HlslResourceNode>? resources = null)
     {
         string outType = fn.OutputStruct?.Name ?? "void";
         string inType = fn.InputStruct?.Name ?? "";
@@ -395,6 +403,11 @@ public static class HlslPrettyPrinter
             InputElements = fn.InputElementsByRegister,
             OutputElements = fn.OutputElementsByRegister,
         };
+        if (resources is not null)
+            foreach (HlslResourceNode res in resources)
+                if (res.Kind == HlslResourceKind.Texture)
+                    ctx.TextureTypeBySlot[(int)res.Slot] = res.TypeHint ?? "Texture2D";
+
         if (fn.OutputStruct is not null)
             sb.Append("                ").Append(outType).Append(" o = (").Append(outType).Append(")0;\n");
 
@@ -2311,11 +2324,14 @@ public static class HlslPrettyPrinter
             or IRExpression.TextureOperation.SampleLevel
             or IRExpression.TextureOperation.SampleGrad
             or IRExpression.TextureOperation.SampleBias
-            or IRExpression.TextureOperation.SampleCompare
-            or IRExpression.TextureOperation.SampleCompareLevelZero
             or IRExpression.TextureOperation.Load
-            or IRExpression.TextureOperation.Gather
-            or IRExpression.TextureOperation.GatherCompare => 4,
+            or IRExpression.TextureOperation.Gather => 4,
+        // Comparison ops return a single scalar in HLSL (the bytecode writes
+        // one lane of the dest register; any single-lane read of it is that
+        // same scalar).
+        IRExpression.TextureOperation.SampleCompare
+            or IRExpression.TextureOperation.SampleCompareLevelZero
+            or IRExpression.TextureOperation.GatherCompare => 1,
         _ => 1,
     };
 
@@ -2645,6 +2661,16 @@ public static class HlslPrettyPrinter
         return $"mul(float{mv.Rows.Count}x4({rows}), {RenderExpression(mv.Vector, ctx)})";
     }
 
+    // The location arity a comparison intrinsic wants for a given texture
+    // type: TextureCube/3D/2D-array take float3, Texture2D takes float2.
+    private static string CompareCoordinateSwizzle(string textureType) => textureType switch
+    {
+        "Texture1D" => ".x",
+        "Texture2D" or "Texture2DMS" => ".xy",
+        "TextureCubeArray" => ".xyzw",
+        _ => ".xyz",
+    };
+
     // Confirmed 1:1 against real Texture2D/TextureCube method names;
     // Load/Sample/SampleLevel/SampleBias/SampleGrad/Gather keep the same
     // name DXBC uses, only the Compare variants and argument order/style
@@ -2655,6 +2681,23 @@ public static class HlslPrettyPrinter
         string? sampler = tex.Sampler is null ? null : RenderRegisterRead(tex.Sampler, ctx);
         string? coord = tex.Coordinates is null ? null : RenderExpression(tex.Coordinates, ctx);
         string? offset = tex.Offset is null ? null : RenderExpression(tex.Offset, ctx);
+
+        // Comparison intrinsics (SampleCmp/SampleCmpLevelZero/GatherCmp)
+        // resolve strictly by arity, unlike the plain Sample family which
+        // implicitly truncates an over-wide location. The bytecode's
+        // coordinate operand is a full 4-component register read, so trim it
+        // to the component count the texture dimension demands (.xyz for a
+        // cube, .xy for a 2D).
+        bool isCompare = tex.Operation is IRExpression.TextureOperation.SampleCompare
+            or IRExpression.TextureOperation.SampleCompareLevelZero
+            or IRExpression.TextureOperation.GatherCompare;
+        if (isCompare && tex.Coordinates is not null && coord is not null)
+        {
+            string type = tex.Resource is { } rr
+                ? ctx.TextureTypeBySlot.GetValueOrDefault((int)rr.Index, "Texture2D")
+                : "Texture2D";
+            coord = $"({coord}){CompareCoordinateSwizzle(type)}";
+        }
 
         string Args(params string?[] parts) => string.Join(", ", parts.Where(p => p is not null));
 
