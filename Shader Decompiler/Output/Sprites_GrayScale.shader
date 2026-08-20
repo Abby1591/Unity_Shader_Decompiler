@@ -129,13 +129,13 @@ Shader "Sprites/GrayScale"
                 float4 color0 : COLOR0;
                 float2 texcoord0 : TEXCOORD0;
             };
-            struct program5Input
+            struct program6Input
             {
                 float4 sv_Position0 : SV_POSITION0;
                 float4 color0 : COLOR0;
                 float2 texcoord0 : TEXCOORD0;
             };
-            struct program5Output
+            struct program6Output
             {
                 float4 sv_Target0 : SV_Target0;
             };
@@ -159,9 +159,9 @@ Shader "Sprites/GrayScale"
                 return o;
             }
             #pragma fragment frag
-            program5Output frag(program5Input i)
+            program6Output frag(program6Input i)
             {
-                program5Output o = (program5Output)0;
+                program6Output o = (program6Output)0;
                 float4 r0_xyzw_1 = t0.Sample(s0, i.texcoord0.xyxx);
                 float4 r1_xyzw_2 = (-r0_xyzw_1.xyzx + (dot(r0_xyzw_1.xyzx, float4(0.3, 0.59, 0.11, 0))).xxxx);
                 float r1_x_2 = r1_xyzw_2.x;

@@ -73,6 +73,7 @@ Shader "Custom/Armor_Shader_UNLIT"
             program1Output vert(program1Input i)
             {
                 program1Output o = (program1Output)0;
+                #define UnityObjectToClipPos(v) mul(unity_MatrixVP, v)
                 float4 worldPos_xyzw_2 = mad(unity_ObjectToWorld[0], i.position0.xxxx, (i.position0.yyyy * unity_ObjectToWorld[1]));
                 float4 worldPos_xyzw_3 = mad(unity_ObjectToWorld[2], i.position0.zzzz, worldPos_xyzw_2);
                 float4 worldPos_xyzw_1 = (worldPos_xyzw_3 + unity_ObjectToWorld[3]);
@@ -81,7 +82,7 @@ Shader "Custom/Armor_Shader_UNLIT"
                 float4 clipPos_xyzw_5 = mad(unity_MatrixVP[0], worldPos_xyzw_1.xxxx, clipPos_xyzw_4);
                 float4 clipPos_xyzw_6 = mad(unity_MatrixVP[2], worldPos_xyzw_1.zzzz, clipPos_xyzw_5);
                 float4 clipPos_xyzw_7 = mad(unity_MatrixVP[3], worldPos_xyzw_1.wwww, clipPos_xyzw_6);
-                o.sv_Position0.xyzw = clipPos_xyzw_7;
+                o.sv_Position0.xyzw = UnityObjectToClipPos(worldPos_xyzw_1);
                 float worldNormal_x_2 = dot(i.normal0.xyzx, unity_WorldToObject[0].xyzx);
                 float worldNormal_y_2 = dot(i.normal0.xyzx, unity_WorldToObject[1].xyzx);
                 float worldNormal_z_2 = dot(i.normal0.xyzx, unity_WorldToObject[2].xyzx);

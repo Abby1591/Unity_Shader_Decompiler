@@ -1053,7 +1053,7 @@ public static class HlslPrettyPrinter
     private static readonly System.Text.RegularExpressions.Regex TempDefLine =
         new(@"^float4 (\w+) = (.+);$");
     private static readonly System.Text.RegularExpressions.Regex RowRead =
-        new(@"^unity_MatrixVP\[([0-9]+)\]$");
+        new(@"^([A-Za-z_][A-Za-z0-9_]*)\[([0-9]+)\](\.[xyzw]+)?$");
     private static readonly System.Text.RegularExpressions.Regex ObjectToWorldRowRead =
         new(@"^unity_ObjectToWorld\[([0-9]+)\]$");
     private static readonly System.Text.RegularExpressions.Regex LaneSplat =
@@ -1088,21 +1088,30 @@ public static class HlslPrettyPrinter
             }
 
             var outMatch = ClipPosOutLine.Match(lines[i]);
-            if (outMatch.Success && TryCollapseClipTransform(lines, outMatch.Groups[1].Value, i, out var srcName, out var usedTemps))
+            if (outMatch.Success && TryCollapseClipTransform(lines, outMatch.Groups[1].Value, i, out var clipReplacement, out var usedTemps, out var canDeleteTemps))
             {
-                ctx.Macros.Add("UnityObjectToClipPos");
-                // The chain temps are now dead — remove their def lines from the
-                // tail of the run (single-use check guarantees no other reference).
-                for (int k = result.Count - 1; k >= 0; k--)
+                if (clipReplacement is not null)
                 {
-                    var t = TempDefLine.Match(result[k]);
-                    if (!t.Success || !usedTemps.Contains(t.Groups[1].Value))
-                        break;
-                    result.RemoveAt(k);
+                    if (clipReplacement.Contains("UnityObjectToClipPos", StringComparison.Ordinal))
+                        ctx.Macros.Add("UnityObjectToClipPos");
+
+                    // Chain temps that are single-use are now dead — remove their
+                    // def lines from the tail of the run. Shared temps stay (their
+                    // other consumers still need them).
+                    if (canDeleteTemps)
+                    {
+                        for (int k = result.Count - 1; k >= 0; k--)
+                        {
+                            var t = TempDefLine.Match(result[k]);
+                            if (!t.Success || !usedTemps.Contains(t.Groups[1].Value))
+                                break;
+                            result.RemoveAt(k);
+                        }
+                    }
+                    result.Add(clipReplacement);
+                    i++;
+                    continue;
                 }
-                result.Add($"o.sv_Position0.xyzw = UnityObjectToClipPos({srcName});");
-                i++;
-                continue;
             }
 
             // UnityObjectToWorldPos: `float4 W = <mul chain over xyz> + unity_ObjectToWorld[3];`
@@ -1130,12 +1139,28 @@ public static class HlslPrettyPrinter
         return result;
     }
 
-    // Returns true and sets srcName when lines[i] (o.sv_Position0.xyzw = E;)
-    // is a pure mul(unity_MatrixVP, X) chain over the SAME vector register X.
-    private static bool TryCollapseClipTransform(List<string> lines, string rhs, int i, out string srcName, out HashSet<string> usedTemps)
+    // Returns true and sets replacement (plus whether its chain temps may be
+    // deleted) when lines[i] (o.sv_Position0.xyzw = E;) is a pure 4x4
+    // matrix·vector row-sum over the SAME vector register X:
+    //
+    //     Σ row[k] * X.<lane of (k - base)>   (rows consecutive, one per lane)
+    //
+    // where row[k] is a whole cbuffer row read — unity_MatrixVP[k] or a
+    // synthesized cbN_values[k] (the RDEF-less fallback that names rows only
+    // by slot). When the matrix is unity_MatrixVP and every chain temp is
+    // single-use, the chain reverts to UnityObjectToClipPos(X) exactly as the
+    // original Unity source wrote it. Any other cbuffer name, or a shared
+    // chain temp, still collapses to the plain mul(float4x4(rows), X) — the
+    // same math regrouped, keeping the chain statements for their other
+    // consumers. Guards are strict — every row {base..base+3} used exactly
+    // once, each multiplied by the matching single lane of the SAME source
+    // register, all rows from the SAME cbuffer array, nothing else in the
+    // expression — and any doubt leaves the statements untouched.
+    private static bool TryCollapseClipTransform(List<string> lines, string rhs, int i, out string? replacement, out HashSet<string> usedTemps, out bool canDelete)
     {
-        srcName = "";
+        replacement = null;
         usedTemps = new HashSet<string>();
+        canDelete = false;
 
         // Build the map of float4 temp defs directly above the final line.
         var temps = new Dictionary<string, (string Expr, int Line)>();
@@ -1147,7 +1172,7 @@ public static class HlslPrettyPrinter
             temps[td.Groups[1].Value] = (td.Groups[2].Value, k);
         }
 
-        var terms = new List<(int Row, string Src, char Lane)>();
+        var terms = new List<(string Name, int Row, string Src, char Lane)>();
         if (!ParseRowSum(rhs, temps, usedTemps, i, terms))
         {
             return false;
@@ -1155,15 +1180,20 @@ public static class HlslPrettyPrinter
         if (terms.Count != 4)
             return false;
 
+        int baseRow = terms.Min(t => t.Row);
+        string name = terms[0].Name;
         int[] rows = new int[4];
         string src = "";
-        foreach (var (row, s, lane) in terms)
+        foreach (var (n, row, s, lane) in terms)
         {
-            if (row < 0 || row > 3)
+            if (n != name)
+                return false; // rows of different cbuffer arrays — skip
+            int rel = row - baseRow;
+            if (rel < 0 || rel > 3)
                 return false;
-            rows[row]++;
-            // lane letter must match the row index (row i * lane i).
-            if (lane != "xyzw"[row])
+            rows[rel]++;
+            // lane letter must match the relative row index (row i * lane i).
+            if (lane != "xyzw"[rel])
                 return false;
             if (src.Length == 0)
                 src = s;
@@ -1176,7 +1206,10 @@ public static class HlslPrettyPrinter
             return false;
 
         // Chain temps must be single-use: each must not appear anywhere in the
-        // run outside its own definition and the consumed chain lines.
+        // run outside its own definition and the consumed chain lines. When any
+        // is shared (e.g. the final clip-position temp also feeding texcoord
+        // outputs), the statements stay and only the output line is rewritten.
+        canDelete = true;
         foreach (string t in usedTemps)
         {
             if (!temps.TryGetValue(t, out var td))
@@ -1184,21 +1217,24 @@ public static class HlslPrettyPrinter
             int total = CountTokenOccurrences(lines, t);
             int inChain = CountTokenOccurrences(lines, td.Line, i, t);
             if (total != inChain)
-                return false;
+                canDelete = false;
         }
 
-        srcName = src;
+        string matrix = $"float4x4({name}[{baseRow}], {name}[{baseRow + 1}], {name}[{baseRow + 2}], {name}[{baseRow + 3}])";
+        replacement = name == "unity_MatrixVP"
+            ? $"o.sv_Position0.xyzw = UnityObjectToClipPos({src});"
+            : $"o.sv_Position0.xyzw = mul({matrix}, {src});";
         return true;
     }
 
-    // Recursively decomposes a rendered RHS into the set of unity_MatrixVP
-    // row terms it adds. Temp reads are inlined from their definitions.
+    // Recursively decomposes a rendered RHS into the set of matrix row terms it
+    // adds. Temp reads are inlined from their definitions.
     private static bool ParseRowSum(
         string expr,
         Dictionary<string, (string Expr, int Line)> temps,
         HashSet<string> usedTemps,
         int finalLine,
-        List<(int Row, string Src, char Lane)> terms)
+        List<(string Name, int Row, string Src, char Lane)> terms)
     {
         expr = expr.Trim();
         while (expr.StartsWith('(') && expr.EndsWith(')'))
@@ -1237,32 +1273,49 @@ public static class HlslPrettyPrinter
         return false;
     }
 
-    private static bool AddFinalTerm((int Row, string Src, char Lane) term, List<(int Row, string Src, char Lane)> terms)
+    private static bool AddFinalTerm((string Name, int Row, string Src, char Lane) term, List<(string Name, int Row, string Src, char Lane)> terms)
     {
         terms.Add(term);
         return true;
     }
 
-    // One operand must be a unity_MatrixVP row read and the other a single-lane
-    // splat of a register (X.xxxx) — the row term of the matrix multiply.
-    private static bool TryRowTerm(string a, string b, out (int Row, string Src, char Lane) term)
+    private static bool AddObjectToWorldTerm((int Row, string Src, char Lane) term, List<(int Row, string Src, char Lane)> terms)
+    {
+        terms.Add(term);
+        return true;
+    }
+
+    // One operand must be a cbuffer row read (unity_MatrixVP[N], cbN_values[N],
+    // with an optional full .xyzw suffix) and the other a single-lane splat of a
+    // register (X.xxxx) — the row term of a matrix multiply. A partial row
+    // swizzle (`.xyz` etc.) means a 3xN product that is not a plain 4x4
+    // matrix·vector multiply, so it is rejected here.
+    private static bool TryRowTerm(string a, string b, out (string Name, int Row, string Src, char Lane) term)
     {
         term = default;
-        var rowMatch = RowRead.Match(a.Trim());
-        var laneMatch = LaneSplat.Match(b.Trim());
-        if (rowMatch.Success && laneMatch.Success)
-        {
-            term = (int.Parse(rowMatch.Groups[1].Value), laneMatch.Groups[1].Value, laneMatch.Groups[3].Value[0]);
+        if (AsRowTerm(a, b, out term))
             return true;
-        }
-        rowMatch = RowRead.Match(b.Trim());
-        laneMatch = LaneSplat.Match(a.Trim());
-        if (rowMatch.Success && laneMatch.Success)
-        {
-            term = (int.Parse(rowMatch.Groups[1].Value), laneMatch.Groups[1].Value, laneMatch.Groups[3].Value[0]);
-            return true;
-        }
-        return false;
+        return AsRowTerm(b, a, out term);
+    }
+
+    private static bool AsRowTerm(string candidate, string other, out (string Name, int Row, string Src, char Lane) term)
+    {
+        term = default;
+        var rowMatch = RowRead.Match(candidate.Trim());
+        var laneMatch = LaneSplat.Match(other.Trim());
+        if (!rowMatch.Success || !laneMatch.Success)
+            return false;
+
+        string swz = rowMatch.Groups[3].Value;
+        if (swz.Length > 0 && swz != ".xyzw")
+            return false;
+
+        term = (
+            rowMatch.Groups[1].Value,
+            int.Parse(rowMatch.Groups[2].Value),
+            laneMatch.Groups[1].Value,
+            laneMatch.Groups[3].Value[0]);
+        return true;
     }
 
     private static List<string> SplitTopLevelArgs(string s)
@@ -1425,7 +1478,7 @@ public static class HlslPrettyPrinter
         string left = expr[..op].Trim();
         string right = expr[(op + 1)..].Trim();
         if (expr[op] == '*')
-            return TryObjectToWorldRowTerm(left, right, out var mulTerm) && AddFinalTerm(mulTerm, terms);
+            return TryObjectToWorldRowTerm(left, right, out var mulTerm) && AddObjectToWorldTerm(mulTerm, terms);
         if (expr[op] == '+')
         {
             // The translation tail: `... + unity_ObjectToWorld[3]`. A bare add

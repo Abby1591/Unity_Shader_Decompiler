@@ -201,6 +201,10 @@ internal class Program
             }
 
             Console.WriteLine($"Type     : {sp.m_ProgramType}");
+
+            // DEBUG: keyword sets per subprogram
+            if (args.Contains("--dump-keywords"))
+                Console.WriteLine($"Keywords : [{string.Join(" | ", sp.m_Keywords)}]  Local: [{string.Join(" | ", sp.m_LocalKeywords ?? Array.Empty<string>())}]");
             Console.WriteLine($"Version  : {sp.m_Version}");
             Console.WriteLine($"Code Size: {sp.m_ProgramCode.Length}");
 
@@ -364,6 +368,8 @@ internal class Program
                         Header = header,
                         SigIn = InterfaceKey(dxbcFile.InputSignature?.Elements),
                         SigOut = InterfaceKey(dxbcFile.OutputSignature?.Elements),
+                        SigInInterp = InterfaceInterpKey(dxbcFile.InputSignature?.Elements),
+                        SigOutInterp = InterfaceInterpKey(dxbcFile.OutputSignature?.Elements),
                     });
                     Console.WriteLine($"Stage 2: collected {function.Stage} function '{function.Name}' (subprogram {i}).");
                 }
@@ -453,6 +459,12 @@ internal class Program
         public UnityNonComputeHeader? Header;
         public required string SigIn;
         public required string SigOut;
+        // Interpolator-only keys (SystemValue == 0): the rasterized hand-off
+        // set. Fragment inputs may add rasterizer system values (SV_IsFrontFace,
+        // ...) the vertex never writes, so pairing compares these, not the
+        // full signature.
+        public required string SigInInterp;
+        public required string SigOutInterp;
         public string Hash = "";
     }
 
@@ -464,12 +476,19 @@ internal class Program
 // the lanes it uses (ISGN mask), so the two can legitimately differ for
 // the same variant. Register numbers must match too — the rasterizer
 // interpolates by register, so two programs with the same semantics in
-// different registers do not link.
+// different registers do not link. The interpolator-only variant (system
+// values dropped) is what variant pairing compares; see SubprogramCandidate.
 private static string InterfaceKey(List<Parser.DXBC.Chunks.SignatureElement>? elements) =>
         elements is null
             ? ""
             : string.Join(";", elements.Select(e =>
                 $"{e.SemanticName}:{e.SemanticIndex}:{e.SystemValue}:r{e.Register}"));
+private static string InterfaceInterpKey(List<Parser.DXBC.Chunks.SignatureElement>? elements) =>
+        elements is null
+            ? ""
+            : string.Join(";", elements
+                .Where(e => e.SystemValue == 0)
+                .Select(e => $"{e.SemanticName}:{e.SemanticIndex}:{e.SystemValue}:r{e.Register}"));
 
     // Stage rank in Unity's per-pass serialization order. A new pass begins
     // when the stage rank regresses in the serialized subprogram sequence.
@@ -536,15 +555,18 @@ private static string InterfaceKey(List<Parser.DXBC.Chunks.SignatureElement>? el
             var frags = group.Where(c => c.Stage == HlslShaderStage.Fragment).ToList();
             var others = group.Where(c => c.Stage is not (HlslShaderStage.Vertex or HlslShaderStage.Fragment)).ToList();
 
-            // Pair by interpolator hand-off; deduplicate byte-identical
-            // (vertex, fragment) program pairs. Iteration order is the
-            // serialized subprogram order, so the first pair is the one the
-            // previous streaming code attached to the shell pass. The vertex
-            // output must be a subset of the fragment input: the rasterizer
-            // can add system values the vertex never writes (SV_IsFrontFace,
-            // SV_Position, SV_Coverage, ...), which appear only on the
-            // fragment side.
+            // Pair by interpolator hand-off. The vertex and fragment must agree on the
+            // interpolated set (the rasterized hand-off); the fragment may
+            // additionally consume rasterizer-generated system values
+            // (SV_IsFrontFace, ...) the vertex never writes, so the vertex
+            // output is also required to be a subset of the fragment input.
+            // Pairing is 1:1 — each vertex takes the first unused fragment it
+            // links with (both are in serialized keyword-set order, so this
+            // recovers Unity's original variant passes) and a fragment is
+            // never reused. Byte-identical pairs therefore collapse and
+            // genuinely unmatched variants are reported as folded.
             var pairs = new List<(SubprogramCandidate V, SubprogramCandidate F)>();
+            var usedFrags = new HashSet<SubprogramCandidate>();
             var seen = new HashSet<(string, string)>();
             foreach (SubprogramCandidate v in verts)
             {
@@ -553,9 +575,16 @@ private static string InterfaceKey(List<Parser.DXBC.Chunks.SignatureElement>? el
                     continue; // a vertex always writes interpolators; don't match an empty output
                 foreach (SubprogramCandidate f in frags)
                 {
-                    if (vertOut.All(f.SigIn.Split(';', StringSplitOptions.RemoveEmptyEntries).Contains)
+                    if (usedFrags.Contains(f))
+                        continue;
+                    if (v.SigOutInterp == f.SigInInterp
+                        && vertOut.All(f.SigIn.Split(';', StringSplitOptions.RemoveEmptyEntries).Contains)
                         && seen.Add((v.Hash, f.Hash)))
+                    {
                         pairs.Add((v, f));
+                        usedFrags.Add(f);
+                        break;
+                    }
                 }
             }
 
