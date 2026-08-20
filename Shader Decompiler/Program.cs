@@ -410,25 +410,28 @@ internal class Program
         }
 
         bool surfaceReconstruct = !args.Contains("--no-surface-shaders");
+        bool keepPasses = args.Contains("--keep-passes");
 
-        PrintFullShaderOutput(project, astShader, !args.Contains("--no-fuse-temps"), surfaceReconstruct, outRoot);
+        PrintFullShaderOutput(project, astShader, !args.Contains("--no-fuse-temps"), surfaceReconstruct, keepPasses, outRoot);
 
         Console.WriteLine();
         Console.WriteLine("Finished.");
     }
 
-    private static void PrintFullShaderOutput(ShaderProject project, HlslShaderNode astShader, bool fuseTemps, bool surfaceReconstruct, string outRoot)
+    private static void PrintFullShaderOutput(ShaderProject project, HlslShaderNode astShader, bool fuseTemps, bool surfaceReconstruct, bool keepPasses, string outRoot)
     {
         string text = HlslPrettyPrinter.Print(astShader, fuseTemps);
 
         // Stage 13.5 — surface-shader recognition: when a pass carries the
         // compiled signature of a `#pragma surface surf ...` source, rewrite
         // the lit pass back into the canonical CGPROGRAM surface form. The
-        // original HLSLPROGRAM passes are kept as a comment in the output so
-        // the verified form remains present. Opt out with --no-surface-shaders.
+        // original HLSLPROGRAM passes are kept as a comment only with
+        // --keep-passes; by default the output is just the reconstructed
+        // source so surface shaders match their original line count. Opt
+        // out entirely with --no-surface-shaders.
         if (surfaceReconstruct)
         {
-            string? reconstructed = HlslSurfaceShaderRecognizer.TryReconstruct(text, project.Metadata);
+            string? reconstructed = HlslSurfaceShaderRecognizer.TryReconstruct(text, project.Metadata, keepPasses);
             if (reconstructed is not null)
             {
                 text = reconstructed;

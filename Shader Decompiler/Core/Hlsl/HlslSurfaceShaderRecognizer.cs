@@ -24,7 +24,11 @@ namespace Parser.Core.Hlsl.Ast;
 // _LightColor0 chain) are left untouched and null is returned.
 public static class HlslSurfaceShaderRecognizer
 {
-    public static string? TryReconstruct(string shaderText, ShaderMetadata metadata)
+    // keepPasses: when false the verified compiled passes are omitted from
+    // the output (the reconstructed #pragma surface source is the whole
+    // file), so surface shaders collapse to their original line count. The
+    // passes stay recoverable with --keep-passes.
+    public static string? TryReconstruct(string shaderText, ShaderMetadata metadata, bool keepPasses)
     {
         string[] lines = shaderText.Split('\n');
         // Property names come from the Metadata layer (the one place that
@@ -51,7 +55,7 @@ public static class HlslSurfaceShaderRecognizer
                 if (surf is null || input is null)
                     continue;
 
-                string subShaderBlock = BuildSubShader(model, input, surf, rawSubShader, metadata);
+                string subShaderBlock = BuildSubShader(model, input, surf, rawSubShader, metadata, keepPasses);
                 return Splice(lines, subShader, subShaderEnd, subShaderBlock);
             }
         }
@@ -111,13 +115,15 @@ public static class HlslSurfaceShaderRecognizer
     private static string? ReconstructSurf(string frag, string model, string? metGloss, HashSet<string> properties)
     {
         var statements = new List<string>();
+        string? field = null;
+        string? albedoProp = null;
 
         Match albedo = Regex.Match(frag, @"i\.(\w+)\.xyzx \* (_\w+)\.xyzx");
         if (albedo.Success)
         {
-            string field = InterpolatorField(albedo.Groups[1].Value);
-            string prop = ResolveProperty(albedo.Groups[2].Value, properties);
-            statements.Add($"o.Albedo = (IN.{field}.rgb * {prop}.rgb);");
+            field = InterpolatorField(albedo.Groups[1].Value);
+            albedoProp = ResolveProperty(albedo.Groups[2].Value, properties);
+            statements.Add($"o.Albedo = (IN.{field}.rgb * {albedoProp}.rgb);");
         }
         else
         {
@@ -132,6 +138,33 @@ public static class HlslSurfaceShaderRecognizer
                 statements.Add("o.Metallic = _Metallic;");
             if (metGloss?.Contains('G') == true)
                 statements.Add($"o.Smoothness = {ResolveProperty("_Gloss", properties)};");
+        }
+
+        // Emission: the surface pipeline folds o.Emission into the
+        // ForwardBase fragment as an add of the albedo register scaled by a
+        // "one-minus-alpha" glow, compiled to
+        //     float T1 = (-i.<field>.w + 1);
+        //     float T2 = (T1 * _<prop>);
+        //     o.sv_Target0.xyz = (mad(<albedoReg>.xyzx, T2.xxxx, ...)).xyz;
+        // Faithful reconstruction is o.Emission = albedo * (1 - a) * prop;
+        // every step must line up before it is emitted.
+        Match oneMinus = Regex.Match(frag, @"float (\w+) = \(-i\.(\w+)\.w \+ 1\);");
+        if (oneMinus.Success)
+        {
+            string oneMinusTemp = oneMinus.Groups[1].Value;
+            Match glow = Regex.Match(frag, $@"float (\w+) = \((?:{oneMinusTemp}) \* (_\w+)\);");
+            if (glow.Success)
+            {
+                Match albedoReg = Regex.Match(frag, @"float3 (\w+) = \(\(i\.\w+\.xyzx \* _\w+\.xyzx\)\)\.xyz;");
+                Match finalWrite = Regex.Match(frag, @"o\.sv_Target0\.xyz = ([^;]+);");
+                if (albedoReg.Success && finalWrite.Success
+                    && finalWrite.Groups[1].Value.Contains(albedoReg.Groups[1].Value + ".xyzx")
+                    && finalWrite.Groups[1].Value.Contains(glow.Groups[1].Value + ".xxxx"))
+                {
+                    string glowProp = ResolveProperty(glow.Groups[2].Value, properties);
+                    statements.Add($"o.Emission = (IN.{field}.rgb * {albedoProp}.rgb) * (1 - IN.{field}.a) * {glowProp};");
+                }
+            }
         }
 
         Match alpha = Regex.Match(frag, @"sv_Target0\.w = ([^;]+);");
@@ -160,7 +193,7 @@ public static class HlslSurfaceShaderRecognizer
 
     // -- emission of the rewritten subshader ------------------------------
 
-    private static string BuildSubShader(string model, string input, string surf, string raw, ShaderMetadata metadata)
+    private static string BuildSubShader(string model, string input, string surf, string raw, ShaderMetadata metadata, bool keepPasses)
     {
         string output = model == "Standard" ? "SurfaceOutputStandard" : "SurfaceOutput";
         var sb = new StringBuilder();
@@ -196,16 +229,25 @@ public static class HlslSurfaceShaderRecognizer
         sb.AppendLine(surf);
         sb.AppendLine("        }");
         sb.AppendLine("        ENDCG");
-        sb.AppendLine();
-        sb.AppendLine("        /*");
-        sb.AppendLine("        The passes below are the compiled surface-shader");
-        sb.AppendLine("        output (the literal bytecode we decompiled). They");
-        sb.AppendLine("        are what the #pragma surface source above generates.");
-        sb.AppendLine("        */");
-        sb.AppendLine("        /*");
-        foreach (string line in raw.Split('\n'))
-            sb.AppendLine(line);
-        sb.AppendLine("        */");
+        if (keepPasses)
+        {
+            sb.AppendLine();
+            sb.AppendLine("        /*");
+            sb.AppendLine("        The passes below are the compiled surface-shader");
+            sb.AppendLine("        output (the literal bytecode we decompiled). They");
+            sb.AppendLine("        are what the #pragma surface source above generates.");
+            sb.AppendLine("        */");
+            sb.AppendLine("        /*");
+            foreach (string line in raw.Split('\n'))
+                sb.AppendLine(line);
+            sb.AppendLine("        */");
+        }
+        else
+        {
+            sb.AppendLine();
+            sb.AppendLine("        // Compiled passes omitted for size. Rerun with");
+            sb.AppendLine("        // --keep-passes to include the verified passes.");
+        }
         sb.AppendLine("    }");
         return sb.ToString();
     }
