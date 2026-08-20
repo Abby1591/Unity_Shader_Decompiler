@@ -135,6 +135,7 @@ Shader "Knife/Soft Holo Cone"
             program11Output frag(program11Input i)
             {
                 program11Output o = (program11Output)0;
+                #define LinearEyeDepth(d) (1.0 / (_ZBufferParams.z * (d) + _ZBufferParams.w))
                 float2 uvMask2_xy_1 = (mad(i.texcoord0.xyxx, _Mask2_ST.xyxx, _Mask2_ST.zwzz)).xy;
                 float4 r0_xyzw_3 = t0.Sample(s0, (mad(_Time.yyyy, _Mask2Speed.xyxx, uvMask2_xy_1.xyxx)).xyxx);
                 float r0_y_4 = ((float4(1, 1, 1, 1) / _MaskSoftness2)).y;
@@ -169,10 +170,8 @@ Shader "Knife/Soft Holo Cone"
                 float r0_z_8 = r0_xyzw_18.z;
                 float r0_w_4 = r0_xyzw_18.w;
                 float4 r1_xyzw_4 = t2.Sample(s2, float4(r0_y_18, r0_z_8, r0_y_18, r0_y_18));
-                float r0_y_19 = mad(_ZBufferParams.z, r0_w_4, _ZBufferParams.w);
-                float r0_y_20 = ((float4(1, 1, 1, 1) / r0_y_19)).y;
-                float r0_z_9 = mad(_ZBufferParams.z, r1_xyzw_4.x, _ZBufferParams.w);
-                float r0_z_10 = ((float4(1, 1, 1, 1) / r0_z_9)).z;
+                float r0_y_20 = LinearEyeDepth(r0_w_4);
+                float r0_z_10 = LinearEyeDepth(r1_xyzw_4.x);
                 float r0_y_21 = (-r0_y_20 + r0_z_10);
                 float r0_y_22 = (r0_y_21 / _DepthFadeDistance);
                 float r0_y_23 = min(abs(r0_y_22), 1);
@@ -343,6 +342,7 @@ Shader "Knife/Soft Holo Cone"
             program14Output frag(program14Input i)
             {
                 program14Output o = (program14Output)0;
+                #define LinearEyeDepth(d) (1.0 / (_ZBufferParams.z * (d) + _ZBufferParams.w))
                 float2 uvMask2_xy_1 = (mad(i.texcoord0.xyxx, _Mask2_ST.xyxx, _Mask2_ST.zwzz)).xy;
                 float4 r0_xyzw_3 = t0.Sample(s0, (mad(_Time.yyyy, _Mask2Speed.xyxx, uvMask2_xy_1.xyxx)).xyxx);
                 float r0_y_4 = ((float4(1, 1, 1, 1) / _MaskSoftness2)).y;
@@ -377,10 +377,8 @@ Shader "Knife/Soft Holo Cone"
                 float r0_z_8 = r0_xyzw_18.z;
                 float r0_w_4 = r0_xyzw_18.w;
                 float4 r1_xyzw_4 = t2.Sample(s2, float4(r0_y_18, r0_z_8, r0_y_18, r0_y_18));
-                float r0_y_19 = mad(_ZBufferParams.z, r0_w_4, _ZBufferParams.w);
-                float r0_y_20 = ((float4(1, 1, 1, 1) / r0_y_19)).y;
-                float r0_z_9 = mad(_ZBufferParams.z, r1_xyzw_4.x, _ZBufferParams.w);
-                float r0_z_10 = ((float4(1, 1, 1, 1) / r0_z_9)).z;
+                float r0_y_20 = LinearEyeDepth(r0_w_4);
+                float r0_z_10 = LinearEyeDepth(r1_xyzw_4.x);
                 float r0_y_21 = (-r0_y_20 + r0_z_10);
                 float r0_y_22 = (r0_y_21 / _DepthFadeDistance);
                 float r0_y_23 = min(abs(r0_y_22), 1);
@@ -514,6 +512,7 @@ Shader "Knife/Soft Holo Cone"
             program13Output frag(program13Input i)
             {
                 program13Output o = (program13Output)0;
+                #define LinearEyeDepth(d) (1.0 / (_ZBufferParams.z * (d) + _ZBufferParams.w))
                 float2 uvMask2_xy_1 = (mad(i.texcoord0.xyxx, _Mask2_ST.xyxx, _Mask2_ST.zwzz)).xy;
                 float4 r0_xyzw_3 = t0.Sample(s0, (mad(_Time.yyyy, _Mask2Speed.xyxx, uvMask2_xy_1.xyxx)).xyxx);
                 float r0_y_4 = ((float4(1, 1, 1, 1) / _MaskSoftness2)).y;
@@ -548,10 +547,8 @@ Shader "Knife/Soft Holo Cone"
                 float r0_z_8 = r0_xyzw_18.z;
                 float r0_w_4 = r0_xyzw_18.w;
                 float4 r1_xyzw_4 = t2.Sample(s2, float4(r0_y_18, r0_z_8, r0_y_18, r0_y_18));
-                float r0_y_19 = mad(_ZBufferParams.z, r0_w_4, _ZBufferParams.w);
-                float r0_y_20 = ((float4(1, 1, 1, 1) / r0_y_19)).y;
-                float r0_z_9 = mad(_ZBufferParams.z, r1_xyzw_4.x, _ZBufferParams.w);
-                float r0_z_10 = ((float4(1, 1, 1, 1) / r0_z_9)).z;
+                float r0_y_20 = LinearEyeDepth(r0_w_4);
+                float r0_z_10 = LinearEyeDepth(r1_xyzw_4.x);
                 float r0_y_21 = (-r0_y_20 + r0_z_10);
                 float r0_y_22 = (r0_y_21 / _DepthFadeDistance);
                 float r0_y_23 = min(abs(r0_y_22), 1);
@@ -720,6 +717,7 @@ Shader "Knife/Soft Holo Cone"
             program12Output frag(program12Input i)
             {
                 program12Output o = (program12Output)0;
+                #define LinearEyeDepth(d) (1.0 / (_ZBufferParams.z * (d) + _ZBufferParams.w))
                 float2 uvMask2_xy_1 = (mad(i.texcoord0.xyxx, _Mask2_ST.xyxx, _Mask2_ST.zwzz)).xy;
                 float4 r0_xyzw_3 = t0.Sample(s0, (mad(_Time.yyyy, _Mask2Speed.xyxx, uvMask2_xy_1.xyxx)).xyxx);
                 float r0_y_4 = ((float4(1, 1, 1, 1) / _MaskSoftness2)).y;
@@ -754,10 +752,8 @@ Shader "Knife/Soft Holo Cone"
                 float r0_z_8 = r0_xyzw_18.z;
                 float r0_w_4 = r0_xyzw_18.w;
                 float4 r1_xyzw_4 = t2.Sample(s2, float4(r0_y_18, r0_z_8, r0_y_18, r0_y_18));
-                float r0_y_19 = mad(_ZBufferParams.z, r0_w_4, _ZBufferParams.w);
-                float r0_y_20 = ((float4(1, 1, 1, 1) / r0_y_19)).y;
-                float r0_z_9 = mad(_ZBufferParams.z, r1_xyzw_4.x, _ZBufferParams.w);
-                float r0_z_10 = ((float4(1, 1, 1, 1) / r0_z_9)).z;
+                float r0_y_20 = LinearEyeDepth(r0_w_4);
+                float r0_z_10 = LinearEyeDepth(r1_xyzw_4.x);
                 float r0_y_21 = (-r0_y_20 + r0_z_10);
                 float r0_y_22 = (r0_y_21 / _DepthFadeDistance);
                 float r0_y_23 = min(abs(r0_y_22), 1);
@@ -891,6 +887,7 @@ Shader "Knife/Soft Holo Cone"
             program29Output frag(program29Input i)
             {
                 program29Output o = (program29Output)0;
+                #define LinearEyeDepth(d) (1.0 / (_ZBufferParams.z * (d) + _ZBufferParams.w))
                 float4 r0_xyzw_3 = t0.Sample(s0, (mad(_Time.yyyy, cb0_values[9].yzyy, (mad(i.texcoord0.xyxx, cb0_values[10].xyxx, cb0_values[10].zwzz)).xyxx)).xyxx);
                 float r0_y_4 = ((float4(1, 1, 1, 1) / _Softness)).y;
                 float r0_x_4 = (r0_y_4 * r0_xyzw_3.x);
@@ -924,10 +921,8 @@ Shader "Knife/Soft Holo Cone"
                 float r0_z_8 = r0_xyzw_18.z;
                 float r0_w_4 = r0_xyzw_18.w;
                 float4 r1_xyzw_4 = t2.Sample(s2, float4(r0_y_18, r0_z_8, r0_y_18, r0_y_18));
-                float r0_y_19 = mad(_ZBufferParams.z, r0_w_4, _ZBufferParams.w);
-                float r0_y_20 = ((float4(1, 1, 1, 1) / r0_y_19)).y;
-                float r0_z_9 = mad(_ZBufferParams.z, r1_xyzw_4.x, _ZBufferParams.w);
-                float r0_z_10 = ((float4(1, 1, 1, 1) / r0_z_9)).z;
+                float r0_y_20 = LinearEyeDepth(r0_w_4);
+                float r0_z_10 = LinearEyeDepth(r1_xyzw_4.x);
                 float r0_y_21 = (-r0_y_20 + r0_z_10);
                 float r0_y_22 = (r0_y_21 / cb0_values[15].x);
                 float r0_y_23 = min(abs(r0_y_22), 1);
@@ -1057,6 +1052,7 @@ Shader "Knife/Soft Holo Cone"
             program38Output frag(program38Input i)
             {
                 program38Output o = (program38Output)0;
+                #define LinearEyeDepth(d) (1.0 / (_ZBufferParams.z * (d) + _ZBufferParams.w))
                 float4 r0_xyzw_3 = t0.Sample(s0, (mad(_Time.yyyy, cb0_values[9].yzyy, (mad(i.texcoord0.xyxx, cb0_values[10].xyxx, cb0_values[10].zwzz)).xyxx)).xyxx);
                 float r0_y_4 = ((float4(1, 1, 1, 1) / _Softness)).y;
                 float r0_x_4 = (r0_y_4 * r0_xyzw_3.x);
@@ -1090,10 +1086,8 @@ Shader "Knife/Soft Holo Cone"
                 float r0_z_8 = r0_xyzw_18.z;
                 float r0_w_4 = r0_xyzw_18.w;
                 float4 r1_xyzw_4 = t2.Sample(s2, float4(r0_y_18, r0_z_8, r0_y_18, r0_y_18));
-                float r0_y_19 = mad(_ZBufferParams.z, r0_w_4, _ZBufferParams.w);
-                float r0_y_20 = ((float4(1, 1, 1, 1) / r0_y_19)).y;
-                float r0_z_9 = mad(_ZBufferParams.z, r1_xyzw_4.x, _ZBufferParams.w);
-                float r0_z_10 = ((float4(1, 1, 1, 1) / r0_z_9)).z;
+                float r0_y_20 = LinearEyeDepth(r0_w_4);
+                float r0_z_10 = LinearEyeDepth(r1_xyzw_4.x);
                 float r0_y_21 = (-r0_y_20 + r0_z_10);
                 float r0_y_22 = (r0_y_21 / cb0_values[15].x);
                 float r0_y_23 = min(abs(r0_y_22), 1);
@@ -1223,6 +1217,7 @@ Shader "Knife/Soft Holo Cone"
             program36Output frag(program36Input i)
             {
                 program36Output o = (program36Output)0;
+                #define LinearEyeDepth(d) (1.0 / (_ZBufferParams.z * (d) + _ZBufferParams.w))
                 float4 r0_xyzw_3 = t0.Sample(s0, (mad(_Time.yyyy, cb0_values[9].yzyy, (mad(i.texcoord0.xyxx, cb0_values[10].xyxx, cb0_values[10].zwzz)).xyxx)).xyxx);
                 float r0_y_4 = ((float4(1, 1, 1, 1) / _Softness)).y;
                 float r0_x_4 = (r0_y_4 * r0_xyzw_3.x);
@@ -1256,10 +1251,8 @@ Shader "Knife/Soft Holo Cone"
                 float r0_z_8 = r0_xyzw_18.z;
                 float r0_w_4 = r0_xyzw_18.w;
                 float4 r1_xyzw_4 = t2.Sample(s2, float4(r0_y_18, r0_z_8, r0_y_18, r0_y_18));
-                float r0_y_19 = mad(_ZBufferParams.z, r0_w_4, _ZBufferParams.w);
-                float r0_y_20 = ((float4(1, 1, 1, 1) / r0_y_19)).y;
-                float r0_z_9 = mad(_ZBufferParams.z, r1_xyzw_4.x, _ZBufferParams.w);
-                float r0_z_10 = ((float4(1, 1, 1, 1) / r0_z_9)).z;
+                float r0_y_20 = LinearEyeDepth(r0_w_4);
+                float r0_z_10 = LinearEyeDepth(r1_xyzw_4.x);
                 float r0_y_21 = (-r0_y_20 + r0_z_10);
                 float r0_y_22 = (r0_y_21 / cb0_values[15].x);
                 float r0_y_23 = min(abs(r0_y_22), 1);
@@ -1383,6 +1376,7 @@ Shader "Knife/Soft Holo Cone"
             program35Output frag(program35Input i)
             {
                 program35Output o = (program35Output)0;
+                #define LinearEyeDepth(d) (1.0 / (_ZBufferParams.z * (d) + _ZBufferParams.w))
                 float2 uvMask2_xy_1 = (mad(i.texcoord0.xyxx, _Mask2_ST.xyxx, _Mask2_ST.zwzz)).xy;
                 float4 r0_xyzw_3 = t0.Sample(s0, (mad(_Time.yyyy, _Mask2Speed.xyxx, uvMask2_xy_1.xyxx)).xyxx);
                 float r0_y_4 = ((float4(1, 1, 1, 1) / _MaskSoftness2)).y;
@@ -1417,10 +1411,8 @@ Shader "Knife/Soft Holo Cone"
                 float r0_z_8 = r0_xyzw_18.z;
                 float r0_w_4 = r0_xyzw_18.w;
                 float4 r1_xyzw_4 = t2.Sample(s2, float4(r0_y_18, r0_z_8, r0_y_18, r0_y_18));
-                float r0_y_19 = mad(_ZBufferParams.z, r0_w_4, _ZBufferParams.w);
-                float r0_y_20 = ((float4(1, 1, 1, 1) / r0_y_19)).y;
-                float r0_z_9 = mad(_ZBufferParams.z, r1_xyzw_4.x, _ZBufferParams.w);
-                float r0_z_10 = ((float4(1, 1, 1, 1) / r0_z_9)).z;
+                float r0_y_20 = LinearEyeDepth(r0_w_4);
+                float r0_z_10 = LinearEyeDepth(r1_xyzw_4.x);
                 float r0_y_21 = (-r0_y_20 + r0_z_10);
                 float r0_y_22 = (r0_y_21 / _DepthFadeDistance);
                 float r0_y_23 = min(abs(r0_y_22), 1);
@@ -1557,6 +1549,7 @@ Shader "Knife/Soft Holo Cone"
             program34Output frag(program34Input i)
             {
                 program34Output o = (program34Output)0;
+                #define LinearEyeDepth(d) (1.0 / (_ZBufferParams.z * (d) + _ZBufferParams.w))
                 float4 r0_xyzw_3 = t0.Sample(s0, (mad(_Time.yyyy, cb0_values[9].yzyy, (mad(i.texcoord0.xyxx, cb0_values[10].xyxx, cb0_values[10].zwzz)).xyxx)).xyxx);
                 float r0_y_4 = ((float4(1, 1, 1, 1) / _Softness)).y;
                 float r0_x_4 = (r0_y_4 * r0_xyzw_3.x);
@@ -1590,10 +1583,8 @@ Shader "Knife/Soft Holo Cone"
                 float r0_z_8 = r0_xyzw_18.z;
                 float r0_w_4 = r0_xyzw_18.w;
                 float4 r1_xyzw_4 = t2.Sample(s2, float4(r0_y_18, r0_z_8, r0_y_18, r0_y_18));
-                float r0_y_19 = mad(_ZBufferParams.z, r0_w_4, _ZBufferParams.w);
-                float r0_y_20 = ((float4(1, 1, 1, 1) / r0_y_19)).y;
-                float r0_z_9 = mad(_ZBufferParams.z, r1_xyzw_4.x, _ZBufferParams.w);
-                float r0_z_10 = ((float4(1, 1, 1, 1) / r0_z_9)).z;
+                float r0_y_20 = LinearEyeDepth(r0_w_4);
+                float r0_z_10 = LinearEyeDepth(r1_xyzw_4.x);
                 float r0_y_21 = (-r0_y_20 + r0_z_10);
                 float r0_y_22 = (r0_y_21 / cb0_values[15].x);
                 float r0_y_23 = min(abs(r0_y_22), 1);
@@ -1720,6 +1711,7 @@ Shader "Knife/Soft Holo Cone"
             program33Output frag(program33Input i)
             {
                 program33Output o = (program33Output)0;
+                #define LinearEyeDepth(d) (1.0 / (_ZBufferParams.z * (d) + _ZBufferParams.w))
                 float4 r0_xyzw_3 = t0.Sample(s0, (mad(_Time.yyyy, cb0_values[9].yzyy, (mad(i.texcoord0.xyxx, cb0_values[10].xyxx, cb0_values[10].zwzz)).xyxx)).xyxx);
                 float r0_y_4 = ((float4(1, 1, 1, 1) / _Softness)).y;
                 float r0_x_4 = (r0_y_4 * r0_xyzw_3.x);
@@ -1753,10 +1745,8 @@ Shader "Knife/Soft Holo Cone"
                 float r0_z_8 = r0_xyzw_18.z;
                 float r0_w_4 = r0_xyzw_18.w;
                 float4 r1_xyzw_4 = t2.Sample(s2, float4(r0_y_18, r0_z_8, r0_y_18, r0_y_18));
-                float r0_y_19 = mad(_ZBufferParams.z, r0_w_4, _ZBufferParams.w);
-                float r0_y_20 = ((float4(1, 1, 1, 1) / r0_y_19)).y;
-                float r0_z_9 = mad(_ZBufferParams.z, r1_xyzw_4.x, _ZBufferParams.w);
-                float r0_z_10 = ((float4(1, 1, 1, 1) / r0_z_9)).z;
+                float r0_y_20 = LinearEyeDepth(r0_w_4);
+                float r0_z_10 = LinearEyeDepth(r1_xyzw_4.x);
                 float r0_y_21 = (-r0_y_20 + r0_z_10);
                 float r0_y_22 = (r0_y_21 / cb0_values[15].x);
                 float r0_y_23 = min(abs(r0_y_22), 1);
@@ -1895,6 +1885,7 @@ Shader "Knife/Soft Holo Cone"
             program31Output frag(program31Input i)
             {
                 program31Output o = (program31Output)0;
+                #define LinearEyeDepth(d) (1.0 / (_ZBufferParams.z * (d) + _ZBufferParams.w))
                 float4 r0_xyzw_3 = t0.Sample(s0, (mad(_Time.yyyy, cb0_values[9].yzyy, (mad(i.texcoord0.xyxx, cb0_values[10].xyxx, cb0_values[10].zwzz)).xyxx)).xyxx);
                 float r0_y_4 = ((float4(1, 1, 1, 1) / _Softness)).y;
                 float r0_x_4 = (r0_y_4 * r0_xyzw_3.x);
@@ -1928,10 +1919,8 @@ Shader "Knife/Soft Holo Cone"
                 float r0_z_8 = r0_xyzw_18.z;
                 float r0_w_4 = r0_xyzw_18.w;
                 float4 r1_xyzw_4 = t2.Sample(s2, float4(r0_y_18, r0_z_8, r0_y_18, r0_y_18));
-                float r0_y_19 = mad(_ZBufferParams.z, r0_w_4, _ZBufferParams.w);
-                float r0_y_20 = ((float4(1, 1, 1, 1) / r0_y_19)).y;
-                float r0_z_9 = mad(_ZBufferParams.z, r1_xyzw_4.x, _ZBufferParams.w);
-                float r0_z_10 = ((float4(1, 1, 1, 1) / r0_z_9)).z;
+                float r0_y_20 = LinearEyeDepth(r0_w_4);
+                float r0_z_10 = LinearEyeDepth(r1_xyzw_4.x);
                 float r0_y_21 = (-r0_y_20 + r0_z_10);
                 float r0_y_22 = (r0_y_21 / cb0_values[15].x);
                 float r0_y_23 = min(abs(r0_y_22), 1);
@@ -2052,6 +2041,7 @@ Shader "Knife/Soft Holo Cone"
             program30Output frag(program30Input i)
             {
                 program30Output o = (program30Output)0;
+                #define LinearEyeDepth(d) (1.0 / (_ZBufferParams.z * (d) + _ZBufferParams.w))
                 float2 uvMask2_xy_1 = (mad(i.texcoord0.xyxx, _Mask2_ST.xyxx, _Mask2_ST.zwzz)).xy;
                 float4 r0_xyzw_3 = t0.Sample(s0, (mad(_Time.yyyy, _Mask2Speed.xyxx, uvMask2_xy_1.xyxx)).xyxx);
                 float r0_y_4 = ((float4(1, 1, 1, 1) / _MaskSoftness2)).y;
@@ -2086,10 +2076,8 @@ Shader "Knife/Soft Holo Cone"
                 float r0_z_8 = r0_xyzw_18.z;
                 float r0_w_4 = r0_xyzw_18.w;
                 float4 r1_xyzw_4 = t2.Sample(s2, float4(r0_y_18, r0_z_8, r0_y_18, r0_y_18));
-                float r0_y_19 = mad(_ZBufferParams.z, r0_w_4, _ZBufferParams.w);
-                float r0_y_20 = ((float4(1, 1, 1, 1) / r0_y_19)).y;
-                float r0_z_9 = mad(_ZBufferParams.z, r1_xyzw_4.x, _ZBufferParams.w);
-                float r0_z_10 = ((float4(1, 1, 1, 1) / r0_z_9)).z;
+                float r0_y_20 = LinearEyeDepth(r0_w_4);
+                float r0_z_10 = LinearEyeDepth(r1_xyzw_4.x);
                 float r0_y_21 = (-r0_y_20 + r0_z_10);
                 float r0_y_22 = (r0_y_21 / _DepthFadeDistance);
                 float r0_y_23 = min(abs(r0_y_22), 1);
@@ -2243,6 +2231,7 @@ Shader "Knife/Soft Holo Cone"
             program43Output frag(program43Input i)
             {
                 program43Output o = (program43Output)0;
+                #define LinearEyeDepth(d) (1.0 / (_ZBufferParams.z * (d) + _ZBufferParams.w))
                 float2 uvMask2_xy_1 = (mad(i.texcoord1.xyxx, _Mask2_ST.xyxx, _Mask2_ST.zwzz)).xy;
                 float4 r0_xyzw_3 = t0.Sample(s0, (mad(_Time.yyyy, _Mask2Speed.xyxx, uvMask2_xy_1.xyxx)).xyxx);
                 float r0_y_4 = ((float4(1, 1, 1, 1) / _MaskSoftness2)).y;
@@ -2277,10 +2266,8 @@ Shader "Knife/Soft Holo Cone"
                 float r0_z_8 = r0_xyzw_18.z;
                 float r0_w_4 = r0_xyzw_18.w;
                 float4 r1_xyzw_4 = t2.Sample(s2, float4(r0_y_18, r0_z_8, r0_y_18, r0_y_18));
-                float r0_y_19 = mad(_ZBufferParams.z, r0_w_4, _ZBufferParams.w);
-                float r0_y_20 = ((float4(1, 1, 1, 1) / r0_y_19)).y;
-                float r0_z_9 = mad(_ZBufferParams.z, r1_xyzw_4.x, _ZBufferParams.w);
-                float r0_z_10 = ((float4(1, 1, 1, 1) / r0_z_9)).z;
+                float r0_y_20 = LinearEyeDepth(r0_w_4);
+                float r0_z_10 = LinearEyeDepth(r1_xyzw_4.x);
                 float r0_y_21 = (-r0_y_20 + r0_z_10);
                 float r0_y_22 = (r0_y_21 / _DepthFadeDistance);
                 float r0_y_23 = min(abs(r0_y_22), 1);
@@ -2437,6 +2424,7 @@ Shader "Knife/Soft Holo Cone"
             program44Output frag(program44Input i)
             {
                 program44Output o = (program44Output)0;
+                #define LinearEyeDepth(d) (1.0 / (_ZBufferParams.z * (d) + _ZBufferParams.w))
                 float2 uvMask2_xy_1 = (mad(i.texcoord1.xyxx, _Mask2_ST.xyxx, _Mask2_ST.zwzz)).xy;
                 float4 r0_xyzw_3 = t0.Sample(s0, (mad(_Time.yyyy, _Mask2Speed.xyxx, uvMask2_xy_1.xyxx)).xyxx);
                 float r0_y_4 = ((float4(1, 1, 1, 1) / _MaskSoftness2)).y;
@@ -2471,10 +2459,8 @@ Shader "Knife/Soft Holo Cone"
                 float r0_z_8 = r0_xyzw_18.z;
                 float r0_w_4 = r0_xyzw_18.w;
                 float4 r1_xyzw_4 = t2.Sample(s2, float4(r0_y_18, r0_z_8, r0_y_18, r0_y_18));
-                float r0_y_19 = mad(_ZBufferParams.z, r0_w_4, _ZBufferParams.w);
-                float r0_y_20 = ((float4(1, 1, 1, 1) / r0_y_19)).y;
-                float r0_z_9 = mad(_ZBufferParams.z, r1_xyzw_4.x, _ZBufferParams.w);
-                float r0_z_10 = ((float4(1, 1, 1, 1) / r0_z_9)).z;
+                float r0_y_20 = LinearEyeDepth(r0_w_4);
+                float r0_z_10 = LinearEyeDepth(r1_xyzw_4.x);
                 float r0_y_21 = (-r0_y_20 + r0_z_10);
                 float r0_y_22 = (r0_y_21 / _DepthFadeDistance);
                 float r0_y_23 = min(abs(r0_y_22), 1);

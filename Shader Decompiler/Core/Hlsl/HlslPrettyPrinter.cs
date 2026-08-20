@@ -445,6 +445,8 @@ public static class HlslPrettyPrinter
     {
         "UnityObjectToClipPos" => "#define UnityObjectToClipPos(v) mul(unity_MatrixVP, v)",
         "UnityObjectToWorldPos" => "#define UnityObjectToWorldPos(v) mul(unity_ObjectToWorld, float4(v, 1.0))",
+        "LinearEyeDepth" => "#define LinearEyeDepth(d) (1.0 / (_ZBufferParams.z * (d) + _ZBufferParams.w))",
+        "Linear01Depth" => "#define Linear01Depth(d) (1.0 / (_ZBufferParams.x * (d) + _ZBufferParams.y))",
         _ => $"#define {name}(v) /* TODO: unrecognized macro {name} */ (v)",
     };
 
@@ -1067,6 +1069,17 @@ public static class HlslPrettyPrinter
     // bare (SRC.w folded to 1), this equals `LHS = <final>.xyz;`.
     private static readonly System.Text.RegularExpressions.Regex RecomputeLine =
         new(@"^(?<lhs>[^=]+?) = \(mad\(unity_ObjectToWorld\[3\]\.xyzx, (?<src>[^,]+?)\.wwww, (?<t>[^,]+?)\.xyzx\)\)\.xyz;$");
+    // `float r0_y_20 = ((float4(1, 1, 1, 1) / r0_y_19)).y;` — a scalar
+    // reciprocal. When the denominator is `mad(_ZBufferParams.*, z,
+    // _ZBufferParams.*)` the pair is exactly Unity's LinearEyeDepth(z) =
+    // 1/(_ZBufferParams.z*z + _ZBufferParams.w) or Linear01Depth(z) =
+    // 1/(_ZBufferParams.x*z + _ZBufferParams.y).
+    private static readonly System.Text.RegularExpressions.Regex ScalarTempDefLine =
+        new(@"^float (\w+) = (.+);$");
+    private static readonly System.Text.RegularExpressions.Regex ScalarReciprocalLine =
+        new(@"^float (?<dst>\w+) = \(\(float4\(1, 1, 1, 1\) / (?<den>.+)\)\)\.(?<lane>[xyzw]);$");
+    private static readonly System.Text.RegularExpressions.Regex DepthZBufParam =
+        new(@"^_ZBufferParams\.(?<c>[xyzw])$");
 
     private static List<string> RevertUnityMacros(List<string> lines, PrintContext ctx)
     {
@@ -1111,6 +1124,41 @@ public static class HlslPrettyPrinter
                     result.Add(clipReplacement);
                     i++;
                     continue;
+                }
+            }
+
+            // LinearEyeDepth / Linear01Depth: `float D = 1/(_ZBufferParams.* z
+            // + _ZBufferParams.*);`. The denominator is either the mad inline or
+            // a temp whose def sits directly above.
+            var recipMatch = ScalarReciprocalLine.Match(lines[i]);
+            if (recipMatch.Success)
+            {
+                string dst = recipMatch.Groups["dst"].Value;
+                string den = recipMatch.Groups["den"].Value.Trim();
+                if (TryParseDepthDenominator(den, out var depthSrc, out var depthMacro))
+                {
+                    result.Add($"float {dst} = {depthMacro}({depthSrc});");
+                    ctx.Macros.Add(depthMacro);
+                    i++;
+                    continue;
+                }
+                if (SimpleIdentifier.IsMatch(den) && result.Count > 0)
+                {
+                    var defMatch = ScalarTempDefLine.Match(result[^1]);
+                    if (defMatch.Success
+                        && defMatch.Groups[1].Value == den
+                        && TryParseDepthDenominator(defMatch.Groups[2].Value, out depthSrc, out depthMacro))
+                    {
+                        // Safe to drop the temp def only when it feeds nothing
+                        // else in the run; shared temps stay for their other
+                        // consumers and the reciprocal alone is rewritten.
+                        if (CountTokenOccurrences(lines, den) <= 2)
+                            result.RemoveAt(result.Count - 1);
+                        result.Add($"float {dst} = {depthMacro}({depthSrc});");
+                        ctx.Macros.Add(depthMacro);
+                        i++;
+                        continue;
+                    }
                 }
             }
 
@@ -1224,6 +1272,55 @@ public static class HlslPrettyPrinter
         replacement = name == "unity_MatrixVP"
             ? $"o.sv_Position0.xyzw = UnityObjectToClipPos({src});"
             : $"o.sv_Position0.xyzw = mul({matrix}, {src});";
+        return true;
+    }
+
+    // Parses the denominator of a depth reciprocal. Recognizes Unity's
+    // LinearEyeDepth / Linear01Depth expansions in either operand order:
+    // mad(_ZBufferParams.z, z, _ZBufferParams.w) == mad(z, _ZBufferParams.z,
+    // _ZBufferParams.w). Any other shape — a different cbuffer name, a
+    // mismatched pair, extra terms — is left untouched.
+    private static bool TryParseDepthDenominator(string den, out string src, out string macroName)
+    {
+        src = "";
+        macroName = "";
+        den = den.Trim();
+        while (den.StartsWith('(') && den.EndsWith(')'))
+            den = den[1..^1].Trim();
+        if (!den.StartsWith("mad(") || !den.EndsWith(')'))
+            return false;
+        List<string> args = SplitTopLevelArgs(den[4..^1]);
+        if (args.Count != 3)
+            return false;
+
+        int scale = -1, bias = -1;
+        string zsrc = "";
+        for (int k = 0; k < 3; k++)
+        {
+            var m = DepthZBufParam.Match(args[k].Trim());
+            if (m.Success)
+            {
+                char c = m.Groups["c"].Value[0];
+                if (c is 'x' or 'z') scale = k;
+                else bias = k;
+            }
+            else if (SimpleSource.IsMatch(args[k].Trim()))
+                zsrc = args[k].Trim();
+            else
+                return false;
+        }
+        if (scale < 0 || bias < 0 || zsrc.Length == 0)
+            return false;
+
+        char sc = DepthZBufParam.Match(args[scale].Trim()).Groups["c"].Value[0];
+        char bc = DepthZBufParam.Match(args[bias].Trim()).Groups["c"].Value[0];
+        if (sc == 'x' && bc == 'y')
+            macroName = "Linear01Depth";
+        else if (sc == 'z' && bc == 'w')
+            macroName = "LinearEyeDepth";
+        else
+            return false;
+        src = zsrc;
         return true;
     }
 
