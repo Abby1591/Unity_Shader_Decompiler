@@ -231,7 +231,7 @@ public static class HlslAstBuilder
         List<IRDeclaration> declarations, RdefChunk? rdef = null, List<IRBlock>? blocks = null,
         Dictionary<(int Slot, string Stage), CbufferMetadata>? cbuffers = null, string stage = "")
     {
-        Dictionary<uint, uint> maxCbufferSlot = BuildMaxCbufferSlot(blocks);
+        Dictionary<uint, uint> maxCbufferSlot = BuildMaxCbufferSlot(blocks, cbuffers, stage);
 
         foreach (IRDeclaration decl in declarations)
         {
@@ -339,7 +339,18 @@ public static class HlslAstBuilder
     // Scans the subprogram's IR for cbuffer reads like cb2[10].yyyy and
     // returns, per cbuffer slot, the highest register index (element) used.
     // Used to size the synthesized float4 array for RDEF-less cbuffers.
-    private static Dictionary<uint, uint> BuildMaxCbufferSlot(List<IRBlock>? blocks)
+    //
+    // `cbuffers`/`stage` are the ShaderLab-metadata layout for the pass
+    // (the substitute for the RDEF Unity strips from shipped bytecode).
+    // A read that the metadata resolves to a named member (HlslPrettyPrinter
+    // resolves the same way) never touches the synthesized cbN_values array,
+    // so it must not count toward the array's size — otherwise the fallback
+    // is declared bigger than needed, or declared at all for a slot whose
+    // every read resolves (a dead declaration).
+    private static Dictionary<uint, uint> BuildMaxCbufferSlot(
+        List<IRBlock>? blocks,
+        Dictionary<(int Slot, string Stage), CbufferMetadata>? cbuffers,
+        string stage)
     {
         var result = new Dictionary<uint, uint>();
 
@@ -362,7 +373,17 @@ public static class HlslAstBuilder
                     // to the real cbuffer size, which RDEF-less bytecode
                     // doesn't tell us — reserve a generous range for them.
                     if (reg.RelativeIndices.Length > 1 && reg.RelativeIndices[1] is not null)
+                    {
                         elem = Math.Max(elem, 64);
+                    }
+                    // Reads the ShaderLab metadata resolves to a named member
+                    // (variable name + optional row/component) render as that
+                    // identifier, never as cbN_values[slot], so they impose no
+                    // requirement on the synthesized fallback array.
+                    else if (ResolvesToNamedMember(reg, cbuffers, stage))
+                    {
+                        continue;
+                    }
 
                     if (!result.TryGetValue(slot, out uint max) || elem > max)
                         result[slot] = elem;
@@ -371,6 +392,22 @@ public static class HlslAstBuilder
         }
 
         return result;
+    }
+
+    // Does the metadata layout cover this cbuffer read with a named member,
+    // so the printer will render it as an identifier instead of cbN_values?
+    // Mirrors HlslPrettyPrinter.RenderCbufferRead's metadata path exactly:
+    // same per-stage lookup, same ResolveCbufferRead result.
+    private static bool ResolvesToNamedMember(
+        IRRegister reg,
+        Dictionary<(int Slot, string Stage), CbufferMetadata>? cbuffers,
+        string stage)
+    {
+        if (cbuffers is null || !cbuffers.TryGetValue(((int)reg.Indices[0], stage), out CbufferMetadata? meta)
+            && !cbuffers.TryGetValue(((int)reg.Indices[0], ""), out meta))
+            return false;
+
+        return HlslPrettyPrinter.ResolveCbufferRead(meta, reg) is not null;
     }
 
     // Sampler slots used by comparison texture operations in the given IR.
