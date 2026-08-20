@@ -1,37 +1,37 @@
 # Shader Decompiler (Stage 1+) — Unity Shader Decompiler
 
 This directory contains the C# (net10.0) backend of the Unity Shader Decompiler:
-DXBC container parsing, instruction decoding, SSA IR construction + optimization,
-pattern recognition, the Stage 2 HLSL AST, and — since the pretty-printer landed —
-full `.shader` emission with surface-shader recognition.
+DXBC container parsing, SM4/SM5 instruction decoding, SSA IR construction and
+optimization, pattern recognition, HLSL AST building, and full `.shader` output.
 
-See the [project README](../README.md) for the full pipeline overview, repository
-layout, build/run instructions, CLI flags, and current status. Highlights:
+See the [project README](../README.md) for the pipeline overview, repository
+layout, all CLI flags, and current status. Highlights:
 
-- **Entry point:** `Program.cs` (drives extraction → disassembly → IR → AST →
-  pretty printing, plus the verification/test modes).
-- **Parse:** `DXBC/Container` (DxbcFile, chunks), `DXBC/Chunks` (RDEF/ISGN/OSGN/SFI0/STAT),
-  `DXBC/Instructions` (opcode table, `ShdrParser`, operands), `DXBC/Extraction`
-  (`UnityShaderBlob`), `Unity/Blob` (Unity subprogram model).
-- **IR & SSA:** `DXBC/IR` and `Core/Analysis` — CFG, dominators, phi insertion,
-  renaming, verifier, leave-SSA; ~20 optimization passes + pattern recognition in
-  `Core/Optimizations`.
-- **AST & emit:** `Core/Hlsl` — `HlslAST`, `HlslAstBuilder`, `HlslRenderstateBuilder`,
-  `HlslStatement`, `HlslPrettyPrinter`, `HlslSurfaceShaderRecognizer`.
+- **Entry point:** `Program.cs` (blob classification → container parse → IR →
+  SSA → optimization → AST → pretty print → surface-shader recognition, plus
+  the verification/test modes).
+- **Parse:** `DXBC/Container` (`DxbcFile`, chunks), `DXBC/Chunks`
+  (ISGN/OSGN/PSGN/RDEF/SFI0/STAT), `DXBC/Instructions` (`ShdrParser`),
+  `DXBC/Extraction` (`UnityShaderBlob` classifier).
+- **IR & SSA:** `DXBC/IR` + `Core/Analysis` — CFG, dominators, dominance
+  frontiers, phi insertion, renaming, verifier, leave-SSA; `Core/Optimizations`
+  has ~20 passes run to a fixed point plus matrix/vector/texture/loop pattern
+  recognition.
+- **AST & emit:** `Core/Hlsl` — `HlslAstBuilder`, `HlslPrettyPrinter`,
+  `HlslSurfaceShaderRecognizer`, `HlslNameRecovery`, `HlslFuseTemps`.
 - **Tests:** `Tests/` — golden PicaVoxel tests (`test_picavoxel_shaders.py`),
-  spec vectors, signature cross-check, strip-survivor analysis, and the
-  recompile-verification harness.
-- **Outputs:** `Output/<Name>.shader` — full reconstructed ShaderLab source
-  (default write location). `--save-subprograms` additionally writes
-  `program{i}.{bin,dxbc,hlsl}`; the `.hlsl` artifact is DXBC disassembly, not
-  reconstructed HLSL.
+  spec vectors, signature cross-check, strip-survivor analysis, recompile
+  verification.
+- **Unity blob reader:** `Unity/Blob/` (AssetStudio `ShaderProgram`,
+  `ShaderSubProgram`).
 
-Requires a .NET SDK supporting `net10.0` and the `Vortice.D3DCompiler` native
-library (Windows). `AllowUnsafeBlocks` is enabled for the disassembler's pinned
-buffer call. NuGet packages: `Unity 5.11.10` (AssetStudio), `Vortice.D3DCompiler 3.8.3`.
+Requires a .NET SDK targeting `net10.0`; `Vortice.D3DCompiler` (Windows) is
+needed for disassembly/recompilation. `AllowUnsafeBlocks` is enabled for the
+pinned-buffer D3D compiler calls. NuGet packages: `Unity` 5.11.10 (AssetStudio),
+`Vortice.D3DCompiler` 3.8.3.
 
 ```bash
 dotnet restore "Shader Decompiler.csproj"
 dotnet build "Shader Decompiler.csproj" -c Release
-dotnet run --project "Shader Decompiler.csproj" -- path/to/output-folder
+dotnet run --project "Shader Decompiler.csproj" -- ../Output/HOLO_Holo
 ```
