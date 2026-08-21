@@ -429,9 +429,10 @@ public static class HlslPrettyPrinter
         // Whole-function passes. First scalar lane splits whose uses are all
         // clean collapse back into vector swizzle uses (CollapseScalarLanes),
         // then 4x4 outer-product accumulation blocks rebuild into matrix
-        // multiplies (CollapseMatrixMul). Must run after PrintBlock so every
-        // use in the body is visible.
-        sb.Append(CollapseMatrixMul(CollapseScalarLanes(body.ToString())));
+        // multiplies (CollapseMatrixMul), then common math idioms (normalize,
+        // dot, lerp, vector-by-matrix mul) simplify. Must run after
+        // PrintBlock so every use in the body is visible.
+        sb.Append(SimplifyMathIdioms(CollapseMatrixMul(CollapseScalarLanes(body.ToString()))));
         sb.Append("            }\n");
     }
 
@@ -2879,5 +2880,406 @@ public static class HlslPrettyPrinter
             _ =>
                 $"/* TODO: no confirmed HLSL mapping for {tex.Operation} */ {resource}.{tex.Operation}({Args(sampler, coord)})",
         };
+    }
+
+    // ---------- Math idiom simplification ----------
+    // Recognises common multi-line patterns in the rendered HLSL and
+    // replaces them with shorter equivalent calls (normalize, dot, lerp,
+    // saturate, mul).  Each sub-pass is a whole-function regex scan.
+
+    private static string SimplifyMathIdioms(string body)
+    {
+        string[] lines = body.Split('\n');
+        var drop = new bool[lines.Length];
+        var replacements = new Dictionary<int, string>();
+        var renames = new List<(string Old, string New)>();
+
+        SimplifyNormalizes(lines, drop, replacements, renames);
+        SimplifyDotProducts(lines, drop, replacements, renames);
+        SimplifyLerps(lines, drop, replacements, renames);
+        SimplifyVectorMatrixMuls(lines, drop, replacements, renames);
+
+        if (!drop.Any(d => d) && replacements.Count == 0 && renames.Count == 0)
+            return body;
+
+        var sb = new StringBuilder(body.Length);
+        bool first = true;
+        for (int k = 0; k < lines.Length; k++)
+        {
+            if (drop[k])
+            {
+                if (replacements.TryGetValue(k, out string? repl))
+                    AppendBodyLine(sb, ref first, repl);
+                continue;
+            }
+            if (k == lines.Length - 1 && lines[k].Length == 0)
+                continue;
+            string line = lines[k];
+            foreach ((string old, string neu) in renames)
+                line = Regex.Replace(line, $@"(?<!\w){Regex.Escape(old)}(?!\w)", neu);
+            AppendBodyLine(sb, ref first, line);
+        }
+        if (body.Length > 0 && body[body.Length - 1] == '\n')
+            sb.Append('\n');
+        return sb.ToString();
+    }
+
+    // Pattern: float T = dot(v, v); float T2 = rsqrt(T); floatN result = (T2.xxx * v...).swz;
+    // → floatN result = normalize(v);
+    private static void SimplifyNormalizes(string[] lines, bool[] drop,
+        Dictionary<int, string> replacements, List<(string Old, string New)> renames)
+    {
+        // Match full line: float <dr> = dot(<anything>, <anything>);
+        // We parse the dot args manually to handle nested parens like float4(...).
+        var linePat = new Regex(@"^\s*float\s+(?<dr>\w+)\s*=\s*dot\((?<rest>.+)\)\s*;\s*$");
+
+        for (int i = 0; i + 2 < lines.Length; i++)
+        {
+            if (drop[i] || drop[i + 1] || drop[i + 2])
+                continue;
+
+            Match mLine = linePat.Match(lines[i]);
+            if (!mLine.Success) continue;
+            string dr = mLine.Groups["dr"].Value;
+            string rest = mLine.Groups["rest"].Value;
+
+            // Split on comma at nesting depth 0 to get the two dot args
+            string? a = null, b = null;
+            int depth = 0;
+            int split = -1;
+            for (int j = 0; j < rest.Length; j++)
+            {
+                if (rest[j] == '(') depth++;
+                else if (rest[j] == ')') depth--;
+                else if (rest[j] == ',' && depth == 0) { split = j; break; }
+            }
+            if (split < 0) continue;
+            a = rest[..split].Trim();
+            b = rest[(split + 1)..].Trim();
+
+            // Self-dot check: a and b must be the same expression
+            if (a != b) continue;
+
+            string escDr = Regex.Escape(dr);
+            // Match: float <rsqrtResult> = rsqrt(<dotResult>);
+            var rsqrtRe = new Regex($@"^\s*float\s+(?<rsr>\w+)\s*=\s*rsqrt\({escDr}\)\s*;\s*$");
+            Match mRsqrt = rsqrtRe.Match(lines[i + 1]);
+            if (!mRsqrt.Success) continue;
+            string rsr = mRsqrt.Groups["rsr"].Value;
+
+            // Match: floatN <result> = ((<rsqrtResult>.xxxx * vec...)).swz;  OR  (rsr.xxxx * vec...)  OR  rsr.xxxx * vec...
+            // The vec is either a simple variable (possibly with swizzle) or a float4(...) constructor.
+            string escRsr = Regex.Escape(rsr);
+            var mulRe = new Regex($@"^\s*float(?<dims>[234])\s+(?<res>\w+)\s*=\s*\(*\(?{escRsr}\.xxxx\s*\*\s*(?<vec>\w+(?:\([^)]*\))?(?:\.\w+)?)\)+(?:\.\w+)?\s*;\s*$");
+            Match mMul = mulRe.Match(lines[i + 2]);
+            if (!mMul.Success) continue;
+
+            string resName = mMul.Groups["res"].Value;
+            string vecRaw = mMul.Groups["vec"].Value.Trim();
+            string vec;
+            if (vecRaw.StartsWith("float4(") && vecRaw.EndsWith(")"))
+            {
+                // Already a complete float4(...) constructor — use as-is
+                vec = vecRaw;
+            }
+            else if (vecRaw.Contains('('))
+            {
+                var parts = ExtractComponents(vecRaw);
+                vec = "float4(" + string.Join(", ", parts) + ")";
+            }
+            else
+            {
+                vec = vecRaw.Split('.')[0];
+            }
+            string indent = new string(lines[i].TakeWhile(char.IsWhiteSpace).ToArray());
+
+            drop[i] = true;
+            drop[i + 1] = true;
+            drop[i + 2] = true;
+            replacements[i] = $"{indent}float3 {resName} = normalize({vec});";
+        }
+    }
+
+    // Extract comma-separated component names from float4(x, y, z, w)
+    private static List<string> ExtractComponents(string expr)
+    {
+        var result = new List<string>();
+        int depth = 0;
+        int start = -1;
+        for (int i = 0; i < expr.Length; i++)
+        {
+            if (expr[i] == '(' && start == -1) { depth++; continue; }
+            if (expr[i] == '(') depth++;
+            if (expr[i] == ')')
+            {
+                depth--;
+                if (depth == 0 && start >= 0)
+                {
+                    string part = expr[start..i].Trim();
+                    if (part.Length > 0) result.Add(part);
+                    start = -1;
+                }
+                continue;
+            }
+            if (depth == 1 && expr[i] == ',')
+            {
+                if (start >= 0)
+                {
+                    string part = expr[start..i].Trim();
+                    if (part.Length > 0) result.Add(part);
+                    start = -1;
+                }
+            }
+            if (depth == 1 && start == -1 && expr[i] != ' ' && expr[i] != ',') start = i;
+        }
+        return result;
+    }
+
+    // Pattern: float T = a*x + b*y + c*z; (3-4 scalar multiply-adds with
+    // matching swizzle pairs on two inputs)
+    // → float T = dot(a.xyz, b.xyz);
+    private static void SimplifyDotProducts(string[] lines, bool[] drop,
+        Dictionary<int, string> replacements, List<(string Old, string New)> renames)
+    {
+        // Match: float <res> = (<term> + <term> + <term>);
+        // where each term is: <scalar> * <vec>.<comp>
+        var chainPat = new Regex(
+            @"^\s*float\s+(?<res>\w+)\s*=\s*\(" +
+            @"(?<t1>\w+(?:\.\w+)?)\s*\*\s*(?<v1>\w+(?:\.\w+)?)\.[xyzw]" +
+            @"\s*\+\s*" +
+            @"(?<t2>\w+(?:\.\w+)?)\s*\*\s*(?<v2>\w+(?:\.\w+)?)\.[xyzw]" +
+            @"\s*\+\s*" +
+            @"(?<t3>\w+(?:\.\w+)?)\s*\*\s*(?<v3>\w+(?:\.\w+)?)\.[xyzw]" +
+            @"(?:\s*\+\s*" +
+            @"(?<t4>\w+(?:\.\w+)?)\s*\*\s*(?<v4>\w+(?:\.\w+)?)\.[xyzw]" +
+            @")?\)\s*;\s*$");
+
+        for (int i = 0; i < lines.Length; i++)
+        {
+            if (drop[i]) continue;
+
+            Match m = chainPat.Match(lines[i]);
+            if (!m.Success) continue;
+
+            string res = m.Groups["res"].Value;
+            string[] scalars = { m.Groups["t1"].Value, m.Groups["t2"].Value, m.Groups["t3"].Value };
+            string[] vecs = { m.Groups["v1"].Value, m.Groups["v2"].Value, m.Groups["v3"].Value };
+            int count = 3;
+            if (m.Groups["t4"].Success)
+            {
+                scalars = scalars.Append(m.Groups["t4"].Value).ToArray();
+                vecs = vecs.Append(m.Groups["v4"].Value).ToArray();
+                count = 4;
+            }
+
+            // Check all scalars are the same base variable (e.g. all from one vec)
+            // and all vecs are the same base variable — classic dot(a, b) pattern
+            // scalars[i] = a.comp, vecs[i] = b.comp
+            string sBase = scalars[0].Split('.')[0];
+            string vBase = vecs[0].Split('.')[0];
+            bool allScalarMatch = scalars.All(s => s.Split('.')[0] == sBase);
+            bool allVecMatch = vecs.All(v => v.Split('.')[0] == vBase);
+            if (!allScalarMatch || !allVecMatch) continue;
+
+            // Swizzle components must be distinct and match {x,y,z} or {x,y,z,w}
+            char[] sComps = scalars.Select(s => s.Contains('.') ? s.Split('.')[1][0] : 'x').ToArray();
+            char[] vComps = vecs.Select(v => v.Contains('.') ? v.Split('.')[1][0] : 'x').ToArray();
+            if (sComps.Distinct().Count() != count || vComps.Distinct().Count() != count)
+                continue;
+
+            string indent = new string(lines[i].TakeWhile(char.IsWhiteSpace).ToArray());
+            string swz = new string(sComps);
+            string dim = count == 3 ? "3" : "4";
+
+            // Use the vec's swizzle as the dot product swizzle
+            string dotA = $"{sBase}.{swz}";
+            string dotB = $"{vBase}.{swz}";
+
+            drop[i] = true;
+            replacements[i] = $"{indent}float{dim} {res} = dot({dotA}, {dotB});";
+        }
+    }
+
+    // Pattern: float <res> = <a> * (1 - <t>) + <b> * <t>;
+    // Or:        float <res> = mad(<a>, (1 - <t>), <b> * <t>);
+    // → float <res> = lerp(<a>, <b>, <t>);
+    private static void SimplifyLerps(string[] lines, bool[] drop,
+        Dictionary<int, string> replacements, List<(string Old, string New)> renames)
+    {
+        // Pattern: result = a * (1 - t) + b * t
+        var lerpPat = new Regex(
+            @"^\s*float\s+(?<res>\w+)\s*=\s*" +
+            @"(?<a>\w+(?:\.\w+)?)\s*\*\s*\(1\s*-\s*(?<t>\w+(?:\.\w+)?)\)" +
+            @"\s*\+\s*" +
+            @"(?<b>\w+(?:\.\w+)?)\s*\*\s*(?<t2>\w+(?:\.\w+)?)\s*;\s*$");
+
+        for (int i = 0; i < lines.Length; i++)
+        {
+            if (drop[i]) continue;
+
+            Match m = lerpPat.Match(lines[i]);
+            if (!m.Success) continue;
+            if (m.Groups["t"].Value != m.Groups["t2"].Value) continue;
+
+            string res = m.Groups["res"].Value;
+            string a = m.Groups["a"].Value;
+            string b = m.Groups["b"].Value;
+            string t = m.Groups["t"].Value;
+            string indent = new string(lines[i].TakeWhile(char.IsWhiteSpace).ToArray());
+
+            drop[i] = true;
+            replacements[i] = $"{indent}float {res} = lerp({a}, {b}, {t});";
+        }
+    }
+
+    // Pattern: float4 r = v.y * M[1]; r = mad(M[0], v.x, r); r = mad(M[2], v.z, r);
+    // Or:        r = r + v.w * M[3];
+    // Or:        r = mad(v.w, M[3], r);  (operand order varies)
+    // → float4 result = mul(float4(v.x, v.y, v.z, 1), M);
+    private static void SimplifyVectorMatrixMuls(string[] lines, bool[] drop,
+        Dictionary<int, string> replacements, List<(string Old, string New)> renames)
+    {
+        // Seed: float4 <acc> = <scalar> * <mat>[<idx>]; OR <mat>[<idx>] * <scalar>;
+        var seedPat = new Regex(
+            @"^\s*float4\s+(?<acc>\w+)\s*=\s*(?<mul>[^;]+\*\s*(?<mat>\w+)\[(?<idx>\d+)\]|(?<mat2>\w+)\[(?<idx2>\d+)\]\s*\*\s*(?<mul2>[^;]+))\s*;\s*$");
+        // Seed (simpler): just match the LHS and RHS
+        var seedPat2 = new Regex(
+            @"^\s*float4\s+(?<acc>\w+)\s*=\s*(?<rhs>.+)\s*;\s*$");
+        // Match mad: <acc> = mad(<a>, <b>, <acc>);  — a,b can be mat[k] or scalar
+        var madPat = new Regex(
+            @"^\s*(?<acc>\w+)\s*=\s*mad\((?<a>[^,]+),\s*(?<b>[^,]+),\s*(?<c>[^)]+)\)\s*;\s*$");
+        // Match add: <acc> = <acc> + <scalar> * <mat>[<idx>]; OR <acc> + mad(...)
+        var addPat = new Regex(
+            @"^\s*(?<acc>\w+)\s*=\s*(?<acc2>\w+)\s*\+\s*(?<rest>.+)\s*;\s*$");
+
+        for (int i = 0; i + 2 < lines.Length; i++)
+        {
+            if (drop[i]) continue;
+
+            // Try to parse seed line: float4 acc = scalar * M[idx] or M[idx] * scalar
+            Match mSeed = seedPat2.Match(lines[i]);
+            if (!mSeed.Success) continue;
+            string acc = mSeed.Groups["acc"].Value;
+            string rhs = mSeed.Groups["rhs"].Value.Trim();
+
+            // Extract mat[k] and scalar from the RHS
+            string? mat = null;
+            var comps = new List<char>();
+            var indices = new List<string>();
+
+            // Check if RHS contains a matrix access M[idx]
+            var matAccess = Regex.Match(rhs, @"(\w+)\[(\d+)\]");
+            if (!matAccess.Success) continue;
+            mat = matAccess.Groups[1].Value;
+            string idx0 = matAccess.Groups[2].Value;
+
+            // Extract the scalar operand (everything not the matrix access)
+            string scalarPart = rhs.Replace(matAccess.Value, "").Replace("*", "").Trim();
+            // Try to extract the swizzle component from the scalar
+            var swizMatch = Regex.Match(scalarPart, @"(\w+)\.([xyzw])");
+            if (swizMatch.Success)
+            {
+                comps.Add(swizMatch.Groups[2].Value[0]);
+                indices.Add(idx0);
+            }
+            else
+            {
+                continue; // Can't determine the component
+            }
+
+            int end = i + 1;
+            for (int j = i + 1; j < lines.Length && j < i + 6; j++)
+            {
+                if (drop[j]) { end = j + 1; continue; }
+
+                Match mMad = madPat.Match(lines[j]);
+                if (mMad.Success && mMad.Groups["acc"].Value == acc)
+                {
+                    string aArg = mMad.Groups["a"].Value.Trim();
+                    string bArg = mMad.Groups["b"].Value.Trim();
+                    string cArg = mMad.Groups["c"].Value.Trim();
+
+                    // One of a,b should be mat[k], the other should be a scalar
+                    string? madMat = null, madScalar = null;
+                    var ma1 = Regex.Match(aArg, @"(\w+)\[(\d+)\]");
+                    var mb1 = Regex.Match(bArg, @"(\w+)\[(\d+)\]");
+                    if (ma1.Success && ma1.Groups[1].Value == mat)
+                    {
+                        madMat = aArg; madScalar = bArg;
+                    }
+                    else if (mb1.Success && mb1.Groups[1].Value == mat)
+                    {
+                        madMat = bArg; madScalar = aArg;
+                    }
+                    else
+                    {
+                        continue; // Not our matrix
+                    }
+
+                    // Verify cArg is the accumulator
+                    if (cArg != acc) continue;
+
+                    var madIdx = Regex.Match(madMat, @"\[(\d+)\]");
+                    var madSwiz = Regex.Match(madScalar, @"\.([xyzw])");
+                    if (!madIdx.Success || !madSwiz.Success) continue;
+                    comps.Add(madSwiz.Groups[1].Value[0]);
+                    indices.Add(madIdx.Groups[1].Value);
+                    end = j + 1;
+                    continue;
+                }
+
+                // Try add pattern: acc = acc + scalar * M[idx]
+                Match mAdd = addPat.Match(lines[j]);
+                if (mAdd.Success && mAdd.Groups["acc"].Value == acc && mAdd.Groups["acc2"].Value == acc)
+                {
+                    string rest = mAdd.Groups["rest"].Value.Trim();
+                    var addMul = Regex.Match(rest, @"(\w+(?:\.\w+)?)\s*\*\s*(\w+)\[(\d+)\]");
+                    var addMulRev = Regex.Match(rest, @"(\w+)\[(\d+)\]\s*\*\s*(\w+(?:\.\w+)?)");
+                    if (addMul.Success && addMul.Groups[2].Value == mat)
+                    {
+                        var swz = Regex.Match(addMul.Groups[1].Value, @"\.([xyzw])");
+                        if (swz.Success)
+                        {
+                            comps.Add(swz.Groups[1].Value[0]);
+                            indices.Add(addMul.Groups[3].Value);
+                            end = j + 1;
+                            continue;
+                        }
+                    }
+                    if (addMulRev.Success && addMulRev.Groups[1].Value == mat)
+                    {
+                        var swz = Regex.Match(addMulRev.Groups[3].Value, @"\.([xyzw])");
+                        if (swz.Success)
+                        {
+                            comps.Add(swz.Groups[1].Value[0]);
+                            indices.Add(addMulRev.Groups[2].Value);
+                            end = j + 1;
+                            continue;
+                        }
+                    }
+                }
+
+                break;
+            }
+
+            if (comps.Count < 3) continue;
+            if (indices.Count != comps.Count) continue;
+            var idxInts = indices.Select(int.Parse).ToList();
+            if (idxInts.Any(x => x < 0 || x > 3)) continue;
+
+            string indent = new string(lines[i].TakeWhile(char.IsWhiteSpace).ToArray());
+            string swzStr = new string(comps.ToArray());
+
+            // Extract vector base name from the first scalar
+            string firstScalar = rhs.Replace(matAccess.Value, "").Replace("*", "").Trim();
+            string vecBase = firstScalar.Split('.')[0];
+
+            string vecCtor = $"float4({string.Join(", ", comps.Select(c => $"{vecBase}.{c}"))})";
+            string result = $"{indent}float4 {acc} = mul({vecCtor}, {mat});";
+
+            for (int k = i; k < end; k++)
+                drop[k] = true;
+            replacements[i] = result;
+        }
     }
 }
