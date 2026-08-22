@@ -279,7 +279,20 @@ public static class RecompileVerify
             Console.WriteLine($"=== {Path.GetFileName(file)} ===");
             string text = File.ReadAllText(file);
             string dir = Path.GetDirectoryName(file) ?? ".";
-            string blobPath = Path.Combine(dir, Path.GetFileNameWithoutExtension(file), "blob.bin");
+            string name = Path.GetFileNameWithoutExtension(file);
+            string blobPath = Path.Combine(dir, name, "blob.bin");
+            if (!File.Exists(blobPath))
+            {
+                string? walk = dir;
+                for (int i = 0; i < 8 && walk is not null; i++)
+                {
+                    string candidate = Path.Combine(walk, name, "blob.bin");
+                    if (File.Exists(candidate)) { blobPath = candidate; break; }
+                    candidate = Path.Combine(walk, "Output", name, "blob.bin");
+                    if (File.Exists(candidate)) { blobPath = candidate; break; }
+                    walk = Path.GetDirectoryName(walk);
+                }
+            }
             var shipped = File.Exists(blobPath)
                 ? LoadShipped(blobPath)
                 : new List<(string Stage, string Label, HashSet<string> Input, HashSet<string> Output)>();
