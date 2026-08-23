@@ -34,18 +34,15 @@ Shader "Custom/Hyperdrive"
                 float _YScale;
                 float _XYScale;
                 float _StarCount;
-                float4 cb0_values[5];
             };
             cbuffer UnityPerDraw : register(b1)
             {
                 float4x4 unity_ObjectToWorld;
                 float4 _Time;
-                float4 cb1_values[4];
             };
             cbuffer UnityPerFrame : register(b2)
             {
                 float4x4 unity_MatrixVP;
-                float4 cb2_values[21];
             };
             struct program1Input
             {

@@ -17,12 +17,10 @@ Shader "Hidden/FXAA Preset 3"
             {
                 float4x4 unity_ObjectToWorld;
                 float4 _MainTex_TexelSize;
-                float4 cb0_values[4];
             };
             cbuffer UnityPerFrame : register(b1)
             {
                 float4x4 unity_MatrixVP;
-                float4 cb1_values[21];
             };
             SamplerState s0 : register(s0);
             Texture2D t0 : register(t0);
@@ -283,7 +281,7 @@ Shader "Hidden/FXAA Preset 3"
                     float4 r3_xyzw_18 = t0.Sample(s0, float4(r3_x_17, r3_y_14, r3_x_17, r3_x_17));
                     r2_xyz_3 = (mad(-r1_x_10.xxxx, r3_xyzw_18.xyzx, (mad(((r1_x_10.xxxx * r0_xyz_7.xyzx)).xyzx, float4(0.11111111, 0.11111111, 0.11111111, 0), r3_xyzw_18.xyzx)).xyzx)).xyz;
                 }
-                o.sv_Target0.xyz = (r2_xyz_3.xyzx).xyz;
+                o.sv_Target0.xyz = r2_xyz_3.xyz;
                 o.sv_Target0.w = 0;
                 return o;
             }

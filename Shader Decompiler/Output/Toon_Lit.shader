@@ -22,7 +22,6 @@ Shader "Toon/Lit"
                 float4 _LightColor0;
                 float4 _Color;
                 float4 _MainTex_ST;
-                float4 cb0_values[6];
             };
             cbuffer UnityPerDraw : register(b1)
             {
@@ -30,7 +29,6 @@ Shader "Toon/Lit"
                 float4 _WorldSpaceLightPos0;
                 float4x4 unity_WorldToObject;
                 float4 unity_OcclusionMaskSelector;
-                float4 cb1_values[47];
             };
             cbuffer UnityPerFrame : register(b2)
             {
@@ -39,7 +37,6 @@ Shader "Toon/Lit"
                 float3 unity_ProbeVolumeSizeInv;
                 float3 unity_ProbeVolumeMin;
                 float4x4 unity_MatrixVP;
-                float4 cb2_values[21];
             };
             SamplerState s0 : register(s0);
             SamplerState s1 : register(s1);
@@ -166,7 +163,6 @@ Shader "Toon/Lit"
                 float4 _LightColor0;
                 float4 _Color;
                 float4 _MainTex_ST;
-                float4 cb0_values[6];
             };
             cbuffer UnityPerDraw : register(b1)
             {
@@ -268,7 +264,7 @@ Shader "Toon/Lit"
                 float r0_z_8 = dot(float4(worldNormal_x_2, worldNormal_y_2, worldNormal_z_2, worldNormal_x_2), float4(worldNormal_x_2, worldNormal_y_2, worldNormal_z_2, worldNormal_x_2));
                 float r0_z_9 = rsqrt(r0_z_8);
                 float3 unitWorldNormal_xyz_3 = ((r0_z_9.xxxx * float4(worldNormal_x_2, worldNormal_y_2, worldNormal_z_2, worldNormal_x_2))).xyz;
-                o.texcoord1.xyz = (unitWorldNormal_xyz_3.xyzx).xyz;
+                o.texcoord1.xyz = unitWorldNormal_xyz_3.xyz;
                 float r0_z_10 = (unitWorldNormal_xyz_3.y * unitWorldNormal_xyz_3.y);
                 float r0_z_11 = mad(unitWorldNormal_xyz_3.x, unitWorldNormal_xyz_3.x, -r0_z_10);
                 float4 r2_xyzw_1 = (unitWorldNormal_xyz_3.yzzx * unitWorldNormal_xyz_3.xyzz);
@@ -398,7 +394,6 @@ Shader "Toon/Lit"
                 float4 _LightColor0;
                 float4 _Color;
                 float4 _MainTex_ST;
-                float4 cb0_values[6];
             };
             cbuffer UnityPerDraw : register(b1)
             {
@@ -618,7 +613,6 @@ Shader "Toon/Lit"
                 float4 _LightColor0;
                 float4 _Color;
                 float4 _MainTex_ST;
-                float4 cb0_values[6];
             };
             cbuffer UnityPerDraw : register(b1)
             {
@@ -626,7 +620,6 @@ Shader "Toon/Lit"
                 float4 _WorldSpaceLightPos0;
                 float4x4 unity_WorldToObject;
                 float4 unity_OcclusionMaskSelector;
-                float4 cb1_values[47];
             };
             cbuffer UnityPerFrame : register(b2)
             {
@@ -821,7 +814,6 @@ Shader "Toon/Lit"
                 float4 _LightColor0;
                 float4 _Color;
                 float4 _MainTex_ST;
-                float4 cb0_values[6];
             };
             cbuffer UnityPerDraw : register(b1)
             {
@@ -829,7 +821,6 @@ Shader "Toon/Lit"
                 float4 _WorldSpaceLightPos0;
                 float4x4 unity_WorldToObject;
                 float4 unity_OcclusionMaskSelector;
-                float4 cb1_values[47];
             };
             cbuffer UnityPerFrame : register(b2)
             {
@@ -980,7 +971,6 @@ Shader "Toon/Lit"
                 float4 _LightColor0;
                 float4 _Color;
                 float4 _MainTex_ST;
-                float4 cb0_values[6];
             };
             cbuffer UnityPerDraw : register(b1)
             {
@@ -988,7 +978,7 @@ Shader "Toon/Lit"
                 float4 _WorldSpaceLightPos0;
                 float4x4 unity_WorldToObject;
                 float4 unity_OcclusionMaskSelector;
-                float4 cb1_values[6];
+                float4 cb1_values[5];
             };
             cbuffer UnityPerFrame : register(b2)
             {
@@ -1074,7 +1064,7 @@ Shader "Toon/Lit"
                 float r1_w_2 = dot(float4(worldNormal_x_2, worldNormal_y_2, worldNormal_z_2, worldNormal_x_2), float4(worldNormal_x_2, worldNormal_y_2, worldNormal_z_2, worldNormal_x_2));
                 float r1_w_3 = rsqrt(r1_w_2);
                 float3 unitWorldNormal_xyz_3 = ((r1_w_3.xxxx * float4(worldNormal_x_2, worldNormal_y_2, worldNormal_z_2, worldNormal_x_2))).xyz;
-                o.texcoord1.xyz = (unitWorldNormal_xyz_3.xyzx).xyz;
+                o.texcoord1.xyz = unitWorldNormal_xyz_3.xyz;
                 float4 r3_xyzw_1 = (unitWorldNormal_xyz_3.yzzx * unitWorldNormal_xyz_3.xyzz);
                 float r4_x_1 = dot(cb2_values[42].xyzw, r3_xyzw_1);
                 float r4_y_1 = dot(cb2_values[43].xyzw, r3_xyzw_1);
@@ -1087,7 +1077,7 @@ Shader "Toon/Lit"
                 float r3_x_2 = dot(cb2_values[39].xyzw, float4(unitWorldNormal_xyz_3.x, unitWorldNormal_xyz_3.y, unitWorldNormal_xyz_3.z, r1_w_4));
                 float r3_y_2 = dot(cb2_values[40].xyzw, float4(unitWorldNormal_xyz_3.x, unitWorldNormal_xyz_3.y, unitWorldNormal_xyz_3.z, r1_w_4));
                 float r3_z_2 = dot(cb2_values[41].xyzw, float4(unitWorldNormal_xyz_3.x, unitWorldNormal_xyz_3.y, unitWorldNormal_xyz_3.z, r1_w_4));
-                float3 r1_xyz_8 = (exp2((((log2((max(((float4(r2_x_3, r2_y_1, r2_z_1, r2_x_3) + float4(r3_x_2, r3_y_2, r3_z_2, r3_x_2))).xyzx, float4(0, 0, 0, 0))).xyzx)).xyzx * float4(0.41666666, 0.41666666, 0.41666666, 0))).xyzx)).xyz;
+                                float3 r1_xyz_8 = (pow(max((float4(r2_x_3, r2_y_1, r2_z_1, r2_x_3) + float4(r3_x_2, r3_y_2, r3_z_2, r3_x_2)).xyz, float3(0, 0, 0)), float3(0.41666666, 0.41666666, 0.41666666)));
                 o.texcoord3.xyz = (max((mad(r1_xyz_8.xyzx, float4(1.055, 1.055, 1.055, 0), float4(-0.055, -0.055, -0.055, 0))).xyzx, float4(0, 0, 0, 0))).xyz;
                 float r0_y_8 = (clipPos_xyzw_7.y * unity_WorldToObject[1].x);
                 float4 r1_xyzw_10 = (float4(clipPos_xyzw_7.x, clipPos_xyzw_7.x, clipPos_xyzw_7.w, r0_y_8) * float4(0.5, 0, 0.5, 0.5));
@@ -1202,7 +1192,6 @@ Shader "Toon/Lit"
                 float4 _LightColor0;
                 float4 _Color;
                 float4 _MainTex_ST;
-                float4 cb0_values[6];
             };
             cbuffer UnityPerDraw : register(b1)
             {
@@ -1210,7 +1199,7 @@ Shader "Toon/Lit"
                 float4 _WorldSpaceLightPos0;
                 float4x4 unity_WorldToObject;
                 float4 unity_OcclusionMaskSelector;
-                float4 cb1_values[6];
+                float4 cb1_values[5];
             };
             cbuffer UnityPerFrame : register(b2)
             {
@@ -1410,7 +1399,6 @@ Shader "Toon/Lit"
                 float4 _LightColor0;
                 float4 _Color;
                 float4 _MainTex_ST;
-                float4 cb0_values[6];
             };
             cbuffer UnityPerDraw : register(b1)
             {
@@ -1418,7 +1406,7 @@ Shader "Toon/Lit"
                 float4 _WorldSpaceLightPos0;
                 float4x4 unity_WorldToObject;
                 float4 unity_OcclusionMaskSelector;
-                float4 cb1_values[47];
+                float4 cb1_values[46];
             };
             cbuffer UnityPerFrame : register(b2)
             {
@@ -1488,7 +1476,7 @@ Shader "Toon/Lit"
                 float r0_w_7 = dot(float4(worldNormal_x_7, worldNormal_y_7, worldNormal_z_7, worldNormal_x_7), float4(worldNormal_x_7, worldNormal_y_7, worldNormal_z_7, worldNormal_x_7));
                 float r0_w_8 = rsqrt(r0_w_7);
                 float3 unitWorldNormal_xyz_8 = ((r0_w_8.xxxx * float4(worldNormal_x_7, worldNormal_y_7, worldNormal_z_7, worldNormal_x_7))).xyz;
-                o.texcoord1.xyz = (unitWorldNormal_xyz_8.xyzx).xyz;
+                o.texcoord1.xyz = unitWorldNormal_xyz_8.xyz;
                 float4 r2_xyzw_1 = (unitWorldNormal_xyz_8.yzzx * unitWorldNormal_xyz_8.xyzz);
                 float r3_x_1 = dot(cb1_values[42].xyzw, r2_xyzw_1);
                 float r3_y_1 = dot(cb1_values[43].xyzw, r2_xyzw_1);
@@ -1501,7 +1489,7 @@ Shader "Toon/Lit"
                 float r2_x_2 = dot(cb1_values[39].xyzw, float4(unitWorldNormal_xyz_8.x, unitWorldNormal_xyz_8.y, unitWorldNormal_xyz_8.z, r0_w_9));
                 float r2_y_2 = dot(cb1_values[40].xyzw, float4(unitWorldNormal_xyz_8.x, unitWorldNormal_xyz_8.y, unitWorldNormal_xyz_8.z, r0_w_9));
                 float r2_z_2 = dot(cb1_values[41].xyzw, float4(unitWorldNormal_xyz_8.x, unitWorldNormal_xyz_8.y, unitWorldNormal_xyz_8.z, r0_w_9));
-                float3 r0_xyz_13 = (exp2((((log2((max(((float4(r1_x_4, r1_y_2, r1_z_2, r1_x_4) + float4(r2_x_2, r2_y_2, r2_z_2, r2_x_2))).xyzx, float4(0, 0, 0, 0))).xyzx)).xyzx * float4(0.41666666, 0.41666666, 0.41666666, 0))).xyzx)).xyz;
+                                float3 r0_xyz_13 = (pow(max((float4(r1_x_4, r1_y_2, r1_z_2, r1_x_4) + float4(r2_x_2, r2_y_2, r2_z_2, r2_x_2)).xyz, float3(0, 0, 0)), float3(0.41666666, 0.41666666, 0.41666666)));
                 o.texcoord3.xyz = (max((mad(r0_xyz_13.xyzx, float4(1.055, 1.055, 1.055, 0), float4(-0.055, -0.055, -0.055, 0))).xyzx, float4(0, 0, 0, 0))).xyz;
                 o.texcoord5.xyzw = float4(0, 0, 0, 0);
                 return o;
@@ -1581,7 +1569,6 @@ Shader "Toon/Lit"
                 float4 _WorldSpaceLightPos0;
                 float4x4 unity_WorldToObject;
                 float4 unity_OcclusionMaskSelector;
-                float4 cb1_values[47];
             };
             cbuffer UnityPerFrame : register(b2)
             {
@@ -1590,7 +1577,6 @@ Shader "Toon/Lit"
                 float3 unity_ProbeVolumeSizeInv;
                 float3 unity_ProbeVolumeMin;
                 float4x4 unity_MatrixVP;
-                float4 cb2_values[21];
             };
             SamplerState s0 : register(s0);
             SamplerState s1 : register(s1);
@@ -1738,7 +1724,6 @@ Shader "Toon/Lit"
                 float4 _WorldSpaceLightPos0;
                 float4x4 unity_WorldToObject;
                 float4 unity_OcclusionMaskSelector;
-                float4 cb1_values[47];
             };
             cbuffer UnityPerFrame : register(b2)
             {
@@ -1893,7 +1878,6 @@ Shader "Toon/Lit"
                 float4 _WorldSpaceLightPos0;
                 float4x4 unity_WorldToObject;
                 float4 unity_OcclusionMaskSelector;
-                float4 cb1_values[47];
             };
             cbuffer UnityPerFrame : register(b2)
             {
@@ -2077,7 +2061,6 @@ Shader "Toon/Lit"
                 float4 _WorldSpaceLightPos0;
                 float4x4 unity_WorldToObject;
                 float4 unity_OcclusionMaskSelector;
-                float4 cb1_values[47];
             };
             cbuffer UnityPerFrame : register(b2)
             {
@@ -2250,7 +2233,7 @@ Shader "Toon/Lit"
                 float4 _LightColor0;
                 float4 _Color;
                 float4 _MainTex_ST;
-                float4 cb0_values[6];
+                float4 cb0_values[5];
             };
             cbuffer UnityPerDraw : register(b1)
             {
@@ -2258,7 +2241,6 @@ Shader "Toon/Lit"
                 float4 _WorldSpaceLightPos0;
                 float4x4 unity_WorldToObject;
                 float4 unity_OcclusionMaskSelector;
-                float4 cb1_values[47];
             };
             cbuffer UnityPerFrame : register(b2)
             {
@@ -2407,7 +2389,6 @@ Shader "Toon/Lit"
                 float4 _WorldSpaceLightPos0;
                 float4x4 unity_WorldToObject;
                 float4 unity_OcclusionMaskSelector;
-                float4 cb1_values[47];
             };
             cbuffer UnityPerFrame : register(b2)
             {
@@ -2587,7 +2568,6 @@ Shader "Toon/Lit"
                 float4 _WorldSpaceLightPos0;
                 float4x4 unity_WorldToObject;
                 float4 unity_OcclusionMaskSelector;
-                float4 cb1_values[47];
             };
             cbuffer UnityPerFrame : register(b2)
             {
@@ -2596,7 +2576,6 @@ Shader "Toon/Lit"
                 float3 unity_ProbeVolumeSizeInv;
                 float3 unity_ProbeVolumeMin;
                 float4x4 unity_MatrixVP;
-                float4 cb2_values[21];
             };
             SamplerState s0 : register(s0);
             SamplerState s1 : register(s1);
@@ -2731,7 +2710,6 @@ Shader "Toon/Lit"
                 float4 _WorldSpaceLightPos0;
                 float4x4 unity_WorldToObject;
                 float4 unity_OcclusionMaskSelector;
-                float4 cb1_values[47];
             };
             cbuffer UnityPerFrame : register(b2)
             {
@@ -2740,7 +2718,6 @@ Shader "Toon/Lit"
                 float3 unity_ProbeVolumeSizeInv;
                 float3 unity_ProbeVolumeMin;
                 float4x4 unity_MatrixVP;
-                float4 cb2_values[21];
             };
             SamplerState s0 : register(s0);
             SamplerState s1 : register(s1);
@@ -2892,7 +2869,6 @@ Shader "Toon/Lit"
                 float4 _WorldSpaceLightPos0;
                 float4x4 unity_WorldToObject;
                 float4 unity_OcclusionMaskSelector;
-                float4 cb1_values[47];
             };
             cbuffer UnityPerFrame : register(b2)
             {
@@ -2901,7 +2877,6 @@ Shader "Toon/Lit"
                 float3 unity_ProbeVolumeSizeInv;
                 float3 unity_ProbeVolumeMin;
                 float4x4 unity_MatrixVP;
-                float4 cb2_values[21];
             };
             SamplerState s0 : register(s0);
             SamplerState s1 : register(s1);
@@ -3050,7 +3025,7 @@ Shader "Toon/Lit"
                 float4 _LightColor0;
                 float4 _Color;
                 float4 _MainTex_ST;
-                float4 cb0_values[6];
+                float4 cb0_values[5];
             };
             cbuffer UnityPerDraw : register(b1)
             {
@@ -3058,7 +3033,6 @@ Shader "Toon/Lit"
                 float4 _WorldSpaceLightPos0;
                 float4x4 unity_WorldToObject;
                 float4 unity_OcclusionMaskSelector;
-                float4 cb1_values[47];
             };
             cbuffer UnityPerFrame : register(b2)
             {
@@ -3067,7 +3041,6 @@ Shader "Toon/Lit"
                 float3 unity_ProbeVolumeSizeInv;
                 float3 unity_ProbeVolumeMin;
                 float4x4 unity_MatrixVP;
-                float4 cb2_values[21];
             };
             SamplerState s0 : register(s0);
             SamplerState s1 : register(s1);

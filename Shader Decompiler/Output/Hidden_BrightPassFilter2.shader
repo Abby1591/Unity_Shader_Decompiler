@@ -17,12 +17,10 @@ Shader "Hidden/BrightPassFilter2"
             {
                 float4x4 unity_ObjectToWorld;
                 float4 _Threshhold;
-                float4 cb0_values[4];
             };
             cbuffer UnityPerFrame : register(b1)
             {
                 float4x4 unity_MatrixVP;
-                float4 cb1_values[21];
             };
             SamplerState s0 : register(s0);
             Texture2D t0 : register(t0);

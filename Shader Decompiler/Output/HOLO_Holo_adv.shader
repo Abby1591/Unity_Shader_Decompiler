@@ -85,7 +85,7 @@ Shader "HOLO/Holo_adv"
                 float _Rotation;
                 float _monochrom;
                 float _OriginalUVSwitch;
-                float4 cb0_values[15];
+                float4 cb0_values[13];
             };
             cbuffer UnityPerCamera : register(b1)
             {
@@ -94,19 +94,16 @@ Shader "HOLO/Holo_adv"
                 float4 _CosTime;
                 float3 _WorldSpaceCameraPos;
                 float4 _ScreenParams;
-                float4 cb1_values[7];
             };
             cbuffer UnityPerDraw : register(b2)
             {
                 float4x4 unity_ObjectToWorld;
                 float4x4 unity_WorldToObject;
-                float4 cb2_values[7];
             };
             cbuffer UnityPerFrame : register(b3)
             {
                 float4x4 unity_MatrixV;
                 float4x4 unity_MatrixVP;
-                float4 cb3_values[21];
             };
             SamplerState s0 : register(s0);
             Texture2D t0 : register(t0);
@@ -256,12 +253,10 @@ Shader "HOLO/Holo_adv"
                 float worldPos_x_7 = worldPos_xyzw_7.x;
                 float worldPos_y_6 = worldPos_xyzw_7.y;
                 float worldPos_z_6 = worldPos_xyzw_7.z;
-                float3 viewNormal_xyz_5 = (mad(objectToView[0].xyzx, i.normal0.xxxx, ((objectToView[1].xyzx * i.normal0.yyyy)).xyzx)).xyz;
-                float3 viewNormal_xyz_6 = (mad(objectToView[2].xyzx, i.normal0.zzzz, viewNormal_xyz_5.xyzx)).xyz;
-                float3 viewNormal_xyz_7 = (mad(objectToView[3].xyzx, i.normal0.wwww, viewNormal_xyz_6.xyzx)).xyz;
-                float r0_z_8 = dot(viewNormal_xyz_7.xyzx, viewNormal_xyz_7.xyzx);
-                float r0_z_9 = rsqrt(r0_z_8);
-                float2 unitViewNormal_xy_8 = ((r0_z_9.xxxx * viewNormal_xyz_7.xyxx)).xy;
+                float3 viewNormal_xyz_5 = (mad(objectToView[0].xyz.xyzx, i.normal0.xxxx, ((objectToView[1].xyz.xyzx * i.normal0.yyyy)).xyzx)).xyz;
+                float3 viewNormal_xyz_6 = (mad(objectToView[2].xyz.xyzx, i.normal0.zzzz, viewNormal_xyz_5.xyzx)).xyz;
+                float3 viewNormal_xyz_7 = (mad(objectToView[3].xyz.xyzx, i.normal0.wwww, viewNormal_xyz_6.xyzx)).xyz;
+                float2 unitViewNormal_xy_8 = normalize(viewNormal_xyz_7);
                 float worldNormal_x_6 = dot(i.normal0.xyzx, unity_WorldToObject[0].xyzx);
                 float worldNormal_y_6 = dot(i.normal0.xyzx, unity_WorldToObject[1].xyzx);
                 float worldNormal_z_6 = dot(i.normal0.xyzx, unity_WorldToObject[2].xyzx);
@@ -281,7 +276,7 @@ Shader "HOLO/Holo_adv"
                 float unitDirToSurface_z_13 = unitDirToSurface_xyzw_10.z;
                 float nDotV_x_11 = dot(float4(unitDirToSurface_x_10, unitDirToSurface_y_10, unitDirToSurface_z_13, unitDirToSurface_x_10), unitWorldNormal_xyz_7.xyzx);
                 float r0_y_11 = (_Scale * _Bias);
-                float fresnel_x_15 = exp2((log2((nDotV_x_11 + _t)) * _Power));
+                                float fresnel_x_15 = pow((nDotV_x_11 + _t), _Power);
                 o.texcoord4.x = (fresnel_x_15 * r0_y_11);
                 o.texcoord5.xyz = (float4(worldPos_x_7, worldPos_y_6, worldPos_z_6, worldPos_x_7)).xyz;
                 o.texcoord5.w = 0;
@@ -292,7 +287,7 @@ Shader "HOLO/Holo_adv"
                 o.texcoord6.w = i.position0.w;
                 o.texcoord6.xyz = (float4(r4_x_13, r4_y_10, r4_z_7, r4_x_13)).xyz;
                 o.texcoord2.z = 0;
-                o.texcoord3.xyz = (unitWorldNormal_xyz_7.xyzx).xyz;
+                o.texcoord3.xyz = unitWorldNormal_xyz_7.xyz;
                 return o;
             }
             #pragma fragment frag

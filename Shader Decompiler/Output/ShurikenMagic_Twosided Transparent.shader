@@ -22,7 +22,6 @@ Shader "ShurikenMagic/Twosided Transparent"
                 float4 _LightColor0;
                 float4 _Color;
                 float4 _MainTex_ST;
-                float4 cb0_values[6];
             };
             cbuffer UnityPerDraw : register(b1)
             {
@@ -30,7 +29,6 @@ Shader "ShurikenMagic/Twosided Transparent"
                 float4 _WorldSpaceLightPos0;
                 float4x4 unity_WorldToObject;
                 float4 unity_OcclusionMaskSelector;
-                float4 cb1_values[47];
             };
             cbuffer UnityPerFrame : register(b2)
             {
@@ -39,7 +37,6 @@ Shader "ShurikenMagic/Twosided Transparent"
                 float3 unity_ProbeVolumeSizeInv;
                 float3 unity_ProbeVolumeMin;
                 float4x4 unity_MatrixVP;
-                float4 cb2_values[21];
             };
             SamplerState s0 : register(s0);
             SamplerState s1 : register(s1);
@@ -161,7 +158,6 @@ Shader "ShurikenMagic/Twosided Transparent"
                 float4 _LightColor0;
                 float4 _Color;
                 float4 _MainTex_ST;
-                float4 cb0_values[6];
             };
             cbuffer UnityPerDraw : register(b1)
             {
@@ -169,7 +165,6 @@ Shader "ShurikenMagic/Twosided Transparent"
                 float4 _WorldSpaceLightPos0;
                 float4x4 unity_WorldToObject;
                 float4 unity_OcclusionMaskSelector;
-                float4 cb1_values[47];
             };
             cbuffer UnityPerFrame : register(b2)
             {
@@ -367,7 +362,6 @@ Shader "ShurikenMagic/Twosided Transparent"
                 float4 _LightColor0;
                 float4 _Color;
                 float4 _MainTex_ST;
-                float4 cb0_values[6];
             };
             cbuffer UnityPerDraw : register(b1)
             {
@@ -375,7 +369,6 @@ Shader "ShurikenMagic/Twosided Transparent"
                 float4 _WorldSpaceLightPos0;
                 float4x4 unity_WorldToObject;
                 float4 unity_OcclusionMaskSelector;
-                float4 cb1_values[47];
             };
             cbuffer UnityPerFrame : register(b2)
             {
@@ -522,7 +515,6 @@ Shader "ShurikenMagic/Twosided Transparent"
                 float4 _LightColor0;
                 float4 _Color;
                 float4 _MainTex_ST;
-                float4 cb0_values[6];
             };
             cbuffer UnityPerDraw : register(b1)
             {
@@ -530,7 +522,7 @@ Shader "ShurikenMagic/Twosided Transparent"
                 float4 _WorldSpaceLightPos0;
                 float4x4 unity_WorldToObject;
                 float4 unity_OcclusionMaskSelector;
-                float4 cb1_values[47];
+                float4 cb1_values[46];
             };
             cbuffer UnityPerFrame : register(b2)
             {
@@ -596,7 +588,7 @@ Shader "ShurikenMagic/Twosided Transparent"
                 float r0_w_7 = dot(float4(worldNormal_x_7, worldNormal_y_7, worldNormal_z_7, worldNormal_x_7), float4(worldNormal_x_7, worldNormal_y_7, worldNormal_z_7, worldNormal_x_7));
                 float r0_w_8 = rsqrt(r0_w_7);
                 float3 unitWorldNormal_xyz_8 = ((r0_w_8.xxxx * float4(worldNormal_x_7, worldNormal_y_7, worldNormal_z_7, worldNormal_x_7))).xyz;
-                o.texcoord1.xyz = (unitWorldNormal_xyz_8.xyzx).xyz;
+                o.texcoord1.xyz = unitWorldNormal_xyz_8.xyz;
                 float4 r2_xyzw_1 = (unitWorldNormal_xyz_8.yzzx * unitWorldNormal_xyz_8.xyzz);
                 float r3_x_1 = dot(cb1_values[42].xyzw, r2_xyzw_1);
                 float r3_y_1 = dot(cb1_values[43].xyzw, r2_xyzw_1);
@@ -609,7 +601,7 @@ Shader "ShurikenMagic/Twosided Transparent"
                 float r2_x_2 = dot(cb1_values[39].xyzw, float4(unitWorldNormal_xyz_8.x, unitWorldNormal_xyz_8.y, unitWorldNormal_xyz_8.z, r0_w_9));
                 float r2_y_2 = dot(cb1_values[40].xyzw, float4(unitWorldNormal_xyz_8.x, unitWorldNormal_xyz_8.y, unitWorldNormal_xyz_8.z, r0_w_9));
                 float r2_z_2 = dot(cb1_values[41].xyzw, float4(unitWorldNormal_xyz_8.x, unitWorldNormal_xyz_8.y, unitWorldNormal_xyz_8.z, r0_w_9));
-                float3 r0_xyz_13 = (exp2((((log2((max(((float4(r1_x_4, r1_y_2, r1_z_2, r1_x_4) + float4(r2_x_2, r2_y_2, r2_z_2, r2_x_2))).xyzx, float4(0, 0, 0, 0))).xyzx)).xyzx * float4(0.41666666, 0.41666666, 0.41666666, 0))).xyzx)).xyz;
+                                float3 r0_xyz_13 = (pow(max((float4(r1_x_4, r1_y_2, r1_z_2, r1_x_4) + float4(r2_x_2, r2_y_2, r2_z_2, r2_x_2)).xyz, float3(0, 0, 0)), float3(0.41666666, 0.41666666, 0.41666666)));
                 o.texcoord3.xyz = (max((mad(r0_xyz_13.xyzx, float4(1.055, 1.055, 1.055, 0), float4(-0.055, -0.055, -0.055, 0))).xyzx, float4(0, 0, 0, 0))).xyz;
                 return o;
             }
@@ -694,7 +686,6 @@ Shader "ShurikenMagic/Twosided Transparent"
                 float4 _WorldSpaceLightPos0;
                 float4x4 unity_WorldToObject;
                 float4 unity_OcclusionMaskSelector;
-                float4 cb1_values[47];
             };
             cbuffer UnityPerFrame : register(b2)
             {
@@ -703,7 +694,6 @@ Shader "ShurikenMagic/Twosided Transparent"
                 float3 unity_ProbeVolumeSizeInv;
                 float3 unity_ProbeVolumeMin;
                 float4x4 unity_MatrixVP;
-                float4 cb2_values[21];
             };
             SamplerState s0 : register(s0);
             SamplerState s1 : register(s1);
@@ -845,7 +835,6 @@ Shader "ShurikenMagic/Twosided Transparent"
                 float4 _WorldSpaceLightPos0;
                 float4x4 unity_WorldToObject;
                 float4 unity_OcclusionMaskSelector;
-                float4 cb1_values[47];
             };
             cbuffer UnityPerFrame : register(b2)
             {
@@ -1000,7 +989,6 @@ Shader "ShurikenMagic/Twosided Transparent"
                 float4 _WorldSpaceLightPos0;
                 float4x4 unity_WorldToObject;
                 float4 unity_OcclusionMaskSelector;
-                float4 cb1_values[47];
             };
             cbuffer UnityPerFrame : register(b2)
             {
@@ -1178,7 +1166,6 @@ Shader "ShurikenMagic/Twosided Transparent"
                 float4 _WorldSpaceLightPos0;
                 float4x4 unity_WorldToObject;
                 float4 unity_OcclusionMaskSelector;
-                float4 cb1_values[47];
             };
             cbuffer UnityPerFrame : register(b2)
             {
@@ -1361,7 +1348,6 @@ Shader "ShurikenMagic/Twosided Transparent"
                 float4 _WorldSpaceLightPos0;
                 float4x4 unity_WorldToObject;
                 float4 unity_OcclusionMaskSelector;
-                float4 cb1_values[47];
             };
             cbuffer UnityPerFrame : register(b2)
             {
@@ -1535,7 +1521,6 @@ Shader "ShurikenMagic/Twosided Transparent"
                 float4 _WorldSpaceLightPos0;
                 float4x4 unity_WorldToObject;
                 float4 unity_OcclusionMaskSelector;
-                float4 cb1_values[47];
             };
             cbuffer UnityPerFrame : register(b2)
             {
@@ -1544,7 +1529,6 @@ Shader "ShurikenMagic/Twosided Transparent"
                 float3 unity_ProbeVolumeSizeInv;
                 float3 unity_ProbeVolumeMin;
                 float4x4 unity_MatrixVP;
-                float4 cb2_values[21];
             };
             SamplerState s0 : register(s0);
             SamplerState s1 : register(s1);
@@ -1679,7 +1663,6 @@ Shader "ShurikenMagic/Twosided Transparent"
                 float4 _WorldSpaceLightPos0;
                 float4x4 unity_WorldToObject;
                 float4 unity_OcclusionMaskSelector;
-                float4 cb1_values[47];
             };
             cbuffer UnityPerFrame : register(b2)
             {
@@ -1688,7 +1671,6 @@ Shader "ShurikenMagic/Twosided Transparent"
                 float3 unity_ProbeVolumeSizeInv;
                 float3 unity_ProbeVolumeMin;
                 float4x4 unity_MatrixVP;
-                float4 cb2_values[21];
             };
             SamplerState s0 : register(s0);
             SamplerState s1 : register(s1);
@@ -1834,7 +1816,6 @@ Shader "ShurikenMagic/Twosided Transparent"
                 float4 _WorldSpaceLightPos0;
                 float4x4 unity_WorldToObject;
                 float4 unity_OcclusionMaskSelector;
-                float4 cb1_values[47];
             };
             cbuffer UnityPerFrame : register(b2)
             {
@@ -1843,7 +1824,6 @@ Shader "ShurikenMagic/Twosided Transparent"
                 float3 unity_ProbeVolumeSizeInv;
                 float3 unity_ProbeVolumeMin;
                 float4x4 unity_MatrixVP;
-                float4 cb2_values[21];
             };
             SamplerState s0 : register(s0);
             SamplerState s1 : register(s1);

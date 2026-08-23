@@ -19,17 +19,14 @@ Shader "Hidden/NFAA"
                 float4 _MainTex_TexelSize;
                 float _OffsetScale;
                 float _BlurRadius;
-                float4 cb0_values[4];
             };
             cbuffer UnityPerDraw : register(b1)
             {
                 float4x4 unity_ObjectToWorld;
-                float4 cb1_values[4];
             };
             cbuffer UnityPerFrame : register(b2)
             {
                 float4x4 unity_MatrixVP;
-                float4 cb2_values[21];
             };
             SamplerState s0 : register(s0);
             Texture2D t0 : register(t0);

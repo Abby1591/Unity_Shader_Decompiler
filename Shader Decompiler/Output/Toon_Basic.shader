@@ -21,18 +21,15 @@ Shader "Toon/Basic"
             {
                 float4 _MainTex_ST;
                 float4 _Color;
-                float4 cb0_values[4];
             };
             cbuffer UnityPerDraw : register(b1)
             {
                 float4x4 unity_ObjectToWorld;
-                float4 cb1_values[4];
             };
             cbuffer UnityPerFrame : register(b2)
             {
                 float4x4 unity_MatrixV;
                 float4x4 unity_MatrixVP;
-                float4 cb2_values[21];
             };
             SamplerState s0 : register(s0);
             SamplerState s1 : register(s1);
@@ -69,20 +66,11 @@ Shader "Toon/Basic"
                 float4 worldPos_xyzw_4 = UnityObjectToWorldPos(i.position0.xyz);
                 o.sv_Position0.xyzw = UnityObjectToClipPos(worldPos_xyzw_4);
                 o.texcoord0.xy = (mad(i.texcoord0.xyxx, _MainTex_ST.xyxx, _MainTex_ST.zwzz)).xy;
-                float3 objectToView1_xyz_5 = ((unity_ObjectToWorld[1].yyyy * unity_MatrixV[1].xyzx)).xyz;
-                float3 objectToView1_xyz_6 = (mad(unity_MatrixV[0].xyzx, unity_ObjectToWorld[1].xxxx, objectToView1_xyz_5.xyzx)).xyz;
-                float3 objectToView1_xyz_7 = (mad(unity_MatrixV[2].xyzx, unity_ObjectToWorld[1].zzzz, objectToView1_xyz_6.xyzx)).xyz;
-                float3 objectToView1_xyz_8 = (mad(unity_MatrixV[3].xyzx, unity_ObjectToWorld[1].wwww, objectToView1_xyz_7.xyzx)).xyz;
+                float3 objectToView1_xyz_8 = mul(unity_ObjectToWorld[1], unity_MatrixV).xyz;
                 float3 viewNormal_xyz_9 = ((objectToView1_xyz_8.xyzx * i.normal0.yyyy)).xyz;
-                float3 objectToView0_xyz_4 = ((unity_ObjectToWorld[0].yyyy * unity_MatrixV[1].xyzx)).xyz;
-                float3 objectToView0_xyz_5 = (mad(unity_MatrixV[0].xyzx, unity_ObjectToWorld[0].xxxx, objectToView0_xyz_4.xyzx)).xyz;
-                float3 objectToView0_xyz_6 = (mad(unity_MatrixV[2].xyzx, unity_ObjectToWorld[0].zzzz, objectToView0_xyz_5.xyzx)).xyz;
-                float3 objectToView0_xyz_7 = (mad(unity_MatrixV[3].xyzx, unity_ObjectToWorld[0].wwww, objectToView0_xyz_6.xyzx)).xyz;
+                float3 objectToView0_xyz_7 = mul(unity_ObjectToWorld[0], unity_MatrixV).xyz;
                 float3 viewNormal_xyz_10 = (mad(objectToView0_xyz_7.xyzx, i.normal0.xxxx, viewNormal_xyz_9.xyzx)).xyz;
-                float3 objectToView2_xyz_8 = ((unity_ObjectToWorld[2].yyyy * unity_MatrixV[1].xyzx)).xyz;
-                float3 objectToView2_xyz_9 = (mad(unity_MatrixV[0].xyzx, unity_ObjectToWorld[2].xxxx, objectToView2_xyz_8.xyzx)).xyz;
-                float3 objectToView2_xyz_10 = (mad(unity_MatrixV[2].xyzx, unity_ObjectToWorld[2].zzzz, objectToView2_xyz_9.xyzx)).xyz;
-                float3 objectToView2_xyz_11 = (mad(unity_MatrixV[3].xyzx, unity_ObjectToWorld[2].wwww, objectToView2_xyz_10.xyzx)).xyz;
+                float3 objectToView2_xyz_11 = mul(unity_ObjectToWorld[2], unity_MatrixV).xyz;
                 o.texcoord1.xyz = (mad(objectToView2_xyz_11.xyzx, i.normal0.zzzz, viewNormal_xyz_10.xyzx)).xyz;
                 return o;
             }
@@ -110,7 +98,6 @@ Shader "Toon/Basic"
             {
                 float4 _MainTex_ST;
                 float4 _Color;
-                float4 cb0_values[4];
             };
             cbuffer UnityPerDraw : register(b1)
             {

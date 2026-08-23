@@ -36,20 +36,17 @@ Shader "Custom/Planets_Atmosphere"
                 float _Outeratmospherelimit;
                 float4 _Inneratmosphere;
                 float _DisplacementAtmosphere;
-                float4 cb0_values[9];
             };
             cbuffer UnityPerDraw : register(b1)
             {
                 float4x4 unity_ObjectToWorld;
                 float4x4 unity_WorldToObject;
                 float3 _WorldSpaceCameraPos;
-                float4 cb1_values[7];
             };
             cbuffer UnityPerFrame : register(b2)
             {
                 float4 _WorldSpaceLightPos0;
                 float4x4 unity_MatrixVP;
-                float4 cb2_values[21];
             };
             struct program1Input
             {
@@ -105,9 +102,7 @@ Shader "Custom/Planets_Atmosphere"
                 float3 r0_xyz_1 = ((-i.texcoord0.xyzx + _WorldSpaceCameraPos.xyzx)).xyz;
                 float r0_w_1 = dot(r0_xyz_1.xyzx, r0_xyz_1.xyzx);
                 float r0_w_2 = rsqrt(r0_w_1);
-                float r0_w_3 = dot(i.texcoord1.xyzx, i.texcoord1.xyzx);
-                float r0_w_4 = rsqrt(r0_w_3);
-                float3 unitWorldNormal_xyz_1 = ((r0_w_4.xxxx * i.texcoord1.xyzx)).xyz;
+                float3 unitWorldNormal_xyz_1 = normalize(i.texcoord1);
                 float r0_x_5 = (max(dot(unitWorldNormal_xyz_1.xyzx, ((r0_w_2.xxxx * r0_xyz_1.xyzx)).xyzx), 0) + 1);
                 float r0_y_3 = (-_Inneroutersmoothness + _Innerouterlimit);
                 float r0_y_4 = max(r0_y_3, 0);
@@ -121,7 +116,7 @@ Shader "Custom/Planets_Atmosphere"
                 float r0_y_8 = (r0_y_7 * r0_y_7);
                 float r0_y_9 = (r0_y_8 * r0_z_4);
                 float r0_z_5 = ((float4(1, 1, 1, 1) / _Outeratmospherelimit)).z;
-                float r0_x_9 = (r0_z_5 * exp2((log2(r0_x_5) * 7)));
+                                float r0_x_9 = (r0_z_5 * pow(r0_x_5, 7));
                 float r0_z_6 = mad(r0_x_9, -2, 3);
                 float r0_x_10 = (r0_x_9 * r0_x_9);
                 float r0_w_7 = (r0_x_10 * r0_z_6);
@@ -129,9 +124,7 @@ Shader "Custom/Planets_Atmosphere"
                 float r0_y_10 = r0_xyzw_10.y;
                 float r0_z_7 = r0_xyzw_10.z;
                 float r0_w_8 = r0_xyzw_10.w;
-                float r1_w_1 = dot(_WorldSpaceLightPos0.xyzx, _WorldSpaceLightPos0.xyzx);
-                float r1_w_2 = rsqrt(r1_w_1);
-                float3 lightDir_xyz_4 = ((r1_w_2.xxxx * _WorldSpaceLightPos0.xyzx)).xyz;
+                float3 lightDir_xyz_4 = normalize(_WorldSpaceLightPos0);
                 float nDotL_x_2 = dot(unitWorldNormal_xyz_1.xyzx, lightDir_xyz_4.xyzx);
                 float r1_y_2 = mad(nDotL_x_2, 0.875, 0.125);
                 o.sv_Target0.w = (mad(r0_y_9, mad(mad(-r0_z_6, r0_x_10, 1), _Outeratmopsheredensity, -_Inneratmopsheredensity), _Inneratmopsheredensity) * (nDotL_x_2 + nDotL_x_2));
@@ -231,9 +224,7 @@ Shader "Custom/Planets_Atmosphere"
                 float3 r0_xyz_1 = ((-i.texcoord0.xyzx + _WorldSpaceCameraPos.xyzx)).xyz;
                 float r0_w_1 = dot(r0_xyz_1.xyzx, r0_xyz_1.xyzx);
                 float r0_w_2 = rsqrt(r0_w_1);
-                float r0_w_3 = dot(i.texcoord1.xyzx, i.texcoord1.xyzx);
-                float r0_w_4 = rsqrt(r0_w_3);
-                float3 unitWorldNormal_xyz_1 = ((r0_w_4.xxxx * i.texcoord1.xyzx)).xyz;
+                float3 unitWorldNormal_xyz_1 = normalize(i.texcoord1);
                 float r0_x_5 = (max(dot(unitWorldNormal_xyz_1.xyzx, ((r0_w_2.xxxx * r0_xyz_1.xyzx)).xyzx), 0) + 1);
                 float r0_y_3 = (-cb0_values[9].w + cb0_values[9].z);
                 float r0_y_4 = max(r0_y_3, 0);
@@ -247,7 +238,7 @@ Shader "Custom/Planets_Atmosphere"
                 float r0_y_8 = (r0_y_7 * r0_y_7);
                 float r0_y_9 = (r0_y_8 * r0_z_4);
                 float r0_z_5 = ((float4(1, 1, 1, 1) / cb0_values[10].x)).z;
-                float r0_x_9 = (r0_z_5 * exp2((log2(r0_x_5) * 7)));
+                                float r0_x_9 = (r0_z_5 * pow(r0_x_5, 7));
                 float r0_z_6 = mad(r0_x_9, -2, 3);
                 float r0_x_10 = (r0_x_9 * r0_x_9);
                 float r0_w_7 = (r0_x_10 * r0_z_6);
@@ -368,9 +359,7 @@ Shader "Custom/Planets_Atmosphere"
                 float3 r0_xyz_1 = ((-i.texcoord0.xyzx + _WorldSpaceCameraPos.xyzx)).xyz;
                 float r0_w_1 = dot(r0_xyz_1.xyzx, r0_xyz_1.xyzx);
                 float r0_w_2 = rsqrt(r0_w_1);
-                float r0_w_3 = dot(i.texcoord1.xyzx, i.texcoord1.xyzx);
-                float r0_w_4 = rsqrt(r0_w_3);
-                float3 unitWorldNormal_xyz_1 = ((r0_w_4.xxxx * i.texcoord1.xyzx)).xyz;
+                float3 unitWorldNormal_xyz_1 = normalize(i.texcoord1);
                 float r0_x_5 = (max(dot(unitWorldNormal_xyz_1.xyzx, ((r0_w_2.xxxx * r0_xyz_1.xyzx)).xyzx), 0) + 1);
                 float r0_y_3 = (-cb0_values[9].w + cb0_values[9].z);
                 float r0_y_4 = max(r0_y_3, 0);
@@ -384,7 +373,7 @@ Shader "Custom/Planets_Atmosphere"
                 float r0_y_8 = (r0_y_7 * r0_y_7);
                 float r0_y_9 = (r0_y_8 * r0_z_4);
                 float r0_z_5 = ((float4(1, 1, 1, 1) / cb0_values[10].x)).z;
-                float r0_x_9 = (r0_z_5 * exp2((log2(r0_x_5) * 7)));
+                                float r0_x_9 = (r0_z_5 * pow(r0_x_5, 7));
                 float r0_z_6 = mad(r0_x_9, -2, 3);
                 float r0_x_10 = (r0_x_9 * r0_x_9);
                 float r0_w_7 = (r0_x_10 * r0_z_6);
@@ -506,9 +495,7 @@ Shader "Custom/Planets_Atmosphere"
                 float3 r0_xyz_1 = ((-i.texcoord0.xyzx + _WorldSpaceCameraPos.xyzx)).xyz;
                 float r0_w_1 = dot(r0_xyz_1.xyzx, r0_xyz_1.xyzx);
                 float r0_w_2 = rsqrt(r0_w_1);
-                float r0_w_3 = dot(i.texcoord1.xyzx, i.texcoord1.xyzx);
-                float r0_w_4 = rsqrt(r0_w_3);
-                float3 unitWorldNormal_xyz_1 = ((r0_w_4.xxxx * i.texcoord1.xyzx)).xyz;
+                float3 unitWorldNormal_xyz_1 = normalize(i.texcoord1);
                 float r0_x_5 = (max(dot(unitWorldNormal_xyz_1.xyzx, ((r0_w_2.xxxx * r0_xyz_1.xyzx)).xyzx), 0) + 1);
                 float r0_y_3 = (-cb0_values[9].w + cb0_values[9].z);
                 float r0_y_4 = max(r0_y_3, 0);
@@ -522,7 +509,7 @@ Shader "Custom/Planets_Atmosphere"
                 float r0_y_8 = (r0_y_7 * r0_y_7);
                 float r0_y_9 = (r0_y_8 * r0_z_4);
                 float r0_z_5 = ((float4(1, 1, 1, 1) / cb0_values[10].x)).z;
-                float r0_x_9 = (r0_z_5 * exp2((log2(r0_x_5) * 7)));
+                                float r0_x_9 = (r0_z_5 * pow(r0_x_5, 7));
                 float r0_z_6 = mad(r0_x_9, -2, 3);
                 float r0_x_10 = (r0_x_9 * r0_x_9);
                 float r0_w_7 = (r0_x_10 * r0_z_6);
@@ -657,9 +644,7 @@ Shader "Custom/Planets_Atmosphere"
                 float3 r1_xyz_2 = (mad(_WorldSpaceLightPos0.wwww, -i.texcoord0.xyzx, _WorldSpaceLightPos0.xyzx)).xyz;
                 float r0_w_2 = dot(r1_xyz_2.xyzx, r1_xyz_2.xyzx);
                 float r0_w_3 = rsqrt(r0_w_2);
-                float r0_w_4 = dot(i.texcoord1.xyzx, i.texcoord1.xyzx);
-                float r0_w_5 = rsqrt(r0_w_4);
-                float3 unitWorldNormal_xyz_1 = ((r0_w_5.xxxx * i.texcoord1.xyzx)).xyz;
+                float3 unitWorldNormal_xyz_1 = normalize(i.texcoord1);
                 float r0_w_6 = dot(unitWorldNormal_xyz_1.xyzx, ((r0_w_3.xxxx * r1_xyz_2.xyzx)).xyzx);
                 float r0_w_7 = (r0_w_6 + r0_w_6);
                 float4 r0_xyzw_9 = (float4(r0_x_8, r0_y_5, r0_z_2, r0_x_8) * (max(mad(r0_w_6, 0.875, 0.125), 0)).xxxx);
@@ -689,7 +674,7 @@ Shader "Custom/Planets_Atmosphere"
                 float r1_y_11 = (r1_y_10 * r1_y_10);
                 float r1_y_12 = (r1_y_11 * r1_z_7);
                 float r1_z_8 = ((float4(1, 1, 1, 1) / cb0_values[10].x)).z;
-                float r1_x_14 = (r1_z_8 * exp2((log2(r1_x_10) * 7)));
+                                float r1_x_14 = (r1_z_8 * pow(r1_x_10, 7));
                 float r1_z_9 = mad(r1_x_14, -2, 3);
                 float r1_x_15 = (r1_x_14 * r1_x_14);
                 float r1_w_6 = (r1_x_15 * r1_z_9);
@@ -739,18 +724,15 @@ Shader "Custom/Planets_Atmosphere"
                 float _Outeratmospherelimit;
                 float4 _Inneratmosphere;
                 float _DisplacementAtmosphere;
-                float4 cb0_values[8];
             };
             cbuffer UnityPerFrame : register(b1)
             {
                 float3 _WorldSpaceCameraPos;
                 float4x4 unity_MatrixVP;
-                float4 cb1_values[21];
             };
             cbuffer UnityLighting : register(b2)
             {
                 float4 _WorldSpaceLightPos0;
-                float4 cb2_values[1];
             };
             struct program17Input
             {
@@ -796,12 +778,8 @@ Shader "Custom/Planets_Atmosphere"
             {
                 program26Output o = (program26Output)0;
                 float3 viewDir_xyz_1 = ((-i.texcoord0.xyzx + _WorldSpaceCameraPos.xyzx)).xyz;
-                float r0_w_1 = dot(viewDir_xyz_1.xyzx, viewDir_xyz_1.xyzx);
-                float r0_w_2 = rsqrt(r0_w_1);
-                float3 unitViewDir_xyz_2 = ((r0_w_2.xxxx * viewDir_xyz_1.xyzx)).xyz;
-                float r0_w_3 = dot(i.texcoord1.xyzx, i.texcoord1.xyzx);
-                float r0_w_4 = rsqrt(r0_w_3);
-                float3 unitWorldNormal_xyz_1 = ((r0_w_4.xxxx * i.texcoord1.xyzx)).xyz;
+                float3 unitViewDir_xyz_2 = normalize(viewDir_xyz_1);
+                float3 unitWorldNormal_xyz_1 = normalize(i.texcoord1);
                 float nDotV_x_3 = dot(unitWorldNormal_xyz_1.xyzx, unitViewDir_xyz_2.xyzx);
                 float r0_x_5 = (max(nDotV_x_3, 0) + 1);
                 float r0_y_3 = (-_Inneroutersmoothness + _Innerouterlimit);
@@ -816,7 +794,7 @@ Shader "Custom/Planets_Atmosphere"
                 float r0_y_8 = (r0_y_7 * r0_y_7);
                 float r0_y_9 = (r0_y_8 * r0_z_4);
                 float r0_z_5 = ((float4(1, 1, 1, 1) / _Outeratmospherelimit)).z;
-                float r0_x_9 = (r0_z_5 * exp2((log2(r0_x_5) * 7)));
+                                float r0_x_9 = (r0_z_5 * pow(r0_x_5, 7));
                 float r0_z_6 = mad(r0_x_9, -2, 3);
                 float r0_x_10 = (r0_x_9 * r0_x_9);
                 float r0_w_7 = (r0_x_10 * r0_z_6);

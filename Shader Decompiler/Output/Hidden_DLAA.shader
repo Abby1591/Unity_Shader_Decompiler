@@ -17,12 +17,10 @@ Shader "Hidden/DLAA"
             {
                 float4x4 unity_ObjectToWorld;
                 float4 _MainTex_TexelSize;
-                float4 cb0_values[4];
             };
             cbuffer UnityPerFrame : register(b1)
             {
                 float4x4 unity_MatrixVP;
-                float4 cb1_values[21];
             };
             SamplerState s0 : register(s0);
             Texture2D t0 : register(t0);
@@ -82,7 +80,7 @@ Shader "Hidden/DLAA"
                 float r0_x_6 = r0_xyzw_6.x;
                 float r0_y_6 = r0_xyzw_6.y;
                 float r0_z_5 = r0_xyzw_6.z;
-                o.sv_Target0.xyz = (r1_xyzw_5.xyzx).xyz;
+                o.sv_Target0.xyz = r1_xyzw_5.xyz;
                 float4 r0_xyzw_7 = (abs(float4(r0_x_6, r0_y_6, r0_z_5, r0_x_6)) * float4(4, 4, 4, 0));
                 float r0_x_7 = r0_xyzw_7.x;
                 float r0_y_7 = r0_xyzw_7.y;

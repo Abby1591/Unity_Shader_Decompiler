@@ -22,17 +22,14 @@ Shader "Hidden/FXAA III (Console)"
                 float _EdgeThreshold;
                 float _EdgeSharpness;
                 float4 _MainTex_TexelSize;
-                float4 cb0_values[4];
             };
             cbuffer UnityPerDraw : register(b1)
             {
                 float4x4 unity_ObjectToWorld;
-                float4 cb1_values[4];
             };
             cbuffer UnityPerFrame : register(b2)
             {
                 float4x4 unity_MatrixVP;
-                float4 cb2_values[21];
             };
             SamplerState s0 : register(s0);
             Texture2D t0 : register(t0);
@@ -160,7 +157,7 @@ Shader "Hidden/FXAA III (Console)"
                     float r2_z_4 = r2_xyzw_3.z;
                     r1_xyz_6 = ((r0_w_9.xxxx ? float4(r2_x_3, r2_y_3, r2_z_4, r2_x_3) : float4(r0_x_13, r0_y_11, r0_z_11, r0_x_13))).xyz;
                 }
-                o.sv_Target0.xyz = (r1_xyz_6.xyzx).xyz;
+                o.sv_Target0.xyz = r1_xyz_6.xyz;
                 o.sv_Target0.w = 1;
                 return o;
             }

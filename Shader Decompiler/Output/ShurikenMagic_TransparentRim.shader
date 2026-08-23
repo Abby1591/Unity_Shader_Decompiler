@@ -31,13 +31,12 @@ Shader "ShurikenMagic/TransparentRim"
                 float _InnerColorPower;
                 float _AllPower;
                 float4 _InnerColor;
-                float4 cb0_values[8];
+                float4 cb0_values[6];
             };
             cbuffer UnityPerFrame : register(b1)
             {
                 float3 _WorldSpaceCameraPos;
                 float4x4 unity_MatrixVP;
-                float4 cb1_values[21];
             };
             struct program6Input
             {
@@ -88,9 +87,7 @@ Shader "ShurikenMagic/TransparentRim"
             {
                 program14Output o = (program14Output)0;
                 float3 viewDir_xyz_1 = ((-i.texcoord1.xyzx + _WorldSpaceCameraPos.xyzx)).xyz;
-                float r0_w_1 = dot(viewDir_xyz_1.xyzx, viewDir_xyz_1.xyzx);
-                float r0_w_2 = rsqrt(r0_w_1);
-                float3 unitViewDir_xyz_2 = ((r0_w_2.xxxx * viewDir_xyz_1.xyzx)).xyz;
+                float3 unitViewDir_xyz_2 = normalize(viewDir_xyz_1);
                 float4 r0_xyzw_6 = ((log2((dot(unitViewDir_xyz_2.xyzx, i.texcoord0.xyzx) + 1))).xxxx * cb0_values[5].xyxx);
                 float r0_x_6 = r0_xyzw_6.x;
                 float r0_y_3 = r0_xyzw_6.y;
@@ -126,7 +123,7 @@ Shader "ShurikenMagic/TransparentRim"
                 float _InnerColorPower;
                 float _AllPower;
                 float4 _InnerColor;
-                float4 cb0_values[8];
+                float4 cb0_values[6];
             };
             cbuffer UnityPerFrame : register(b1)
             {
@@ -245,9 +242,7 @@ Shader "ShurikenMagic/TransparentRim"
             {
                 program17Output o = (program17Output)0;
                 float3 viewDir_xyz_1 = ((-i.texcoord1.xyzx + _WorldSpaceCameraPos.xyzx)).xyz;
-                float r0_w_1 = dot(viewDir_xyz_1.xyzx, viewDir_xyz_1.xyzx);
-                float r0_w_2 = rsqrt(r0_w_1);
-                float3 unitViewDir_xyz_2 = ((r0_w_2.xxxx * viewDir_xyz_1.xyzx)).xyz;
+                float3 unitViewDir_xyz_2 = normalize(viewDir_xyz_1);
                 float4 r0_xyzw_6 = ((log2((dot(unitViewDir_xyz_2.xyzx, i.texcoord0.xyzx) + 1))).xxxx * cb0_values[5].xyxx);
                 float r0_x_6 = r0_xyzw_6.x;
                 float r0_y_3 = r0_xyzw_6.y;
@@ -292,7 +287,7 @@ Shader "ShurikenMagic/TransparentRim"
                 float _InnerColorPower;
                 float _AllPower;
                 float4 _InnerColor;
-                float4 cb0_values[8];
+                float4 cb0_values[6];
             };
             cbuffer UnityPerFrame : register(b1)
             {
@@ -364,9 +359,7 @@ Shader "ShurikenMagic/TransparentRim"
             {
                 program16Output o = (program16Output)0;
                 float3 viewDir_xyz_1 = ((-i.texcoord1.xyzx + _WorldSpaceCameraPos.xyzx)).xyz;
-                float r0_w_1 = dot(viewDir_xyz_1.xyzx, viewDir_xyz_1.xyzx);
-                float r0_w_2 = rsqrt(r0_w_1);
-                float3 unitViewDir_xyz_2 = ((r0_w_2.xxxx * viewDir_xyz_1.xyzx)).xyz;
+                float3 unitViewDir_xyz_2 = normalize(viewDir_xyz_1);
                 float4 r0_xyzw_6 = ((log2((dot(unitViewDir_xyz_2.xyzx, i.texcoord0.xyzx) + 1))).xxxx * cb0_values[5].xyxx);
                 float r0_x_6 = r0_xyzw_6.x;
                 float r0_y_3 = r0_xyzw_6.y;
@@ -467,7 +460,7 @@ Shader "ShurikenMagic/TransparentRim"
                 float r0_w_7 = dot(float4(worldNormal_x_7, worldNormal_y_7, worldNormal_z_7, worldNormal_x_7), float4(worldNormal_x_7, worldNormal_y_7, worldNormal_z_7, worldNormal_x_7));
                 float r0_w_8 = rsqrt(r0_w_7);
                 float3 unitWorldNormal_xyz_8 = ((r0_w_8.xxxx * float4(worldNormal_x_7, worldNormal_y_7, worldNormal_z_7, worldNormal_x_7))).xyz;
-                o.texcoord0.xyz = (unitWorldNormal_xyz_8.xyzx).xyz;
+                o.texcoord0.xyz = unitWorldNormal_xyz_8.xyz;
                 float4 r2_xyzw_1 = (unitWorldNormal_xyz_8.yzzx * unitWorldNormal_xyz_8.xyzz);
                 float r3_x_1 = dot(cb0_values[42].xyzw, r2_xyzw_1);
                 float r3_y_1 = dot(cb0_values[43].xyzw, r2_xyzw_1);
@@ -480,7 +473,7 @@ Shader "ShurikenMagic/TransparentRim"
                 float r2_x_2 = dot(cb0_values[39].xyzw, float4(unitWorldNormal_xyz_8.x, unitWorldNormal_xyz_8.y, unitWorldNormal_xyz_8.z, r0_w_9));
                 float r2_y_2 = dot(cb0_values[40].xyzw, float4(unitWorldNormal_xyz_8.x, unitWorldNormal_xyz_8.y, unitWorldNormal_xyz_8.z, r0_w_9));
                 float r2_z_2 = dot(cb0_values[41].xyzw, float4(unitWorldNormal_xyz_8.x, unitWorldNormal_xyz_8.y, unitWorldNormal_xyz_8.z, r0_w_9));
-                float3 r0_xyz_13 = (exp2((((log2((max(((float4(r1_x_4, r1_y_2, r1_z_2, r1_x_4) + float4(r2_x_2, r2_y_2, r2_z_2, r2_x_2))).xyzx, float4(0, 0, 0, 0))).xyzx)).xyzx * float4(0.41666666, 0.41666666, 0.41666666, 0))).xyzx)).xyz;
+                                float3 r0_xyz_13 = (pow(max((float4(r1_x_4, r1_y_2, r1_z_2, r1_x_4) + float4(r2_x_2, r2_y_2, r2_z_2, r2_x_2)).xyz, float3(0, 0, 0)), float3(0.41666666, 0.41666666, 0.41666666)));
                 o.texcoord2.xyz = (max((mad(r0_xyz_13.xyzx, float4(1.055, 1.055, 1.055, 0), float4(-0.055, -0.055, -0.055, 0))).xyzx, float4(0, 0, 0, 0))).xyz;
                 return o;
             }
@@ -489,9 +482,7 @@ Shader "ShurikenMagic/TransparentRim"
             {
                 program15Output o = (program15Output)0;
                 float3 viewDir_xyz_1 = ((-i.texcoord1.xyzx + _WorldSpaceCameraPos.xyzx)).xyz;
-                float r0_w_1 = dot(viewDir_xyz_1.xyzx, viewDir_xyz_1.xyzx);
-                float r0_w_2 = rsqrt(r0_w_1);
-                float3 unitViewDir_xyz_2 = ((r0_w_2.xxxx * viewDir_xyz_1.xyzx)).xyz;
+                float3 unitViewDir_xyz_2 = normalize(viewDir_xyz_1);
                 float4 r0_xyzw_6 = ((log2((dot(unitViewDir_xyz_2.xyzx, i.texcoord0.xyzx) + 1))).xxxx * cb0_values[5].xyxx);
                 float r0_x_6 = r0_xyzw_6.x;
                 float r0_y_3 = r0_xyzw_6.y;
@@ -592,10 +583,8 @@ Shader "ShurikenMagic/TransparentRim"
             {
                 program30Output o = (program30Output)0;
                 float3 viewDir_xyz_1 = ((-i.texcoord1.xyzx + _WorldSpaceCameraPos.xyzx)).xyz;
-                float r0_w_1 = dot(viewDir_xyz_1.xyzx, viewDir_xyz_1.xyzx);
-                float r0_w_2 = rsqrt(r0_w_1);
-                float3 unitViewDir_xyz_2 = ((r0_w_2.xxxx * viewDir_xyz_1.xyzx)).xyz;
-                o.sv_Target0.w = (exp2((log2((dot(unitViewDir_xyz_2.xyzx, i.texcoord0.xyzx) + 1)) * cb0_values[9].y)) * cb0_values[10].x);
+                float3 unitViewDir_xyz_2 = normalize(viewDir_xyz_1);
+                                o.sv_Target0.w = (pow((dot(unitViewDir_xyz_2.xyzx, i.texcoord0.xyzx) + 1), cb0_values[9].y) * cb0_values[10].x);
                 o.sv_Target0.xyz = (float4(0, 0, 0, 0)).xyz;
                 return o;
             }
@@ -701,10 +690,8 @@ Shader "ShurikenMagic/TransparentRim"
             {
                 program39Output o = (program39Output)0;
                 float3 viewDir_xyz_1 = ((-i.texcoord1.xyzx + _WorldSpaceCameraPos.xyzx)).xyz;
-                float r0_w_1 = dot(viewDir_xyz_1.xyzx, viewDir_xyz_1.xyzx);
-                float r0_w_2 = rsqrt(r0_w_1);
-                float3 unitViewDir_xyz_2 = ((r0_w_2.xxxx * viewDir_xyz_1.xyzx)).xyz;
-                o.sv_Target0.w = (exp2((log2((dot(unitViewDir_xyz_2.xyzx, i.texcoord0.xyzx) + 1)) * cb0_values[9].y)) * cb0_values[10].x);
+                float3 unitViewDir_xyz_2 = normalize(viewDir_xyz_1);
+                                o.sv_Target0.w = (pow((dot(unitViewDir_xyz_2.xyzx, i.texcoord0.xyzx) + 1), cb0_values[9].y) * cb0_values[10].x);
                 o.sv_Target0.xyz = (float4(0, 0, 0, 0)).xyz;
                 return o;
             }
@@ -810,10 +797,8 @@ Shader "ShurikenMagic/TransparentRim"
             {
                 program37Output o = (program37Output)0;
                 float3 viewDir_xyz_1 = ((-i.texcoord1.xyzx + _WorldSpaceCameraPos.xyzx)).xyz;
-                float r0_w_1 = dot(viewDir_xyz_1.xyzx, viewDir_xyz_1.xyzx);
-                float r0_w_2 = rsqrt(r0_w_1);
-                float3 unitViewDir_xyz_2 = ((r0_w_2.xxxx * viewDir_xyz_1.xyzx)).xyz;
-                o.sv_Target0.w = (exp2((log2((dot(unitViewDir_xyz_2.xyzx, i.texcoord0.xyzx) + 1)) * cb0_values[9].y)) * cb0_values[10].x);
+                float3 unitViewDir_xyz_2 = normalize(viewDir_xyz_1);
+                                o.sv_Target0.w = (pow((dot(unitViewDir_xyz_2.xyzx, i.texcoord0.xyzx) + 1), cb0_values[9].y) * cb0_values[10].x);
                 o.sv_Target0.xyz = (float4(0, 0, 0, 0)).xyz;
                 return o;
             }
@@ -924,10 +909,8 @@ Shader "ShurikenMagic/TransparentRim"
             {
                 program35Output o = (program35Output)0;
                 float3 viewDir_xyz_1 = ((-i.texcoord1.xyzx + _WorldSpaceCameraPos.xyzx)).xyz;
-                float r0_w_1 = dot(viewDir_xyz_1.xyzx, viewDir_xyz_1.xyzx);
-                float r0_w_2 = rsqrt(r0_w_1);
-                float3 unitViewDir_xyz_2 = ((r0_w_2.xxxx * viewDir_xyz_1.xyzx)).xyz;
-                o.sv_Target0.w = (exp2((log2((dot(unitViewDir_xyz_2.xyzx, i.texcoord0.xyzx) + 1)) * cb0_values[9].y)) * cb0_values[10].x);
+                float3 unitViewDir_xyz_2 = normalize(viewDir_xyz_1);
+                                o.sv_Target0.w = (pow((dot(unitViewDir_xyz_2.xyzx, i.texcoord0.xyzx) + 1), cb0_values[9].y) * cb0_values[10].x);
                 o.sv_Target0.xyz = (float4(0, 0, 0, 0)).xyz;
                 return o;
             }
@@ -1016,10 +999,8 @@ Shader "ShurikenMagic/TransparentRim"
             {
                 program33Output o = (program33Output)0;
                 float3 viewDir_xyz_1 = ((-i.texcoord1.xyzx + _WorldSpaceCameraPos.xyzx)).xyz;
-                float r0_w_1 = dot(viewDir_xyz_1.xyzx, viewDir_xyz_1.xyzx);
-                float r0_w_2 = rsqrt(r0_w_1);
-                float3 unitViewDir_xyz_2 = ((r0_w_2.xxxx * viewDir_xyz_1.xyzx)).xyz;
-                o.sv_Target0.w = (exp2((log2((dot(unitViewDir_xyz_2.xyzx, i.texcoord0.xyzx) + 1)) * cb0_values[9].y)) * cb0_values[10].x);
+                float3 unitViewDir_xyz_2 = normalize(viewDir_xyz_1);
+                                o.sv_Target0.w = (pow((dot(unitViewDir_xyz_2.xyzx, i.texcoord0.xyzx) + 1), cb0_values[9].y) * cb0_values[10].x);
                 o.sv_Target0.xyz = (float4(0, 0, 0, 0)).xyz;
                 return o;
             }
@@ -1108,10 +1089,8 @@ Shader "ShurikenMagic/TransparentRim"
             {
                 program34Output o = (program34Output)0;
                 float3 viewDir_xyz_1 = ((-i.texcoord1.xyzx + _WorldSpaceCameraPos.xyzx)).xyz;
-                float r0_w_1 = dot(viewDir_xyz_1.xyzx, viewDir_xyz_1.xyzx);
-                float r0_w_2 = rsqrt(r0_w_1);
-                float3 unitViewDir_xyz_2 = ((r0_w_2.xxxx * viewDir_xyz_1.xyzx)).xyz;
-                o.sv_Target0.w = (exp2((log2((dot(unitViewDir_xyz_2.xyzx, i.texcoord0.xyzx) + 1)) * cb0_values[9].y)) * cb0_values[10].x);
+                float3 unitViewDir_xyz_2 = normalize(viewDir_xyz_1);
+                                o.sv_Target0.w = (pow((dot(unitViewDir_xyz_2.xyzx, i.texcoord0.xyzx) + 1), cb0_values[9].y) * cb0_values[10].x);
                 o.sv_Target0.xyz = (float4(0, 0, 0, 0)).xyz;
                 return o;
             }
@@ -1203,10 +1182,8 @@ Shader "ShurikenMagic/TransparentRim"
             {
                 program32Output o = (program32Output)0;
                 float3 viewDir_xyz_1 = ((-i.texcoord1.xyzx + _WorldSpaceCameraPos.xyzx)).xyz;
-                float r0_w_1 = dot(viewDir_xyz_1.xyzx, viewDir_xyz_1.xyzx);
-                float r0_w_2 = rsqrt(r0_w_1);
-                float3 unitViewDir_xyz_2 = ((r0_w_2.xxxx * viewDir_xyz_1.xyzx)).xyz;
-                o.sv_Target0.w = (exp2((log2((dot(unitViewDir_xyz_2.xyzx, i.texcoord0.xyzx) + 1)) * cb0_values[9].y)) * cb0_values[10].x);
+                float3 unitViewDir_xyz_2 = normalize(viewDir_xyz_1);
+                                o.sv_Target0.w = (pow((dot(unitViewDir_xyz_2.xyzx, i.texcoord0.xyzx) + 1), cb0_values[9].y) * cb0_values[10].x);
                 o.sv_Target0.xyz = (float4(0, 0, 0, 0)).xyz;
                 return o;
             }

@@ -27,7 +27,6 @@ Shader "Custom/Planet_Clouds"
                 float _AlphaScale;
                 float _DisplacementClouds;
                 float4 _MainTex_ST;
-                float4 cb0_values[6];
             };
             cbuffer UnityPerDraw : register(b1)
             {
@@ -35,14 +34,12 @@ Shader "Custom/Planet_Clouds"
                 float4x4 unity_WorldToObject;
                 float3 _WorldSpaceCameraPos;
                 float4 unity_WorldTransformParams;
-                float4 cb1_values[10];
             };
             cbuffer UnityPerFrame : register(b2)
             {
                 float4 _WorldSpaceLightPos0;
                 float4x4 unity_MatrixVP;
                 float4 unity_OcclusionMaskSelector;
-                float4 cb2_values[47];
             };
             cbuffer UnityReflectionProbes : register(b3)
             {
@@ -54,7 +51,6 @@ Shader "Custom/Planet_Clouds"
                 float4 unity_SpecCube1_BoxMin;
                 float4 unity_SpecCube1_ProbePosition;
                 float4 unity_SpecCube1_HDR;
-                float4 cb3_values[8];
             };
             cbuffer UnityProbeVolume : register(b4)
             {
@@ -62,7 +58,6 @@ Shader "Custom/Planet_Clouds"
                 float4x4 unity_ProbeVolumeWorldToObject;
                 float3 unity_ProbeVolumeSizeInv;
                 float3 unity_ProbeVolumeMin;
-                float4 cb4_values[7];
             };
             SamplerState s0 : register(s0);
             SamplerState s1 : register(s1);
@@ -149,9 +144,7 @@ Shader "Custom/Planet_Clouds"
                 float TEXCOORD2_y_1 = i.texcoord2.w;
                 float TEXCOORD3_z_1 = i.texcoord3.w;
                 float3 viewDir_xyz_1 = ((-float4(TEXCOORD1_x_1, TEXCOORD2_y_1, TEXCOORD3_z_1, TEXCOORD1_x_1) + _WorldSpaceCameraPos.xyzx)).xyz;
-                float r0_w_1 = dot(viewDir_xyz_1.xyzx, viewDir_xyz_1.xyzx);
-                float r0_w_2 = rsqrt(r0_w_1);
-                float3 unitViewDir_xyz_1 = ((r0_w_2.xxxx * viewDir_xyz_1.xyzx)).xyz;
+                float3 unitViewDir_xyz_1 = normalize(viewDir_xyz_1);
                 float4 r3_xyzw_1 = t0.Sample(s2, i.texcoord0.xyxx);
                 float4 r4_xyzw_1 = t1.Sample(s3, i.texcoord0.xyxx);
                 float r1_w_1 = (r3_xyzw_1.w * _AlphaScale);
@@ -221,9 +214,7 @@ Shader "Custom/Planet_Clouds"
                 float3 r7_xyz_4;
                 if (r2_w_11)
                 {
-                    float r2_w_12 = dot(r5_xyz_12.xyzx, r5_xyz_12.xyzx);
-                    float r2_w_13 = rsqrt(r2_w_12);
-                    float3 r7_xyz_2 = ((r2_w_13.xxxx * r5_xyz_12.xyzx)).xyz;
+                    float3 r7_xyz_2 = normalize(r5_xyz_12);
                     float3 r10_xyz_1 = ((float4(0, 0, 0, 0) < r7_xyz_2.xyzx)).xyz;
                     float3 r8_xyz_3 = ((r10_xyz_1.xyzx ? ((((-float4(TEXCOORD1_x_1, TEXCOORD2_y_1, TEXCOORD3_z_1, TEXCOORD1_x_1) + unity_SpecCube0_BoxMax.xyzx)).xyzx / r7_xyz_2.xyzx)).xyzx : ((((-float4(TEXCOORD1_x_1, TEXCOORD2_y_1, TEXCOORD3_z_1, TEXCOORD1_x_1) + unity_SpecCube0_BoxMin.xyzx)).xyzx / r7_xyz_2.xyzx)).xyzx)).xyz;
                     float r2_w_14 = min(r8_xyz_3.y, r8_xyz_3.x);
@@ -232,7 +223,7 @@ Shader "Custom/Planet_Clouds"
                 }
                 else
                 {
-                    r7_xyz_4 = (r5_xyz_12.xyzx).xyz;
+                    r7_xyz_4 = r5_xyz_12.xyz;
                 }
                 float4 r7_xyzw_5 = t2.SampleLevel(s0, r7_xyz_4.xyzx, 6);
                 float r2_w_17 = (r7_xyzw_5.w + -1);
@@ -246,9 +237,7 @@ Shader "Custom/Planet_Clouds"
                     float3 r5_xyz_14 = r5_xyz_12;
                     if (r3_w_9)
                     {
-                        float r3_w_10 = dot(r5_xyz_12.xyzx, r5_xyz_12.xyzx);
-                        float r3_w_11 = rsqrt(r3_w_10);
-                        float3 r9_xyz_4 = ((r3_w_11.xxxx * r5_xyz_12.xyzx)).xyz;
+                        float3 r9_xyz_4 = normalize(r5_xyz_12);
                         float3 r12_xyz_1 = ((float4(0, 0, 0, 0) < r9_xyz_4.xyzx)).xyz;
                         float3 r10_xyz_5 = ((r12_xyz_1.xyzx ? ((((-float4(TEXCOORD1_x_1, TEXCOORD2_y_1, TEXCOORD3_z_1, TEXCOORD1_x_1) + unity_SpecCube1_BoxMax.xyzx)).xyzx / r9_xyz_4.xyzx)).xyzx : ((((-float4(TEXCOORD1_x_1, TEXCOORD2_y_1, TEXCOORD3_z_1, TEXCOORD1_x_1) + unity_SpecCube1_BoxMin.xyzx)).xyzx / r9_xyz_4.xyzx)).xyzx)).xyz;
                         float r3_w_12 = min(r10_xyz_5.y, r10_xyz_5.x);
@@ -339,7 +328,6 @@ Shader "Custom/Planet_Clouds"
                 float _AlphaScale;
                 float _DisplacementClouds;
                 float4 _MainTex_ST;
-                float4 cb0_values[6];
             };
             cbuffer UnityPerDraw : register(b1)
             {
@@ -354,7 +342,7 @@ Shader "Custom/Planet_Clouds"
                 float4 _WorldSpaceLightPos0;
                 float4x4 unity_MatrixVP;
                 float4 unity_OcclusionMaskSelector;
-                float4 cb2_values[47];
+                float4 cb2_values[42];
             };
             cbuffer cb3 : register(b3)
             {
@@ -475,9 +463,7 @@ Shader "Custom/Planet_Clouds"
                 float TEXCOORD2_y_1 = i.texcoord2.w;
                 float TEXCOORD3_z_1 = i.texcoord3.w;
                 float3 viewDir_xyz_1 = ((-float4(TEXCOORD1_x_1, TEXCOORD2_y_1, TEXCOORD3_z_1, TEXCOORD1_x_1) + _WorldSpaceCameraPos.xyzx)).xyz;
-                float r0_w_1 = dot(viewDir_xyz_1.xyzx, viewDir_xyz_1.xyzx);
-                float r0_w_2 = rsqrt(r0_w_1);
-                float3 unitViewDir_xyz_1 = ((r0_w_2.xxxx * viewDir_xyz_1.xyzx)).xyz;
+                float3 unitViewDir_xyz_1 = normalize(viewDir_xyz_1);
                 float4 r3_xyzw_1 = t0.Sample(s2, i.texcoord0.xyxx);
                 float4 r4_xyzw_1 = t1.Sample(s3, i.texcoord0.xyxx);
                 float r1_w_1 = (r3_xyzw_1.w * _AlphaScale);
@@ -573,7 +559,7 @@ Shader "Custom/Planet_Clouds"
                     float r8_z_1 = dot(cb2_values[41].xyzw, float4(r4_x_8, r4_y_5, r4_z_4, r4_w_4));
                     r8_xyz_4 = float3(r8_x_1, r8_y_1, r8_z_1);
                 }
-                float3 r7_xyz_15 = (exp2((((log2((max(((r8_xyz_4.xyzx + i.texcoord4.xyzx)).xyzx, float4(0, 0, 0, 0))).xyzx)).xyzx * float4(0.41666666, 0.41666666, 0.41666666, 0))).xyzx)).xyz;
+                                float3 r7_xyz_15 = (pow(max((r8_xyz_4.xyzx + i.texcoord4.xyzx).xyz, float3(0, 0, 0)), float3(0.41666666, 0.41666666, 0.41666666)));
                 float r2_w_11 = (0 < unity_ProbeVolumeWorldToObject[1].w);
                 float3 r8_xyz_8;
                 if (r2_w_11)
@@ -721,7 +707,6 @@ Shader "Custom/Planet_Clouds"
                 float _AlphaScale;
                 float _DisplacementClouds;
                 float4 _MainTex_ST;
-                float4 cb0_values[6];
             };
             cbuffer UnityPerDraw : register(b1)
             {
@@ -729,14 +714,13 @@ Shader "Custom/Planet_Clouds"
                 float4x4 unity_WorldToObject;
                 float3 _WorldSpaceCameraPos;
                 float4 unity_WorldTransformParams;
-                float4 cb1_values[10];
+                float4 cb1_values[6];
             };
             cbuffer UnityPerFrame : register(b2)
             {
                 float4 _WorldSpaceLightPos0;
                 float4x4 unity_MatrixVP;
                 float4 unity_OcclusionMaskSelector;
-                float4 cb2_values[47];
             };
             cbuffer UnityReflectionProbes : register(b3)
             {
@@ -748,7 +732,6 @@ Shader "Custom/Planet_Clouds"
                 float4 unity_SpecCube1_BoxMin;
                 float4 unity_SpecCube1_ProbePosition;
                 float4 unity_SpecCube1_HDR;
-                float4 cb3_values[2];
             };
             cbuffer UnityProbeVolume : register(b4)
             {
@@ -851,9 +834,7 @@ Shader "Custom/Planet_Clouds"
                 float TEXCOORD2_y_1 = i.texcoord2.w;
                 float TEXCOORD3_z_1 = i.texcoord3.w;
                 float3 viewDir_xyz_1 = ((-float4(TEXCOORD1_x_1, TEXCOORD2_y_1, TEXCOORD3_z_1, TEXCOORD1_x_1) + _WorldSpaceCameraPos.xyzx)).xyz;
-                float r0_w_1 = dot(viewDir_xyz_1.xyzx, viewDir_xyz_1.xyzx);
-                float r0_w_2 = rsqrt(r0_w_1);
-                float3 unitViewDir_xyz_1 = ((r0_w_2.xxxx * viewDir_xyz_1.xyzx)).xyz;
+                float3 unitViewDir_xyz_1 = normalize(viewDir_xyz_1);
                 float4 r3_xyzw_1 = t0.Sample(s2, i.texcoord0.xyxx);
                 float4 r4_xyzw_1 = t1.Sample(s3, i.texcoord0.xyxx);
                 float r1_w_1 = (r3_xyzw_1.w * _AlphaScale);
@@ -922,9 +903,7 @@ Shader "Custom/Planet_Clouds"
                 float3 r7_xyz_4;
                 if (r2_w_11)
                 {
-                    float r2_w_12 = dot(r5_xyz_12.xyzx, r5_xyz_12.xyzx);
-                    float r2_w_13 = rsqrt(r2_w_12);
-                    float3 r7_xyz_2 = ((r2_w_13.xxxx * r5_xyz_12.xyzx)).xyz;
+                    float3 r7_xyz_2 = normalize(r5_xyz_12);
                     float3 r10_xyz_1 = ((float4(0, 0, 0, 0) < r7_xyz_2.xyzx)).xyz;
                     float3 r8_xyz_3 = ((r10_xyz_1.xyzx ? ((((-float4(TEXCOORD1_x_1, TEXCOORD2_y_1, TEXCOORD3_z_1, TEXCOORD1_x_1) + unity_ProbeVolumeParams.xyzx)).xyzx / r7_xyz_2.xyzx)).xyzx : ((((-float4(TEXCOORD1_x_1, TEXCOORD2_y_1, TEXCOORD3_z_1, TEXCOORD1_x_1) + unity_ProbeVolumeWorldToObject[0].xyzx)).xyzx / r7_xyz_2.xyzx)).xyzx)).xyz;
                     float r2_w_14 = min(r8_xyz_3.y, r8_xyz_3.x);
@@ -933,7 +912,7 @@ Shader "Custom/Planet_Clouds"
                 }
                 else
                 {
-                    r7_xyz_4 = (r5_xyz_12.xyzx).xyz;
+                    r7_xyz_4 = r5_xyz_12.xyz;
                 }
                 float4 r7_xyzw_5 = t2.SampleLevel(s0, r7_xyz_4.xyzx, 6);
                 float r2_w_17 = (r7_xyzw_5.w + -1);
@@ -947,9 +926,7 @@ Shader "Custom/Planet_Clouds"
                     float3 r5_xyz_14 = r5_xyz_12;
                     if (r3_w_9)
                     {
-                        float r3_w_10 = dot(r5_xyz_12.xyzx, r5_xyz_12.xyzx);
-                        float r3_w_11 = rsqrt(r3_w_10);
-                        float3 r9_xyz_4 = ((r3_w_11.xxxx * r5_xyz_12.xyzx)).xyz;
+                        float3 r9_xyz_4 = normalize(r5_xyz_12);
                         float3 r12_xyz_1 = ((float4(0, 0, 0, 0) < r9_xyz_4.xyzx)).xyz;
                         float3 r10_xyz_5 = ((r12_xyz_1.xyzx ? ((((-float4(TEXCOORD1_x_1, TEXCOORD2_y_1, TEXCOORD3_z_1, TEXCOORD1_x_1) + unity_ProbeVolumeWorldToObject[3].xyzx)).xyzx / r9_xyz_4.xyzx)).xyzx : ((((-float4(TEXCOORD1_x_1, TEXCOORD2_y_1, TEXCOORD3_z_1, TEXCOORD1_x_1) + unity_ProbeVolumeSizeInv.xyzx)).xyzx / r9_xyz_4.xyzx)).xyzx)).xyz;
                         float r3_w_12 = min(r10_xyz_5.y, r10_xyz_5.x);
@@ -1053,7 +1030,6 @@ Shader "Custom/Planet_Clouds"
                 float _AlphaScale;
                 float _DisplacementClouds;
                 float4 _MainTex_ST;
-                float4 cb0_values[6];
             };
             cbuffer UnityPerDraw : register(b1)
             {
@@ -1068,7 +1044,7 @@ Shader "Custom/Planet_Clouds"
                 float4 _WorldSpaceLightPos0;
                 float4x4 unity_MatrixVP;
                 float4 unity_OcclusionMaskSelector;
-                float4 cb2_values[47];
+                float4 cb2_values[42];
             };
             cbuffer cb3 : register(b3)
             {
@@ -1088,7 +1064,6 @@ Shader "Custom/Planet_Clouds"
                 float4x4 unity_ProbeVolumeWorldToObject;
                 float3 unity_ProbeVolumeSizeInv;
                 float3 unity_ProbeVolumeMin;
-                float4 cb4_values[7];
             };
             SamplerState s0 : register(s0);
             SamplerState s1 : register(s1);
@@ -1181,9 +1156,7 @@ Shader "Custom/Planet_Clouds"
                 float TEXCOORD2_y_1 = i.texcoord2.w;
                 float TEXCOORD3_z_1 = i.texcoord3.w;
                 float3 viewDir_xyz_1 = ((-float4(TEXCOORD1_x_1, TEXCOORD2_y_1, TEXCOORD3_z_1, TEXCOORD1_x_1) + _WorldSpaceCameraPos.xyzx)).xyz;
-                float r0_w_1 = dot(viewDir_xyz_1.xyzx, viewDir_xyz_1.xyzx);
-                float r0_w_2 = rsqrt(r0_w_1);
-                float3 unitViewDir_xyz_1 = ((r0_w_2.xxxx * viewDir_xyz_1.xyzx)).xyz;
+                float3 unitViewDir_xyz_1 = normalize(viewDir_xyz_1);
                 float4 r3_xyzw_1 = t0.Sample(s2, i.texcoord0.xyxx);
                 float4 r4_xyzw_1 = t1.Sample(s3, i.texcoord0.xyxx);
                 float r1_w_1 = (r3_xyzw_1.w * _AlphaScale);
@@ -1281,7 +1254,7 @@ Shader "Custom/Planet_Clouds"
                     float r8_z_1 = dot(cb2_values[41].xyzw, float4(r4_x_8, r4_y_5, r4_z_4, r4_w_4));
                     r8_xyz_4 = float3(r8_x_1, r8_y_1, r8_z_1);
                 }
-                float3 r7_xyz_15 = (exp2((((log2((max(((r8_xyz_4.xyzx + i.texcoord4.xyzx)).xyzx, float4(0, 0, 0, 0))).xyzx)).xyzx * float4(0.41666666, 0.41666666, 0.41666666, 0))).xyzx)).xyz;
+                                float3 r7_xyz_15 = (pow(max((r8_xyz_4.xyzx + i.texcoord4.xyzx).xyz, float3(0, 0, 0)), float3(0.41666666, 0.41666666, 0.41666666)));
                 float r2_w_11 = (0 < unity_SpecCube0_ProbePosition.w);
                 float3 r8_xyz_8;
                 if (r2_w_11)
@@ -1424,14 +1397,12 @@ Shader "Custom/Planet_Clouds"
                 float4x4 unity_WorldToObject;
                 float3 _WorldSpaceCameraPos;
                 float4 unity_WorldTransformParams;
-                float4 cb1_values[10];
             };
             cbuffer UnityPerFrame : register(b2)
             {
                 float4 _WorldSpaceLightPos0;
                 float4x4 unity_MatrixVP;
                 float4 unity_OcclusionMaskSelector;
-                float4 cb2_values[47];
             };
             cbuffer UnityProbeVolume : register(b3)
             {
@@ -1439,7 +1410,6 @@ Shader "Custom/Planet_Clouds"
                 float4x4 unity_ProbeVolumeWorldToObject;
                 float3 unity_ProbeVolumeSizeInv;
                 float3 unity_ProbeVolumeMin;
-                float4 cb3_values[7];
             };
             SamplerState s0 : register(s0);
             SamplerState s1 : register(s1);
@@ -1503,9 +1473,7 @@ Shader "Custom/Planet_Clouds"
                 float3 worldTangent_xyz_4 = ((i.tangent0.yyyy * unity_ObjectToWorld[1].yzxy)).xyz;
                 float3 worldTangent_xyz_5 = (mad(unity_ObjectToWorld[0].yzxy, i.tangent0.xxxx, worldTangent_xyz_4.xyzx)).xyz;
                 float3 worldTangent_xyz_6 = (mad(unity_ObjectToWorld[2].yzxy, i.tangent0.zzzz, worldTangent_xyz_5.xyzx)).xyz;
-                float r1_w_6 = dot(worldTangent_xyz_6.xyzx, worldTangent_xyz_6.xyzx);
-                float r1_w_7 = rsqrt(r1_w_6);
-                float3 unitWorldTangent_xyz_7 = ((r1_w_7.xxxx * worldTangent_xyz_6.xyzx)).xyz;
+                float3 unitWorldTangent_xyz_7 = normalize(worldTangent_xyz_6);
                 float r1_w_8 = (i.tangent0.w * unity_WorldTransformParams.w);
                 float3 r3_xyz_3 = ((r1_w_8.xxxx * (mad(unitWorldNormal_xyz_5.zxyz, unitWorldTangent_xyz_7.yzxy, ((unitWorldNormal_xyz_5.xyzx * unitWorldTangent_xyz_7.xyzx)).xyzx)).xyzx)).xyz;
                 o.texcoord1.y = r3_xyz_3.x;
@@ -1530,13 +1498,9 @@ Shader "Custom/Planet_Clouds"
             {
                 program37Output o = (program37Output)0;
                 float3 r0_xyz_1 = ((-i.texcoord4.xyzx + _WorldSpaceLightPos0.xyzx)).xyz;
-                float r0_w_1 = dot(r0_xyz_1.xyzx, r0_xyz_1.xyzx);
-                float r0_w_2 = rsqrt(r0_w_1);
-                float3 r1_xyz_1 = ((r0_w_2.xxxx * r0_xyz_1.xyzx)).xyz;
+                float3 r1_xyz_1 = normalize(r0_xyz_1);
                 float3 r2_xyz_1 = ((-i.texcoord4.xyzx + _WorldSpaceCameraPos.xyzx)).xyz;
-                float r1_w_1 = dot(r2_xyz_1.xyzx, r2_xyz_1.xyzx);
-                float r1_w_2 = rsqrt(r1_w_1);
-                float3 r2_xyz_2 = ((r1_w_2.xxxx * r2_xyz_1.xyzx)).xyz;
+                float3 r2_xyz_2 = normalize(r2_xyz_1);
                 float4 r3_xyzw_1 = t0.Sample(s2, i.texcoord0.xyxx);
                 float4 r4_xyzw_1 = t1.Sample(s3, i.texcoord0.xyxx);
                 float r1_w_3 = (r3_xyzw_1.w * cb0_values[8].y);
@@ -1674,14 +1638,13 @@ Shader "Custom/Planet_Clouds"
                 float4x4 unity_WorldToObject;
                 float3 _WorldSpaceCameraPos;
                 float4 unity_WorldTransformParams;
-                float4 cb1_values[10];
+                float4 cb1_values[6];
             };
             cbuffer UnityPerFrame : register(b2)
             {
                 float4 _WorldSpaceLightPos0;
                 float4x4 unity_MatrixVP;
                 float4 unity_OcclusionMaskSelector;
-                float4 cb2_values[47];
             };
             cbuffer UnityProbeVolume : register(b3)
             {
@@ -1689,7 +1652,6 @@ Shader "Custom/Planet_Clouds"
                 float4x4 unity_ProbeVolumeWorldToObject;
                 float3 unity_ProbeVolumeSizeInv;
                 float3 unity_ProbeVolumeMin;
-                float4 cb3_values[2];
             };
             cbuffer cb4 : register(b4)
             {
@@ -1770,9 +1732,7 @@ Shader "Custom/Planet_Clouds"
                 float3 worldTangent_xyz_6 = ((i.tangent0.yyyy * unity_ObjectToWorld[1].yzxy)).xyz;
                 float3 worldTangent_xyz_7 = (mad(unity_ObjectToWorld[0].yzxy, i.tangent0.xxxx, worldTangent_xyz_6.xyzx)).xyz;
                 float3 worldTangent_xyz_8 = (mad(unity_ObjectToWorld[2].yzxy, i.tangent0.zzzz, worldTangent_xyz_7.xyzx)).xyz;
-                float r0_w_4 = dot(worldTangent_xyz_8.xyzx, worldTangent_xyz_8.xyzx);
-                float r0_w_5 = rsqrt(r0_w_4);
-                float3 unitWorldTangent_xyz_9 = ((r0_w_5.xxxx * worldTangent_xyz_8.xyzx)).xyz;
+                float3 unitWorldTangent_xyz_9 = normalize(worldTangent_xyz_8);
                 float r0_w_6 = (i.tangent0.w * unity_WorldTransformParams.w);
                 float3 r2_xyz_6 = ((r0_w_6.xxxx * (mad(float4(unitWorldNormal_z_4, unitWorldNormal_x_7, unitWorldNormal_y_7, unitWorldNormal_z_4), unitWorldTangent_xyz_9.yzxy, ((float4(unitWorldNormal_x_7, unitWorldNormal_y_7, unitWorldNormal_z_4, unitWorldNormal_x_7) * unitWorldTangent_xyz_9.xyzx)).xyzx)).xyzx)).xyz;
                 o.texcoord1.y = r2_xyz_6.x;
@@ -1939,14 +1899,13 @@ Shader "Custom/Planet_Clouds"
                 float4x4 unity_WorldToObject;
                 float3 _WorldSpaceCameraPos;
                 float4 unity_WorldTransformParams;
-                float4 cb1_values[10];
+                float4 cb1_values[6];
             };
             cbuffer UnityPerFrame : register(b2)
             {
                 float4 _WorldSpaceLightPos0;
                 float4x4 unity_MatrixVP;
                 float4 unity_OcclusionMaskSelector;
-                float4 cb2_values[47];
             };
             cbuffer UnityProbeVolume : register(b3)
             {
@@ -1954,7 +1913,6 @@ Shader "Custom/Planet_Clouds"
                 float4x4 unity_ProbeVolumeWorldToObject;
                 float3 unity_ProbeVolumeSizeInv;
                 float3 unity_ProbeVolumeMin;
-                float4 cb3_values[2];
             };
             cbuffer cb4 : register(b4)
             {
@@ -2028,9 +1986,7 @@ Shader "Custom/Planet_Clouds"
                 float3 worldTangent_xyz_4 = ((i.tangent0.yyyy * unity_ObjectToWorld[1].yzxy)).xyz;
                 float3 worldTangent_xyz_5 = (mad(unity_ObjectToWorld[0].yzxy, i.tangent0.xxxx, worldTangent_xyz_4.xyzx)).xyz;
                 float3 worldTangent_xyz_6 = (mad(unity_ObjectToWorld[2].yzxy, i.tangent0.zzzz, worldTangent_xyz_5.xyzx)).xyz;
-                float r1_w_7 = dot(worldTangent_xyz_6.xyzx, worldTangent_xyz_6.xyzx);
-                float r1_w_8 = rsqrt(r1_w_7);
-                float3 unitWorldTangent_xyz_7 = ((r1_w_8.xxxx * worldTangent_xyz_6.xyzx)).xyz;
+                float3 unitWorldTangent_xyz_7 = normalize(worldTangent_xyz_6);
                 float r1_w_9 = (i.tangent0.w * unity_WorldTransformParams.w);
                 float3 r3_xyz_3 = ((r1_w_9.xxxx * (mad(unitWorldNormal_xyz_6.zxyz, unitWorldTangent_xyz_7.yzxy, ((unitWorldNormal_xyz_6.xyzx * unitWorldTangent_xyz_7.xyzx)).xyzx)).xyzx)).xyz;
                 o.texcoord1.y = r3_xyz_3.x;
@@ -2055,13 +2011,9 @@ Shader "Custom/Planet_Clouds"
             {
                 program45Output o = (program45Output)0;
                 float3 r0_xyz_1 = ((-i.texcoord4.xyzx + _WorldSpaceLightPos0.xyzx)).xyz;
-                float r0_w_1 = dot(r0_xyz_1.xyzx, r0_xyz_1.xyzx);
-                float r0_w_2 = rsqrt(r0_w_1);
-                float3 r1_xyz_1 = ((r0_w_2.xxxx * r0_xyz_1.xyzx)).xyz;
+                float3 r1_xyz_1 = normalize(r0_xyz_1);
                 float3 r2_xyz_1 = ((-i.texcoord4.xyzx + _WorldSpaceCameraPos.xyzx)).xyz;
-                float r1_w_1 = dot(r2_xyz_1.xyzx, r2_xyz_1.xyzx);
-                float r1_w_2 = rsqrt(r1_w_1);
-                float3 r2_xyz_2 = ((r1_w_2.xxxx * r2_xyz_1.xyzx)).xyz;
+                float3 r2_xyz_2 = normalize(r2_xyz_1);
                 float4 r3_xyzw_1 = t0.Sample(s3, i.texcoord0.xyxx);
                 float4 r4_xyzw_1 = t1.Sample(s4, i.texcoord0.xyxx);
                 float r1_w_3 = (r3_xyzw_1.w * cb0_values[8].y);
@@ -2209,14 +2161,13 @@ Shader "Custom/Planet_Clouds"
                 float4x4 unity_WorldToObject;
                 float3 _WorldSpaceCameraPos;
                 float4 unity_WorldTransformParams;
-                float4 cb1_values[10];
+                float4 cb1_values[6];
             };
             cbuffer UnityPerFrame : register(b2)
             {
                 float4 _WorldSpaceLightPos0;
                 float4x4 unity_MatrixVP;
                 float4 unity_OcclusionMaskSelector;
-                float4 cb2_values[47];
             };
             cbuffer UnityProbeVolume : register(b3)
             {
@@ -2224,7 +2175,6 @@ Shader "Custom/Planet_Clouds"
                 float4x4 unity_ProbeVolumeWorldToObject;
                 float3 unity_ProbeVolumeSizeInv;
                 float3 unity_ProbeVolumeMin;
-                float4 cb3_values[2];
             };
             cbuffer cb4 : register(b4)
             {
@@ -2298,9 +2248,7 @@ Shader "Custom/Planet_Clouds"
                 float3 worldTangent_xyz_4 = ((i.tangent0.yyyy * unity_ObjectToWorld[1].yzxy)).xyz;
                 float3 worldTangent_xyz_5 = (mad(unity_ObjectToWorld[0].yzxy, i.tangent0.xxxx, worldTangent_xyz_4.xyzx)).xyz;
                 float3 worldTangent_xyz_6 = (mad(unity_ObjectToWorld[2].yzxy, i.tangent0.zzzz, worldTangent_xyz_5.xyzx)).xyz;
-                float r1_w_7 = dot(worldTangent_xyz_6.xyzx, worldTangent_xyz_6.xyzx);
-                float r1_w_8 = rsqrt(r1_w_7);
-                float3 unitWorldTangent_xyz_7 = ((r1_w_8.xxxx * worldTangent_xyz_6.xyzx)).xyz;
+                float3 unitWorldTangent_xyz_7 = normalize(worldTangent_xyz_6);
                 float r1_w_9 = (i.tangent0.w * unity_WorldTransformParams.w);
                 float3 r3_xyz_3 = ((r1_w_9.xxxx * (mad(unitWorldNormal_xyz_6.zxyz, unitWorldTangent_xyz_7.yzxy, ((unitWorldNormal_xyz_6.xyzx * unitWorldTangent_xyz_7.xyzx)).xyzx)).xyzx)).xyz;
                 o.texcoord1.y = r3_xyz_3.x;
@@ -2325,13 +2273,9 @@ Shader "Custom/Planet_Clouds"
             {
                 program44Output o = (program44Output)0;
                 float3 r0_xyz_1 = ((-i.texcoord4.xyzx + _WorldSpaceLightPos0.xyzx)).xyz;
-                float r0_w_1 = dot(r0_xyz_1.xyzx, r0_xyz_1.xyzx);
-                float r0_w_2 = rsqrt(r0_w_1);
-                float3 r1_xyz_1 = ((r0_w_2.xxxx * r0_xyz_1.xyzx)).xyz;
+                float3 r1_xyz_1 = normalize(r0_xyz_1);
                 float3 r2_xyz_1 = ((-i.texcoord4.xyzx + _WorldSpaceCameraPos.xyzx)).xyz;
-                float r1_w_1 = dot(r2_xyz_1.xyzx, r2_xyz_1.xyzx);
-                float r1_w_2 = rsqrt(r1_w_1);
-                float3 r2_xyz_2 = ((r1_w_2.xxxx * r2_xyz_1.xyzx)).xyz;
+                float3 r2_xyz_2 = normalize(r2_xyz_1);
                 float4 r3_xyzw_1 = t0.Sample(s3, i.texcoord0.xyxx);
                 float4 r4_xyzw_1 = t1.Sample(s4, i.texcoord0.xyxx);
                 float r1_w_3 = (r3_xyzw_1.w * cb0_values[8].y);
@@ -2474,7 +2418,7 @@ Shader "Custom/Planet_Clouds"
                 float _AlphaScale;
                 float _DisplacementClouds;
                 float4 _MainTex_ST;
-                float4 cb0_values[6];
+                float4 cb0_values[5];
             };
             cbuffer UnityPerDraw : register(b1)
             {
@@ -2482,14 +2426,13 @@ Shader "Custom/Planet_Clouds"
                 float4x4 unity_WorldToObject;
                 float3 _WorldSpaceCameraPos;
                 float4 unity_WorldTransformParams;
-                float4 cb1_values[10];
+                float4 cb1_values[6];
             };
             cbuffer UnityPerFrame : register(b2)
             {
                 float4 _WorldSpaceLightPos0;
                 float4x4 unity_MatrixVP;
                 float4 unity_OcclusionMaskSelector;
-                float4 cb2_values[47];
             };
             cbuffer UnityProbeVolume : register(b3)
             {
@@ -2497,7 +2440,6 @@ Shader "Custom/Planet_Clouds"
                 float4x4 unity_ProbeVolumeWorldToObject;
                 float3 unity_ProbeVolumeSizeInv;
                 float3 unity_ProbeVolumeMin;
-                float4 cb3_values[2];
             };
             cbuffer cb4 : register(b4)
             {
@@ -2568,9 +2510,7 @@ Shader "Custom/Planet_Clouds"
                 float3 worldTangent_xyz_4 = ((i.tangent0.yyyy * unity_ObjectToWorld[1].yzxy)).xyz;
                 float3 worldTangent_xyz_5 = (mad(unity_ObjectToWorld[0].yzxy, i.tangent0.xxxx, worldTangent_xyz_4.xyzx)).xyz;
                 float3 worldTangent_xyz_6 = (mad(unity_ObjectToWorld[2].yzxy, i.tangent0.zzzz, worldTangent_xyz_5.xyzx)).xyz;
-                float r0_w_8 = dot(worldTangent_xyz_6.xyzx, worldTangent_xyz_6.xyzx);
-                float r0_w_9 = rsqrt(r0_w_8);
-                float3 unitWorldTangent_xyz_7 = ((r0_w_9.xxxx * worldTangent_xyz_6.xyzx)).xyz;
+                float3 unitWorldTangent_xyz_7 = normalize(worldTangent_xyz_6);
                 float r0_w_10 = (i.tangent0.w * unity_WorldTransformParams.w);
                 float3 r2_xyz_3 = ((r0_w_10.xxxx * (mad(unitWorldNormal_xyz_8.zxyz, unitWorldTangent_xyz_7.yzxy, ((unitWorldNormal_xyz_8.xyzx * unitWorldTangent_xyz_7.xyzx)).xyzx)).xyzx)).xyz;
                 o.texcoord1.y = r2_xyz_3.x;
@@ -2732,14 +2672,13 @@ Shader "Custom/Planet_Clouds"
                 float4x4 unity_WorldToObject;
                 float3 _WorldSpaceCameraPos;
                 float4 unity_WorldTransformParams;
-                float4 cb1_values[10];
+                float4 cb1_values[6];
             };
             cbuffer UnityPerFrame : register(b2)
             {
                 float4 _WorldSpaceLightPos0;
                 float4x4 unity_MatrixVP;
                 float4 unity_OcclusionMaskSelector;
-                float4 cb2_values[47];
             };
             cbuffer UnityProbeVolume : register(b3)
             {
@@ -2747,7 +2686,6 @@ Shader "Custom/Planet_Clouds"
                 float4x4 unity_ProbeVolumeWorldToObject;
                 float3 unity_ProbeVolumeSizeInv;
                 float3 unity_ProbeVolumeMin;
-                float4 cb3_values[2];
             };
             cbuffer cb4 : register(b4)
             {
@@ -2819,9 +2757,7 @@ Shader "Custom/Planet_Clouds"
                 float3 worldTangent_xyz_4 = ((i.tangent0.yyyy * unity_ObjectToWorld[1].yzxy)).xyz;
                 float3 worldTangent_xyz_5 = (mad(unity_ObjectToWorld[0].yzxy, i.tangent0.xxxx, worldTangent_xyz_4.xyzx)).xyz;
                 float3 worldTangent_xyz_6 = (mad(unity_ObjectToWorld[2].yzxy, i.tangent0.zzzz, worldTangent_xyz_5.xyzx)).xyz;
-                float r1_w_7 = dot(worldTangent_xyz_6.xyzx, worldTangent_xyz_6.xyzx);
-                float r1_w_8 = rsqrt(r1_w_7);
-                float3 unitWorldTangent_xyz_7 = ((r1_w_8.xxxx * worldTangent_xyz_6.xyzx)).xyz;
+                float3 unitWorldTangent_xyz_7 = normalize(worldTangent_xyz_6);
                 float r1_w_9 = (i.tangent0.w * unity_WorldTransformParams.w);
                 float3 r3_xyz_3 = ((r1_w_9.xxxx * (mad(unitWorldNormal_xyz_6.zxyz, unitWorldTangent_xyz_7.yzxy, ((unitWorldNormal_xyz_6.xyzx * unitWorldTangent_xyz_7.xyzx)).xyzx)).xyzx)).xyz;
                 o.texcoord1.y = r3_xyz_3.x;
@@ -2846,13 +2782,9 @@ Shader "Custom/Planet_Clouds"
             {
                 program42Output o = (program42Output)0;
                 float3 r0_xyz_1 = ((-i.texcoord4.xyzx + _WorldSpaceLightPos0.xyzx)).xyz;
-                float r0_w_1 = dot(r0_xyz_1.xyzx, r0_xyz_1.xyzx);
-                float r0_w_2 = rsqrt(r0_w_1);
-                float3 r1_xyz_1 = ((r0_w_2.xxxx * r0_xyz_1.xyzx)).xyz;
+                float3 r1_xyz_1 = normalize(r0_xyz_1);
                 float3 r2_xyz_1 = ((-i.texcoord4.xyzx + _WorldSpaceCameraPos.xyzx)).xyz;
-                float r1_w_1 = dot(r2_xyz_1.xyzx, r2_xyz_1.xyzx);
-                float r1_w_2 = rsqrt(r1_w_1);
-                float3 r2_xyz_2 = ((r1_w_2.xxxx * r2_xyz_1.xyzx)).xyz;
+                float3 r2_xyz_2 = normalize(r2_xyz_1);
                 float4 r3_xyzw_1 = t0.Sample(s2, i.texcoord0.xyxx);
                 float4 r4_xyzw_1 = t1.Sample(s3, i.texcoord0.xyxx);
                 float r1_w_3 = (r3_xyzw_1.w * cb0_values[8].y);
@@ -2998,14 +2930,12 @@ Shader "Custom/Planet_Clouds"
                 float4x4 unity_WorldToObject;
                 float3 _WorldSpaceCameraPos;
                 float4 unity_WorldTransformParams;
-                float4 cb1_values[10];
             };
             cbuffer UnityPerFrame : register(b2)
             {
                 float4 _WorldSpaceLightPos0;
                 float4x4 unity_MatrixVP;
                 float4 unity_OcclusionMaskSelector;
-                float4 cb2_values[47];
             };
             cbuffer UnityProbeVolume : register(b3)
             {
@@ -3013,7 +2943,6 @@ Shader "Custom/Planet_Clouds"
                 float4x4 unity_ProbeVolumeWorldToObject;
                 float3 unity_ProbeVolumeSizeInv;
                 float3 unity_ProbeVolumeMin;
-                float4 cb3_values[7];
             };
             SamplerState s0 : register(s0);
             SamplerState s1 : register(s1);
@@ -3086,9 +3015,7 @@ Shader "Custom/Planet_Clouds"
                 float3 worldTangent_xyz_5 = ((i.tangent0.yyyy * unity_ObjectToWorld[1].yzxy)).xyz;
                 float3 worldTangent_xyz_6 = (mad(unity_ObjectToWorld[0].yzxy, i.tangent0.xxxx, worldTangent_xyz_5.xyzx)).xyz;
                 float3 worldTangent_xyz_7 = (mad(unity_ObjectToWorld[2].yzxy, i.tangent0.zzzz, worldTangent_xyz_6.xyzx)).xyz;
-                float r0_w_4 = dot(worldTangent_xyz_7.xyzx, worldTangent_xyz_7.xyzx);
-                float r0_w_5 = rsqrt(r0_w_4);
-                float3 unitWorldTangent_xyz_8 = ((r0_w_5.xxxx * worldTangent_xyz_7.xyzx)).xyz;
+                float3 unitWorldTangent_xyz_8 = normalize(worldTangent_xyz_7);
                 float r0_w_6 = (i.tangent0.w * unity_WorldTransformParams.w);
                 float3 r2_xyz_6 = ((r0_w_6.xxxx * (mad(float4(unitWorldNormal_z_4, unitWorldNormal_x_7, unitWorldNormal_y_7, unitWorldNormal_z_4), unitWorldTangent_xyz_8.yzxy, ((float4(unitWorldNormal_x_7, unitWorldNormal_y_7, unitWorldNormal_z_4, unitWorldNormal_x_7) * unitWorldTangent_xyz_8.xyzx)).xyzx)).xyzx)).xyz;
                 o.texcoord1.y = r2_xyz_6.x;
@@ -3247,14 +3174,12 @@ Shader "Custom/Planet_Clouds"
                 float4x4 unity_WorldToObject;
                 float3 _WorldSpaceCameraPos;
                 float4 unity_WorldTransformParams;
-                float4 cb1_values[10];
             };
             cbuffer UnityPerFrame : register(b2)
             {
                 float4 _WorldSpaceLightPos0;
                 float4x4 unity_MatrixVP;
                 float4 unity_OcclusionMaskSelector;
-                float4 cb2_values[47];
             };
             cbuffer UnityProbeVolume : register(b3)
             {
@@ -3262,7 +3187,6 @@ Shader "Custom/Planet_Clouds"
                 float4x4 unity_ProbeVolumeWorldToObject;
                 float3 unity_ProbeVolumeSizeInv;
                 float3 unity_ProbeVolumeMin;
-                float4 cb3_values[7];
             };
             SamplerState s0 : register(s0);
             SamplerState s1 : register(s1);
@@ -3328,9 +3252,7 @@ Shader "Custom/Planet_Clouds"
                 float3 worldTangent_xyz_4 = ((i.tangent0.yyyy * unity_ObjectToWorld[1].yzxy)).xyz;
                 float3 worldTangent_xyz_5 = (mad(unity_ObjectToWorld[0].yzxy, i.tangent0.xxxx, worldTangent_xyz_4.xyzx)).xyz;
                 float3 worldTangent_xyz_6 = (mad(unity_ObjectToWorld[2].yzxy, i.tangent0.zzzz, worldTangent_xyz_5.xyzx)).xyz;
-                float r1_w_6 = dot(worldTangent_xyz_6.xyzx, worldTangent_xyz_6.xyzx);
-                float r1_w_7 = rsqrt(r1_w_6);
-                float3 unitWorldTangent_xyz_7 = ((r1_w_7.xxxx * worldTangent_xyz_6.xyzx)).xyz;
+                float3 unitWorldTangent_xyz_7 = normalize(worldTangent_xyz_6);
                 float r1_w_8 = (i.tangent0.w * unity_WorldTransformParams.w);
                 float3 r3_xyz_3 = ((r1_w_8.xxxx * (mad(unitWorldNormal_xyz_5.zxyz, unitWorldTangent_xyz_7.yzxy, ((unitWorldNormal_xyz_5.xyzx * unitWorldTangent_xyz_7.xyzx)).xyzx)).xyzx)).xyz;
                 o.texcoord1.y = r3_xyz_3.x;
@@ -3355,13 +3277,9 @@ Shader "Custom/Planet_Clouds"
             {
                 program40Output o = (program40Output)0;
                 float3 r0_xyz_1 = ((-i.texcoord4.xyzx + _WorldSpaceLightPos0.xyzx)).xyz;
-                float r0_w_1 = dot(r0_xyz_1.xyzx, r0_xyz_1.xyzx);
-                float r0_w_2 = rsqrt(r0_w_1);
-                float3 r1_xyz_1 = ((r0_w_2.xxxx * r0_xyz_1.xyzx)).xyz;
+                float3 r1_xyz_1 = normalize(r0_xyz_1);
                 float3 r2_xyz_1 = ((-i.texcoord4.xyzx + _WorldSpaceCameraPos.xyzx)).xyz;
-                float r1_w_1 = dot(r2_xyz_1.xyzx, r2_xyz_1.xyzx);
-                float r1_w_2 = rsqrt(r1_w_1);
-                float3 r2_xyz_2 = ((r1_w_2.xxxx * r2_xyz_1.xyzx)).xyz;
+                float3 r2_xyz_2 = normalize(r2_xyz_1);
                 float4 r3_xyzw_1 = t0.Sample(s3, i.texcoord0.xyxx);
                 float4 r4_xyzw_1 = t1.Sample(s4, i.texcoord0.xyxx);
                 float r1_w_3 = (r3_xyzw_1.w * cb0_values[8].y);
@@ -3501,14 +3419,12 @@ Shader "Custom/Planet_Clouds"
                 float4x4 unity_WorldToObject;
                 float3 _WorldSpaceCameraPos;
                 float4 unity_WorldTransformParams;
-                float4 cb1_values[10];
             };
             cbuffer UnityPerFrame : register(b2)
             {
                 float4 _WorldSpaceLightPos0;
                 float4x4 unity_MatrixVP;
                 float4 unity_OcclusionMaskSelector;
-                float4 cb2_values[47];
             };
             cbuffer UnityProbeVolume : register(b3)
             {
@@ -3516,7 +3432,6 @@ Shader "Custom/Planet_Clouds"
                 float4x4 unity_ProbeVolumeWorldToObject;
                 float3 unity_ProbeVolumeSizeInv;
                 float3 unity_ProbeVolumeMin;
-                float4 cb3_values[7];
             };
             SamplerState s0 : register(s0);
             SamplerState s1 : register(s1);
@@ -3582,9 +3497,7 @@ Shader "Custom/Planet_Clouds"
                 float3 worldTangent_xyz_4 = ((i.tangent0.yyyy * unity_ObjectToWorld[1].yzxy)).xyz;
                 float3 worldTangent_xyz_5 = (mad(unity_ObjectToWorld[0].yzxy, i.tangent0.xxxx, worldTangent_xyz_4.xyzx)).xyz;
                 float3 worldTangent_xyz_6 = (mad(unity_ObjectToWorld[2].yzxy, i.tangent0.zzzz, worldTangent_xyz_5.xyzx)).xyz;
-                float r1_w_6 = dot(worldTangent_xyz_6.xyzx, worldTangent_xyz_6.xyzx);
-                float r1_w_7 = rsqrt(r1_w_6);
-                float3 unitWorldTangent_xyz_7 = ((r1_w_7.xxxx * worldTangent_xyz_6.xyzx)).xyz;
+                float3 unitWorldTangent_xyz_7 = normalize(worldTangent_xyz_6);
                 float r1_w_8 = (i.tangent0.w * unity_WorldTransformParams.w);
                 float3 r3_xyz_3 = ((r1_w_8.xxxx * (mad(unitWorldNormal_xyz_5.zxyz, unitWorldTangent_xyz_7.yzxy, ((unitWorldNormal_xyz_5.xyzx * unitWorldTangent_xyz_7.xyzx)).xyzx)).xyzx)).xyz;
                 o.texcoord1.y = r3_xyz_3.x;
@@ -3609,13 +3522,9 @@ Shader "Custom/Planet_Clouds"
             {
                 program39Output o = (program39Output)0;
                 float3 r0_xyz_1 = ((-i.texcoord4.xyzx + _WorldSpaceLightPos0.xyzx)).xyz;
-                float r0_w_1 = dot(r0_xyz_1.xyzx, r0_xyz_1.xyzx);
-                float r0_w_2 = rsqrt(r0_w_1);
-                float3 r1_xyz_1 = ((r0_w_2.xxxx * r0_xyz_1.xyzx)).xyz;
+                float3 r1_xyz_1 = normalize(r0_xyz_1);
                 float3 r2_xyz_1 = ((-i.texcoord4.xyzx + _WorldSpaceCameraPos.xyzx)).xyz;
-                float r1_w_1 = dot(r2_xyz_1.xyzx, r2_xyz_1.xyzx);
-                float r1_w_2 = rsqrt(r1_w_1);
-                float3 r2_xyz_2 = ((r1_w_2.xxxx * r2_xyz_1.xyzx)).xyz;
+                float3 r2_xyz_2 = normalize(r2_xyz_1);
                 float4 r3_xyzw_1 = t0.Sample(s3, i.texcoord0.xyxx);
                 float4 r4_xyzw_1 = t1.Sample(s4, i.texcoord0.xyxx);
                 float r1_w_3 = (r3_xyzw_1.w * cb0_values[8].y);
@@ -3750,7 +3659,7 @@ Shader "Custom/Planet_Clouds"
                 float _AlphaScale;
                 float _DisplacementClouds;
                 float4 _MainTex_ST;
-                float4 cb0_values[6];
+                float4 cb0_values[5];
             };
             cbuffer UnityPerDraw : register(b1)
             {
@@ -3758,14 +3667,12 @@ Shader "Custom/Planet_Clouds"
                 float4x4 unity_WorldToObject;
                 float3 _WorldSpaceCameraPos;
                 float4 unity_WorldTransformParams;
-                float4 cb1_values[10];
             };
             cbuffer UnityPerFrame : register(b2)
             {
                 float4 _WorldSpaceLightPos0;
                 float4x4 unity_MatrixVP;
                 float4 unity_OcclusionMaskSelector;
-                float4 cb2_values[47];
             };
             cbuffer UnityProbeVolume : register(b3)
             {
@@ -3773,7 +3680,6 @@ Shader "Custom/Planet_Clouds"
                 float4x4 unity_ProbeVolumeWorldToObject;
                 float3 unity_ProbeVolumeSizeInv;
                 float3 unity_ProbeVolumeMin;
-                float4 cb3_values[7];
             };
             SamplerState s0 : register(s0);
             SamplerState s1 : register(s1);
@@ -3836,9 +3742,7 @@ Shader "Custom/Planet_Clouds"
                 float3 worldTangent_xyz_4 = ((i.tangent0.yyyy * unity_ObjectToWorld[1].yzxy)).xyz;
                 float3 worldTangent_xyz_5 = (mad(unity_ObjectToWorld[0].yzxy, i.tangent0.xxxx, worldTangent_xyz_4.xyzx)).xyz;
                 float3 worldTangent_xyz_6 = (mad(unity_ObjectToWorld[2].yzxy, i.tangent0.zzzz, worldTangent_xyz_5.xyzx)).xyz;
-                float r0_w_7 = dot(worldTangent_xyz_6.xyzx, worldTangent_xyz_6.xyzx);
-                float r0_w_8 = rsqrt(r0_w_7);
-                float3 unitWorldTangent_xyz_7 = ((r0_w_8.xxxx * worldTangent_xyz_6.xyzx)).xyz;
+                float3 unitWorldTangent_xyz_7 = normalize(worldTangent_xyz_6);
                 float r0_w_9 = (i.tangent0.w * unity_WorldTransformParams.w);
                 float3 r2_xyz_3 = ((r0_w_9.xxxx * (mad(unitWorldNormal_xyz_7.zxyz, unitWorldTangent_xyz_7.yzxy, ((unitWorldNormal_xyz_7.xyzx * unitWorldTangent_xyz_7.xyzx)).xyzx)).xyzx)).xyz;
                 o.texcoord1.y = r2_xyz_3.x;

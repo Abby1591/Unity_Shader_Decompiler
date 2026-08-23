@@ -28,18 +28,15 @@ Shader "Custom/Hologram_Flicker"
                 float _ReverseSpeed;
                 float _GlitchAmount;
                 float _FlickerAmount;
-                float4 cb0_values[4];
             };
             cbuffer UnityPerDraw : register(b1)
             {
                 float4x4 unity_ObjectToWorld;
                 float4 _Time;
-                float4 cb1_values[4];
             };
             cbuffer UnityPerFrame : register(b2)
             {
                 float4x4 unity_MatrixVP;
-                float4 cb2_values[21];
             };
             SamplerState s0 : register(s0);
             SamplerState s1 : register(s1);
@@ -92,7 +89,7 @@ Shader "Custom/Hologram_Flicker"
                 float4 r1_xyzw_2 = t1.Sample(s1, float4(r1_xz_1.y, TEXCOORD0_yw_1.y, r1_xz_1.y, r1_xz_1.y));
                 float4 r0_xyzw_11 = (r0_xyzw_10 + r1_xyzw_2);
                 o.sv_Target0.w = (r0_xyzw_11.w + min(frac((sin(_Time.x) * 43758.547)), _FlickerAmount));
-                o.sv_Target0.xyz = (r0_xyzw_11.xyzx).xyz;
+                o.sv_Target0.xyz = r0_xyzw_11.xyz;
                 return o;
             }
             ENDHLSL

@@ -38,7 +38,6 @@ Shader "Knife/Soft Holo Cone"
                 float _DepthFadeDistance;
                 float _Alpha;
                 float4 _texcoord_ST;
-                float4 cb0_values[13];
             };
             cbuffer UnityPerCamera : register(b1)
             {
@@ -46,18 +45,15 @@ Shader "Knife/Soft Holo Cone"
                 float3 _WorldSpaceCameraPos;
                 float4 _ProjectionParams;
                 float4 _ZBufferParams;
-                float4 cb1_values[8];
             };
             cbuffer UnityPerDraw : register(b2)
             {
                 float4x4 unity_ObjectToWorld;
                 float4x4 unity_WorldToObject;
-                float4 cb2_values[7];
             };
             cbuffer UnityPerFrame : register(b3)
             {
                 float4x4 unity_MatrixVP;
-                float4 cb3_values[21];
             };
             SamplerState s0 : register(s0);
             SamplerState s1 : register(s1);
@@ -176,7 +172,7 @@ Shader "Knife/Soft Holo Cone"
                 float r0_y_22 = (r0_y_21 / _DepthFadeDistance);
                 float r0_y_23 = min(abs(r0_y_22), 1);
                 o.sv_Target0.w = ((r0_y_23 * (r0_y_16 * ((r0_y_10 * ((r0_x_4 * r0_x_4) * r0_y_5)) * _Color.w))) * _Alpha);
-                o.sv_Target0.xyz = (_Color.xyzx).xyz;
+                o.sv_Target0.xyz = _Color.xyz;
                 return o;
             }
             ENDHLSL
@@ -201,7 +197,6 @@ Shader "Knife/Soft Holo Cone"
                 float _DepthFadeDistance;
                 float _Alpha;
                 float4 _texcoord_ST;
-                float4 cb0_values[13];
             };
             cbuffer UnityPerCamera : register(b1)
             {
@@ -209,7 +204,7 @@ Shader "Knife/Soft Holo Cone"
                 float3 _WorldSpaceCameraPos;
                 float4 _ProjectionParams;
                 float4 _ZBufferParams;
-                float4 cb1_values[8];
+                float4 cb1_values[6];
             };
             cbuffer UnityPerDraw : register(b2)
             {
@@ -291,7 +286,7 @@ Shader "Knife/Soft Holo Cone"
                 float r0_z_8 = dot(float4(worldNormal_x_2, worldNormal_y_2, worldNormal_z_2, worldNormal_x_2), float4(worldNormal_x_2, worldNormal_y_2, worldNormal_z_2, worldNormal_x_2));
                 float r0_z_9 = rsqrt(r0_z_8);
                 float3 unitWorldNormal_xyz_3 = ((r0_z_9.xxxx * float4(worldNormal_x_2, worldNormal_y_2, worldNormal_z_2, worldNormal_x_2))).xyz;
-                o.texcoord1.xyz = (unitWorldNormal_xyz_3.xyzx).xyz;
+                o.texcoord1.xyz = unitWorldNormal_xyz_3.xyz;
                 float r0_y_8 = (clipPos_xyzw_7.y * _ProjectionParams.x);
                 float4 r0_xyzw_8 = (clipPos_xyzw_7.xxwx * float4(0.5, 0, 0.5, 0));
                 float r0_x_8 = r0_xyzw_8.x;
@@ -412,7 +407,6 @@ Shader "Knife/Soft Holo Cone"
                 float _DepthFadeDistance;
                 float _Alpha;
                 float4 _texcoord_ST;
-                float4 cb0_values[13];
             };
             cbuffer UnityPerCamera : register(b1)
             {
@@ -420,18 +414,17 @@ Shader "Knife/Soft Holo Cone"
                 float3 _WorldSpaceCameraPos;
                 float4 _ProjectionParams;
                 float4 _ZBufferParams;
-                float4 cb1_values[8];
+                float4 cb1_values[6];
             };
             cbuffer UnityPerDraw : register(b2)
             {
                 float4x4 unity_ObjectToWorld;
                 float4x4 unity_WorldToObject;
-                float4 cb2_values[7];
+                float4 cb2_values[2];
             };
             cbuffer UnityPerFrame : register(b3)
             {
                 float4x4 unity_MatrixVP;
-                float4 cb3_values[21];
             };
             SamplerState s0 : register(s0);
             SamplerState s1 : register(s1);
@@ -582,7 +575,6 @@ Shader "Knife/Soft Holo Cone"
                 float _DepthFadeDistance;
                 float _Alpha;
                 float4 _texcoord_ST;
-                float4 cb0_values[13];
             };
             cbuffer UnityPerCamera : register(b1)
             {
@@ -590,7 +582,6 @@ Shader "Knife/Soft Holo Cone"
                 float3 _WorldSpaceCameraPos;
                 float4 _ProjectionParams;
                 float4 _ZBufferParams;
-                float4 cb1_values[8];
             };
             cbuffer UnityPerDraw : register(b2)
             {
@@ -668,7 +659,7 @@ Shader "Knife/Soft Holo Cone"
                 float r1_w_2 = dot(float4(worldNormal_x_2, worldNormal_y_2, worldNormal_z_2, worldNormal_x_2), float4(worldNormal_x_2, worldNormal_y_2, worldNormal_z_2, worldNormal_x_2));
                 float r1_w_3 = rsqrt(r1_w_2);
                 float3 unitWorldNormal_xyz_3 = ((r1_w_3.xxxx * float4(worldNormal_x_2, worldNormal_y_2, worldNormal_z_2, worldNormal_x_2))).xyz;
-                o.texcoord1.xyz = (unitWorldNormal_xyz_3.xyzx).xyz;
+                o.texcoord1.xyz = unitWorldNormal_xyz_3.xyz;
                 float r0_y_8 = (clipPos_xyzw_7.y * _ProjectionParams.x);
                 float3 r2_xzw_1 = ((float4(clipPos_xyzw_7.x, clipPos_xyzw_7.x, clipPos_xyzw_7.w, r0_y_8) * float4(0.5, 0, 0.5, 0.5))).xzw;
                 o.texcoord3.zw = (clipPos_xyzw_7.zzzw).zw;
@@ -758,7 +749,7 @@ Shader "Knife/Soft Holo Cone"
                 float r0_y_22 = (r0_y_21 / _DepthFadeDistance);
                 float r0_y_23 = min(abs(r0_y_22), 1);
                 o.sv_Target0.w = ((r0_y_23 * (r0_y_16 * ((r0_y_10 * ((r0_x_4 * r0_x_4) * r0_y_5)) * _Color.w))) * _Alpha);
-                o.sv_Target0.xyz = (_Color.xyzx).xyz;
+                o.sv_Target0.xyz = _Color.xyz;
                 return o;
             }
             ENDHLSL
@@ -791,18 +782,15 @@ Shader "Knife/Soft Holo Cone"
                 float3 _WorldSpaceCameraPos;
                 float4 _ProjectionParams;
                 float4 _ZBufferParams;
-                float4 cb1_values[8];
             };
             cbuffer UnityPerDraw : register(b2)
             {
                 float4x4 unity_ObjectToWorld;
                 float4x4 unity_WorldToObject;
-                float4 cb2_values[7];
             };
             cbuffer UnityPerFrame : register(b3)
             {
                 float4x4 unity_MatrixVP;
-                float4 cb3_values[21];
             };
             SamplerState s0 : register(s0);
             SamplerState s1 : register(s1);
@@ -960,18 +948,15 @@ Shader "Knife/Soft Holo Cone"
                 float3 _WorldSpaceCameraPos;
                 float4 _ProjectionParams;
                 float4 _ZBufferParams;
-                float4 cb1_values[8];
             };
             cbuffer UnityPerDraw : register(b2)
             {
                 float4x4 unity_ObjectToWorld;
                 float4x4 unity_WorldToObject;
-                float4 cb2_values[7];
             };
             cbuffer UnityPerFrame : register(b3)
             {
                 float4x4 unity_MatrixVP;
-                float4 cb3_values[21];
             };
             SamplerState s0 : register(s0);
             SamplerState s1 : register(s1);
@@ -1125,18 +1110,15 @@ Shader "Knife/Soft Holo Cone"
                 float3 _WorldSpaceCameraPos;
                 float4 _ProjectionParams;
                 float4 _ZBufferParams;
-                float4 cb1_values[8];
             };
             cbuffer UnityPerDraw : register(b2)
             {
                 float4x4 unity_ObjectToWorld;
                 float4x4 unity_WorldToObject;
-                float4 cb2_values[7];
             };
             cbuffer UnityPerFrame : register(b3)
             {
                 float4x4 unity_MatrixVP;
-                float4 cb3_values[21];
             };
             SamplerState s0 : register(s0);
             SamplerState s1 : register(s1);
@@ -1282,7 +1264,6 @@ Shader "Knife/Soft Holo Cone"
                 float _DepthFadeDistance;
                 float _Alpha;
                 float4 _texcoord_ST;
-                float4 cb0_values[13];
             };
             cbuffer UnityPerCamera : register(b1)
             {
@@ -1290,18 +1271,15 @@ Shader "Knife/Soft Holo Cone"
                 float3 _WorldSpaceCameraPos;
                 float4 _ProjectionParams;
                 float4 _ZBufferParams;
-                float4 cb1_values[8];
             };
             cbuffer UnityPerDraw : register(b2)
             {
                 float4x4 unity_ObjectToWorld;
                 float4x4 unity_WorldToObject;
-                float4 cb2_values[7];
             };
             cbuffer UnityPerFrame : register(b3)
             {
                 float4x4 unity_MatrixVP;
-                float4 cb3_values[21];
             };
             SamplerState s0 : register(s0);
             SamplerState s1 : register(s1);
@@ -1450,18 +1428,15 @@ Shader "Knife/Soft Holo Cone"
                 float3 _WorldSpaceCameraPos;
                 float4 _ProjectionParams;
                 float4 _ZBufferParams;
-                float4 cb1_values[8];
             };
             cbuffer UnityPerDraw : register(b2)
             {
                 float4x4 unity_ObjectToWorld;
                 float4x4 unity_WorldToObject;
-                float4 cb2_values[7];
             };
             cbuffer UnityPerFrame : register(b3)
             {
                 float4x4 unity_MatrixVP;
-                float4 cb3_values[21];
             };
             SamplerState s0 : register(s0);
             SamplerState s1 : register(s1);
@@ -1622,18 +1597,15 @@ Shader "Knife/Soft Holo Cone"
                 float3 _WorldSpaceCameraPos;
                 float4 _ProjectionParams;
                 float4 _ZBufferParams;
-                float4 cb1_values[8];
             };
             cbuffer UnityPerDraw : register(b2)
             {
                 float4x4 unity_ObjectToWorld;
                 float4x4 unity_WorldToObject;
-                float4 cb2_values[7];
             };
             cbuffer UnityPerFrame : register(b3)
             {
                 float4x4 unity_MatrixVP;
-                float4 cb3_values[21];
             };
             SamplerState s0 : register(s0);
             SamplerState s1 : register(s1);
@@ -1784,18 +1756,15 @@ Shader "Knife/Soft Holo Cone"
                 float3 _WorldSpaceCameraPos;
                 float4 _ProjectionParams;
                 float4 _ZBufferParams;
-                float4 cb1_values[8];
             };
             cbuffer UnityPerDraw : register(b2)
             {
                 float4x4 unity_ObjectToWorld;
                 float4x4 unity_WorldToObject;
-                float4 cb2_values[7];
             };
             cbuffer UnityPerFrame : register(b3)
             {
                 float4x4 unity_MatrixVP;
-                float4 cb3_values[21];
             };
             SamplerState s0 : register(s0);
             SamplerState s1 : register(s1);
@@ -1950,7 +1919,6 @@ Shader "Knife/Soft Holo Cone"
                 float _DepthFadeDistance;
                 float _Alpha;
                 float4 _texcoord_ST;
-                float4 cb0_values[13];
             };
             cbuffer UnityPerCamera : register(b1)
             {
@@ -1958,18 +1926,15 @@ Shader "Knife/Soft Holo Cone"
                 float3 _WorldSpaceCameraPos;
                 float4 _ProjectionParams;
                 float4 _ZBufferParams;
-                float4 cb1_values[8];
             };
             cbuffer UnityPerDraw : register(b2)
             {
                 float4x4 unity_ObjectToWorld;
                 float4x4 unity_WorldToObject;
-                float4 cb2_values[7];
             };
             cbuffer UnityPerFrame : register(b3)
             {
                 float4x4 unity_MatrixVP;
-                float4 cb3_values[21];
             };
             SamplerState s0 : register(s0);
             SamplerState s1 : register(s1);
@@ -2106,7 +2071,6 @@ Shader "Knife/Soft Holo Cone"
                 float _Softness;
                 float _DepthFadeDistance;
                 float _Alpha;
-                float4 cb0_values[12];
             };
             cbuffer UnityLighting : register(b1)
             {
@@ -2114,23 +2078,19 @@ Shader "Knife/Soft Holo Cone"
                 float4 _Time;
                 float3 _WorldSpaceCameraPos;
                 float4 _ZBufferParams;
-                float4 cb1_values[8];
             };
             cbuffer UnityShadows : register(b2)
             {
                 float4 unity_LightShadowBias;
-                float4 cb2_values[6];
             };
             cbuffer UnityPerDraw : register(b3)
             {
                 float4x4 unity_ObjectToWorld;
                 float4x4 unity_WorldToObject;
-                float4 cb3_values[7];
             };
             cbuffer UnityPerFrame : register(b4)
             {
                 float4x4 unity_MatrixVP;
-                float4 cb4_values[21];
             };
             SamplerState s0 : register(s0);
             SamplerState s1 : register(s1);
@@ -2192,7 +2152,7 @@ Shader "Knife/Soft Holo Cone"
                 float r0_w_6 = mad(-r0_w_5, r0_w_5, 1);
                 float r0_w_7 = sqrt(r0_w_6);
                 float r0_w_8 = (r0_w_7 * unity_LightShadowBias.z);
-                o.texcoord4.xyz = (unitWorldNormal_xyz_2.xyzx).xyz;
+                o.texcoord4.xyz = unitWorldNormal_xyz_2.xyz;
                 float4 unity_LightShadowBiasSelect_xyzw_4 = (((unity_LightShadowBias.z != 0)).xxxx ? (mad(-unitWorldNormal_xyz_2.xyzx, r0_w_8.xxxx, worldPos_xyzw_4.xyzx)).xyzx : worldPos_xyzw_4.xyzx);
                 float unity_LightShadowBiasSelect_x_4 = unity_LightShadowBiasSelect_xyzw_4.x;
                 float unity_LightShadowBiasSelect_y_3 = unity_LightShadowBiasSelect_xyzw_4.y;
@@ -2302,7 +2262,6 @@ Shader "Knife/Soft Holo Cone"
                 float _Softness;
                 float _DepthFadeDistance;
                 float _Alpha;
-                float4 cb0_values[12];
             };
             cbuffer UnityLighting : register(b1)
             {
@@ -2310,23 +2269,19 @@ Shader "Knife/Soft Holo Cone"
                 float4 _Time;
                 float3 _WorldSpaceCameraPos;
                 float4 _ZBufferParams;
-                float4 cb1_values[8];
             };
             cbuffer UnityShadows : register(b2)
             {
                 float4 unity_LightShadowBias;
-                float4 cb2_values[6];
             };
             cbuffer UnityPerDraw : register(b3)
             {
                 float4x4 unity_ObjectToWorld;
                 float4x4 unity_WorldToObject;
-                float4 cb3_values[7];
             };
             cbuffer UnityPerFrame : register(b4)
             {
                 float4x4 unity_MatrixVP;
-                float4 cb4_values[21];
             };
             SamplerState s0 : register(s0);
             SamplerState s1 : register(s1);
@@ -2388,7 +2343,7 @@ Shader "Knife/Soft Holo Cone"
                 float r0_w_6 = mad(-r0_w_5, r0_w_5, 1);
                 float r0_w_7 = sqrt(r0_w_6);
                 float r0_w_8 = (r0_w_7 * unity_LightShadowBias.z);
-                o.texcoord4.xyz = (unitWorldNormal_xyz_2.xyzx).xyz;
+                o.texcoord4.xyz = unitWorldNormal_xyz_2.xyz;
                 float4 unity_LightShadowBiasSelect_xyzw_4 = (((unity_LightShadowBias.z != 0)).xxxx ? (mad(-unitWorldNormal_xyz_2.xyzx, r0_w_8.xxxx, worldPos_xyzw_4.xyzx)).xyzx : worldPos_xyzw_4.xyzx);
                 float unity_LightShadowBiasSelect_x_4 = unity_LightShadowBiasSelect_xyzw_4.x;
                 float unity_LightShadowBiasSelect_y_3 = unity_LightShadowBiasSelect_xyzw_4.y;

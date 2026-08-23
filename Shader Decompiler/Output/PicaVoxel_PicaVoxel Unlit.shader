@@ -19,12 +19,10 @@ Shader "PicaVoxel/PicaVoxel Unlit"
             {
                 float4x4 unity_ObjectToWorld;
                 float4 _Tint;
-                float4 cb0_values[4];
             };
             cbuffer UnityPerFrame : register(b1)
             {
                 float4x4 unity_MatrixVP;
-                float4 cb1_values[21];
             };
             struct program1Input
             {

@@ -17,12 +17,10 @@ Shader "Hidden/BlurAndFlares"
             cbuffer UnityPerDraw : register(b0)
             {
                 float4x4 unity_ObjectToWorld;
-                float4 cb0_values[4];
             };
             cbuffer UnityPerFrame : register(b1)
             {
                 float4x4 unity_MatrixVP;
-                float4 cb1_values[21];
             };
             SamplerState s0 : register(s0);
             Texture2D t0 : register(t0);
@@ -76,17 +74,14 @@ Shader "Hidden/BlurAndFlares"
             {
                 float4 _Offsets;
                 float _StretchWidth;
-                float4 cb0_values[5];
             };
             cbuffer UnityPerDraw : register(b1)
             {
                 float4x4 unity_ObjectToWorld;
-                float4 cb1_values[4];
             };
             cbuffer UnityPerFrame : register(b2)
             {
                 float4x4 unity_MatrixVP;
-                float4 cb2_values[21];
             };
             SamplerState s0 : register(s0);
             Texture2D t0 : register(t0);
@@ -169,17 +164,14 @@ Shader "Hidden/BlurAndFlares"
                 float2 _Threshhold;
                 float _Saturation;
                 float4 _MainTex_TexelSize;
-                float4 cb0_values[6];
             };
             cbuffer UnityPerDraw : register(b1)
             {
                 float4x4 unity_ObjectToWorld;
-                float4 cb1_values[4];
             };
             cbuffer UnityPerFrame : register(b2)
             {
                 float4x4 unity_MatrixVP;
-                float4 cb2_values[21];
             };
             SamplerState s0 : register(s0);
             Texture2D t0 : register(t0);
@@ -262,17 +254,14 @@ Shader "Hidden/BlurAndFlares"
             {
                 float4 _Offsets;
                 float4 _MainTex_TexelSize;
-                float4 cb0_values[3];
             };
             cbuffer UnityPerDraw : register(b1)
             {
                 float4x4 unity_ObjectToWorld;
-                float4 cb1_values[4];
             };
             cbuffer UnityPerFrame : register(b2)
             {
                 float4x4 unity_MatrixVP;
-                float4 cb2_values[21];
             };
             SamplerState s0 : register(s0);
             Texture2D t0 : register(t0);

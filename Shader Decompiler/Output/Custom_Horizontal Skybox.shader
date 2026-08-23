@@ -30,12 +30,10 @@ Shader "Custom/Horizontal Skybox"
                 float _Intensity;
                 float _Exponent1;
                 float _Exponent2;
-                float4 cb0_values[6];
             };
             cbuffer UnityPerFrame : register(b1)
             {
                 float4x4 unity_MatrixVP;
-                float4 cb1_values[21];
             };
             struct program1Input
             {
@@ -78,7 +76,7 @@ Shader "Custom/Horizontal Skybox"
                 float4 r0_xyzw_4 = min(float4(r0_x_3, r0_y_1, r0_x_3, r0_x_3), float4(1, 1, 0, 0));
                 float r0_x_4 = r0_xyzw_4.x;
                 float r0_y_2 = r0_xyzw_4.y;
-                float r0_x_7 = exp2((log2(r0_x_4) * _Exponent2));
+                                float r0_x_7 = pow(r0_x_4, _Exponent2);
                 float r0_y_3 = log2(r0_y_2);
                 float r0_y_4 = (r0_y_3 * _Exponent1);
                 float r0_y_5 = exp2(r0_y_4);
