@@ -38,8 +38,8 @@ Shader "ShurikenMagic/Twosided Transparent"
                 float3 unity_ProbeVolumeMin;
                 float4x4 unity_MatrixVP;
             };
-            SamplerState s0 : register(s0);
-            SamplerState s1 : register(s1);
+            SamplerState sampler_linear_clamp : register(s0);
+            SamplerState sampler_linear_clamp1 : register(s1);
             Texture2D t0 : register(t0);
             Texture3D t1 : register(t1);
             struct program6Input
@@ -93,7 +93,7 @@ Shader "ShurikenMagic/Twosided Transparent"
             program14Output frag(program14Input i)
             {
                 program14Output o = (program14Output)0;
-                float4 r0_xyzw_1 = t0.Sample(s1, i.texcoord0.xyxx);
+                float4 r0_xyzw_1 = t0.Sample(sampler_linear_clamp1, (i.texcoord0.xyxx).xy);
                 float4 r0_xyzw_2 = (r0_xyzw_1 * _Color);
                 float r1_x_8;
                 float r1_y_11;
@@ -119,7 +119,7 @@ Shader "ShurikenMagic/Twosided Transparent"
                     float r1_w_6 = r1_xyzw_8.w;
                     float r1_y_9 = mad(r1_y_8, 0.25, 0.75);
                     float r1_x_6 = max(r1_y_9, mad(unity_ProbeVolumeParams.z, 0.5, 0.75));
-                    float4 r1_xyzw_7 = t1.Sample(s0, float4(r1_x_6, r1_z_8, r1_w_6, r1_x_6));
+                    float4 r1_xyzw_7 = t1.Sample(sampler_linear_clamp, (float4(r1_x_6, r1_z_8, r1_w_6, r1_x_6)).xyz);
                     r1_x_8 = r1_xyzw_7.x;
                     r1_y_11 = r1_xyzw_7.y;
                     r1_z_10 = r1_xyzw_7.z;
@@ -187,8 +187,8 @@ Shader "ShurikenMagic/Twosided Transparent"
             {
                 float4 cb5_values[2];
             };
-            SamplerState s0 : register(s0);
-            SamplerState s1 : register(s1);
+            SamplerState sampler_linear_clamp : register(s0);
+            SamplerState sampler_linear_clamp1 : register(s1);
             Texture2D t0 : register(t0);
             Texture3D t1 : register(t1);
             struct program10Input
@@ -292,7 +292,7 @@ Shader "ShurikenMagic/Twosided Transparent"
             program17Output frag(program17Input i)
             {
                 program17Output o = (program17Output)0;
-                float4 r0_xyzw_1 = t0.Sample(s1, i.texcoord0.xyxx);
+                float4 r0_xyzw_1 = t0.Sample(sampler_linear_clamp1, (i.texcoord0.xyxx).xy);
                 float4 r0_xyzw_2 = (r0_xyzw_1 * _Color);
                 float r1_x_8;
                 float r1_y_11;
@@ -318,7 +318,7 @@ Shader "ShurikenMagic/Twosided Transparent"
                     float r1_w_6 = r1_xyzw_8.w;
                     float r1_y_9 = mad(r1_y_8, 0.25, 0.75);
                     float r1_x_6 = max(r1_y_9, mad(cb3_values[0].z, 0.5, 0.75));
-                    float4 r1_xyzw_7 = t1.Sample(s0, float4(r1_x_6, r1_z_8, r1_w_6, r1_x_6));
+                    float4 r1_xyzw_7 = t1.Sample(sampler_linear_clamp, (float4(r1_x_6, r1_z_8, r1_w_6, r1_x_6)).xyz);
                     r1_x_8 = r1_xyzw_7.x;
                     r1_y_11 = r1_xyzw_7.y;
                     r1_z_10 = r1_xyzw_7.z;
@@ -387,8 +387,8 @@ Shader "ShurikenMagic/Twosided Transparent"
             {
                 float4 cb4_values[2];
             };
-            SamplerState s0 : register(s0);
-            SamplerState s1 : register(s1);
+            SamplerState sampler_linear_clamp : register(s0);
+            SamplerState sampler_linear_clamp1 : register(s1);
             Texture2D t0 : register(t0);
             Texture3D t1 : register(t1);
             struct program9Input
@@ -449,7 +449,7 @@ Shader "ShurikenMagic/Twosided Transparent"
             program16Output frag(program16Input i)
             {
                 program16Output o = (program16Output)0;
-                float4 r0_xyzw_1 = t0.Sample(s1, i.texcoord0.xyxx);
+                float4 r0_xyzw_1 = t0.Sample(sampler_linear_clamp1, (i.texcoord0.xyxx).xy);
                 float4 r0_xyzw_2 = (r0_xyzw_1 * _Color);
                 float r1_x_8;
                 float r1_y_11;
@@ -475,7 +475,7 @@ Shader "ShurikenMagic/Twosided Transparent"
                     float r1_w_6 = r1_xyzw_8.w;
                     float r1_y_9 = mad(r1_y_8, 0.25, 0.75);
                     float r1_x_6 = max(r1_y_9, mad(cb3_values[0].z, 0.5, 0.75));
-                    float4 r1_xyzw_7 = t1.Sample(s0, float4(r1_x_6, r1_z_8, r1_w_6, r1_x_6));
+                    float4 r1_xyzw_7 = t1.Sample(sampler_linear_clamp, (float4(r1_x_6, r1_z_8, r1_w_6, r1_x_6)).xyz);
                     r1_x_8 = r1_xyzw_7.x;
                     r1_y_11 = r1_xyzw_7.y;
                     r1_z_10 = r1_xyzw_7.z;
@@ -537,8 +537,8 @@ Shader "ShurikenMagic/Twosided Transparent"
             {
                 float4 cb3_values[21];
             };
-            SamplerState s0 : register(s0);
-            SamplerState s1 : register(s1);
+            SamplerState sampler_linear_clamp : register(s0);
+            SamplerState sampler_linear_clamp1 : register(s1);
             Texture2D t0 : register(t0);
             Texture3D t1 : register(t1);
             struct program7Input
@@ -609,7 +609,7 @@ Shader "ShurikenMagic/Twosided Transparent"
             program15Output frag(program15Input i)
             {
                 program15Output o = (program15Output)0;
-                float4 r0_xyzw_1 = t0.Sample(s1, i.texcoord0.xyxx);
+                float4 r0_xyzw_1 = t0.Sample(sampler_linear_clamp1, (i.texcoord0.xyxx).xy);
                 float4 r0_xyzw_2 = (r0_xyzw_1 * _Color);
                 float r1_x_8;
                 float r1_y_11;
@@ -635,7 +635,7 @@ Shader "ShurikenMagic/Twosided Transparent"
                     float r1_w_6 = r1_xyzw_8.w;
                     float r1_y_9 = mad(r1_y_8, 0.25, 0.75);
                     float r1_x_6 = max(r1_y_9, mad(unity_ProbeVolumeParams.z, 0.5, 0.75));
-                    float4 r1_xyzw_7 = t1.Sample(s0, float4(r1_x_6, r1_z_8, r1_w_6, r1_x_6));
+                    float4 r1_xyzw_7 = t1.Sample(sampler_linear_clamp, (float4(r1_x_6, r1_z_8, r1_w_6, r1_x_6)).xyz);
                     r1_x_8 = r1_xyzw_7.x;
                     r1_y_11 = r1_xyzw_7.y;
                     r1_z_10 = r1_xyzw_7.z;
@@ -695,9 +695,9 @@ Shader "ShurikenMagic/Twosided Transparent"
                 float3 unity_ProbeVolumeMin;
                 float4x4 unity_MatrixVP;
             };
-            SamplerState s0 : register(s0);
-            SamplerState s1 : register(s1);
-            SamplerState s2 : register(s2);
+            SamplerState sampler_linear_clamp : register(s0);
+            SamplerState sampler_linear_clamp1 : register(s1);
+            SamplerState sampler_linear_clamp2 : register(s2);
             Texture2D t0 : register(t0);
             Texture2D t1 : register(t1);
             Texture3D t2 : register(t2);
@@ -763,7 +763,7 @@ Shader "ShurikenMagic/Twosided Transparent"
                 float3 r0_xyz_1 = ((-i.texcoord2.xyzx + _WorldSpaceLightPos0.xyzx)).xyz;
                 float r0_w_1 = dot(r0_xyz_1.xyzx, r0_xyz_1.xyzx);
                 float r0_w_2 = rsqrt(r0_w_1);
-                float4 r1_xyzw_1 = t0.Sample(s2, i.texcoord0.xyxx);
+                float4 r1_xyzw_1 = t0.Sample(sampler_linear_clamp2, (i.texcoord0.xyxx).xy);
                 float4 r1_xyzw_2 = (r1_xyzw_1 * cb0_values[8].xyzw);
                 float3 r2_xyz_4 = (((mad(cb0_values[6].xyzx, i.texcoord2.zzzz, (mad(cb0_values[4].xyzx, i.texcoord2.xxxx, ((i.texcoord2.yyyy * cb0_values[5].xyzx)).xyzx)).xyzx)).xyzx + cb0_values[7].xyzx)).xyz;
                 float r0_w_3 = (unity_ProbeVolumeParams.x == 1);
@@ -783,7 +783,7 @@ Shader "ShurikenMagic/Twosided Transparent"
                     float r0_w_5 = mad(r3_y_8, 0.25, 0.75);
                     float r2_w_1 = mad(unity_ProbeVolumeParams.z, 0.5, 0.75);
                     float r3_x_8 = max(r0_w_5, r2_w_1);
-                    float4 r3_xyzw_9 = t2.Sample(s0, float4(r3_x_8, r3_z_8, r3_w_2, r3_x_8));
+                    float4 r3_xyzw_9 = t2.Sample(sampler_linear_clamp, (float4(r3_x_8, r3_z_8, r3_w_2, r3_x_8)).xyz);
                     r3_x_10 = r3_xyzw_9.x;
                     r3_y_10 = r3_xyzw_9.y;
                     r3_z_10 = r3_xyzw_9.z;
@@ -798,7 +798,7 @@ Shader "ShurikenMagic/Twosided Transparent"
                     r3_w_4 = r3_xyzw_10.w;
                 }
                 float r0_w_7 = dot(float4(r3_x_10, r3_y_10, r3_z_10, r3_w_4), unity_OcclusionMaskSelector);
-                float4 r2_xyzw_6 = t1.Sample(s1, (dot(r2_xyz_4.xyzx, r2_xyz_4.xyzx)).xxxx);
+                float4 r2_xyzw_6 = t1.Sample(sampler_linear_clamp1, ((dot(r2_xyz_4.xyzx, r2_xyz_4.xyzx)).xxxx).xy);
                 float r0_w_8 = (r0_w_7 * r2_xyzw_6.x);
                 float4 r2_xyzw_7 = (r0_w_8.xxxx * _LightColor0.xyzx);
                 float r2_x_7 = r2_xyzw_7.x;
@@ -853,9 +853,9 @@ Shader "ShurikenMagic/Twosided Transparent"
             {
                 float4 cb4_values[2];
             };
-            SamplerState s0 : register(s0);
-            SamplerState s1 : register(s1);
-            SamplerState s2 : register(s2);
+            SamplerState sampler_linear_clamp : register(s0);
+            SamplerState sampler_linear_clamp1 : register(s1);
+            SamplerState sampler_linear_clamp2 : register(s2);
             Texture2D t0 : register(t0);
             Texture2D t1 : register(t1);
             Texture3D t2 : register(t2);
@@ -920,7 +920,7 @@ Shader "ShurikenMagic/Twosided Transparent"
             program42Output frag(program42Input i)
             {
                 program42Output o = (program42Output)0;
-                float4 r0_xyzw_1 = t0.Sample(s2, i.texcoord0.xyxx);
+                float4 r0_xyzw_1 = t0.Sample(sampler_linear_clamp2, (i.texcoord0.xyxx).xy);
                 float4 r0_xyzw_2 = (r0_xyzw_1 * cb0_values[8].xyzw);
                 float r1_z_1 = (unity_ProbeVolumeParams.x == 1);
                 float r2_x_10;
@@ -939,7 +939,7 @@ Shader "ShurikenMagic/Twosided Transparent"
                     float r1_z_3 = mad(r2_y_8, 0.25, 0.75);
                     float r1_w_1 = mad(unity_ProbeVolumeParams.z, 0.5, 0.75);
                     float r2_x_8 = max(r1_w_1, r1_z_3);
-                    float4 r2_xyzw_9 = t2.Sample(s0, float4(r2_x_8, r2_z_8, r2_w_2, r2_x_8));
+                    float4 r2_xyzw_9 = t2.Sample(sampler_linear_clamp, (float4(r2_x_8, r2_z_8, r2_w_2, r2_x_8)).xyz);
                     r2_x_10 = r2_xyzw_9.x;
                     r2_y_10 = r2_xyzw_9.y;
                     r2_z_10 = r2_xyzw_9.z;
@@ -954,7 +954,7 @@ Shader "ShurikenMagic/Twosided Transparent"
                     r2_w_4 = r2_xyzw_10.w;
                 }
                 float r1_z_5 = dot(float4(r2_x_10, r2_y_10, r2_z_10, r2_w_4), unity_OcclusionMaskSelector);
-                float4 r2_xyzw_11 = t1.Sample(s1, (((mad(cb0_values[6].xyxx, i.texcoord2.zzzz, (mad(cb0_values[4].xyxx, i.texcoord2.xxxx, ((i.texcoord2.yyyy * cb0_values[5].xyxx)).xyxx)).xyxx)).xyxx + cb0_values[7].xyxx)).xyxx);
+                float4 r2_xyzw_11 = t1.Sample(sampler_linear_clamp1, ((((mad(cb0_values[6].xyxx, i.texcoord2.zzzz, (mad(cb0_values[4].xyxx, i.texcoord2.xxxx, ((i.texcoord2.yyyy * cb0_values[5].xyxx)).xyxx)).xyxx)).xyxx + cb0_values[7].xyxx)).xyxx).xy);
                 float4 r1_xyzw_6 = (((r1_z_5 * r2_xyzw_11.w)).xxxx * _LightColor0.xyzx);
                 float r1_x_6 = r1_xyzw_6.x;
                 float r1_y_5 = r1_xyzw_6.y;
@@ -1007,10 +1007,10 @@ Shader "ShurikenMagic/Twosided Transparent"
             {
                 float4 cb4_values[2];
             };
-            SamplerState s0 : register(s0);
-            SamplerState s1 : register(s1);
-            SamplerState s2 : register(s2);
-            SamplerState s3 : register(s3);
+            SamplerState sampler_linear_clamp : register(s0);
+            SamplerState sampler_linear_clamp1 : register(s1);
+            SamplerState sampler_linear_clamp2 : register(s2);
+            SamplerState sampler_linear_clamp3 : register(s3);
             Texture2D t0 : register(t0);
             Texture2D t1 : register(t1);
             TextureCube t2 : register(t2);
@@ -1087,7 +1087,7 @@ Shader "ShurikenMagic/Twosided Transparent"
                 float3 r0_xyz_1 = ((-i.texcoord2.xyzx + _WorldSpaceLightPos0.xyzx)).xyz;
                 float r0_w_1 = dot(r0_xyz_1.xyzx, r0_xyz_1.xyzx);
                 float r0_w_2 = rsqrt(r0_w_1);
-                float4 r1_xyzw_1 = t0.Sample(s3, i.texcoord0.xyxx);
+                float4 r1_xyzw_1 = t0.Sample(sampler_linear_clamp3, (i.texcoord0.xyxx).xy);
                 float4 r1_xyzw_2 = (r1_xyzw_1 * cb0_values[8].xyzw);
                 float3 r2_xyz_4 = (((mad(cb0_values[6].xyzx, i.texcoord2.zzzz, (mad(cb0_values[4].xyzx, i.texcoord2.xxxx, ((i.texcoord2.yyyy * cb0_values[5].xyzx)).xyzx)).xyzx)).xyzx + cb0_values[7].xyzx)).xyz;
                 float r0_w_3 = (unity_ProbeVolumeParams.x == 1);
@@ -1107,7 +1107,7 @@ Shader "ShurikenMagic/Twosided Transparent"
                     float r0_w_5 = mad(r3_y_8, 0.25, 0.75);
                     float r2_w_1 = mad(unity_ProbeVolumeParams.z, 0.5, 0.75);
                     float r3_x_8 = max(r0_w_5, r2_w_1);
-                    float4 r3_xyzw_9 = t3.Sample(s0, float4(r3_x_8, r3_z_8, r3_w_2, r3_x_8));
+                    float4 r3_xyzw_9 = t3.Sample(sampler_linear_clamp, (float4(r3_x_8, r3_z_8, r3_w_2, r3_x_8)).xyz);
                     r3_x_10 = r3_xyzw_9.x;
                     r3_y_10 = r3_xyzw_9.y;
                     r3_z_10 = r3_xyzw_9.z;
@@ -1123,8 +1123,8 @@ Shader "ShurikenMagic/Twosided Transparent"
                 }
                 float r0_w_7 = dot(float4(r3_x_10, r3_y_10, r3_z_10, r3_w_4), unity_OcclusionMaskSelector);
                 float r2_w_3 = dot(r2_xyz_4.xyzx, r2_xyz_4.xyzx);
-                float4 r3_xyzw_11 = t1.Sample(s2, r2_w_3.xxxx);
-                float4 r2_xyzw_5 = t2.Sample(s1, r2_xyz_4.xyzx);
+                float4 r3_xyzw_11 = t1.Sample(sampler_linear_clamp2, (r2_w_3.xxxx).xy);
+                float4 r2_xyzw_5 = t2.Sample(sampler_linear_clamp1, r2_xyz_4.xyz);
                 float r0_w_8 = (r0_w_7 * (r2_xyzw_5.w * r3_xyzw_11.x));
                 float4 r2_xyzw_7 = (r0_w_8.xxxx * _LightColor0.xyzx);
                 float r2_x_7 = r2_xyzw_7.x;
@@ -1184,10 +1184,10 @@ Shader "ShurikenMagic/Twosided Transparent"
             {
                 float4 cb4_values[2];
             };
-            SamplerState s0 : register(s0);
-            SamplerState s1 : register(s1);
-            SamplerState s2 : register(s2);
-            SamplerState s3 : register(s3);
+            SamplerState sampler_linear_clamp : register(s0);
+            SamplerState sampler_linear_clamp1 : register(s1);
+            SamplerState sampler_linear_clamp2 : register(s2);
+            SamplerState sampler_linear_clamp3 : register(s3);
             Texture2D t0 : register(t0);
             Texture2D t1 : register(t1);
             Texture2D t2 : register(t2);
@@ -1259,7 +1259,7 @@ Shader "ShurikenMagic/Twosided Transparent"
                 float3 r0_xyz_1 = ((-i.texcoord2.xyzx + _WorldSpaceLightPos0.xyzx)).xyz;
                 float r0_w_1 = dot(r0_xyz_1.xyzx, r0_xyz_1.xyzx);
                 float r0_w_2 = rsqrt(r0_w_1);
-                float4 r1_xyzw_1 = t0.Sample(s3, i.texcoord0.xyxx);
+                float4 r1_xyzw_1 = t0.Sample(sampler_linear_clamp3, (i.texcoord0.xyxx).xy);
                 float4 r1_xyzw_2 = (r1_xyzw_1 * cb0_values[8].xyzw);
                 float4 r2_xyzw_4 = (mad(cb0_values[6].xyzw, i.texcoord2.zzzz, mad(cb0_values[4].xyzw, i.texcoord2.xxxx, (i.texcoord2.yyyy * cb0_values[5].xyzw))) + cb0_values[7].xyzw);
                 float r0_w_3 = (unity_ProbeVolumeParams.x == 1);
@@ -1279,7 +1279,7 @@ Shader "ShurikenMagic/Twosided Transparent"
                     float r0_w_5 = mad(r3_y_8, 0.25, 0.75);
                     float r3_y_9 = mad(unity_ProbeVolumeParams.z, 0.5, 0.75);
                     float r3_x_8 = max(r0_w_5, r3_y_9);
-                    float4 r3_xyzw_9 = t3.Sample(s0, float4(r3_x_8, r3_z_8, r3_w_2, r3_x_8));
+                    float4 r3_xyzw_9 = t3.Sample(sampler_linear_clamp, (float4(r3_x_8, r3_z_8, r3_w_2, r3_x_8)).xyz);
                     r3_x_10 = r3_xyzw_9.x;
                     r3_y_11 = r3_xyzw_9.y;
                     r3_z_10 = r3_xyzw_9.z;
@@ -1300,10 +1300,10 @@ Shader "ShurikenMagic/Twosided Transparent"
                 float4 r3_xyzw_13 = (float4(r3_y_12, r3_y_12, r3_z_11, r3_y_12) + float4(0, 0.5, 0.5, 0));
                 float r3_y_13 = r3_xyzw_13.y;
                 float r3_z_12 = r3_xyzw_13.z;
-                float4 r4_xyzw_1 = t1.Sample(s1, float4(r3_y_13, r3_z_12, r3_y_13, r3_y_13));
+                float4 r4_xyzw_1 = t1.Sample(sampler_linear_clamp1, (float4(r3_y_13, r3_z_12, r3_y_13, r3_y_13)).xy);
                 float r2_w_5 = (asfloat(asint((float)((0 < r2_xyzw_4.z))) & asint(1065353216)) * r4_xyzw_1.w);
-                float r3_x_13 = (t2.Sample(s2, (dot(r2_xyzw_4.xyzx, r2_xyzw_4.xyzx)).xxxx)).x;
-                float4 r3_xyzw_14 = t2.Sample(s2, (dot(r2_xyzw_4.xyzx, r2_xyzw_4.xyzx)).xxxx);
+                float r3_x_13 = (t2.Sample(sampler_linear_clamp2, ((dot(r2_xyzw_4.xyzx, r2_xyzw_4.xyzx)).xxxx).xy)).x;
+                float4 r3_xyzw_14 = t2.Sample(sampler_linear_clamp2, ((dot(r2_xyzw_4.xyzx, r2_xyzw_4.xyzx)).xxxx).xy);
                 float r3_y_14 = r3_xyzw_14.y;
                 float r3_z_13 = r3_xyzw_14.z;
                 float r3_w_5 = r3_xyzw_14.w;
@@ -1366,9 +1366,9 @@ Shader "ShurikenMagic/Twosided Transparent"
             {
                 float4 cb4_values[2];
             };
-            SamplerState s0 : register(s0);
-            SamplerState s1 : register(s1);
-            SamplerState s2 : register(s2);
+            SamplerState sampler_linear_clamp : register(s0);
+            SamplerState sampler_linear_clamp1 : register(s1);
+            SamplerState sampler_linear_clamp2 : register(s2);
             Texture2D t0 : register(t0);
             Texture2D t1 : register(t1);
             Texture3D t2 : register(t2);
@@ -1444,7 +1444,7 @@ Shader "ShurikenMagic/Twosided Transparent"
                 float3 r0_xyz_1 = ((-i.texcoord2.xyzx + _WorldSpaceLightPos0.xyzx)).xyz;
                 float r0_w_1 = dot(r0_xyz_1.xyzx, r0_xyz_1.xyzx);
                 float r0_w_2 = rsqrt(r0_w_1);
-                float4 r1_xyzw_1 = t0.Sample(s2, i.texcoord0.xyxx);
+                float4 r1_xyzw_1 = t0.Sample(sampler_linear_clamp2, (i.texcoord0.xyxx).xy);
                 float4 r1_xyzw_2 = (r1_xyzw_1 * cb0_values[8].xyzw);
                 float3 r2_xyz_4 = (((mad(cb0_values[6].xyzx, i.texcoord2.zzzz, (mad(cb0_values[4].xyzx, i.texcoord2.xxxx, ((i.texcoord2.yyyy * cb0_values[5].xyzx)).xyzx)).xyzx)).xyzx + cb0_values[7].xyzx)).xyz;
                 float r0_w_3 = (unity_ProbeVolumeParams.x == 1);
@@ -1464,7 +1464,7 @@ Shader "ShurikenMagic/Twosided Transparent"
                     float r0_w_5 = mad(r3_y_8, 0.25, 0.75);
                     float r2_w_1 = mad(unity_ProbeVolumeParams.z, 0.5, 0.75);
                     float r3_x_8 = max(r0_w_5, r2_w_1);
-                    float4 r3_xyzw_9 = t2.Sample(s0, float4(r3_x_8, r3_z_8, r3_w_2, r3_x_8));
+                    float4 r3_xyzw_9 = t2.Sample(sampler_linear_clamp, (float4(r3_x_8, r3_z_8, r3_w_2, r3_x_8)).xyz);
                     r3_x_10 = r3_xyzw_9.x;
                     r3_y_10 = r3_xyzw_9.y;
                     r3_z_10 = r3_xyzw_9.z;
@@ -1479,7 +1479,7 @@ Shader "ShurikenMagic/Twosided Transparent"
                     r3_w_4 = r3_xyzw_10.w;
                 }
                 float r0_w_7 = dot(float4(r3_x_10, r3_y_10, r3_z_10, r3_w_4), unity_OcclusionMaskSelector);
-                float4 r2_xyzw_6 = t1.Sample(s1, (dot(r2_xyz_4.xyzx, r2_xyz_4.xyzx)).xxxx);
+                float4 r2_xyzw_6 = t1.Sample(sampler_linear_clamp1, ((dot(r2_xyz_4.xyzx, r2_xyz_4.xyzx)).xxxx).xy);
                 float r0_w_8 = (r0_w_7 * r2_xyzw_6.x);
                 float4 r2_xyzw_7 = (r0_w_8.xxxx * _LightColor0.xyzx);
                 float r2_x_7 = r2_xyzw_7.x;
@@ -1530,9 +1530,9 @@ Shader "ShurikenMagic/Twosided Transparent"
                 float3 unity_ProbeVolumeMin;
                 float4x4 unity_MatrixVP;
             };
-            SamplerState s0 : register(s0);
-            SamplerState s1 : register(s1);
-            SamplerState s2 : register(s2);
+            SamplerState sampler_linear_clamp : register(s0);
+            SamplerState sampler_linear_clamp1 : register(s1);
+            SamplerState sampler_linear_clamp2 : register(s2);
             Texture2D t0 : register(t0);
             Texture2D t1 : register(t1);
             Texture3D t2 : register(t2);
@@ -1595,7 +1595,7 @@ Shader "ShurikenMagic/Twosided Transparent"
             program37Output frag(program37Input i)
             {
                 program37Output o = (program37Output)0;
-                float4 r0_xyzw_1 = t0.Sample(s2, i.texcoord0.xyxx);
+                float4 r0_xyzw_1 = t0.Sample(sampler_linear_clamp2, (i.texcoord0.xyxx).xy);
                 float4 r0_xyzw_2 = (r0_xyzw_1 * cb0_values[8].xyzw);
                 float r1_z_1 = (unity_ProbeVolumeParams.x == 1);
                 float r2_x_10;
@@ -1614,7 +1614,7 @@ Shader "ShurikenMagic/Twosided Transparent"
                     float r1_z_3 = mad(r2_y_8, 0.25, 0.75);
                     float r1_w_1 = mad(unity_ProbeVolumeParams.z, 0.5, 0.75);
                     float r2_x_8 = max(r1_w_1, r1_z_3);
-                    float4 r2_xyzw_9 = t2.Sample(s0, float4(r2_x_8, r2_z_8, r2_w_2, r2_x_8));
+                    float4 r2_xyzw_9 = t2.Sample(sampler_linear_clamp, (float4(r2_x_8, r2_z_8, r2_w_2, r2_x_8)).xyz);
                     r2_x_10 = r2_xyzw_9.x;
                     r2_y_10 = r2_xyzw_9.y;
                     r2_z_10 = r2_xyzw_9.z;
@@ -1629,7 +1629,7 @@ Shader "ShurikenMagic/Twosided Transparent"
                     r2_w_4 = r2_xyzw_10.w;
                 }
                 float r1_z_5 = dot(float4(r2_x_10, r2_y_10, r2_z_10, r2_w_4), unity_OcclusionMaskSelector);
-                float4 r2_xyzw_11 = t1.Sample(s1, (((mad(cb0_values[6].xyxx, i.texcoord2.zzzz, (mad(cb0_values[4].xyxx, i.texcoord2.xxxx, ((i.texcoord2.yyyy * cb0_values[5].xyxx)).xyxx)).xyxx)).xyxx + cb0_values[7].xyxx)).xyxx);
+                float4 r2_xyzw_11 = t1.Sample(sampler_linear_clamp1, ((((mad(cb0_values[6].xyxx, i.texcoord2.zzzz, (mad(cb0_values[4].xyxx, i.texcoord2.xxxx, ((i.texcoord2.yyyy * cb0_values[5].xyxx)).xyxx)).xyxx)).xyxx + cb0_values[7].xyxx)).xyxx).xy);
                 float4 r1_xyzw_6 = (((r1_z_5 * r2_xyzw_11.w)).xxxx * _LightColor0.xyzx);
                 float r1_x_6 = r1_xyzw_6.x;
                 float r1_y_5 = r1_xyzw_6.y;
@@ -1672,10 +1672,10 @@ Shader "ShurikenMagic/Twosided Transparent"
                 float3 unity_ProbeVolumeMin;
                 float4x4 unity_MatrixVP;
             };
-            SamplerState s0 : register(s0);
-            SamplerState s1 : register(s1);
-            SamplerState s2 : register(s2);
-            SamplerState s3 : register(s3);
+            SamplerState sampler_linear_clamp : register(s0);
+            SamplerState sampler_linear_clamp1 : register(s1);
+            SamplerState sampler_linear_clamp2 : register(s2);
+            SamplerState sampler_linear_clamp3 : register(s3);
             Texture2D t0 : register(t0);
             Texture2D t1 : register(t1);
             TextureCube t2 : register(t2);
@@ -1742,7 +1742,7 @@ Shader "ShurikenMagic/Twosided Transparent"
                 float3 r0_xyz_1 = ((-i.texcoord2.xyzx + _WorldSpaceLightPos0.xyzx)).xyz;
                 float r0_w_1 = dot(r0_xyz_1.xyzx, r0_xyz_1.xyzx);
                 float r0_w_2 = rsqrt(r0_w_1);
-                float4 r1_xyzw_1 = t0.Sample(s3, i.texcoord0.xyxx);
+                float4 r1_xyzw_1 = t0.Sample(sampler_linear_clamp3, (i.texcoord0.xyxx).xy);
                 float4 r1_xyzw_2 = (r1_xyzw_1 * cb0_values[8].xyzw);
                 float3 r2_xyz_4 = (((mad(cb0_values[6].xyzx, i.texcoord2.zzzz, (mad(cb0_values[4].xyzx, i.texcoord2.xxxx, ((i.texcoord2.yyyy * cb0_values[5].xyzx)).xyzx)).xyzx)).xyzx + cb0_values[7].xyzx)).xyz;
                 float r0_w_3 = (unity_ProbeVolumeParams.x == 1);
@@ -1762,7 +1762,7 @@ Shader "ShurikenMagic/Twosided Transparent"
                     float r0_w_5 = mad(r3_y_8, 0.25, 0.75);
                     float r2_w_1 = mad(unity_ProbeVolumeParams.z, 0.5, 0.75);
                     float r3_x_8 = max(r0_w_5, r2_w_1);
-                    float4 r3_xyzw_9 = t3.Sample(s0, float4(r3_x_8, r3_z_8, r3_w_2, r3_x_8));
+                    float4 r3_xyzw_9 = t3.Sample(sampler_linear_clamp, (float4(r3_x_8, r3_z_8, r3_w_2, r3_x_8)).xyz);
                     r3_x_10 = r3_xyzw_9.x;
                     r3_y_10 = r3_xyzw_9.y;
                     r3_z_10 = r3_xyzw_9.z;
@@ -1778,8 +1778,8 @@ Shader "ShurikenMagic/Twosided Transparent"
                 }
                 float r0_w_7 = dot(float4(r3_x_10, r3_y_10, r3_z_10, r3_w_4), unity_OcclusionMaskSelector);
                 float r2_w_3 = dot(r2_xyz_4.xyzx, r2_xyz_4.xyzx);
-                float4 r3_xyzw_11 = t1.Sample(s2, r2_w_3.xxxx);
-                float4 r2_xyzw_5 = t2.Sample(s1, r2_xyz_4.xyzx);
+                float4 r3_xyzw_11 = t1.Sample(sampler_linear_clamp2, (r2_w_3.xxxx).xy);
+                float4 r2_xyzw_5 = t2.Sample(sampler_linear_clamp1, r2_xyz_4.xyz);
                 float r0_w_8 = (r0_w_7 * (r2_xyzw_5.w * r3_xyzw_11.x));
                 float4 r2_xyzw_7 = (r0_w_8.xxxx * _LightColor0.xyzx);
                 float r2_x_7 = r2_xyzw_7.x;
@@ -1825,10 +1825,10 @@ Shader "ShurikenMagic/Twosided Transparent"
                 float3 unity_ProbeVolumeMin;
                 float4x4 unity_MatrixVP;
             };
-            SamplerState s0 : register(s0);
-            SamplerState s1 : register(s1);
-            SamplerState s2 : register(s2);
-            SamplerState s3 : register(s3);
+            SamplerState sampler_linear_clamp : register(s0);
+            SamplerState sampler_linear_clamp1 : register(s1);
+            SamplerState sampler_linear_clamp2 : register(s2);
+            SamplerState sampler_linear_clamp3 : register(s3);
             Texture2D t0 : register(t0);
             Texture2D t1 : register(t1);
             Texture2D t2 : register(t2);
@@ -1898,7 +1898,7 @@ Shader "ShurikenMagic/Twosided Transparent"
                 float3 r0_xyz_1 = ((-i.texcoord2.xyzx + _WorldSpaceLightPos0.xyzx)).xyz;
                 float r0_w_1 = dot(r0_xyz_1.xyzx, r0_xyz_1.xyzx);
                 float r0_w_2 = rsqrt(r0_w_1);
-                float4 r1_xyzw_1 = t0.Sample(s3, i.texcoord0.xyxx);
+                float4 r1_xyzw_1 = t0.Sample(sampler_linear_clamp3, (i.texcoord0.xyxx).xy);
                 float4 r1_xyzw_2 = (r1_xyzw_1 * cb0_values[8].xyzw);
                 float4 r2_xyzw_4 = (mad(cb0_values[6].xyzw, i.texcoord2.zzzz, mad(cb0_values[4].xyzw, i.texcoord2.xxxx, (i.texcoord2.yyyy * cb0_values[5].xyzw))) + cb0_values[7].xyzw);
                 float r0_w_3 = (unity_ProbeVolumeParams.x == 1);
@@ -1918,7 +1918,7 @@ Shader "ShurikenMagic/Twosided Transparent"
                     float r0_w_5 = mad(r3_y_8, 0.25, 0.75);
                     float r3_y_9 = mad(unity_ProbeVolumeParams.z, 0.5, 0.75);
                     float r3_x_8 = max(r0_w_5, r3_y_9);
-                    float4 r3_xyzw_9 = t3.Sample(s0, float4(r3_x_8, r3_z_8, r3_w_2, r3_x_8));
+                    float4 r3_xyzw_9 = t3.Sample(sampler_linear_clamp, (float4(r3_x_8, r3_z_8, r3_w_2, r3_x_8)).xyz);
                     r3_x_10 = r3_xyzw_9.x;
                     r3_y_11 = r3_xyzw_9.y;
                     r3_z_10 = r3_xyzw_9.z;
@@ -1939,10 +1939,10 @@ Shader "ShurikenMagic/Twosided Transparent"
                 float4 r3_xyzw_13 = (float4(r3_y_12, r3_y_12, r3_z_11, r3_y_12) + float4(0, 0.5, 0.5, 0));
                 float r3_y_13 = r3_xyzw_13.y;
                 float r3_z_12 = r3_xyzw_13.z;
-                float4 r4_xyzw_1 = t1.Sample(s1, float4(r3_y_13, r3_z_12, r3_y_13, r3_y_13));
+                float4 r4_xyzw_1 = t1.Sample(sampler_linear_clamp1, (float4(r3_y_13, r3_z_12, r3_y_13, r3_y_13)).xy);
                 float r2_w_5 = (asfloat(asint((float)((0 < r2_xyzw_4.z))) & asint(1065353216)) * r4_xyzw_1.w);
-                float r3_x_13 = (t2.Sample(s2, (dot(r2_xyzw_4.xyzx, r2_xyzw_4.xyzx)).xxxx)).x;
-                float4 r3_xyzw_14 = t2.Sample(s2, (dot(r2_xyzw_4.xyzx, r2_xyzw_4.xyzx)).xxxx);
+                float r3_x_13 = (t2.Sample(sampler_linear_clamp2, ((dot(r2_xyzw_4.xyzx, r2_xyzw_4.xyzx)).xxxx).xy)).x;
+                float4 r3_xyzw_14 = t2.Sample(sampler_linear_clamp2, ((dot(r2_xyzw_4.xyzx, r2_xyzw_4.xyzx)).xxxx).xy);
                 float r3_y_14 = r3_xyzw_14.y;
                 float r3_z_13 = r3_xyzw_14.z;
                 float r3_w_5 = r3_xyzw_14.w;

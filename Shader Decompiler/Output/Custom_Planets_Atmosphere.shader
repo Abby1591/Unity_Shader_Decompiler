@@ -173,7 +173,7 @@ Shader "Custom/Planets_Atmosphere"
                 float4 _WorldSpaceLightPos0;
                 float4 cb2_values[21];
             };
-            SamplerState s0 : register(s0);
+            SamplerState sampler_linear_clamp : register(s0);
             Texture2D t0 : register(t0);
             struct program16Input
             {
@@ -253,7 +253,7 @@ Shader "Custom/Planets_Atmosphere"
                 float r1_y_2 = mad(r1_x_2, 0.875, 0.125);
                 float r0_x_14 = (mad(r0_y_9, mad(mad(-r0_z_6, r0_x_10, 1), cb0_values[9].x, -cb0_values[9].y), cb0_values[9].y) * (r1_x_2 + r1_x_2));
                 float r1_y_3 = dot(i.texcoord2.xyzx, i.texcoord2.xyzx);
-                float4 r2_xyzw_6 = t0.Sample(s0, r1_y_3.xxxx);
+                float4 r2_xyzw_6 = t0.Sample(sampler_linear_clamp, (r1_y_3.xxxx).xy);
                 float4 r1_xyzw_4 = (r2_xyzw_6.xxxx * cb0_values[6].xxyz);
                 float r1_y_4 = r1_xyzw_4.y;
                 float r1_z_2 = r1_xyzw_4.z;
@@ -308,7 +308,7 @@ Shader "Custom/Planets_Atmosphere"
                 float4 _WorldSpaceLightPos0;
                 float4 cb2_values[21];
             };
-            SamplerState s0 : register(s0);
+            SamplerState sampler_linear_clamp : register(s0);
             Texture2D t0 : register(t0);
             struct program20Input
             {
@@ -387,7 +387,7 @@ Shader "Custom/Planets_Atmosphere"
                 float r1_x_2 = dot(unitWorldNormal_xyz_1.xyzx, ((r1_w_2.xxxx * r2_xyz_4.xyzx)).xyzx);
                 float r1_y_2 = mad(r1_x_2, 0.875, 0.125);
                 float r0_x_14 = (mad(r0_y_9, mad(mad(-r0_z_6, r0_x_10, 1), cb0_values[9].x, -cb0_values[9].y), cb0_values[9].y) * (r1_x_2 + r1_x_2));
-                float4 r2_xyzw_6 = t0.Sample(s0, i.texcoord2.xyxx);
+                float4 r2_xyzw_6 = t0.Sample(sampler_linear_clamp, (i.texcoord2.xyxx).xy);
                 float4 r1_xyzw_3 = (r2_xyzw_6.wwww * cb0_values[6].xxyz);
                 float r1_y_3 = r1_xyzw_3.y;
                 float r1_z_2 = r1_xyzw_3.z;
@@ -442,8 +442,8 @@ Shader "Custom/Planets_Atmosphere"
                 float4 _WorldSpaceLightPos0;
                 float4 cb2_values[21];
             };
-            SamplerState s0 : register(s0);
-            SamplerState s1 : register(s1);
+            SamplerState sampler_linear_clamp : register(s0);
+            SamplerState sampler_linear_clamp1 : register(s1);
             Texture2D t0 : register(t0);
             TextureCube t1 : register(t1);
             struct program19Input
@@ -524,8 +524,8 @@ Shader "Custom/Planets_Atmosphere"
                 float r1_y_2 = mad(r1_x_2, 0.875, 0.125);
                 float r0_x_14 = (mad(r0_y_9, mad(mad(-r0_z_6, r0_x_10, 1), cb0_values[9].x, -cb0_values[9].y), cb0_values[9].y) * (r1_x_2 + r1_x_2));
                 float r1_y_3 = dot(i.texcoord2.xyzx, i.texcoord2.xyzx);
-                float4 r2_xyzw_6 = t0.Sample(s1, r1_y_3.xxxx);
-                float4 r3_xyzw_1 = t1.Sample(s0, i.texcoord2.xyzx);
+                float4 r2_xyzw_6 = t0.Sample(sampler_linear_clamp1, (r1_y_3.xxxx).xy);
+                float4 r3_xyzw_1 = t1.Sample(sampler_linear_clamp, i.texcoord2.xyz);
                 float r1_y_4 = (r2_xyzw_6.x * r3_xyzw_1.w);
                 float4 r1_xyzw_5 = (r1_y_4.xxxx * cb0_values[6].xxyz);
                 float r1_y_5 = r1_xyzw_5.y;
@@ -581,8 +581,8 @@ Shader "Custom/Planets_Atmosphere"
                 float4 _WorldSpaceLightPos0;
                 float4 cb2_values[21];
             };
-            SamplerState s0 : register(s0);
-            SamplerState s1 : register(s1);
+            SamplerState sampler_linear_clamp : register(s0);
+            SamplerState sampler_linear_clamp1 : register(s1);
             Texture2D t0 : register(t0);
             Texture2D t1 : register(t1);
             struct program18Input
@@ -634,9 +634,9 @@ Shader "Custom/Planets_Atmosphere"
             program27Output frag(program27Input i)
             {
                 program27Output o = (program27Output)0;
-                float4 r0_xyzw_3 = t0.Sample(s0, ((((i.texcoord2.xyxx / i.texcoord2.wwww)).xyxx + float4(0.5, 0.5, 0, 0))).xyxx);
+                float4 r0_xyzw_3 = t0.Sample(sampler_linear_clamp, (((((i.texcoord2.xyxx / i.texcoord2.wwww)).xyxx + float4(0.5, 0.5, 0, 0))).xyxx).xy);
                 float r0_y_4 = dot(i.texcoord2.xyzx, i.texcoord2.xyzx);
-                float4 r1_xyzw_1 = t1.Sample(s1, r0_y_4.xxxx);
+                float4 r1_xyzw_1 = t1.Sample(sampler_linear_clamp1, (r0_y_4.xxxx).xy);
                 float4 r0_xyzw_8 = ((((r0_xyzw_3.w * asfloat(asint((float)((0 < i.texcoord2.z))) & asint(1065353216))) * r1_xyzw_1.x)).xxxx * cb0_values[6].xyzx);
                 float r0_x_8 = r0_xyzw_8.x;
                 float r0_y_5 = r0_xyzw_8.y;

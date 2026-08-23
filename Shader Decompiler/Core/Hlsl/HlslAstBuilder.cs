@@ -309,15 +309,22 @@ public static class HlslAstBuilder
                     break;
 
                 case IRDeclaration.IRSamplerDeclaration samp:
+                    bool isComparison = ComparisonSamplers(blocks).Contains(samp.Slot);
                     yield return new HlslResourceNode
                     {
-                        Name = samp.SymbolicName ?? $"s{samp.Slot}",
+                        // Unity's HLSL compiler does not recognise standalone
+                        // SamplerState variables (e.g. "s0").  The variable
+                        // name must either match a paired texture name or be
+                        // a recognised inline sampler name containing filter +
+                        // wrap modes (e.g. "sampler_linear_clamp").  We emit
+                        // the latter, picking a unique inline name per slot.
+                        Name = samp.SymbolicName ?? SamplerInlineName(samp.Slot, isComparison),
                         Kind = HlslResourceKind.Sampler,
                         Slot = samp.Slot,
                         // A sampler used by a comparison operation (sample_c,
                         // sample_c_lz, gather_c) must be a SamplerComparisonState
                         // — the plain SamplerState has no SampleCmp overload.
-                        TypeHint = ComparisonSamplers(blocks).Contains(samp.Slot)
+                        TypeHint = isComparison
                             ? "SamplerComparisonState"
                             : "SamplerState",
                     };
@@ -437,6 +444,18 @@ public static class HlslAstBuilder
             }
         }
         return result;
+    }
+
+    // Returns a Unity-recognised inline sampler name for the given slot.
+    // Unity's HLSL compiler rejects bare "SamplerState s0" — the name must
+    // contain filter + wrap modes (e.g. "sampler_linear_clamp").
+    // We use a base name that is always valid HLSL; the slot number is
+    // appended only when needed for uniqueness.
+    private static string SamplerInlineName(uint slot, bool comparison)
+    {
+        if (comparison)
+            return slot == 0 ? "sampler_comparison_linear_clamp" : $"sampler_comparison_linear_clamp{slot}";
+        return slot == 0 ? "sampler_linear_clamp" : $"sampler_linear_clamp{slot}";
     }
 
     // Depth-first walk of every sub-expression in a statement (mirrors

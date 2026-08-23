@@ -386,6 +386,11 @@ public static class HlslPrettyPrinter
         // "TextureCube"), so a texture op can render its coordinate with the
         // component count the intrinsic demands.
         public Dictionary<int, string> TextureTypeBySlot { get; } = new();
+
+        // Sampler variable name by register slot — used so RenderRegisterRead
+        // emits the same name the declaration used (Unity-recognised inline
+        // names like "sampler_linear_clamp" instead of bare "s0").
+        public Dictionary<int, string> SamplerNameBySlot { get; } = new();
     }
 
     private static void PrintFunction(
@@ -421,8 +426,12 @@ public static class HlslPrettyPrinter
         };
         if (resources is not null)
             foreach (HlslResourceNode res in resources)
+            {
                 if (res.Kind == HlslResourceKind.Texture)
                     ctx.TextureTypeBySlot[(int)res.Slot] = res.TypeHint ?? "Texture2D";
+                if (res.Kind == HlslResourceKind.Sampler)
+                    ctx.SamplerNameBySlot[(int)res.Slot] = res.Name;
+            }
 
         if (fn.OutputStruct is not null)
             sb.Append("                ").Append(outType).Append(" o = (").Append(outType).Append(")0;\n");
@@ -1374,7 +1383,9 @@ public static class HlslPrettyPrinter
             RegisterType.Input => $"v{reg.Index}",
             RegisterType.Output => $"o{reg.Index}",
             RegisterType.Resource => $"t{reg.Index}",
-            RegisterType.Sampler => $"s{reg.Index}",
+            RegisterType.Sampler => ctx.SamplerNameBySlot.TryGetValue((int)reg.Index, out string? sName)
+                ? sName
+                : $"s{reg.Index}",
             RegisterType.ConstantBuffer => CbufferElementName(reg, ctx),
             _ => $"{reg.RegisterType.ToString().ToLowerInvariant()}{reg.Index}",
         };
@@ -2433,16 +2444,15 @@ public static class HlslPrettyPrinter
         string? coord = tex.Coordinates is null ? null : RenderExpression(tex.Coordinates, ctx);
         string? offset = tex.Offset is null ? null : RenderExpression(tex.Offset, ctx);
 
-        // Comparison intrinsics (SampleCmp/SampleCmpLevelZero/GatherCmp)
-        // resolve strictly by arity, unlike the plain Sample family which
-        // implicitly truncates an over-wide location. The bytecode's
-        // coordinate operand is a full 4-component register read, so trim it
-        // to the component count the texture dimension demands (.xyz for a
-        // cube, .xy for a 2D).
-        bool isCompare = tex.Operation is IRExpression.TextureOperation.SampleCompare
-            or IRExpression.TextureOperation.SampleCompareLevelZero
-            or IRExpression.TextureOperation.GatherCompare;
-        if (isCompare && tex.Coordinates is not null && coord is not null)
+        // The bytecode's coordinate operand is always a full 4-component
+        // register read.  HLSL's Sample/SampleLevel/SampleBias/SampleGrad/
+        // Gather intrinsics accept exactly the component count the texture
+        // dimension demands (.xy for 2D, .xyz for cube/3D/array, .xyzw for
+        // cube array).  Trimming avoids implicit-truncation warnings and
+        // matches what the original author would have written.
+        // Load() is excluded — it takes int3 where .z is the mip level.
+        if (tex.Operation is not IRExpression.TextureOperation.Load
+            && tex.Coordinates is not null && coord is not null)
         {
             string type = tex.Resource is { } rr
                 ? ctx.TextureTypeBySlot.GetValueOrDefault((int)rr.Index, "Texture2D")

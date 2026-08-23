@@ -59,10 +59,10 @@ Shader "Custom/Planet_Clouds"
                 float3 unity_ProbeVolumeSizeInv;
                 float3 unity_ProbeVolumeMin;
             };
-            SamplerState s0 : register(s0);
-            SamplerState s1 : register(s1);
-            SamplerState s2 : register(s2);
-            SamplerState s3 : register(s3);
+            SamplerState sampler_linear_clamp : register(s0);
+            SamplerState sampler_linear_clamp1 : register(s1);
+            SamplerState sampler_linear_clamp2 : register(s2);
+            SamplerState sampler_linear_clamp3 : register(s3);
             Texture2D t0 : register(t0);
             Texture2D t1 : register(t1);
             TextureCube t2 : register(t2);
@@ -147,8 +147,8 @@ Shader "Custom/Planet_Clouds"
                 float r0_w_1 = dot(viewDir_xyz_1.xyzx, viewDir_xyz_1.xyzx);
                 float r0_w_2 = rsqrt(r0_w_1);
                 float3 unitViewDir_xyz_1 = ((r0_w_2.xxxx * viewDir_xyz_1.xyzx)).xyz;
-                float4 r3_xyzw_1 = t0.Sample(s2, i.texcoord0.xyxx);
-                float4 r4_xyzw_1 = t1.Sample(s3, i.texcoord0.xyxx);
+                float4 r3_xyzw_1 = t0.Sample(sampler_linear_clamp2, (i.texcoord0.xyxx).xy);
+                float4 r4_xyzw_1 = t1.Sample(sampler_linear_clamp3, (i.texcoord0.xyxx).xy);
                 float r1_w_1 = (r3_xyzw_1.w * _AlphaScale);
                 float r4_x_2 = (r4_xyzw_1.w * r4_xyzw_1.x);
                 float4 r4_xyzw_3 = mad(float4(r4_x_2, r4_xyzw_1.y, r4_x_2, r4_x_2), float4(2, 2, 0, 0), float4(-1, -1, 0, 0));
@@ -184,7 +184,7 @@ Shader "Custom/Planet_Clouds"
                     float r2_w_8 = mad(r5_y_8, 0.25, 0.75);
                     float r3_w_2 = mad(unity_ProbeVolumeParams.z, 0.5, 0.75);
                     float r5_x_8 = max(r2_w_8, r3_w_2);
-                    float4 r5_xyzw_9 = t4.Sample(s1, float4(r5_x_8, r5_z_8, r5_w_2, r5_x_8));
+                    float4 r5_xyzw_9 = t4.Sample(sampler_linear_clamp1, (float4(r5_x_8, r5_z_8, r5_w_2, r5_x_8)).xyz);
                     r5_x_10 = r5_xyzw_9.x;
                     r5_y_10 = r5_xyzw_9.y;
                     r5_z_10 = r5_xyzw_9.z;
@@ -227,7 +227,7 @@ Shader "Custom/Planet_Clouds"
                 {
                     r7_xyz_4 = r5_xyz_12.xyz;
                 }
-                float4 r7_xyzw_5 = t2.SampleLevel(s0, r7_xyz_4.xyzx, 6);
+                float4 r7_xyzw_5 = t2.SampleLevel(sampler_linear_clamp, r7_xyz_4.xyz, 6);
                 float r2_w_17 = (r7_xyzw_5.w + -1);
                 float r2_w_18 = mad(unity_SpecCube0_HDR.w, r2_w_17, 1);
                 float r2_w_19 = (r2_w_18 * unity_SpecCube0_HDR.x);
@@ -246,7 +246,7 @@ Shader "Custom/Planet_Clouds"
                         float r3_w_13 = min(r10_xyz_5.z, r3_w_12);
                         r5_xyz_14 = (mad(r9_xyz_4.xyzx, r3_w_13.xxxx, ((float4(TEXCOORD1_x_1, TEXCOORD2_y_1, TEXCOORD3_z_1, TEXCOORD1_x_1) + -unity_SpecCube1_ProbePosition.xyzx)).xyzx)).xyz;
                     }
-                    float4 r5_xyzw_15 = t3.SampleLevel(s0, r5_xyz_14.xyzx, 6);
+                    float4 r5_xyzw_15 = t3.SampleLevel(sampler_linear_clamp, r5_xyz_14.xyz, 6);
                     float4 r0_xyzw_7 = (r5_xyzw_15.xyzx * ((mad(unity_SpecCube1_HDR.w, (r5_xyzw_15.w + -1), 1) * unity_SpecCube1_HDR.x)).xxxx);
                     float r0_x_7 = r0_xyzw_7.x;
                     float r0_y_4 = r0_xyzw_7.y;
@@ -370,10 +370,10 @@ Shader "Custom/Planet_Clouds"
             {
                 float4 cb5_values[7];
             };
-            SamplerState s0 : register(s0);
-            SamplerState s1 : register(s1);
-            SamplerState s2 : register(s2);
-            SamplerState s3 : register(s3);
+            SamplerState sampler_linear_clamp : register(s0);
+            SamplerState sampler_linear_clamp1 : register(s1);
+            SamplerState sampler_linear_clamp2 : register(s2);
+            SamplerState sampler_linear_clamp3 : register(s3);
             Texture2D t0 : register(t0);
             Texture2D t1 : register(t1);
             TextureCube t2 : register(t2);
@@ -468,8 +468,8 @@ Shader "Custom/Planet_Clouds"
                 float r0_w_1 = dot(viewDir_xyz_1.xyzx, viewDir_xyz_1.xyzx);
                 float r0_w_2 = rsqrt(r0_w_1);
                 float3 unitViewDir_xyz_1 = ((r0_w_2.xxxx * viewDir_xyz_1.xyzx)).xyz;
-                float4 r3_xyzw_1 = t0.Sample(s2, i.texcoord0.xyxx);
-                float4 r4_xyzw_1 = t1.Sample(s3, i.texcoord0.xyxx);
+                float4 r3_xyzw_1 = t0.Sample(sampler_linear_clamp2, (i.texcoord0.xyxx).xy);
+                float4 r4_xyzw_1 = t1.Sample(sampler_linear_clamp3, (i.texcoord0.xyxx).xy);
                 float r1_w_1 = (r3_xyzw_1.w * _AlphaScale);
                 float r4_x_2 = (r4_xyzw_1.w * r4_xyzw_1.x);
                 float4 r4_xyzw_3 = mad(float4(r4_x_2, r4_xyzw_1.y, r4_x_2, r4_x_2), float4(2, 2, 0, 0), float4(-1, -1, 0, 0));
@@ -504,7 +504,7 @@ Shader "Custom/Planet_Clouds"
                     float r3_w_3 = mad(r5_y_8, 0.25, 0.75);
                     float r4_w_2 = mad(cb5_values[0].z, 0.5, 0.75);
                     float r5_x_8 = max(r3_w_3, r4_w_2);
-                    float4 r5_xyzw_9 = t4.Sample(s1, float4(r5_x_8, r5_z_8, r5_w_2, r5_x_8));
+                    float4 r5_xyzw_9 = t4.Sample(sampler_linear_clamp1, (float4(r5_x_8, r5_z_8, r5_w_2, r5_x_8)).xyz);
                     r5_x_10 = r5_xyzw_9.x;
                     r5_y_10 = r5_xyzw_9.y;
                     r5_z_10 = r5_xyzw_9.z;
@@ -546,9 +546,9 @@ Shader "Custom/Planet_Clouds"
                     float r5_w_5 = mad(-cb5_values[0].z, 0.5, 0.25);
                     float r2_w_9 = max(r2_w_8, r3_w_6);
                     float r7_x_7 = min(r5_w_5, r2_w_9);
-                    float4 r8_xyzw_2 = t4.Sample(s1, float4(r7_x_7, r7_z_7, r7_w_1, r7_x_7));
-                    float4 r9_xyzw_2 = t4.Sample(s1, ((float4(r7_x_7, r7_z_7, r7_w_1, r7_x_7) + float4(0.25, 0, 0, 0))).xyzx);
-                    float4 r7_xyzw_9 = t4.Sample(s1, ((float4(r7_x_7, r7_z_7, r7_w_1, r7_x_7) + float4(0.5, 0, 0, 0))).xyzx);
+                    float4 r8_xyzw_2 = t4.Sample(sampler_linear_clamp1, (float4(r7_x_7, r7_z_7, r7_w_1, r7_x_7)).xyz);
+                    float4 r9_xyzw_2 = t4.Sample(sampler_linear_clamp1, (((float4(r7_x_7, r7_z_7, r7_w_1, r7_x_7) + float4(0.25, 0, 0, 0))).xyzx).xyz);
+                    float4 r7_xyzw_9 = t4.Sample(sampler_linear_clamp1, (((float4(r7_x_7, r7_z_7, r7_w_1, r7_x_7) + float4(0.5, 0, 0, 0))).xyzx).xyz);
                     float r4_w_5 = 1;
                     float r8_x_3 = dot(r8_xyzw_2, float4(r4_x_8, r4_y_5, r4_z_4, r4_w_5));
                     float r8_y_3 = dot(r9_xyzw_2, float4(r4_x_8, r4_y_5, r4_z_4, r4_w_5));
@@ -581,7 +581,7 @@ Shader "Custom/Planet_Clouds"
                 {
                     r8_xyz_8 = (float4(r5_x_14, r5_y_12, r5_z_12, r5_x_14)).xyz;
                 }
-                float4 r8_xyzw_9 = t2.SampleLevel(s0, r8_xyz_8.xyzx, 6);
+                float4 r8_xyzw_9 = t2.SampleLevel(sampler_linear_clamp, r8_xyz_8.xyz, 6);
                 float r2_w_17 = (r8_xyzw_9.w + -1);
                 float r2_w_18 = mad(unity_ProbeVolumeWorldToObject[2].w, r2_w_17, 1);
                 float r2_w_19 = (r2_w_18 * unity_ProbeVolumeWorldToObject[2].x);
@@ -610,7 +610,7 @@ Shader "Custom/Planet_Clouds"
                         r5_y_14 = r5_y_13;
                         r5_z_14 = r5_z_13;
                     }
-                    float4 r5_xyzw_17 = t3.SampleLevel(s0, float4(r5_x_16, r5_y_14, r5_z_14, r5_x_16), 6);
+                    float4 r5_xyzw_17 = t3.SampleLevel(sampler_linear_clamp, (float4(r5_x_16, r5_y_14, r5_z_14, r5_x_16)).xyz, 6);
                     float4 r0_xyzw_7 = (r5_xyzw_17.xyzx * ((mad(cb4_values[7].w, (r5_xyzw_17.w + -1), 1) * cb4_values[7].x)).xxxx);
                     float r0_x_7 = r0_xyzw_7.x;
                     float r0_y_4 = r0_xyzw_7.y;
@@ -749,10 +749,10 @@ Shader "Custom/Planet_Clouds"
             {
                 float4 cb5_values[7];
             };
-            SamplerState s0 : register(s0);
-            SamplerState s1 : register(s1);
-            SamplerState s2 : register(s2);
-            SamplerState s3 : register(s3);
+            SamplerState sampler_linear_clamp : register(s0);
+            SamplerState sampler_linear_clamp1 : register(s1);
+            SamplerState sampler_linear_clamp2 : register(s2);
+            SamplerState sampler_linear_clamp3 : register(s3);
             Texture2D t0 : register(t0);
             Texture2D t1 : register(t1);
             TextureCube t2 : register(t2);
@@ -841,8 +841,8 @@ Shader "Custom/Planet_Clouds"
                 float r0_w_1 = dot(viewDir_xyz_1.xyzx, viewDir_xyz_1.xyzx);
                 float r0_w_2 = rsqrt(r0_w_1);
                 float3 unitViewDir_xyz_1 = ((r0_w_2.xxxx * viewDir_xyz_1.xyzx)).xyz;
-                float4 r3_xyzw_1 = t0.Sample(s2, i.texcoord0.xyxx);
-                float4 r4_xyzw_1 = t1.Sample(s3, i.texcoord0.xyxx);
+                float4 r3_xyzw_1 = t0.Sample(sampler_linear_clamp2, (i.texcoord0.xyxx).xy);
+                float4 r4_xyzw_1 = t1.Sample(sampler_linear_clamp3, (i.texcoord0.xyxx).xy);
                 float r1_w_1 = (r3_xyzw_1.w * _AlphaScale);
                 float r4_x_2 = (r4_xyzw_1.w * r4_xyzw_1.x);
                 float4 r4_xyzw_3 = mad(float4(r4_x_2, r4_xyzw_1.y, r4_x_2, r4_x_2), float4(2, 2, 0, 0), float4(-1, -1, 0, 0));
@@ -877,7 +877,7 @@ Shader "Custom/Planet_Clouds"
                     float r2_w_8 = mad(r5_y_8, 0.25, 0.75);
                     float r3_w_2 = mad(cb5_values[0].z, 0.5, 0.75);
                     float r5_x_8 = max(r2_w_8, r3_w_2);
-                    float4 r5_xyzw_9 = t4.Sample(s1, float4(r5_x_8, r5_z_8, r5_w_2, r5_x_8));
+                    float4 r5_xyzw_9 = t4.Sample(sampler_linear_clamp1, (float4(r5_x_8, r5_z_8, r5_w_2, r5_x_8)).xyz);
                     r5_x_10 = r5_xyzw_9.x;
                     r5_y_10 = r5_xyzw_9.y;
                     r5_z_10 = r5_xyzw_9.z;
@@ -920,7 +920,7 @@ Shader "Custom/Planet_Clouds"
                 {
                     r7_xyz_4 = r5_xyz_12.xyz;
                 }
-                float4 r7_xyzw_5 = t2.SampleLevel(s0, r7_xyz_4.xyzx, 6);
+                float4 r7_xyzw_5 = t2.SampleLevel(sampler_linear_clamp, r7_xyz_4.xyz, 6);
                 float r2_w_17 = (r7_xyzw_5.w + -1);
                 float r2_w_18 = mad(unity_ProbeVolumeWorldToObject[2].w, r2_w_17, 1);
                 float r2_w_19 = (r2_w_18 * unity_ProbeVolumeWorldToObject[2].x);
@@ -939,7 +939,7 @@ Shader "Custom/Planet_Clouds"
                         float r3_w_13 = min(r10_xyz_5.z, r3_w_12);
                         r5_xyz_14 = (mad(r9_xyz_4.xyzx, r3_w_13.xxxx, ((float4(TEXCOORD1_x_1, TEXCOORD2_y_1, TEXCOORD3_z_1, TEXCOORD1_x_1) + -unity_ProbeVolumeMin.xyzx)).xyzx)).xyz;
                     }
-                    float4 r5_xyzw_15 = t3.SampleLevel(s0, r5_xyz_14.xyzx, 6);
+                    float4 r5_xyzw_15 = t3.SampleLevel(sampler_linear_clamp, r5_xyz_14.xyz, 6);
                     float4 r0_xyzw_7 = (r5_xyzw_15.xyzx * ((mad(cb4_values[7].w, (r5_xyzw_15.w + -1), 1) * cb4_values[7].x)).xxxx);
                     float r0_x_7 = r0_xyzw_7.x;
                     float r0_y_4 = r0_xyzw_7.y;
@@ -1071,10 +1071,10 @@ Shader "Custom/Planet_Clouds"
                 float3 unity_ProbeVolumeSizeInv;
                 float3 unity_ProbeVolumeMin;
             };
-            SamplerState s0 : register(s0);
-            SamplerState s1 : register(s1);
-            SamplerState s2 : register(s2);
-            SamplerState s3 : register(s3);
+            SamplerState sampler_linear_clamp : register(s0);
+            SamplerState sampler_linear_clamp1 : register(s1);
+            SamplerState sampler_linear_clamp2 : register(s2);
+            SamplerState sampler_linear_clamp3 : register(s3);
             Texture2D t0 : register(t0);
             Texture2D t1 : register(t1);
             TextureCube t2 : register(t2);
@@ -1165,8 +1165,8 @@ Shader "Custom/Planet_Clouds"
                 float r0_w_1 = dot(viewDir_xyz_1.xyzx, viewDir_xyz_1.xyzx);
                 float r0_w_2 = rsqrt(r0_w_1);
                 float3 unitViewDir_xyz_1 = ((r0_w_2.xxxx * viewDir_xyz_1.xyzx)).xyz;
-                float4 r3_xyzw_1 = t0.Sample(s2, i.texcoord0.xyxx);
-                float4 r4_xyzw_1 = t1.Sample(s3, i.texcoord0.xyxx);
+                float4 r3_xyzw_1 = t0.Sample(sampler_linear_clamp2, (i.texcoord0.xyxx).xy);
+                float4 r4_xyzw_1 = t1.Sample(sampler_linear_clamp3, (i.texcoord0.xyxx).xy);
                 float r1_w_1 = (r3_xyzw_1.w * _AlphaScale);
                 float r4_x_2 = (r4_xyzw_1.w * r4_xyzw_1.x);
                 float4 r4_xyzw_3 = mad(float4(r4_x_2, r4_xyzw_1.y, r4_x_2, r4_x_2), float4(2, 2, 0, 0), float4(-1, -1, 0, 0));
@@ -1202,7 +1202,7 @@ Shader "Custom/Planet_Clouds"
                     float r3_w_3 = mad(r5_y_8, 0.25, 0.75);
                     float r4_w_2 = mad(unity_ProbeVolumeParams.z, 0.5, 0.75);
                     float r5_x_8 = max(r3_w_3, r4_w_2);
-                    float4 r5_xyzw_9 = t4.Sample(s1, float4(r5_x_8, r5_z_8, r5_w_2, r5_x_8));
+                    float4 r5_xyzw_9 = t4.Sample(sampler_linear_clamp1, (float4(r5_x_8, r5_z_8, r5_w_2, r5_x_8)).xyz);
                     r5_x_10 = r5_xyzw_9.x;
                     r5_y_10 = r5_xyzw_9.y;
                     r5_z_10 = r5_xyzw_9.z;
@@ -1245,9 +1245,9 @@ Shader "Custom/Planet_Clouds"
                     float r5_w_5 = mad(-unity_ProbeVolumeParams.z, 0.5, 0.25);
                     float r2_w_9 = max(r2_w_8, r3_w_6);
                     float r7_x_7 = min(r5_w_5, r2_w_9);
-                    float4 r8_xyzw_2 = t4.Sample(s1, float4(r7_x_7, r7_z_7, r7_w_1, r7_x_7));
-                    float4 r9_xyzw_2 = t4.Sample(s1, ((float4(r7_x_7, r7_z_7, r7_w_1, r7_x_7) + float4(0.25, 0, 0, 0))).xyzx);
-                    float4 r7_xyzw_9 = t4.Sample(s1, ((float4(r7_x_7, r7_z_7, r7_w_1, r7_x_7) + float4(0.5, 0, 0, 0))).xyzx);
+                    float4 r8_xyzw_2 = t4.Sample(sampler_linear_clamp1, (float4(r7_x_7, r7_z_7, r7_w_1, r7_x_7)).xyz);
+                    float4 r9_xyzw_2 = t4.Sample(sampler_linear_clamp1, (((float4(r7_x_7, r7_z_7, r7_w_1, r7_x_7) + float4(0.25, 0, 0, 0))).xyzx).xyz);
+                    float4 r7_xyzw_9 = t4.Sample(sampler_linear_clamp1, (((float4(r7_x_7, r7_z_7, r7_w_1, r7_x_7) + float4(0.5, 0, 0, 0))).xyzx).xyz);
                     float r4_w_5 = 1;
                     float r8_x_3 = dot(r8_xyzw_2, float4(r4_x_8, r4_y_5, r4_z_4, r4_w_5));
                     float r8_y_3 = dot(r9_xyzw_2, float4(r4_x_8, r4_y_5, r4_z_4, r4_w_5));
@@ -1280,7 +1280,7 @@ Shader "Custom/Planet_Clouds"
                 {
                     r8_xyz_8 = (float4(r5_x_14, r5_y_12, r5_z_12, r5_x_14)).xyz;
                 }
-                float4 r8_xyzw_9 = t2.SampleLevel(s0, r8_xyz_8.xyzx, 6);
+                float4 r8_xyzw_9 = t2.SampleLevel(sampler_linear_clamp, r8_xyz_8.xyz, 6);
                 float r2_w_17 = (r8_xyzw_9.w + -1);
                 float r2_w_18 = mad(unity_SpecCube0_HDR.w, r2_w_17, 1);
                 float r2_w_19 = (r2_w_18 * unity_SpecCube0_HDR.x);
@@ -1309,7 +1309,7 @@ Shader "Custom/Planet_Clouds"
                         r5_y_14 = r5_y_13;
                         r5_z_14 = r5_z_13;
                     }
-                    float4 r5_xyzw_17 = t3.SampleLevel(s0, float4(r5_x_16, r5_y_14, r5_z_14, r5_x_16), 6);
+                    float4 r5_xyzw_17 = t3.SampleLevel(sampler_linear_clamp, (float4(r5_x_16, r5_y_14, r5_z_14, r5_x_16)).xyz, 6);
                     float4 r0_xyzw_7 = (r5_xyzw_17.xyzx * ((mad(unity_SpecCube1_HDR.w, (r5_xyzw_17.w + -1), 1) * unity_SpecCube1_HDR.x)).xxxx);
                     float r0_x_7 = r0_xyzw_7.x;
                     float r0_y_4 = r0_xyzw_7.y;
@@ -1419,10 +1419,10 @@ Shader "Custom/Planet_Clouds"
                 float3 unity_ProbeVolumeSizeInv;
                 float3 unity_ProbeVolumeMin;
             };
-            SamplerState s0 : register(s0);
-            SamplerState s1 : register(s1);
-            SamplerState s2 : register(s2);
-            SamplerState s3 : register(s3);
+            SamplerState sampler_linear_clamp : register(s0);
+            SamplerState sampler_linear_clamp1 : register(s1);
+            SamplerState sampler_linear_clamp2 : register(s2);
+            SamplerState sampler_linear_clamp3 : register(s3);
             Texture2D t0 : register(t0);
             Texture2D t1 : register(t1);
             Texture2D t2 : register(t2);
@@ -1511,8 +1511,8 @@ Shader "Custom/Planet_Clouds"
                 float3 r1_xyz_1 = ((r0_w_2.xxxx * r0_xyz_1.xyzx)).xyz;
                 float3 r2_xyz_1 = ((-i.texcoord4.xyzx + _WorldSpaceCameraPos.xyzx)).xyz;
                 float3 r2_xyz_2 = normalize(r2_xyz_1);
-                float4 r3_xyzw_1 = t0.Sample(s2, i.texcoord0.xyxx);
-                float4 r4_xyzw_1 = t1.Sample(s3, i.texcoord0.xyxx);
+                float4 r3_xyzw_1 = t0.Sample(sampler_linear_clamp2, (i.texcoord0.xyxx).xy);
+                float4 r4_xyzw_1 = t1.Sample(sampler_linear_clamp3, (i.texcoord0.xyxx).xy);
                 float r1_w_3 = (r3_xyzw_1.w * cb0_values[8].y);
                 float r4_x_2 = (r4_xyzw_1.w * r4_xyzw_1.x);
                 float4 r4_xyzw_3 = mad(float4(r4_x_2, r4_xyzw_1.y, r4_x_2, r4_x_2), float4(2, 2, 0, 0), float4(-1, -1, 0, 0));
@@ -1549,7 +1549,7 @@ Shader "Custom/Planet_Clouds"
                     float r2_w_8 = mad(r6_y_8, 0.25, 0.75);
                     float r3_w_2 = mad(unity_ProbeVolumeParams.z, 0.5, 0.75);
                     float r6_x_8 = max(r2_w_8, r3_w_2);
-                    float4 r6_xyzw_9 = t3.Sample(s0, float4(r6_x_8, r6_z_8, r6_w_2, r6_x_8));
+                    float4 r6_xyzw_9 = t3.Sample(sampler_linear_clamp, (float4(r6_x_8, r6_z_8, r6_w_2, r6_x_8)).xyz);
                     r6_x_10 = r6_xyzw_9.x;
                     r6_y_10 = r6_xyzw_9.y;
                     r6_z_10 = r6_xyzw_9.z;
@@ -1565,7 +1565,7 @@ Shader "Custom/Planet_Clouds"
                 }
                 float r2_w_10 = dot(float4(r6_x_10, r6_y_10, r6_z_10, r6_w_4), unity_OcclusionMaskSelector);
                 float r3_w_4 = dot(r5_xyz_4.xyzx, r5_xyz_4.xyzx);
-                float4 r5_xyzw_5 = t2.Sample(s1, r3_w_4.xxxx);
+                float4 r5_xyzw_5 = t2.Sample(sampler_linear_clamp1, (r3_w_4.xxxx).xy);
                 float r2_w_11 = (r2_w_10 * r5_xyzw_5.x);
                 float r5_x_6 = dot(i.texcoord1.xyzx, float4(r4_x_5, r4_y_4, r4_z_3, r4_x_5));
                 float r5_y_6 = dot(i.texcoord2.xyzx, float4(r4_x_5, r4_y_4, r4_z_3, r4_x_5));
@@ -1667,10 +1667,10 @@ Shader "Custom/Planet_Clouds"
             {
                 float4 cb4_values[7];
             };
-            SamplerState s0 : register(s0);
-            SamplerState s1 : register(s1);
-            SamplerState s2 : register(s2);
-            SamplerState s3 : register(s3);
+            SamplerState sampler_linear_clamp : register(s0);
+            SamplerState sampler_linear_clamp1 : register(s1);
+            SamplerState sampler_linear_clamp2 : register(s2);
+            SamplerState sampler_linear_clamp3 : register(s3);
             Texture2D t0 : register(t0);
             Texture2D t1 : register(t1);
             Texture2D t2 : register(t2);
@@ -1763,8 +1763,8 @@ Shader "Custom/Planet_Clouds"
                 float3 r0_xyz_1 = ((-i.texcoord4.xyzx + _WorldSpaceCameraPos.xyzx)).xyz;
                 float r0_w_1 = dot(r0_xyz_1.xyzx, r0_xyz_1.xyzx);
                 float r0_w_2 = rsqrt(r0_w_1);
-                float4 r2_xyzw_1 = t0.Sample(s2, i.texcoord0.xyxx);
-                float4 r3_xyzw_1 = t1.Sample(s3, i.texcoord0.xyxx);
+                float4 r2_xyzw_1 = t0.Sample(sampler_linear_clamp2, (i.texcoord0.xyxx).xy);
+                float4 r3_xyzw_1 = t1.Sample(sampler_linear_clamp3, (i.texcoord0.xyxx).xy);
                 float r1_w_1 = (r2_xyzw_1.w * cb0_values[8].y);
                 float r3_x_2 = (r3_xyzw_1.w * r3_xyzw_1.x);
                 float4 r3_xyzw_3 = mad(float4(r3_x_2, r3_xyzw_1.y, r3_x_2, r3_x_2), float4(2, 2, 0, 0), float4(-1, -1, 0, 0));
@@ -1799,7 +1799,7 @@ Shader "Custom/Planet_Clouds"
                     float r2_w_9 = mad(r5_y_8, 0.25, 0.75);
                     float r3_w_2 = mad(cb4_values[0].z, 0.5, 0.75);
                     float r5_x_8 = max(r2_w_9, r3_w_2);
-                    float4 r5_xyzw_9 = t3.Sample(s0, float4(r5_x_8, r5_z_8, r5_w_2, r5_x_8));
+                    float4 r5_xyzw_9 = t3.Sample(sampler_linear_clamp, (float4(r5_x_8, r5_z_8, r5_w_2, r5_x_8)).xyz);
                     r5_x_10 = r5_xyzw_9.x;
                     r5_y_10 = r5_xyzw_9.y;
                     r5_z_10 = r5_xyzw_9.z;
@@ -1814,7 +1814,7 @@ Shader "Custom/Planet_Clouds"
                     r5_w_4 = r5_xyzw_10.w;
                 }
                 float r2_w_11 = dot(float4(r5_x_10, r5_y_10, r5_z_10, r5_w_4), unity_OcclusionMaskSelector);
-                float4 r4_xyzw_5 = t2.Sample(s1, (((mad(cb0_values[6].xyxx, i.texcoord4.zzzz, (mad(cb0_values[4].xyxx, i.texcoord4.xxxx, ((i.texcoord4.yyyy * cb0_values[5].xyxx)).xyxx)).xyxx)).xyxx + cb0_values[7].xyxx)).xyxx);
+                float4 r4_xyzw_5 = t2.Sample(sampler_linear_clamp1, ((((mad(cb0_values[6].xyxx, i.texcoord4.zzzz, (mad(cb0_values[4].xyxx, i.texcoord4.xxxx, ((i.texcoord4.yyyy * cb0_values[5].xyxx)).xyxx)).xyxx)).xyxx + cb0_values[7].xyxx)).xyxx).xy);
                 float r2_w_12 = (r2_w_11 * r4_xyzw_5.w);
                 float r4_x_6 = dot(i.texcoord1.xyzx, float4(r3_x_5, r3_y_4, r3_z_3, r3_x_5));
                 float r4_y_6 = dot(i.texcoord2.xyzx, float4(r3_x_5, r3_y_4, r3_z_3, r3_x_5));
@@ -1928,11 +1928,11 @@ Shader "Custom/Planet_Clouds"
             {
                 float4 cb4_values[7];
             };
-            SamplerState s0 : register(s0);
-            SamplerState s1 : register(s1);
-            SamplerState s2 : register(s2);
-            SamplerState s3 : register(s3);
-            SamplerState s4 : register(s4);
+            SamplerState sampler_linear_clamp : register(s0);
+            SamplerState sampler_linear_clamp1 : register(s1);
+            SamplerState sampler_linear_clamp2 : register(s2);
+            SamplerState sampler_linear_clamp3 : register(s3);
+            SamplerState sampler_linear_clamp4 : register(s4);
             Texture2D t0 : register(t0);
             Texture2D t1 : register(t1);
             Texture2D t2 : register(t2);
@@ -2026,8 +2026,8 @@ Shader "Custom/Planet_Clouds"
                 float3 r1_xyz_1 = ((r0_w_2.xxxx * r0_xyz_1.xyzx)).xyz;
                 float3 r2_xyz_1 = ((-i.texcoord4.xyzx + _WorldSpaceCameraPos.xyzx)).xyz;
                 float3 r2_xyz_2 = normalize(r2_xyz_1);
-                float4 r3_xyzw_1 = t0.Sample(s3, i.texcoord0.xyxx);
-                float4 r4_xyzw_1 = t1.Sample(s4, i.texcoord0.xyxx);
+                float4 r3_xyzw_1 = t0.Sample(sampler_linear_clamp3, (i.texcoord0.xyxx).xy);
+                float4 r4_xyzw_1 = t1.Sample(sampler_linear_clamp4, (i.texcoord0.xyxx).xy);
                 float r1_w_3 = (r3_xyzw_1.w * cb0_values[8].y);
                 float r4_x_2 = (r4_xyzw_1.w * r4_xyzw_1.x);
                 float4 r4_xyzw_3 = mad(float4(r4_x_2, r4_xyzw_1.y, r4_x_2, r4_x_2), float4(2, 2, 0, 0), float4(-1, -1, 0, 0));
@@ -2063,7 +2063,7 @@ Shader "Custom/Planet_Clouds"
                     float r2_w_8 = mad(r6_y_8, 0.25, 0.75);
                     float r3_w_2 = mad(cb4_values[0].z, 0.5, 0.75);
                     float r6_x_8 = max(r2_w_8, r3_w_2);
-                    float4 r6_xyzw_9 = t4.Sample(s0, float4(r6_x_8, r6_z_8, r6_w_2, r6_x_8));
+                    float4 r6_xyzw_9 = t4.Sample(sampler_linear_clamp, (float4(r6_x_8, r6_z_8, r6_w_2, r6_x_8)).xyz);
                     r6_x_10 = r6_xyzw_9.x;
                     r6_y_10 = r6_xyzw_9.y;
                     r6_z_10 = r6_xyzw_9.z;
@@ -2079,8 +2079,8 @@ Shader "Custom/Planet_Clouds"
                 }
                 float r2_w_10 = dot(float4(r6_x_10, r6_y_10, r6_z_10, r6_w_4), unity_OcclusionMaskSelector);
                 float r3_w_4 = dot(r5_xyz_4.xyzx, r5_xyz_4.xyzx);
-                float4 r6_xyzw_11 = t2.Sample(s2, r3_w_4.xxxx);
-                float4 r5_xyzw_5 = t3.Sample(s1, r5_xyz_4.xyzx);
+                float4 r6_xyzw_11 = t2.Sample(sampler_linear_clamp2, (r3_w_4.xxxx).xy);
+                float4 r5_xyzw_5 = t3.Sample(sampler_linear_clamp1, r5_xyz_4.xyz);
                 float r3_w_5 = (r5_xyzw_5.w * r6_xyzw_11.x);
                 float r2_w_11 = (r2_w_10 * r3_w_5);
                 float r5_x_6 = dot(i.texcoord1.xyzx, float4(r4_x_5, r4_y_4, r4_z_3, r4_x_5));
@@ -2192,11 +2192,11 @@ Shader "Custom/Planet_Clouds"
             {
                 float4 cb4_values[7];
             };
-            SamplerState s0 : register(s0);
-            SamplerState s1 : register(s1);
-            SamplerState s2 : register(s2);
-            SamplerState s3 : register(s3);
-            SamplerState s4 : register(s4);
+            SamplerState sampler_linear_clamp : register(s0);
+            SamplerState sampler_linear_clamp1 : register(s1);
+            SamplerState sampler_linear_clamp2 : register(s2);
+            SamplerState sampler_linear_clamp3 : register(s3);
+            SamplerState sampler_linear_clamp4 : register(s4);
             Texture2D t0 : register(t0);
             Texture2D t1 : register(t1);
             Texture2D t2 : register(t2);
@@ -2290,8 +2290,8 @@ Shader "Custom/Planet_Clouds"
                 float3 r1_xyz_1 = ((r0_w_2.xxxx * r0_xyz_1.xyzx)).xyz;
                 float3 r2_xyz_1 = ((-i.texcoord4.xyzx + _WorldSpaceCameraPos.xyzx)).xyz;
                 float3 r2_xyz_2 = normalize(r2_xyz_1);
-                float4 r3_xyzw_1 = t0.Sample(s3, i.texcoord0.xyxx);
-                float4 r4_xyzw_1 = t1.Sample(s4, i.texcoord0.xyxx);
+                float4 r3_xyzw_1 = t0.Sample(sampler_linear_clamp3, (i.texcoord0.xyxx).xy);
+                float4 r4_xyzw_1 = t1.Sample(sampler_linear_clamp4, (i.texcoord0.xyxx).xy);
                 float r1_w_3 = (r3_xyzw_1.w * cb0_values[8].y);
                 float r4_x_2 = (r4_xyzw_1.w * r4_xyzw_1.x);
                 float4 r4_xyzw_3 = mad(float4(r4_x_2, r4_xyzw_1.y, r4_x_2, r4_x_2), float4(2, 2, 0, 0), float4(-1, -1, 0, 0));
@@ -2327,7 +2327,7 @@ Shader "Custom/Planet_Clouds"
                     float r2_w_8 = mad(r6_y_8, 0.25, 0.75);
                     float r3_w_2 = mad(cb4_values[0].z, 0.5, 0.75);
                     float r6_x_8 = max(r2_w_8, r3_w_2);
-                    float4 r6_xyzw_9 = t4.Sample(s0, float4(r6_x_8, r6_z_8, r6_w_2, r6_x_8));
+                    float4 r6_xyzw_9 = t4.Sample(sampler_linear_clamp, (float4(r6_x_8, r6_z_8, r6_w_2, r6_x_8)).xyz);
                     r6_x_10 = r6_xyzw_9.x;
                     r6_y_10 = r6_xyzw_9.y;
                     r6_z_10 = r6_xyzw_9.z;
@@ -2344,10 +2344,10 @@ Shader "Custom/Planet_Clouds"
                 float r2_w_10 = dot(float4(r6_x_10, r6_y_10, r6_z_10, r6_w_4), unity_OcclusionMaskSelector);
                 float r3_w_4 = (0 < r5_xyzw_4.z);
                 float r3_w_5 = asfloat(asint(r3_w_4) & asint(1065353216));
-                float4 r6_xyzw_13 = t2.Sample(s1, ((((r5_xyzw_4.xyxx / r5_xyzw_4.wwww)).xyxx + float4(0.5, 0.5, 0, 0))).xyxx);
+                float4 r6_xyzw_13 = t2.Sample(sampler_linear_clamp1, (((((r5_xyzw_4.xyxx / r5_xyzw_4.wwww)).xyxx + float4(0.5, 0.5, 0, 0))).xyxx).xy);
                 float r3_w_6 = (r3_w_5 * r6_xyzw_13.w);
                 float r4_w_2 = dot(r5_xyzw_4.xyzx, r5_xyzw_4.xyzx);
-                float4 r5_xyzw_5 = t3.Sample(s2, r4_w_2.xxxx);
+                float4 r5_xyzw_5 = t3.Sample(sampler_linear_clamp2, (r4_w_2.xxxx).xy);
                 float r3_w_7 = (r3_w_6 * r5_xyzw_5.x);
                 float r2_w_11 = (r2_w_10 * r3_w_7);
                 float r5_x_6 = dot(i.texcoord1.xyzx, float4(r4_x_5, r4_y_4, r4_z_3, r4_x_5));
@@ -2459,9 +2459,9 @@ Shader "Custom/Planet_Clouds"
             {
                 float4 cb4_values[7];
             };
-            SamplerState s0 : register(s0);
-            SamplerState s1 : register(s1);
-            SamplerState s2 : register(s2);
+            SamplerState sampler_linear_clamp : register(s0);
+            SamplerState sampler_linear_clamp1 : register(s1);
+            SamplerState sampler_linear_clamp2 : register(s2);
             Texture2D t0 : register(t0);
             Texture2D t1 : register(t1);
             Texture3D t2 : register(t2);
@@ -2545,8 +2545,8 @@ Shader "Custom/Planet_Clouds"
                 float3 r0_xyz_1 = ((-i.texcoord4.xyzx + _WorldSpaceCameraPos.xyzx)).xyz;
                 float r0_w_1 = dot(r0_xyz_1.xyzx, r0_xyz_1.xyzx);
                 float r0_w_2 = rsqrt(r0_w_1);
-                float4 r2_xyzw_1 = t0.Sample(s1, i.texcoord0.xyxx);
-                float4 r3_xyzw_1 = t1.Sample(s2, i.texcoord0.xyxx);
+                float4 r2_xyzw_1 = t0.Sample(sampler_linear_clamp1, (i.texcoord0.xyxx).xy);
+                float4 r3_xyzw_1 = t1.Sample(sampler_linear_clamp2, (i.texcoord0.xyxx).xy);
                 float r1_w_1 = (r2_xyzw_1.w * cb0_values[4].y);
                 float r3_x_2 = (r3_xyzw_1.w * r3_xyzw_1.x);
                 float4 r3_xyzw_3 = mad(float4(r3_x_2, r3_xyzw_1.y, r3_x_2, r3_x_2), float4(2, 2, 0, 0), float4(-1, -1, 0, 0));
@@ -2581,7 +2581,7 @@ Shader "Custom/Planet_Clouds"
                     float r2_w_9 = mad(r4_y_8, 0.25, 0.75);
                     float r3_w_2 = mad(cb4_values[0].z, 0.5, 0.75);
                     float r4_x_8 = max(r2_w_9, r3_w_2);
-                    float4 r4_xyzw_9 = t2.Sample(s0, float4(r4_x_8, r4_z_8, r4_w_2, r4_x_8));
+                    float4 r4_xyzw_9 = t2.Sample(sampler_linear_clamp, (float4(r4_x_8, r4_z_8, r4_w_2, r4_x_8)).xyz);
                     r4_x_10 = r4_xyzw_9.x;
                     r4_y_10 = r4_xyzw_9.y;
                     r4_z_10 = r4_xyzw_9.z;
@@ -2705,10 +2705,10 @@ Shader "Custom/Planet_Clouds"
             {
                 float4 cb4_values[7];
             };
-            SamplerState s0 : register(s0);
-            SamplerState s1 : register(s1);
-            SamplerState s2 : register(s2);
-            SamplerState s3 : register(s3);
+            SamplerState sampler_linear_clamp : register(s0);
+            SamplerState sampler_linear_clamp1 : register(s1);
+            SamplerState sampler_linear_clamp2 : register(s2);
+            SamplerState sampler_linear_clamp3 : register(s3);
             Texture2D t0 : register(t0);
             Texture2D t1 : register(t1);
             Texture2D t2 : register(t2);
@@ -2801,8 +2801,8 @@ Shader "Custom/Planet_Clouds"
                 float3 r1_xyz_1 = ((r0_w_2.xxxx * r0_xyz_1.xyzx)).xyz;
                 float3 r2_xyz_1 = ((-i.texcoord4.xyzx + _WorldSpaceCameraPos.xyzx)).xyz;
                 float3 r2_xyz_2 = normalize(r2_xyz_1);
-                float4 r3_xyzw_1 = t0.Sample(s2, i.texcoord0.xyxx);
-                float4 r4_xyzw_1 = t1.Sample(s3, i.texcoord0.xyxx);
+                float4 r3_xyzw_1 = t0.Sample(sampler_linear_clamp2, (i.texcoord0.xyxx).xy);
+                float4 r4_xyzw_1 = t1.Sample(sampler_linear_clamp3, (i.texcoord0.xyxx).xy);
                 float r1_w_3 = (r3_xyzw_1.w * cb0_values[8].y);
                 float r4_x_2 = (r4_xyzw_1.w * r4_xyzw_1.x);
                 float4 r4_xyzw_3 = mad(float4(r4_x_2, r4_xyzw_1.y, r4_x_2, r4_x_2), float4(2, 2, 0, 0), float4(-1, -1, 0, 0));
@@ -2838,7 +2838,7 @@ Shader "Custom/Planet_Clouds"
                     float r2_w_8 = mad(r6_y_8, 0.25, 0.75);
                     float r3_w_2 = mad(cb4_values[0].z, 0.5, 0.75);
                     float r6_x_8 = max(r2_w_8, r3_w_2);
-                    float4 r6_xyzw_9 = t3.Sample(s0, float4(r6_x_8, r6_z_8, r6_w_2, r6_x_8));
+                    float4 r6_xyzw_9 = t3.Sample(sampler_linear_clamp, (float4(r6_x_8, r6_z_8, r6_w_2, r6_x_8)).xyz);
                     r6_x_10 = r6_xyzw_9.x;
                     r6_y_10 = r6_xyzw_9.y;
                     r6_z_10 = r6_xyzw_9.z;
@@ -2854,7 +2854,7 @@ Shader "Custom/Planet_Clouds"
                 }
                 float r2_w_10 = dot(float4(r6_x_10, r6_y_10, r6_z_10, r6_w_4), unity_OcclusionMaskSelector);
                 float r3_w_4 = dot(r5_xyz_4.xyzx, r5_xyz_4.xyzx);
-                float4 r5_xyzw_5 = t2.Sample(s1, r3_w_4.xxxx);
+                float4 r5_xyzw_5 = t2.Sample(sampler_linear_clamp1, (r3_w_4.xxxx).xy);
                 float r2_w_11 = (r2_w_10 * r5_xyzw_5.x);
                 float r5_x_6 = dot(i.texcoord1.xyzx, float4(r4_x_5, r4_y_4, r4_z_3, r4_x_5));
                 float r5_y_6 = dot(i.texcoord2.xyzx, float4(r4_x_5, r4_y_4, r4_z_3, r4_x_5));
@@ -2960,10 +2960,10 @@ Shader "Custom/Planet_Clouds"
                 float3 unity_ProbeVolumeSizeInv;
                 float3 unity_ProbeVolumeMin;
             };
-            SamplerState s0 : register(s0);
-            SamplerState s1 : register(s1);
-            SamplerState s2 : register(s2);
-            SamplerState s3 : register(s3);
+            SamplerState sampler_linear_clamp : register(s0);
+            SamplerState sampler_linear_clamp1 : register(s1);
+            SamplerState sampler_linear_clamp2 : register(s2);
+            SamplerState sampler_linear_clamp3 : register(s3);
             Texture2D t0 : register(t0);
             Texture2D t1 : register(t1);
             Texture2D t2 : register(t2);
@@ -3052,8 +3052,8 @@ Shader "Custom/Planet_Clouds"
                 float3 r0_xyz_1 = ((-i.texcoord4.xyzx + _WorldSpaceCameraPos.xyzx)).xyz;
                 float r0_w_1 = dot(r0_xyz_1.xyzx, r0_xyz_1.xyzx);
                 float r0_w_2 = rsqrt(r0_w_1);
-                float4 r2_xyzw_1 = t0.Sample(s2, i.texcoord0.xyxx);
-                float4 r3_xyzw_1 = t1.Sample(s3, i.texcoord0.xyxx);
+                float4 r2_xyzw_1 = t0.Sample(sampler_linear_clamp2, (i.texcoord0.xyxx).xy);
+                float4 r3_xyzw_1 = t1.Sample(sampler_linear_clamp3, (i.texcoord0.xyxx).xy);
                 float r1_w_1 = (r2_xyzw_1.w * cb0_values[8].y);
                 float r3_x_2 = (r3_xyzw_1.w * r3_xyzw_1.x);
                 float4 r3_xyzw_3 = mad(float4(r3_x_2, r3_xyzw_1.y, r3_x_2, r3_x_2), float4(2, 2, 0, 0), float4(-1, -1, 0, 0));
@@ -3089,7 +3089,7 @@ Shader "Custom/Planet_Clouds"
                     float r2_w_9 = mad(r5_y_8, 0.25, 0.75);
                     float r3_w_2 = mad(unity_ProbeVolumeParams.z, 0.5, 0.75);
                     float r5_x_8 = max(r2_w_9, r3_w_2);
-                    float4 r5_xyzw_9 = t3.Sample(s0, float4(r5_x_8, r5_z_8, r5_w_2, r5_x_8));
+                    float4 r5_xyzw_9 = t3.Sample(sampler_linear_clamp, (float4(r5_x_8, r5_z_8, r5_w_2, r5_x_8)).xyz);
                     r5_x_10 = r5_xyzw_9.x;
                     r5_y_10 = r5_xyzw_9.y;
                     r5_z_10 = r5_xyzw_9.z;
@@ -3104,7 +3104,7 @@ Shader "Custom/Planet_Clouds"
                     r5_w_4 = r5_xyzw_10.w;
                 }
                 float r2_w_11 = dot(float4(r5_x_10, r5_y_10, r5_z_10, r5_w_4), unity_OcclusionMaskSelector);
-                float4 r4_xyzw_5 = t2.Sample(s1, (((mad(cb0_values[6].xyxx, i.texcoord4.zzzz, (mad(cb0_values[4].xyxx, i.texcoord4.xxxx, ((i.texcoord4.yyyy * cb0_values[5].xyxx)).xyxx)).xyxx)).xyxx + cb0_values[7].xyxx)).xyxx);
+                float4 r4_xyzw_5 = t2.Sample(sampler_linear_clamp1, ((((mad(cb0_values[6].xyxx, i.texcoord4.zzzz, (mad(cb0_values[4].xyxx, i.texcoord4.xxxx, ((i.texcoord4.yyyy * cb0_values[5].xyxx)).xyxx)).xyxx)).xyxx + cb0_values[7].xyxx)).xyxx).xy);
                 float r2_w_12 = (r2_w_11 * r4_xyzw_5.w);
                 float r4_x_6 = dot(i.texcoord1.xyzx, float4(r3_x_5, r3_y_4, r3_z_3, r3_x_5));
                 float r4_y_6 = dot(i.texcoord2.xyzx, float4(r3_x_5, r3_y_4, r3_z_3, r3_x_5));
@@ -3204,11 +3204,11 @@ Shader "Custom/Planet_Clouds"
                 float3 unity_ProbeVolumeSizeInv;
                 float3 unity_ProbeVolumeMin;
             };
-            SamplerState s0 : register(s0);
-            SamplerState s1 : register(s1);
-            SamplerState s2 : register(s2);
-            SamplerState s3 : register(s3);
-            SamplerState s4 : register(s4);
+            SamplerState sampler_linear_clamp : register(s0);
+            SamplerState sampler_linear_clamp1 : register(s1);
+            SamplerState sampler_linear_clamp2 : register(s2);
+            SamplerState sampler_linear_clamp3 : register(s3);
+            SamplerState sampler_linear_clamp4 : register(s4);
             Texture2D t0 : register(t0);
             Texture2D t1 : register(t1);
             Texture2D t2 : register(t2);
@@ -3298,8 +3298,8 @@ Shader "Custom/Planet_Clouds"
                 float3 r1_xyz_1 = ((r0_w_2.xxxx * r0_xyz_1.xyzx)).xyz;
                 float3 r2_xyz_1 = ((-i.texcoord4.xyzx + _WorldSpaceCameraPos.xyzx)).xyz;
                 float3 r2_xyz_2 = normalize(r2_xyz_1);
-                float4 r3_xyzw_1 = t0.Sample(s3, i.texcoord0.xyxx);
-                float4 r4_xyzw_1 = t1.Sample(s4, i.texcoord0.xyxx);
+                float4 r3_xyzw_1 = t0.Sample(sampler_linear_clamp3, (i.texcoord0.xyxx).xy);
+                float4 r4_xyzw_1 = t1.Sample(sampler_linear_clamp4, (i.texcoord0.xyxx).xy);
                 float r1_w_3 = (r3_xyzw_1.w * cb0_values[8].y);
                 float r4_x_2 = (r4_xyzw_1.w * r4_xyzw_1.x);
                 float4 r4_xyzw_3 = mad(float4(r4_x_2, r4_xyzw_1.y, r4_x_2, r4_x_2), float4(2, 2, 0, 0), float4(-1, -1, 0, 0));
@@ -3336,7 +3336,7 @@ Shader "Custom/Planet_Clouds"
                     float r2_w_8 = mad(r6_y_8, 0.25, 0.75);
                     float r3_w_2 = mad(unity_ProbeVolumeParams.z, 0.5, 0.75);
                     float r6_x_8 = max(r2_w_8, r3_w_2);
-                    float4 r6_xyzw_9 = t4.Sample(s0, float4(r6_x_8, r6_z_8, r6_w_2, r6_x_8));
+                    float4 r6_xyzw_9 = t4.Sample(sampler_linear_clamp, (float4(r6_x_8, r6_z_8, r6_w_2, r6_x_8)).xyz);
                     r6_x_10 = r6_xyzw_9.x;
                     r6_y_10 = r6_xyzw_9.y;
                     r6_z_10 = r6_xyzw_9.z;
@@ -3352,8 +3352,8 @@ Shader "Custom/Planet_Clouds"
                 }
                 float r2_w_10 = dot(float4(r6_x_10, r6_y_10, r6_z_10, r6_w_4), unity_OcclusionMaskSelector);
                 float r3_w_4 = dot(r5_xyz_4.xyzx, r5_xyz_4.xyzx);
-                float4 r6_xyzw_11 = t2.Sample(s2, r3_w_4.xxxx);
-                float4 r5_xyzw_5 = t3.Sample(s1, r5_xyz_4.xyzx);
+                float4 r6_xyzw_11 = t2.Sample(sampler_linear_clamp2, (r3_w_4.xxxx).xy);
+                float4 r5_xyzw_5 = t3.Sample(sampler_linear_clamp1, r5_xyz_4.xyz);
                 float r3_w_5 = (r5_xyzw_5.w * r6_xyzw_11.x);
                 float r2_w_11 = (r2_w_10 * r3_w_5);
                 float r5_x_6 = dot(i.texcoord1.xyzx, float4(r4_x_5, r4_y_4, r4_z_3, r4_x_5));
@@ -3451,11 +3451,11 @@ Shader "Custom/Planet_Clouds"
                 float3 unity_ProbeVolumeSizeInv;
                 float3 unity_ProbeVolumeMin;
             };
-            SamplerState s0 : register(s0);
-            SamplerState s1 : register(s1);
-            SamplerState s2 : register(s2);
-            SamplerState s3 : register(s3);
-            SamplerState s4 : register(s4);
+            SamplerState sampler_linear_clamp : register(s0);
+            SamplerState sampler_linear_clamp1 : register(s1);
+            SamplerState sampler_linear_clamp2 : register(s2);
+            SamplerState sampler_linear_clamp3 : register(s3);
+            SamplerState sampler_linear_clamp4 : register(s4);
             Texture2D t0 : register(t0);
             Texture2D t1 : register(t1);
             Texture2D t2 : register(t2);
@@ -3545,8 +3545,8 @@ Shader "Custom/Planet_Clouds"
                 float3 r1_xyz_1 = ((r0_w_2.xxxx * r0_xyz_1.xyzx)).xyz;
                 float3 r2_xyz_1 = ((-i.texcoord4.xyzx + _WorldSpaceCameraPos.xyzx)).xyz;
                 float3 r2_xyz_2 = normalize(r2_xyz_1);
-                float4 r3_xyzw_1 = t0.Sample(s3, i.texcoord0.xyxx);
-                float4 r4_xyzw_1 = t1.Sample(s4, i.texcoord0.xyxx);
+                float4 r3_xyzw_1 = t0.Sample(sampler_linear_clamp3, (i.texcoord0.xyxx).xy);
+                float4 r4_xyzw_1 = t1.Sample(sampler_linear_clamp4, (i.texcoord0.xyxx).xy);
                 float r1_w_3 = (r3_xyzw_1.w * cb0_values[8].y);
                 float r4_x_2 = (r4_xyzw_1.w * r4_xyzw_1.x);
                 float4 r4_xyzw_3 = mad(float4(r4_x_2, r4_xyzw_1.y, r4_x_2, r4_x_2), float4(2, 2, 0, 0), float4(-1, -1, 0, 0));
@@ -3583,7 +3583,7 @@ Shader "Custom/Planet_Clouds"
                     float r2_w_8 = mad(r6_y_8, 0.25, 0.75);
                     float r3_w_2 = mad(unity_ProbeVolumeParams.z, 0.5, 0.75);
                     float r6_x_8 = max(r2_w_8, r3_w_2);
-                    float4 r6_xyzw_9 = t4.Sample(s0, float4(r6_x_8, r6_z_8, r6_w_2, r6_x_8));
+                    float4 r6_xyzw_9 = t4.Sample(sampler_linear_clamp, (float4(r6_x_8, r6_z_8, r6_w_2, r6_x_8)).xyz);
                     r6_x_10 = r6_xyzw_9.x;
                     r6_y_10 = r6_xyzw_9.y;
                     r6_z_10 = r6_xyzw_9.z;
@@ -3600,10 +3600,10 @@ Shader "Custom/Planet_Clouds"
                 float r2_w_10 = dot(float4(r6_x_10, r6_y_10, r6_z_10, r6_w_4), unity_OcclusionMaskSelector);
                 float r3_w_4 = (0 < r5_xyzw_4.z);
                 float r3_w_5 = asfloat(asint(r3_w_4) & asint(1065353216));
-                float4 r6_xyzw_13 = t2.Sample(s1, ((((r5_xyzw_4.xyxx / r5_xyzw_4.wwww)).xyxx + float4(0.5, 0.5, 0, 0))).xyxx);
+                float4 r6_xyzw_13 = t2.Sample(sampler_linear_clamp1, (((((r5_xyzw_4.xyxx / r5_xyzw_4.wwww)).xyxx + float4(0.5, 0.5, 0, 0))).xyxx).xy);
                 float r3_w_6 = (r3_w_5 * r6_xyzw_13.w);
                 float r4_w_2 = dot(r5_xyzw_4.xyzx, r5_xyzw_4.xyzx);
-                float4 r5_xyzw_5 = t3.Sample(s2, r4_w_2.xxxx);
+                float4 r5_xyzw_5 = t3.Sample(sampler_linear_clamp2, (r4_w_2.xxxx).xy);
                 float r3_w_7 = (r3_w_6 * r5_xyzw_5.x);
                 float r2_w_11 = (r2_w_10 * r3_w_7);
                 float r5_x_6 = dot(i.texcoord1.xyzx, float4(r4_x_5, r4_y_4, r4_z_3, r4_x_5));
@@ -3701,9 +3701,9 @@ Shader "Custom/Planet_Clouds"
                 float3 unity_ProbeVolumeSizeInv;
                 float3 unity_ProbeVolumeMin;
             };
-            SamplerState s0 : register(s0);
-            SamplerState s1 : register(s1);
-            SamplerState s2 : register(s2);
+            SamplerState sampler_linear_clamp : register(s0);
+            SamplerState sampler_linear_clamp1 : register(s1);
+            SamplerState sampler_linear_clamp2 : register(s2);
             Texture2D t0 : register(t0);
             Texture2D t1 : register(t1);
             Texture3D t2 : register(t2);
@@ -3783,8 +3783,8 @@ Shader "Custom/Planet_Clouds"
                 float3 r0_xyz_1 = ((-i.texcoord4.xyzx + _WorldSpaceCameraPos.xyzx)).xyz;
                 float r0_w_1 = dot(r0_xyz_1.xyzx, r0_xyz_1.xyzx);
                 float r0_w_2 = rsqrt(r0_w_1);
-                float4 r2_xyzw_1 = t0.Sample(s1, i.texcoord0.xyxx);
-                float4 r3_xyzw_1 = t1.Sample(s2, i.texcoord0.xyxx);
+                float4 r2_xyzw_1 = t0.Sample(sampler_linear_clamp1, (i.texcoord0.xyxx).xy);
+                float4 r3_xyzw_1 = t1.Sample(sampler_linear_clamp2, (i.texcoord0.xyxx).xy);
                 float r1_w_1 = (r2_xyzw_1.w * cb0_values[4].y);
                 float r3_x_2 = (r3_xyzw_1.w * r3_xyzw_1.x);
                 float4 r3_xyzw_3 = mad(float4(r3_x_2, r3_xyzw_1.y, r3_x_2, r3_x_2), float4(2, 2, 0, 0), float4(-1, -1, 0, 0));
@@ -3820,7 +3820,7 @@ Shader "Custom/Planet_Clouds"
                     float r2_w_9 = mad(r4_y_8, 0.25, 0.75);
                     float r3_w_2 = mad(unity_ProbeVolumeParams.z, 0.5, 0.75);
                     float r4_x_8 = max(r2_w_9, r3_w_2);
-                    float4 r4_xyzw_9 = t2.Sample(s0, float4(r4_x_8, r4_z_8, r4_w_2, r4_x_8));
+                    float4 r4_xyzw_9 = t2.Sample(sampler_linear_clamp, (float4(r4_x_8, r4_z_8, r4_w_2, r4_x_8)).xyz);
                     r4_x_10 = r4_xyzw_9.x;
                     r4_y_10 = r4_xyzw_9.y;
                     r4_z_10 = r4_xyzw_9.z;

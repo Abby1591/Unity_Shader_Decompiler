@@ -26,7 +26,7 @@ Shader "Hidden/LensFlareCreate"
             {
                 float4x4 unity_MatrixVP;
             };
-            SamplerState s0 : register(s0);
+            SamplerState sampler_linear_clamp : register(s0);
             Texture2D t0 : register(t0);
             struct program1Input
             {
@@ -72,10 +72,10 @@ Shader "Hidden/LensFlareCreate"
             program3Output frag(program3Input i)
             {
                 program3Output o = (program3Output)0;
-                float4 r0_xyzw_1 = t0.Sample(s0, i.texcoord1.xyxx);
-                float4 r1_xyzw_1 = t0.Sample(s0, i.texcoord0.xyxx);
-                float4 r1_xyzw_2 = t0.Sample(s0, i.texcoord2.xyxx);
-                float4 r1_xyzw_3 = t0.Sample(s0, i.texcoord3.xyxx);
+                float4 r0_xyzw_1 = t0.Sample(sampler_linear_clamp, (i.texcoord1.xyxx).xy);
+                float4 r1_xyzw_1 = t0.Sample(sampler_linear_clamp, (i.texcoord0.xyxx).xy);
+                float4 r1_xyzw_2 = t0.Sample(sampler_linear_clamp, (i.texcoord2.xyxx).xy);
+                float4 r1_xyzw_3 = t0.Sample(sampler_linear_clamp, (i.texcoord3.xyxx).xy);
                 o.sv_Target0.xyzw = mad(r1_xyzw_3, colorD, mad(r1_xyzw_2, colorC, mad(r1_xyzw_1, colorA, (r0_xyzw_1 * colorB))));
                 return o;
             }

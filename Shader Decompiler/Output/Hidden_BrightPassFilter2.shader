@@ -22,7 +22,7 @@ Shader "Hidden/BrightPassFilter2"
             {
                 float4x4 unity_MatrixVP;
             };
-            SamplerState s0 : register(s0);
+            SamplerState sampler_linear_clamp : register(s0);
             Texture2D t0 : register(t0);
             struct program1Input
             {
@@ -58,7 +58,7 @@ Shader "Hidden/BrightPassFilter2"
             program3Output frag(program3Input i)
             {
                 program3Output o = (program3Output)0;
-                float4 r0_xyzw_1 = t0.Sample(s0, i.texcoord0.xyxx);
+                float4 r0_xyzw_1 = t0.Sample(sampler_linear_clamp, (i.texcoord0.xyxx).xy);
                 o.sv_Target0.w = r0_xyzw_1.w;
                 o.sv_Target0.xyz = (max(((r0_xyzw_1.xyzx + -_Threshhold.xxxx)).xyzx, float4(0, 0, 0, 0))).xyz;
                 return o;

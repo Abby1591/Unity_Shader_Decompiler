@@ -25,7 +25,7 @@ Shader "Hidden/SSAA"
             {
                 float4x4 unity_MatrixVP;
             };
-            SamplerState s0 : register(s0);
+            SamplerState sampler_linear_clamp : register(s0);
             Texture2D t0 : register(t0);
             struct program1Input
             {
@@ -75,12 +75,12 @@ Shader "Hidden/SSAA"
             program3Output frag(program3Input i)
             {
                 program3Output o = (program3Output)0;
-                float4 r0_xyzw_1 = t0.Sample(s0, i.texcoord0.xyxx);
-                float4 r1_xyzw_1 = t0.Sample(s0, i.texcoord1.xyxx);
+                float4 r0_xyzw_1 = t0.Sample(sampler_linear_clamp, (i.texcoord0.xyxx).xy);
+                float4 r1_xyzw_1 = t0.Sample(sampler_linear_clamp, (i.texcoord1.xyxx).xy);
                 float r0_y_2 = dot(r1_xyzw_1.xyzx, float4(0.22, 0.707, 0.071, 0));
-                float4 r1_xyzw_2 = t0.Sample(s0, i.texcoord2.xyxx);
+                float4 r1_xyzw_2 = t0.Sample(sampler_linear_clamp, (i.texcoord2.xyxx).xy);
                 float r0_z_2 = dot(r1_xyzw_2.xyzx, float4(0.22, 0.707, 0.071, 0));
-                float4 r1_xyzw_3 = t0.Sample(s0, i.texcoord3.xyxx);
+                float4 r1_xyzw_3 = t0.Sample(sampler_linear_clamp, (i.texcoord3.xyxx).xy);
                 float r0_w_2 = dot(r1_xyzw_3.xyzx, float4(0.22, 0.707, 0.071, 0));
                 float r1_x_4 = (-r0_w_2 + dot(r0_xyzw_1.xyzx, float4(0.22, 0.707, 0.071, 0)));
                 float r1_y_4 = (-r0_y_2 + r0_z_2);
@@ -88,7 +88,7 @@ Shader "Hidden/SSAA"
                 float r0_y_3 = (r0_x_5 < 0.0625);
                 if (r0_y_3)
                 {
-                    o.sv_Target0.xyzw = t0.Sample(s0, i.texcoord4.xyxx);
+                    o.sv_Target0.xyzw = t0.Sample(sampler_linear_clamp, (i.texcoord4.xyxx).xy);
                     o.sv_Target0.xyzw = o.sv_Target0.xyzw;
                 }
                 else
@@ -97,17 +97,17 @@ Shader "Hidden/SSAA"
                     float r0_x_6 = r0_xyzw_6.x;
                     float r0_y_4 = r0_xyzw_6.y;
                     float2 r0_zw_3 = ((float4(r0_x_6, r0_x_6, r0_x_6, r0_y_4) * float4(r1_x_4, r1_x_4, r1_x_4, r1_y_4))).zw;
-                    float4 r2_xyzw_1 = t0.Sample(s0, i.texcoord4.xyxx);
+                    float4 r2_xyzw_1 = t0.Sample(sampler_linear_clamp, (i.texcoord4.xyxx).xy);
                     float2 r1_zw_4 = (mad(r0_zw_3.xxxy, float4(0, 0, 0.5, 0.5), i.texcoord4.xxxy)).zw;
-                    float4 r3_xyzw_1 = t0.Sample(s0, r1_zw_4.xyxx);
+                    float4 r3_xyzw_1 = t0.Sample(sampler_linear_clamp, (r1_zw_4.xyxx).xy);
                     float2 r0_zw_4 = (mad(-r0_zw_3.xxxy, float4(0, 0, 0.5, 0.5), i.texcoord4.xxxy)).zw;
-                    float4 r4_xyzw_1 = t0.Sample(s0, r0_zw_4.xyxx);
+                    float4 r4_xyzw_1 = t0.Sample(sampler_linear_clamp, (r0_zw_4.xyxx).xy);
                     float2 r0_zw_5 = (mad(float4(r1_x_4, r1_x_4, r1_x_4, r1_y_4), float4(r0_x_6, r0_x_6, r0_x_6, r0_y_4), i.texcoord4.xxxy)).zw;
-                    float4 r5_xyzw_1 = t0.Sample(s0, r0_zw_5.xyxx);
+                    float4 r5_xyzw_1 = t0.Sample(sampler_linear_clamp, (r0_zw_5.xyxx).xy);
                     float4 r0_xyzw_7 = mad(-float4(r1_x_4, r1_y_4, r1_x_4, r1_x_4), float4(r0_x_6, r0_y_4, r0_x_6, r0_x_6), i.texcoord4.xyxx);
                     float r0_x_7 = r0_xyzw_7.x;
                     float r0_y_5 = r0_xyzw_7.y;
-                    float4 r0_xyzw_8 = t0.Sample(s0, float4(r0_x_7, r0_y_5, r0_x_7, r0_x_7));
+                    float4 r0_xyzw_8 = t0.Sample(sampler_linear_clamp, (float4(r0_x_7, r0_y_5, r0_x_7, r0_x_7)).xy);
                     float4 r0_xyzw_9 = mad(r0_xyzw_8, float4(0.75, 0.75, 0.75, 0.75), mad(r5_xyzw_1, float4(0.75, 0.75, 0.75, 0.75), mad(r4_xyzw_1, float4(0.9, 0.9, 0.9, 0.9), mad(r3_xyzw_1, float4(0.9, 0.9, 0.9, 0.9), r2_xyzw_1))));
                     o.sv_Target0.xyzw = (r0_xyzw_9 * float4(0.23255813, 0.23255813, 0.23255813, 0.23255813));
                     o.sv_Target0.xyzw = o.sv_Target0.xyzw;

@@ -90,11 +90,11 @@ Shader "HOLO/Holo2"
                 float4x4 unity_MatrixV;
                 float4x4 unity_MatrixVP;
             };
-            SamplerState s0 : register(s0);
+            SamplerState sampler_linear_clamp : register(s0);
             Texture2D t0 : register(t0);
-            SamplerState s1 : register(s1);
-            SamplerState s2 : register(s2);
-            SamplerState s3 : register(s3);
+            SamplerState sampler_linear_clamp1 : register(s1);
+            SamplerState sampler_linear_clamp2 : register(s2);
+            SamplerState sampler_linear_clamp3 : register(s3);
             Texture2D t1 : register(t1);
             Texture2D t2 : register(t2);
             Texture2D t3 : register(t3);
@@ -145,7 +145,7 @@ Shader "HOLO/Holo2"
                 float4 uvMMap_xyzw_2 = mad(i.texcoord0.xyxx, r0_w_3.xxxx, r1_w_1.xxxx);
                 float uvMMap_x_2 = uvMMap_xyzw_2.x;
                 float uvMMap_y_1 = uvMMap_xyzw_2.y;
-                float4 sampleMMap_xyzw_3 = t0.SampleLevel(s0, float4(uvMMap_x_2, uvMMap_y_1, uvMMap_x_2, uvMMap_x_2), 0);
+                float4 sampleMMap_xyzw_3 = t0.SampleLevel(sampler_linear_clamp, (float4(uvMMap_x_2, uvMMap_y_1, uvMMap_x_2, uvMMap_x_2)).xy, 0);
                 float r0_w_4 = (int)(_noise_details);
                 float4 r4_xyzw_3 = (_Time.xxyx * float4(0, 0.1, 0.1, 0));
                 float r4_y_3 = r4_xyzw_3.y;
@@ -270,13 +270,13 @@ Shader "HOLO/Holo2"
                 float4 uvNMap_xyzw_3 = mad(i.texcoord0.xxxy, _N_map_ST.xxxy, float4(r0_y_2, r0_y_2, r0_y_2, r0_w_1));
                 float uvNMap_y_3 = uvNMap_xyzw_3.y;
                 float uvNMap_w_2 = uvNMap_xyzw_3.w;
-                float4 sampleNMap_xyzw_1 = t0.Sample(s2, float4(uvNMap_y_3, uvNMap_w_2, uvNMap_y_3, uvNMap_y_3));
+                float4 sampleNMap_xyzw_1 = t0.Sample(sampler_linear_clamp2, (float4(uvNMap_y_3, uvNMap_w_2, uvNMap_y_3, uvNMap_y_3)).xy);
                 float r0_y_4 = (r1_x_1 * _M_map_ST.y);
                 float r0_w_3 = (cos(r0_y_1) * _M_map_ST.w);
                 float4 uvMMap_xyzw_5 = mad(i.texcoord0.xxxy, r0_y_4.xxxx, r0_w_3.xxxx);
                 float uvMMap_y_5 = uvMMap_xyzw_5.y;
                 float uvMMap_w_4 = uvMMap_xyzw_5.w;
-                float4 sampleMMap_xyzw_2 = t1.Sample(s3, float4(uvMMap_y_5, uvMMap_w_4, uvMMap_y_5, uvMMap_y_5));
+                float4 sampleMMap_xyzw_2 = t1.Sample(sampler_linear_clamp3, (float4(uvMMap_y_5, uvMMap_w_4, uvMMap_y_5, uvMMap_y_5)).xy);
                 float4 r0_xyzw_6 = (_OriginalUVSwitch.xxxx == float4(0, 0, 0, 1));
                 float r0_y_6 = r0_xyzw_6.y;
                 float r0_w_5 = r0_xyzw_6.w;
@@ -284,7 +284,7 @@ Shader "HOLO/Holo2"
                 if (r0_y_6)
                 {
                     float2 uvDiffuse_yz_1 = (mad(i.texcoord2.xxyx, _Diffuse_ST.yyyy, _Diffuse_ST.wwww)).yz;
-                    float4 sampleDiffuse_xyzw_2 = t2.Sample(s1, uvDiffuse_yz_1.xyxx);
+                    float4 sampleDiffuse_xyzw_2 = t2.Sample(sampler_linear_clamp1, (uvDiffuse_yz_1.xyxx).xy);
                     sampleDiffuse_xyzw_3 = sampleDiffuse_xyzw_2;
                 }
                 else
@@ -294,7 +294,7 @@ Shader "HOLO/Holo2"
                 float4 sampleDiffuse_xyzw_5 = sampleDiffuse_xyzw_3;
                 if (r0_w_5)
                 {
-                    float4 r4_xyzw_4 = t3.Sample(s0, i.texcoord0.xyxx);
+                    float4 r4_xyzw_4 = t3.Sample(sampler_linear_clamp, (i.texcoord0.xyxx).xy);
                     sampleDiffuse_xyzw_5 = r4_xyzw_4;
                 }
                 float r0_y_7 = (sampleMMap_xyzw_2.x * sampleNMap_xyzw_1.x);

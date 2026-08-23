@@ -66,8 +66,8 @@ Shader "Custom/Planet_Base_OCEANMOD"
                 float3 unity_ProbeVolumeSizeInv;
                 float3 unity_ProbeVolumeMin;
             };
-            SamplerState s0 : register(s0);
-            SamplerState s1 : register(s1);
+            SamplerState sampler_linear_clamp : register(s0);
+            SamplerState sampler_linear_clamp1 : register(s1);
             TextureCube t0 : register(t0);
             TextureCube t1 : register(t1);
             Texture3D t2 : register(t2);
@@ -164,7 +164,7 @@ Shader "Custom/Planet_Base_OCEANMOD"
                     float r3_w_6 = r3_xyzw_8.w;
                     float r3_y_9 = mad(r3_y_8, 0.25, 0.75);
                     float r3_x_6 = max(r3_y_9, mad(unity_ProbeVolumeParams.z, 0.5, 0.75));
-                    float4 r3_xyzw_7 = t2.Sample(s1, float4(r3_x_6, r3_z_8, r3_w_6, r3_x_6));
+                    float4 r3_xyzw_7 = t2.Sample(sampler_linear_clamp1, (float4(r3_x_6, r3_z_8, r3_w_6, r3_x_6)).xyz);
                     r3_x_8 = r3_xyzw_7.x;
                     r3_y_11 = r3_xyzw_7.y;
                     r3_z_10 = r3_xyzw_7.z;
@@ -209,7 +209,7 @@ Shader "Custom/Planet_Base_OCEANMOD"
                 float r4_w_7 = mad(-r3_y_12, 0.7, 1.7);
                 float r4_w_8 = (r3_y_12 * r4_w_7);
                 float r4_w_9 = (r4_w_8 * 6);
-                float4 r5_xyzw_5 = t0.SampleLevel(s0, r5_xyz_4.xyzx, r4_w_9);
+                float4 r5_xyzw_5 = t0.SampleLevel(sampler_linear_clamp, r5_xyz_4.xyz, r4_w_9);
                 float r5_w_2 = (r5_xyzw_5.w + -1);
                 float r5_w_3 = mad(unity_SpecCube0_HDR.w, r5_w_2, 1);
                 float r5_w_4 = (r5_w_3 * unity_SpecCube0_HDR.x);
@@ -238,7 +238,7 @@ Shader "Custom/Planet_Base_OCEANMOD"
                         r4_y_3 = r4_y_2;
                         r4_z_3 = r4_z_2;
                     }
-                    float4 r4_xyzw_6 = t1.SampleLevel(s0, float4(r4_x_5, r4_y_3, r4_z_3, r4_x_5), r4_w_9);
+                    float4 r4_xyzw_6 = t1.SampleLevel(sampler_linear_clamp, (float4(r4_x_5, r4_y_3, r4_z_3, r4_x_5)).xyz, r4_w_9);
                     float r4_w_11 = (r4_xyzw_6.w + -1);
                     float r4_w_12 = mad(unity_SpecCube1_HDR.w, r4_w_11, 1);
                     float r4_w_13 = (r4_w_12 * unity_SpecCube1_HDR.x);
@@ -401,9 +401,9 @@ Shader "Custom/Planet_Base_OCEANMOD"
             {
                 float4 cb7_values[7];
             };
-            SamplerState s0 : register(s0);
-            SamplerState s1 : register(s1);
-            SamplerState s2 : register(s2);
+            SamplerState sampler_linear_clamp : register(s0);
+            SamplerState sampler_linear_clamp1 : register(s1);
+            SamplerState sampler_linear_clamp2 : register(s2);
             Texture2D t0 : register(t0);
             TextureCube t1 : register(t1);
             TextureCube t2 : register(t2);
@@ -527,7 +527,7 @@ Shader "Custom/Planet_Base_OCEANMOD"
                     float r3_z_4 = mad(r4_y_8, 0.25, 0.75);
                     float r3_w_2 = mad(cb7_values[0].z, 0.5, 0.75);
                     float r4_x_8 = max(r3_w_2, r3_z_4);
-                    float4 r4_xyzw_9 = t3.Sample(s1, float4(r4_x_8, r4_z_8, r4_w_2, r4_x_8));
+                    float4 r4_xyzw_9 = t3.Sample(sampler_linear_clamp1, (float4(r4_x_8, r4_z_8, r4_w_2, r4_x_8)).xyz);
                     r4_x_10 = r4_xyzw_9.x;
                     r4_y_10 = r4_xyzw_9.y;
                     r4_z_10 = r4_xyzw_9.z;
@@ -542,7 +542,7 @@ Shader "Custom/Planet_Base_OCEANMOD"
                     r4_w_4 = r4_xyzw_10.w;
                 }
                 float r3_z_6 = dot(float4(r4_x_10, r4_y_10, r4_z_10, r4_w_4), unity_OcclusionMaskSelector);
-                float4 r4_xyzw_12 = t0.Sample(s2, ((i.texcoord4.xyxx / i.texcoord4.wwww)).xyxx);
+                float4 r4_xyzw_12 = t0.Sample(sampler_linear_clamp2, (((i.texcoord4.xyxx / i.texcoord4.wwww)).xyxx).xy);
                 float r3_z_7 = (r3_z_6 + -r4_xyzw_12.x);
                 float r3_z_8 = (-r2_x_3 + 1);
                 float r3_w_4 = dot(-unitViewDir_xyz_1.xyzx, i.texcoord0.xyzx);
@@ -572,17 +572,17 @@ Shader "Custom/Planet_Base_OCEANMOD"
                     float r3_y_9 = (cb7_values[0].z * 0.5);
                     float r3_w_8 = mad(-cb7_values[0].z, 0.5, 0.25);
                     float r6_x_6 = min(r3_w_8, max(r3_y_9, (r6_y_6 * 0.25)));
-                    float4 r7_xyzw_2 = t3.Sample(s1, float4(r6_x_6, r6_z_6, r6_w_2, r6_x_6));
+                    float4 r7_xyzw_2 = t3.Sample(sampler_linear_clamp1, (float4(r6_x_6, r6_z_6, r6_w_2, r6_x_6)).xyz);
                     float4 r3_xyzw_11 = (float4(r6_x_6, r6_z_6, r6_x_6, r6_w_2) + float4(0.25, 0, 0, 0));
                     float r3_x_11 = r3_xyzw_11.x;
                     float r3_y_10 = r3_xyzw_11.y;
                     float r3_w_9 = r3_xyzw_11.w;
-                    float4 r8_xyzw_1 = t3.Sample(s1, float4(r3_x_11, r3_y_10, r3_w_9, r3_x_11));
+                    float4 r8_xyzw_1 = t3.Sample(sampler_linear_clamp1, (float4(r3_x_11, r3_y_10, r3_w_9, r3_x_11)).xyz);
                     float4 r3_xyzw_12 = (float4(r6_x_6, r6_z_6, r6_x_6, r6_w_2) + float4(0.5, 0, 0, 0));
                     float r3_x_12 = r3_xyzw_12.x;
                     float r3_y_11 = r3_xyzw_12.y;
                     float r3_w_10 = r3_xyzw_12.w;
-                    float4 r6_xyzw_7 = t3.Sample(s1, float4(r3_x_12, r3_y_11, r3_w_10, r3_x_12));
+                    float4 r6_xyzw_7 = t3.Sample(sampler_linear_clamp1, (float4(r3_x_12, r3_y_11, r3_w_10, r3_x_12)).xyz);
                     TEXCOORD0_xyz_1 = i.texcoord0.xyz;
                     float r9_w_1 = 1;
                     float r7_x_3 = dot(r7_xyzw_2, float4(TEXCOORD0_xyz_1.x, TEXCOORD0_xyz_1.y, TEXCOORD0_xyz_1.z, r9_w_1));
@@ -647,7 +647,7 @@ Shader "Custom/Planet_Base_OCEANMOD"
                 float r4_w_12 = mad(-r3_z_8, 0.7, 1.7);
                 float r4_w_13 = (r3_z_8 * r4_w_12);
                 float r4_w_14 = (r4_w_13 * 6);
-                float4 r6_xyzw_13 = t1.SampleLevel(s0, r6_xyz_12.xyzx, r4_w_14);
+                float4 r6_xyzw_13 = t1.SampleLevel(sampler_linear_clamp, r6_xyz_12.xyz, r4_w_14);
                 float r5_w_1 = (r6_xyzw_13.w + -1);
                 float r5_w_2 = mad(cb6_values[3].w, r5_w_1, 1);
                 float r5_w_3 = (r5_w_2 * cb6_values[3].x);
@@ -676,7 +676,7 @@ Shader "Custom/Planet_Base_OCEANMOD"
                         r4_y_15 = r4_y_14;
                         r4_z_14 = r4_z_13;
                     }
-                    float4 r4_xyzw_16 = t2.SampleLevel(s0, float4(r4_x_15, r4_y_15, r4_z_14, r4_x_15), r4_w_14);
+                    float4 r4_xyzw_16 = t2.SampleLevel(sampler_linear_clamp, (float4(r4_x_15, r4_y_15, r4_z_14, r4_x_15)).xyz, r4_w_14);
                     float r4_w_16 = (r4_xyzw_16.w + -1);
                     float r4_w_17 = mad(cb6_values[7].w, r4_w_16, 1);
                     float r4_w_18 = (r4_w_17 * cb6_values[7].x);
@@ -852,9 +852,9 @@ Shader "Custom/Planet_Base_OCEANMOD"
             {
                 float4 cb7_values[7];
             };
-            SamplerState s0 : register(s0);
-            SamplerState s1 : register(s1);
-            SamplerState s2 : register(s2);
+            SamplerState sampler_linear_clamp : register(s0);
+            SamplerState sampler_linear_clamp1 : register(s1);
+            SamplerState sampler_linear_clamp2 : register(s2);
             Texture2D t0 : register(t0);
             TextureCube t1 : register(t1);
             TextureCube t2 : register(t2);
@@ -976,7 +976,7 @@ Shader "Custom/Planet_Base_OCEANMOD"
                     float r3_y_10 = mad(r4_y_6, 0.25, 0.75);
                     float r3_z_5 = mad(cb7_values[0].z, 0.5, 0.75);
                     float r4_x_6 = max(r3_z_5, r3_y_10);
-                    float4 r4_xyzw_7 = t3.Sample(s1, float4(r4_x_6, r4_z_6, r4_w_2, r4_x_6));
+                    float4 r4_xyzw_7 = t3.Sample(sampler_linear_clamp1, (float4(r4_x_6, r4_z_6, r4_w_2, r4_x_6)).xyz);
                     r4_x_8 = r4_xyzw_7.x;
                     r4_y_8 = r4_xyzw_7.y;
                     r4_z_8 = r4_xyzw_7.z;
@@ -994,7 +994,7 @@ Shader "Custom/Planet_Base_OCEANMOD"
                 float4 r3_xyzw_7 = (i.texcoord4.xxxy / i.texcoord4.wwww);
                 float r3_z_7 = r3_xyzw_7.z;
                 float r3_w_5 = r3_xyzw_7.w;
-                float4 r4_xyzw_9 = t0.Sample(s2, float4(r3_z_7, r3_w_5, r3_z_7, r3_z_7));
+                float4 r4_xyzw_9 = t0.Sample(sampler_linear_clamp2, (float4(r3_z_7, r3_w_5, r3_z_7, r3_z_7)).xy);
                 float r3_y_13 = (r3_y_12 + -r4_xyzw_9.x);
                 float r3_y_14 = (-r2_x_3 + 1);
                 float r3_z_8 = dot(-unitViewDir_xyz_1.xyzx, i.texcoord0.xyzx);
@@ -1022,7 +1022,7 @@ Shader "Custom/Planet_Base_OCEANMOD"
                 float r4_w_12 = mad(-r3_y_14, 0.7, 1.7);
                 float r4_w_13 = (r3_y_14 * r4_w_12);
                 float r4_w_14 = (r4_w_13 * 6);
-                float4 r5_xyzw_5 = t1.SampleLevel(s0, r5_xyz_4.xyzx, r4_w_14);
+                float4 r5_xyzw_5 = t1.SampleLevel(sampler_linear_clamp, r5_xyz_4.xyz, r4_w_14);
                 float r5_w_2 = (r5_xyzw_5.w + -1);
                 float r5_w_3 = mad(cb6_values[3].w, r5_w_2, 1);
                 float r5_w_4 = (r5_w_3 * cb6_values[3].x);
@@ -1043,7 +1043,7 @@ Shader "Custom/Planet_Base_OCEANMOD"
                         float r6_w_6 = min(r8_xyz_5.z, r6_w_5);
                         r4_xyz_12 = (mad(r7_xyz_4.xyzx, r6_w_6.xxxx, ((i.texcoord1.xyzx + -cb6_values[6].xyzx)).xyzx)).xyz;
                     }
-                    float4 r4_xyzw_13 = t2.SampleLevel(s0, r4_xyz_12.xyzx, r4_w_14);
+                    float4 r4_xyzw_13 = t2.SampleLevel(sampler_linear_clamp, r4_xyz_12.xyz, r4_w_14);
                     float r4_w_16 = (r4_xyzw_13.w + -1);
                     float r4_w_17 = mad(cb6_values[7].w, r4_w_16, 1);
                     float r4_w_18 = (r4_w_17 * cb6_values[7].x);
@@ -1204,8 +1204,8 @@ Shader "Custom/Planet_Base_OCEANMOD"
             {
                 float4 cb5_values[7];
             };
-            SamplerState s0 : register(s0);
-            SamplerState s1 : register(s1);
+            SamplerState sampler_linear_clamp : register(s0);
+            SamplerState sampler_linear_clamp1 : register(s1);
             TextureCube t0 : register(t0);
             TextureCube t1 : register(t1);
             Texture3D t2 : register(t2);
@@ -1319,7 +1319,7 @@ Shader "Custom/Planet_Base_OCEANMOD"
                     float r3_y_4 = mad(r4_y_6, 0.25, 0.75);
                     float r3_z_3 = mad(cb5_values[0].z, 0.5, 0.75);
                     float r4_x_6 = max(r3_z_3, r3_y_4);
-                    float4 r4_xyzw_7 = t2.Sample(s1, float4(r4_x_6, r4_z_6, r4_w_2, r4_x_6));
+                    float4 r4_xyzw_7 = t2.Sample(sampler_linear_clamp1, (float4(r4_x_6, r4_z_6, r4_w_2, r4_x_6)).xyz);
                     r4_x_8 = r4_xyzw_7.x;
                     r4_y_8 = r4_xyzw_7.y;
                     r4_z_8 = r4_xyzw_7.z;
@@ -1359,17 +1359,17 @@ Shader "Custom/Planet_Base_OCEANMOD"
                     float r3_y_9 = (cb5_values[0].z * 0.5);
                     float r3_w_8 = mad(-cb5_values[0].z, 0.5, 0.25);
                     float r6_x_6 = min(r3_w_8, max(r3_y_9, (r6_y_6 * 0.25)));
-                    float4 r7_xyzw_2 = t2.Sample(s1, float4(r6_x_6, r6_z_6, r6_w_2, r6_x_6));
+                    float4 r7_xyzw_2 = t2.Sample(sampler_linear_clamp1, (float4(r6_x_6, r6_z_6, r6_w_2, r6_x_6)).xyz);
                     float r3_x_7 = ((float4(r6_x_6, r6_z_6, r6_x_6, r6_w_2) + float4(0.25, 0, 0, 0))).x;
                     float4 r3_xyzw_10 = (float4(r6_x_6, r6_z_6, r6_x_6, r6_w_2) + float4(0.25, 0, 0, 0));
                     float r3_y_10 = r3_xyzw_10.y;
                     float r3_w_9 = r3_xyzw_10.w;
-                    float4 r8_xyzw_1 = t2.Sample(s1, float4(r3_x_7, r3_y_10, r3_w_9, r3_x_7));
+                    float4 r8_xyzw_1 = t2.Sample(sampler_linear_clamp1, (float4(r3_x_7, r3_y_10, r3_w_9, r3_x_7)).xyz);
                     float4 r3_xyzw_8 = (float4(r6_x_6, r6_z_6, r6_x_6, r6_w_2) + float4(0.5, 0, 0, 0));
                     float r3_x_8 = r3_xyzw_8.x;
                     float r3_y_11 = r3_xyzw_8.y;
                     float r3_w_10 = r3_xyzw_8.w;
-                    float4 r6_xyzw_7 = t2.Sample(s1, float4(r3_x_8, r3_y_11, r3_w_10, r3_x_8));
+                    float4 r6_xyzw_7 = t2.Sample(sampler_linear_clamp1, (float4(r3_x_8, r3_y_11, r3_w_10, r3_x_8)).xyz);
                     TEXCOORD0_xyz_1 = i.texcoord0.xyz;
                     float r9_w_1 = 1;
                     float r7_x_3 = dot(r7_xyzw_2, float4(TEXCOORD0_xyz_1.x, TEXCOORD0_xyz_1.y, TEXCOORD0_xyz_1.z, r9_w_1));
@@ -1432,7 +1432,7 @@ Shader "Custom/Planet_Base_OCEANMOD"
                 float r4_w_11 = mad(-r3_z_5, 0.7, 1.7);
                 float r4_w_12 = (r3_z_5 * r4_w_11);
                 float r4_w_13 = (r4_w_12 * 6);
-                float4 r6_xyzw_13 = t0.SampleLevel(s0, r6_xyz_12.xyzx, r4_w_13);
+                float4 r6_xyzw_13 = t0.SampleLevel(sampler_linear_clamp, r6_xyz_12.xyz, r4_w_13);
                 float r5_w_1 = (r6_xyzw_13.w + -1);
                 float r5_w_2 = mad(unity_ProbeVolumeWorldToObject[2].w, r5_w_1, 1);
                 float r5_w_3 = (r5_w_2 * unity_ProbeVolumeWorldToObject[2].x);
@@ -1453,7 +1453,7 @@ Shader "Custom/Planet_Base_OCEANMOD"
                         float r6_w_11 = min(r9_xyz_7.z, r6_w_10);
                         r4_xyz_11 = (mad(r8_xyz_6.xyzx, r6_w_11.xxxx, ((i.texcoord1.xyzx + -unity_ProbeVolumeMin.xyzx)).xyzx)).xyz;
                     }
-                    float4 r4_xyzw_12 = t1.SampleLevel(s0, r4_xyz_11.xyzx, r4_w_13);
+                    float4 r4_xyzw_12 = t1.SampleLevel(sampler_linear_clamp, r4_xyz_11.xyz, r4_w_13);
                     float r4_w_15 = (r4_xyzw_12.w + -1);
                     float r4_w_16 = mad(cb4_values[7].w, r4_w_15, 1);
                     float r4_w_17 = (r4_w_16 * cb4_values[7].x);
@@ -1612,8 +1612,8 @@ Shader "Custom/Planet_Base_OCEANMOD"
             {
                 float4 cb5_values[7];
             };
-            SamplerState s0 : register(s0);
-            SamplerState s1 : register(s1);
+            SamplerState sampler_linear_clamp : register(s0);
+            SamplerState sampler_linear_clamp1 : register(s1);
             TextureCube t0 : register(t0);
             TextureCube t1 : register(t1);
             Texture3D t2 : register(t2);
@@ -1717,7 +1717,7 @@ Shader "Custom/Planet_Base_OCEANMOD"
                     float r3_w_6 = r3_xyzw_8.w;
                     float r3_y_9 = mad(r3_y_8, 0.25, 0.75);
                     float r3_x_6 = max(r3_y_9, mad(cb5_values[0].z, 0.5, 0.75));
-                    float4 r3_xyzw_7 = t2.Sample(s1, float4(r3_x_6, r3_z_8, r3_w_6, r3_x_6));
+                    float4 r3_xyzw_7 = t2.Sample(sampler_linear_clamp1, (float4(r3_x_6, r3_z_8, r3_w_6, r3_x_6)).xyz);
                     r3_x_8 = r3_xyzw_7.x;
                     r3_y_11 = r3_xyzw_7.y;
                     r3_z_10 = r3_xyzw_7.z;
@@ -1762,7 +1762,7 @@ Shader "Custom/Planet_Base_OCEANMOD"
                 float r4_w_7 = mad(-r3_y_12, 0.7, 1.7);
                 float r4_w_8 = (r3_y_12 * r4_w_7);
                 float r4_w_9 = (r4_w_8 * 6);
-                float4 r5_xyzw_5 = t0.SampleLevel(s0, r5_xyz_4.xyzx, r4_w_9);
+                float4 r5_xyzw_5 = t0.SampleLevel(sampler_linear_clamp, r5_xyz_4.xyz, r4_w_9);
                 float r5_w_2 = (r5_xyzw_5.w + -1);
                 float r5_w_3 = mad(unity_ProbeVolumeWorldToObject[2].w, r5_w_2, 1);
                 float r5_w_4 = (r5_w_3 * unity_ProbeVolumeWorldToObject[2].x);
@@ -1791,7 +1791,7 @@ Shader "Custom/Planet_Base_OCEANMOD"
                         r4_y_3 = r4_y_2;
                         r4_z_3 = r4_z_2;
                     }
-                    float4 r4_xyzw_6 = t1.SampleLevel(s0, float4(r4_x_5, r4_y_3, r4_z_3, r4_x_5), r4_w_9);
+                    float4 r4_xyzw_6 = t1.SampleLevel(sampler_linear_clamp, (float4(r4_x_5, r4_y_3, r4_z_3, r4_x_5)).xyz, r4_w_9);
                     float r4_w_11 = (r4_xyzw_6.w + -1);
                     float r4_w_12 = mad(cb4_values[7].w, r4_w_11, 1);
                     float r4_w_13 = (r4_w_12 * cb4_values[7].x);
@@ -1963,9 +1963,9 @@ Shader "Custom/Planet_Base_OCEANMOD"
             {
                 float4 cb6_values[7];
             };
-            SamplerState s0 : register(s0);
-            SamplerState s1 : register(s1);
-            SamplerState s2 : register(s2);
+            SamplerState sampler_linear_clamp : register(s0);
+            SamplerState sampler_linear_clamp1 : register(s1);
+            SamplerState sampler_linear_clamp2 : register(s2);
             Texture2D t0 : register(t0);
             TextureCube t1 : register(t1);
             TextureCube t2 : register(t2);
@@ -2086,7 +2086,7 @@ Shader "Custom/Planet_Base_OCEANMOD"
                     float r3_z_4 = mad(r4_y_8, 0.25, 0.75);
                     float r3_w_2 = mad(cb6_values[0].z, 0.5, 0.75);
                     float r4_x_8 = max(r3_w_2, r3_z_4);
-                    float4 r4_xyzw_9 = t3.Sample(s1, float4(r4_x_8, r4_z_8, r4_w_2, r4_x_8));
+                    float4 r4_xyzw_9 = t3.Sample(sampler_linear_clamp1, (float4(r4_x_8, r4_z_8, r4_w_2, r4_x_8)).xyz);
                     r4_x_10 = r4_xyzw_9.x;
                     r4_y_10 = r4_xyzw_9.y;
                     r4_z_10 = r4_xyzw_9.z;
@@ -2101,7 +2101,7 @@ Shader "Custom/Planet_Base_OCEANMOD"
                     r4_w_4 = r4_xyzw_10.w;
                 }
                 float r3_z_6 = dot(float4(r4_x_10, r4_y_10, r4_z_10, r4_w_4), unity_OcclusionMaskSelector);
-                float4 r4_xyzw_12 = t0.Sample(s2, ((i.texcoord4.xyxx / i.texcoord4.wwww)).xyxx);
+                float4 r4_xyzw_12 = t0.Sample(sampler_linear_clamp2, (((i.texcoord4.xyxx / i.texcoord4.wwww)).xyxx).xy);
                 float r3_z_7 = (r3_z_6 + -r4_xyzw_12.x);
                 float r3_z_8 = (-r2_x_3 + 1);
                 float r3_w_4 = dot(-unitViewDir_xyz_1.xyzx, i.texcoord0.xyzx);
@@ -2131,17 +2131,17 @@ Shader "Custom/Planet_Base_OCEANMOD"
                     float r3_y_9 = (cb6_values[0].z * 0.5);
                     float r3_w_8 = mad(-cb6_values[0].z, 0.5, 0.25);
                     float r6_x_6 = min(r3_w_8, max(r3_y_9, (r6_y_6 * 0.25)));
-                    float4 r7_xyzw_2 = t3.Sample(s1, float4(r6_x_6, r6_z_6, r6_w_2, r6_x_6));
+                    float4 r7_xyzw_2 = t3.Sample(sampler_linear_clamp1, (float4(r6_x_6, r6_z_6, r6_w_2, r6_x_6)).xyz);
                     float4 r3_xyzw_11 = (float4(r6_x_6, r6_z_6, r6_x_6, r6_w_2) + float4(0.25, 0, 0, 0));
                     float r3_x_11 = r3_xyzw_11.x;
                     float r3_y_10 = r3_xyzw_11.y;
                     float r3_w_9 = r3_xyzw_11.w;
-                    float4 r8_xyzw_1 = t3.Sample(s1, float4(r3_x_11, r3_y_10, r3_w_9, r3_x_11));
+                    float4 r8_xyzw_1 = t3.Sample(sampler_linear_clamp1, (float4(r3_x_11, r3_y_10, r3_w_9, r3_x_11)).xyz);
                     float4 r3_xyzw_12 = (float4(r6_x_6, r6_z_6, r6_x_6, r6_w_2) + float4(0.5, 0, 0, 0));
                     float r3_x_12 = r3_xyzw_12.x;
                     float r3_y_11 = r3_xyzw_12.y;
                     float r3_w_10 = r3_xyzw_12.w;
-                    float4 r6_xyzw_7 = t3.Sample(s1, float4(r3_x_12, r3_y_11, r3_w_10, r3_x_12));
+                    float4 r6_xyzw_7 = t3.Sample(sampler_linear_clamp1, (float4(r3_x_12, r3_y_11, r3_w_10, r3_x_12)).xyz);
                     TEXCOORD0_xyz_1 = i.texcoord0.xyz;
                     float r9_w_1 = 1;
                     float r7_x_3 = dot(r7_xyzw_2, float4(TEXCOORD0_xyz_1.x, TEXCOORD0_xyz_1.y, TEXCOORD0_xyz_1.z, r9_w_1));
@@ -2206,7 +2206,7 @@ Shader "Custom/Planet_Base_OCEANMOD"
                 float r4_w_12 = mad(-r3_z_8, 0.7, 1.7);
                 float r4_w_13 = (r3_z_8 * r4_w_12);
                 float r4_w_14 = (r4_w_13 * 6);
-                float4 r6_xyzw_13 = t1.SampleLevel(s0, r6_xyz_12.xyzx, r4_w_14);
+                float4 r6_xyzw_13 = t1.SampleLevel(sampler_linear_clamp, r6_xyz_12.xyz, r4_w_14);
                 float r5_w_1 = (r6_xyzw_13.w + -1);
                 float r5_w_2 = mad(cb5_values[3].w, r5_w_1, 1);
                 float r5_w_3 = (r5_w_2 * cb5_values[3].x);
@@ -2235,7 +2235,7 @@ Shader "Custom/Planet_Base_OCEANMOD"
                         r4_y_15 = r4_y_14;
                         r4_z_14 = r4_z_13;
                     }
-                    float4 r4_xyzw_16 = t2.SampleLevel(s0, float4(r4_x_15, r4_y_15, r4_z_14, r4_x_15), r4_w_14);
+                    float4 r4_xyzw_16 = t2.SampleLevel(sampler_linear_clamp, (float4(r4_x_15, r4_y_15, r4_z_14, r4_x_15)).xyz, r4_w_14);
                     float r4_w_16 = (r4_xyzw_16.w + -1);
                     float r4_w_17 = mad(cb5_values[7].w, r4_w_16, 1);
                     float r4_w_18 = (r4_w_17 * cb5_values[7].x);
@@ -2394,9 +2394,9 @@ Shader "Custom/Planet_Base_OCEANMOD"
             {
                 float4 cb6_values[7];
             };
-            SamplerState s0 : register(s0);
-            SamplerState s1 : register(s1);
-            SamplerState s2 : register(s2);
+            SamplerState sampler_linear_clamp : register(s0);
+            SamplerState sampler_linear_clamp1 : register(s1);
+            SamplerState sampler_linear_clamp2 : register(s2);
             Texture2D t0 : register(t0);
             TextureCube t1 : register(t1);
             TextureCube t2 : register(t2);
@@ -2515,7 +2515,7 @@ Shader "Custom/Planet_Base_OCEANMOD"
                     float r3_y_10 = mad(r4_y_6, 0.25, 0.75);
                     float r3_z_5 = mad(cb6_values[0].z, 0.5, 0.75);
                     float r4_x_6 = max(r3_z_5, r3_y_10);
-                    float4 r4_xyzw_7 = t3.Sample(s1, float4(r4_x_6, r4_z_6, r4_w_2, r4_x_6));
+                    float4 r4_xyzw_7 = t3.Sample(sampler_linear_clamp1, (float4(r4_x_6, r4_z_6, r4_w_2, r4_x_6)).xyz);
                     r4_x_8 = r4_xyzw_7.x;
                     r4_y_8 = r4_xyzw_7.y;
                     r4_z_8 = r4_xyzw_7.z;
@@ -2533,7 +2533,7 @@ Shader "Custom/Planet_Base_OCEANMOD"
                 float4 r3_xyzw_7 = (i.texcoord4.xxxy / i.texcoord4.wwww);
                 float r3_z_7 = r3_xyzw_7.z;
                 float r3_w_5 = r3_xyzw_7.w;
-                float4 r4_xyzw_9 = t0.Sample(s2, float4(r3_z_7, r3_w_5, r3_z_7, r3_z_7));
+                float4 r4_xyzw_9 = t0.Sample(sampler_linear_clamp2, (float4(r3_z_7, r3_w_5, r3_z_7, r3_z_7)).xy);
                 float r3_y_13 = (r3_y_12 + -r4_xyzw_9.x);
                 float r3_y_14 = (-r2_x_3 + 1);
                 float r3_z_8 = dot(-unitViewDir_xyz_1.xyzx, i.texcoord0.xyzx);
@@ -2561,7 +2561,7 @@ Shader "Custom/Planet_Base_OCEANMOD"
                 float r4_w_12 = mad(-r3_y_14, 0.7, 1.7);
                 float r4_w_13 = (r3_y_14 * r4_w_12);
                 float r4_w_14 = (r4_w_13 * 6);
-                float4 r5_xyzw_5 = t1.SampleLevel(s0, r5_xyz_4.xyzx, r4_w_14);
+                float4 r5_xyzw_5 = t1.SampleLevel(sampler_linear_clamp, r5_xyz_4.xyz, r4_w_14);
                 float r5_w_2 = (r5_xyzw_5.w + -1);
                 float r5_w_3 = mad(cb5_values[3].w, r5_w_2, 1);
                 float r5_w_4 = (r5_w_3 * cb5_values[3].x);
@@ -2582,7 +2582,7 @@ Shader "Custom/Planet_Base_OCEANMOD"
                         float r6_w_6 = min(r8_xyz_5.z, r6_w_5);
                         r4_xyz_12 = (mad(r7_xyz_4.xyzx, r6_w_6.xxxx, ((i.texcoord1.xyzx + -cb5_values[6].xyzx)).xyzx)).xyz;
                     }
-                    float4 r4_xyzw_13 = t2.SampleLevel(s0, r4_xyz_12.xyzx, r4_w_14);
+                    float4 r4_xyzw_13 = t2.SampleLevel(sampler_linear_clamp, r4_xyz_12.xyz, r4_w_14);
                     float r4_w_16 = (r4_xyzw_13.w + -1);
                     float r4_w_17 = mad(cb5_values[7].w, r4_w_16, 1);
                     float r4_w_18 = (r4_w_17 * cb5_values[7].x);
@@ -2725,8 +2725,8 @@ Shader "Custom/Planet_Base_OCEANMOD"
                 float3 unity_ProbeVolumeSizeInv;
                 float3 unity_ProbeVolumeMin;
             };
-            SamplerState s0 : register(s0);
-            SamplerState s1 : register(s1);
+            SamplerState sampler_linear_clamp : register(s0);
+            SamplerState sampler_linear_clamp1 : register(s1);
             TextureCube t0 : register(t0);
             TextureCube t1 : register(t1);
             Texture3D t2 : register(t2);
@@ -2833,7 +2833,7 @@ Shader "Custom/Planet_Base_OCEANMOD"
                     float r3_y_4 = mad(r4_y_6, 0.25, 0.75);
                     float r3_z_3 = mad(unity_ProbeVolumeParams.z, 0.5, 0.75);
                     float r4_x_6 = max(r3_z_3, r3_y_4);
-                    float4 r4_xyzw_7 = t2.Sample(s1, float4(r4_x_6, r4_z_6, r4_w_2, r4_x_6));
+                    float4 r4_xyzw_7 = t2.Sample(sampler_linear_clamp1, (float4(r4_x_6, r4_z_6, r4_w_2, r4_x_6)).xyz);
                     r4_x_8 = r4_xyzw_7.x;
                     r4_y_8 = r4_xyzw_7.y;
                     r4_z_8 = r4_xyzw_7.z;
@@ -2873,17 +2873,17 @@ Shader "Custom/Planet_Base_OCEANMOD"
                     float r3_y_9 = (unity_ProbeVolumeParams.z * 0.5);
                     float r3_w_8 = mad(-unity_ProbeVolumeParams.z, 0.5, 0.25);
                     float r6_x_6 = min(r3_w_8, max(r3_y_9, (r6_y_6 * 0.25)));
-                    float4 r7_xyzw_2 = t2.Sample(s1, float4(r6_x_6, r6_z_6, r6_w_2, r6_x_6));
+                    float4 r7_xyzw_2 = t2.Sample(sampler_linear_clamp1, (float4(r6_x_6, r6_z_6, r6_w_2, r6_x_6)).xyz);
                     float4 r3_xyzw_7 = (float4(r6_x_6, r6_z_6, r6_x_6, r6_w_2) + float4(0.25, 0, 0, 0));
                     float r3_x_7 = r3_xyzw_7.x;
                     float r3_y_10 = r3_xyzw_7.y;
                     float r3_w_9 = r3_xyzw_7.w;
-                    float4 r8_xyzw_1 = t2.Sample(s1, float4(r3_x_7, r3_y_10, r3_w_9, r3_x_7));
+                    float4 r8_xyzw_1 = t2.Sample(sampler_linear_clamp1, (float4(r3_x_7, r3_y_10, r3_w_9, r3_x_7)).xyz);
                     float4 r3_xyzw_8 = (float4(r6_x_6, r6_z_6, r6_x_6, r6_w_2) + float4(0.5, 0, 0, 0));
                     float r3_x_8 = r3_xyzw_8.x;
                     float r3_y_11 = r3_xyzw_8.y;
                     float r3_w_10 = r3_xyzw_8.w;
-                    float4 r6_xyzw_7 = t2.Sample(s1, float4(r3_x_8, r3_y_11, r3_w_10, r3_x_8));
+                    float4 r6_xyzw_7 = t2.Sample(sampler_linear_clamp1, (float4(r3_x_8, r3_y_11, r3_w_10, r3_x_8)).xyz);
                     TEXCOORD0_xyz_1 = i.texcoord0.xyz;
                     float r9_w_1 = 1;
                     float r7_x_3 = dot(r7_xyzw_2, float4(TEXCOORD0_xyz_1.x, TEXCOORD0_xyz_1.y, TEXCOORD0_xyz_1.z, r9_w_1));
@@ -2946,7 +2946,7 @@ Shader "Custom/Planet_Base_OCEANMOD"
                 float r4_w_11 = mad(-r3_z_5, 0.7, 1.7);
                 float r4_w_12 = (r3_z_5 * r4_w_11);
                 float r4_w_13 = (r4_w_12 * 6);
-                float4 r6_xyzw_13 = t0.SampleLevel(s0, r6_xyz_12.xyzx, r4_w_13);
+                float4 r6_xyzw_13 = t0.SampleLevel(sampler_linear_clamp, r6_xyz_12.xyz, r4_w_13);
                 float r5_w_1 = (r6_xyzw_13.w + -1);
                 float r5_w_2 = mad(unity_SpecCube0_HDR.w, r5_w_1, 1);
                 float r5_w_3 = (r5_w_2 * unity_SpecCube0_HDR.x);
@@ -2967,7 +2967,7 @@ Shader "Custom/Planet_Base_OCEANMOD"
                         float r6_w_11 = min(r9_xyz_7.z, r6_w_10);
                         r4_xyz_11 = (mad(r8_xyz_6.xyzx, r6_w_11.xxxx, ((i.texcoord1.xyzx + -unity_SpecCube1_ProbePosition.xyzx)).xyzx)).xyz;
                     }
-                    float4 r4_xyzw_12 = t1.SampleLevel(s0, r4_xyz_11.xyzx, r4_w_13);
+                    float4 r4_xyzw_12 = t1.SampleLevel(sampler_linear_clamp, r4_xyz_11.xyz, r4_w_13);
                     float r4_w_15 = (r4_xyzw_12.w + -1);
                     float r4_w_16 = mad(unity_SpecCube1_HDR.w, r4_w_15, 1);
                     float r4_w_17 = (r4_w_16 * unity_SpecCube1_HDR.x);
@@ -3091,8 +3091,8 @@ Shader "Custom/Planet_Base_OCEANMOD"
                 float3 unity_ProbeVolumeSizeInv;
                 float3 unity_ProbeVolumeMin;
             };
-            SamplerState s0 : register(s0);
-            SamplerState s1 : register(s1);
+            SamplerState sampler_linear_clamp : register(s0);
+            SamplerState sampler_linear_clamp1 : register(s1);
             Texture2D t0 : register(t0);
             Texture3D t1 : register(t1);
             struct program41Input
@@ -3182,7 +3182,7 @@ Shader "Custom/Planet_Base_OCEANMOD"
                     float r2_w_5 = mad(r5_y_8, 0.25, 0.75);
                     float r3_w_1 = mad(unity_ProbeVolumeParams.z, 0.5, 0.75);
                     float r5_x_8 = max(r2_w_5, r3_w_1);
-                    float4 r5_xyzw_9 = t1.Sample(s0, float4(r5_x_8, r5_z_8, r5_w_2, r5_x_8));
+                    float4 r5_xyzw_9 = t1.Sample(sampler_linear_clamp, (float4(r5_x_8, r5_z_8, r5_w_2, r5_x_8)).xyz);
                     r5_x_10 = r5_xyzw_9.x;
                     r5_y_10 = r5_xyzw_9.y;
                     r5_z_10 = r5_xyzw_9.z;
@@ -3198,7 +3198,7 @@ Shader "Custom/Planet_Base_OCEANMOD"
                 }
                 float r2_w_7 = dot(float4(r5_x_10, r5_y_10, r5_z_10, r5_w_4), unity_OcclusionMaskSelector);
                 float r3_w_3 = dot(r4_xyz_4.xyzx, r4_xyz_4.xyzx);
-                float4 r4_xyzw_5 = t0.Sample(s1, r3_w_3.xxxx);
+                float4 r4_xyzw_5 = t0.Sample(sampler_linear_clamp1, (r3_w_3.xxxx).xy);
                 float r2_w_8 = (r2_w_7 * r4_xyzw_5.x);
                 float3 r4_xyz_6 = ((r2_w_8.xxxx * _LightColor0.xyzx)).xyz;
                 float3 unitWorldNormal_xyz_11 = normalize(i.texcoord0);
@@ -3311,10 +3311,10 @@ Shader "Custom/Planet_Base_OCEANMOD"
             {
                 float4 cb6_values[7];
             };
-            SamplerState s0 : register(s0);
-            SamplerComparisonState s1 : register(s1);
-            SamplerState s2 : register(s2);
-            SamplerState s3 : register(s3);
+            SamplerState sampler_linear_clamp : register(s0);
+            SamplerComparisonState sampler_comparison_linear_clamp1 : register(s1);
+            SamplerState sampler_linear_clamp2 : register(s2);
+            SamplerState sampler_linear_clamp3 : register(s3);
             Texture2D t0 : register(t0);
             TextureCube t1 : register(t1);
             Texture3D t2 : register(t2);
@@ -3431,7 +3431,7 @@ Shader "Custom/Planet_Base_OCEANMOD"
                     float r2_y_10 = mad(r6_y_7, 0.25, 0.75);
                     float r2_z_5 = mad(cb6_values[0].z, 0.5, 0.75);
                     float r6_x_7 = max(r2_z_5, r2_y_10);
-                    float4 r6_xyzw_8 = t2.Sample(s0, float4(r6_x_7, r6_z_7, r6_w_2, r6_x_7));
+                    float4 r6_xyzw_8 = t2.Sample(sampler_linear_clamp, (float4(r6_x_7, r6_z_7, r6_w_2, r6_x_7)).xyz);
                     r6_x_9 = r6_xyzw_8.x;
                     r6_y_9 = r6_xyzw_8.y;
                     r6_z_9 = r6_xyzw_8.z;
@@ -3459,10 +3459,10 @@ Shader "Custom/Planet_Base_OCEANMOD"
                     float r2_z_14 = (cb2_values[2].y / r2_z_13);
                     float r2_z_15 = (r2_z_14 + -cb2_values[2].x);
                     float r2_z_16 = (-r2_z_15 + 1);
-                    float r7_x_2 = t3.SampleCmpLevelZero(s1, (((r6_xyz_10.xyzx + float4(0.0078125, 0.0078125, 0.0078125, 0))).xyzx).xyz, r2_z_16);
-                    float r7_y_2 = t3.SampleCmpLevelZero(s1, (((r6_xyz_10.xyzx + float4(-0.0078125, -0.0078125, 0.0078125, 0))).xyzx).xyz, r2_z_16);
-                    float r7_z_2 = t3.SampleCmpLevelZero(s1, (((r6_xyz_10.xyzx + float4(-0.0078125, 0.0078125, -0.0078125, 0))).xyzx).xyz, r2_z_16);
-                    float r7_w_1 = t3.SampleCmpLevelZero(s1, (((r6_xyz_10.xyzx + float4(0.0078125, -0.0078125, -0.0078125, 0))).xyzx).xyz, r2_z_16);
+                    float r7_x_2 = t3.SampleCmpLevelZero(sampler_comparison_linear_clamp1, (((r6_xyz_10.xyzx + float4(0.0078125, 0.0078125, 0.0078125, 0))).xyzx).xyz, r2_z_16);
+                    float r7_y_2 = t3.SampleCmpLevelZero(sampler_comparison_linear_clamp1, (((r6_xyz_10.xyzx + float4(-0.0078125, -0.0078125, 0.0078125, 0))).xyzx).xyz, r2_z_16);
+                    float r7_z_2 = t3.SampleCmpLevelZero(sampler_comparison_linear_clamp1, (((r6_xyz_10.xyzx + float4(-0.0078125, 0.0078125, -0.0078125, 0))).xyzx).xyz, r2_z_16);
+                    float r7_w_1 = t3.SampleCmpLevelZero(sampler_comparison_linear_clamp1, (((r6_xyz_10.xyzx + float4(0.0078125, -0.0078125, -0.0078125, 0))).xyzx).xyz, r2_z_16);
                     float r2_z_17 = dot(float4(r7_x_2, r7_y_2, r7_z_2, r7_w_1), float4(0.25, 0.25, 0.25, 0.25));
                     float r2_w_7 = (-cb3_values[24].x + 1);
                     float r2_z_18 = mad(r2_z_17, r2_w_7, cb3_values[24].x);
@@ -3475,8 +3475,8 @@ Shader "Custom/Planet_Base_OCEANMOD"
                 }
                 float r2_y_13 = (-r2_z_19 + r2_y_12);
                 float r2_y_14 = dot(r5_xyz_4.xyzx, r5_xyz_4.xyzx);
-                float4 r6_xyzw_13 = t0.Sample(s3, r2_y_14.xxxx);
-                float4 r5_xyzw_5 = t1.Sample(s2, r5_xyz_4.xyzx);
+                float4 r6_xyzw_13 = t0.Sample(sampler_linear_clamp3, (r2_y_14.xxxx).xy);
+                float4 r5_xyzw_5 = t1.Sample(sampler_linear_clamp2, r5_xyz_4.xyz);
                 float r2_y_15 = (r5_xyzw_5.w * r6_xyzw_13.x);
                 float4 r2_xyzw_7 = (((mad(r2_x_4, r2_y_13, r2_z_19) * r2_y_15)).xxxx * _LightColor0.xyzx);
                 float r2_x_7 = r2_xyzw_7.x;
@@ -3601,10 +3601,10 @@ Shader "Custom/Planet_Base_OCEANMOD"
             {
                 float4 cb6_values[7];
             };
-            SamplerState s0 : register(s0);
-            SamplerComparisonState s1 : register(s1);
-            SamplerState s2 : register(s2);
-            SamplerState s3 : register(s3);
+            SamplerState sampler_linear_clamp : register(s0);
+            SamplerComparisonState sampler_comparison_linear_clamp1 : register(s1);
+            SamplerState sampler_linear_clamp2 : register(s2);
+            SamplerState sampler_linear_clamp3 : register(s3);
             Texture2D t0 : register(t0);
             TextureCube t1 : register(t1);
             Texture3D t2 : register(t2);
@@ -3720,7 +3720,7 @@ Shader "Custom/Planet_Base_OCEANMOD"
                     float r2_y_10 = mad(r6_y_7, 0.25, 0.75);
                     float r2_z_5 = mad(cb6_values[0].z, 0.5, 0.75);
                     float r6_x_7 = max(r2_z_5, r2_y_10);
-                    float4 r6_xyzw_8 = t2.Sample(s0, float4(r6_x_7, r6_z_7, r6_w_2, r6_x_7));
+                    float4 r6_xyzw_8 = t2.Sample(sampler_linear_clamp, (float4(r6_x_7, r6_z_7, r6_w_2, r6_x_7)).xyz);
                     r6_x_9 = r6_xyzw_8.x;
                     r6_y_9 = r6_xyzw_8.y;
                     r6_z_9 = r6_xyzw_8.z;
@@ -3744,13 +3744,13 @@ Shader "Custom/Planet_Base_OCEANMOD"
                 float r2_z_12 = (cb2_values[2].y / r2_z_11);
                 float r2_z_13 = (r2_z_12 + -cb2_values[2].x);
                 float r2_z_14 = (-r2_z_13 + 1);
-                float r2_z_15 = t3.SampleCmpLevelZero(s1, r6_xyz_10.xyz, r2_z_14);
+                float r2_z_15 = t3.SampleCmpLevelZero(sampler_comparison_linear_clamp1, r6_xyz_10.xyz, r2_z_14);
                 float r2_w_7 = (-cb3_values[24].x + 1);
                 float r2_z_16 = mad(r2_z_15, r2_w_7, cb3_values[24].x);
                 float r2_y_13 = (-r2_z_16 + r2_y_12);
                 float r2_y_14 = dot(r5_xyz_4.xyzx, r5_xyz_4.xyzx);
-                float4 r6_xyzw_11 = t0.Sample(s3, r2_y_14.xxxx);
-                float4 r5_xyzw_5 = t1.Sample(s2, r5_xyz_4.xyzx);
+                float4 r6_xyzw_11 = t0.Sample(sampler_linear_clamp3, (r2_y_14.xxxx).xy);
+                float4 r5_xyzw_5 = t1.Sample(sampler_linear_clamp2, r5_xyz_4.xyz);
                 float r2_y_15 = (r5_xyzw_5.w * r6_xyzw_11.x);
                 float4 r2_xyzw_7 = (((mad(mad(mad(cb3_values[25].w, r2_y_5, r2_x_2), cb3_values[24].z, cb3_values[24].w), r2_y_13, r2_z_16) * r2_y_15)).xxxx * _LightColor0.xyzx);
                 float r2_x_7 = r2_xyzw_7.x;
@@ -3875,9 +3875,9 @@ Shader "Custom/Planet_Base_OCEANMOD"
             {
                 float4 cb6_values[7];
             };
-            SamplerState s0 : register(s0);
-            SamplerComparisonState s1 : register(s1);
-            SamplerState s2 : register(s2);
+            SamplerState sampler_linear_clamp : register(s0);
+            SamplerComparisonState sampler_comparison_linear_clamp1 : register(s1);
+            SamplerState sampler_linear_clamp2 : register(s2);
             Texture2D t0 : register(t0);
             Texture3D t1 : register(t1);
             TextureCube t2 : register(t2);
@@ -3993,7 +3993,7 @@ Shader "Custom/Planet_Base_OCEANMOD"
                     float r2_y_10 = mad(r6_y_7, 0.25, 0.75);
                     float r2_z_5 = mad(cb6_values[0].z, 0.5, 0.75);
                     float r6_x_7 = max(r2_z_5, r2_y_10);
-                    float4 r6_xyzw_8 = t1.Sample(s0, float4(r6_x_7, r6_z_7, r6_w_2, r6_x_7));
+                    float4 r6_xyzw_8 = t1.Sample(sampler_linear_clamp, (float4(r6_x_7, r6_z_7, r6_w_2, r6_x_7)).xyz);
                     r6_x_9 = r6_xyzw_8.x;
                     r6_y_9 = r6_xyzw_8.y;
                     r6_z_9 = r6_xyzw_8.z;
@@ -4021,10 +4021,10 @@ Shader "Custom/Planet_Base_OCEANMOD"
                     float r2_z_14 = (cb2_values[2].y / r2_z_13);
                     float r2_z_15 = (r2_z_14 + -cb2_values[2].x);
                     float r2_z_16 = (-r2_z_15 + 1);
-                    float r7_x_2 = t2.SampleCmpLevelZero(s1, (((r6_xyz_10.xyzx + float4(0.0078125, 0.0078125, 0.0078125, 0))).xyzx).xyz, r2_z_16);
-                    float r7_y_2 = t2.SampleCmpLevelZero(s1, (((r6_xyz_10.xyzx + float4(-0.0078125, -0.0078125, 0.0078125, 0))).xyzx).xyz, r2_z_16);
-                    float r7_z_2 = t2.SampleCmpLevelZero(s1, (((r6_xyz_10.xyzx + float4(-0.0078125, 0.0078125, -0.0078125, 0))).xyzx).xyz, r2_z_16);
-                    float r7_w_1 = t2.SampleCmpLevelZero(s1, (((r6_xyz_10.xyzx + float4(0.0078125, -0.0078125, -0.0078125, 0))).xyzx).xyz, r2_z_16);
+                    float r7_x_2 = t2.SampleCmpLevelZero(sampler_comparison_linear_clamp1, (((r6_xyz_10.xyzx + float4(0.0078125, 0.0078125, 0.0078125, 0))).xyzx).xyz, r2_z_16);
+                    float r7_y_2 = t2.SampleCmpLevelZero(sampler_comparison_linear_clamp1, (((r6_xyz_10.xyzx + float4(-0.0078125, -0.0078125, 0.0078125, 0))).xyzx).xyz, r2_z_16);
+                    float r7_z_2 = t2.SampleCmpLevelZero(sampler_comparison_linear_clamp1, (((r6_xyz_10.xyzx + float4(-0.0078125, 0.0078125, -0.0078125, 0))).xyzx).xyz, r2_z_16);
+                    float r7_w_1 = t2.SampleCmpLevelZero(sampler_comparison_linear_clamp1, (((r6_xyz_10.xyzx + float4(0.0078125, -0.0078125, -0.0078125, 0))).xyzx).xyz, r2_z_16);
                     float r2_z_17 = dot(float4(r7_x_2, r7_y_2, r7_z_2, r7_w_1), float4(0.25, 0.25, 0.25, 0.25));
                     float r2_w_7 = (-cb3_values[24].x + 1);
                     float r2_z_18 = mad(r2_z_17, r2_w_7, cb3_values[24].x);
@@ -4037,7 +4037,7 @@ Shader "Custom/Planet_Base_OCEANMOD"
                 }
                 float r2_y_13 = (-r2_z_19 + r2_y_12);
                 float r2_y_14 = dot(r5_xyz_4.xyzx, r5_xyz_4.xyzx);
-                float4 r5_xyzw_5 = t0.Sample(s2, r2_y_14.xxxx);
+                float4 r5_xyzw_5 = t0.Sample(sampler_linear_clamp2, (r2_y_14.xxxx).xy);
                 float4 r2_xyzw_7 = (((mad(r2_x_4, r2_y_13, r2_z_19) * r5_xyzw_5.x)).xxxx * _LightColor0.xyzx);
                 float r2_x_7 = r2_xyzw_7.x;
                 float r2_y_15 = r2_xyzw_7.y;
@@ -4161,9 +4161,9 @@ Shader "Custom/Planet_Base_OCEANMOD"
             {
                 float4 cb6_values[7];
             };
-            SamplerState s0 : register(s0);
-            SamplerComparisonState s1 : register(s1);
-            SamplerState s2 : register(s2);
+            SamplerState sampler_linear_clamp : register(s0);
+            SamplerComparisonState sampler_comparison_linear_clamp1 : register(s1);
+            SamplerState sampler_linear_clamp2 : register(s2);
             Texture2D t0 : register(t0);
             Texture3D t1 : register(t1);
             TextureCube t2 : register(t2);
@@ -4278,7 +4278,7 @@ Shader "Custom/Planet_Base_OCEANMOD"
                     float r2_y_10 = mad(r6_y_7, 0.25, 0.75);
                     float r2_z_5 = mad(cb6_values[0].z, 0.5, 0.75);
                     float r6_x_7 = max(r2_z_5, r2_y_10);
-                    float4 r6_xyzw_8 = t1.Sample(s0, float4(r6_x_7, r6_z_7, r6_w_2, r6_x_7));
+                    float4 r6_xyzw_8 = t1.Sample(sampler_linear_clamp, (float4(r6_x_7, r6_z_7, r6_w_2, r6_x_7)).xyz);
                     r6_x_9 = r6_xyzw_8.x;
                     r6_y_9 = r6_xyzw_8.y;
                     r6_z_9 = r6_xyzw_8.z;
@@ -4302,12 +4302,12 @@ Shader "Custom/Planet_Base_OCEANMOD"
                 float r2_z_12 = (cb2_values[2].y / r2_z_11);
                 float r2_z_13 = (r2_z_12 + -cb2_values[2].x);
                 float r2_z_14 = (-r2_z_13 + 1);
-                float r2_z_15 = t2.SampleCmpLevelZero(s1, r6_xyz_10.xyz, r2_z_14);
+                float r2_z_15 = t2.SampleCmpLevelZero(sampler_comparison_linear_clamp1, r6_xyz_10.xyz, r2_z_14);
                 float r2_w_7 = (-cb3_values[24].x + 1);
                 float r2_z_16 = mad(r2_z_15, r2_w_7, cb3_values[24].x);
                 float r2_y_13 = (-r2_z_16 + r2_y_12);
                 float r2_y_14 = dot(r5_xyz_4.xyzx, r5_xyz_4.xyzx);
-                float4 r5_xyzw_5 = t0.Sample(s2, r2_y_14.xxxx);
+                float4 r5_xyzw_5 = t0.Sample(sampler_linear_clamp2, (r2_y_14.xxxx).xy);
                 float4 r2_xyzw_7 = (((mad(mad(mad(cb3_values[25].w, r2_y_5, r2_x_2), cb3_values[24].z, cb3_values[24].w), r2_y_13, r2_z_16) * r5_xyzw_5.x)).xxxx * _LightColor0.xyzx);
                 float r2_x_7 = r2_xyzw_7.x;
                 float r2_y_15 = r2_xyzw_7.y;
@@ -4431,9 +4431,9 @@ Shader "Custom/Planet_Base_OCEANMOD"
             {
                 float4 cb6_values[7];
             };
-            SamplerState s0 : register(s0);
-            SamplerState s1 : register(s1);
-            SamplerState s2 : register(s2);
+            SamplerState sampler_linear_clamp : register(s0);
+            SamplerState sampler_linear_clamp1 : register(s1);
+            SamplerState sampler_linear_clamp2 : register(s2);
             Texture2D t0 : register(t0);
             Texture2D t1 : register(t1);
             Texture3D t2 : register(t2);
@@ -4541,7 +4541,7 @@ Shader "Custom/Planet_Base_OCEANMOD"
                     float r3_z_6 = mad(r4_y_10, 0.25, 0.75);
                     float r3_w_1 = mad(cb6_values[0].z, 0.5, 0.75);
                     float r4_x_10 = max(r3_w_1, r3_z_6);
-                    float4 r4_xyzw_11 = t2.Sample(s0, float4(r4_x_10, r4_z_10, r4_w_2, r4_x_10));
+                    float4 r4_xyzw_11 = t2.Sample(sampler_linear_clamp, (float4(r4_x_10, r4_z_10, r4_w_2, r4_x_10)).xyz);
                     r4_x_12 = r4_xyzw_11.x;
                     r4_y_12 = r4_xyzw_11.y;
                     r4_z_12 = r4_xyzw_11.z;
@@ -4556,10 +4556,10 @@ Shader "Custom/Planet_Base_OCEANMOD"
                     r4_w_4 = r4_xyzw_3.w;
                 }
                 float r3_z_8 = dot(float4(r4_x_12, r4_y_12, r4_z_12, r4_w_4), unity_OcclusionMaskSelector);
-                float4 r4_xyzw_14 = t0.Sample(s1, ((i.texcoord3.xyxx / i.texcoord3.wwww)).xyxx);
+                float4 r4_xyzw_14 = t0.Sample(sampler_linear_clamp1, (((i.texcoord3.xyxx / i.texcoord3.wwww)).xyxx).xy);
                 float r3_z_9 = (r3_z_8 + -r4_xyzw_14.x);
                 float r2_w_4 = mad(r2_w_3, r3_z_9, r4_xyzw_14.x);
-                float4 r3_xyzw_5 = t1.Sample(s2, (((mad(cb0_values[6].xyxx, i.texcoord1.zzzz, (mad(cb0_values[4].xyxx, i.texcoord1.xxxx, ((i.texcoord1.yyyy * cb0_values[5].xyxx)).xyxx)).xyxx)).xyxx + cb0_values[7].xyxx)).xyxx);
+                float4 r3_xyzw_5 = t1.Sample(sampler_linear_clamp2, ((((mad(cb0_values[6].xyxx, i.texcoord1.zzzz, (mad(cb0_values[4].xyxx, i.texcoord1.xxxx, ((i.texcoord1.yyyy * cb0_values[5].xyxx)).xyxx)).xyxx)).xyxx + cb0_values[7].xyxx)).xyxx).xy);
                 float r2_w_5 = (r2_w_4 * r3_xyzw_5.w);
                 float4 r3_xyzw_6 = (r2_w_5.xxxx * _LightColor0.xyzx);
                 float r3_x_6 = r3_xyzw_6.x;
@@ -4698,8 +4698,8 @@ Shader "Custom/Planet_Base_OCEANMOD"
             {
                 float4 cb6_values[7];
             };
-            SamplerState s0 : register(s0);
-            SamplerState s1 : register(s1);
+            SamplerState sampler_linear_clamp : register(s0);
+            SamplerState sampler_linear_clamp1 : register(s1);
             Texture2D t0 : register(t0);
             Texture3D t1 : register(t1);
             struct program61Input
@@ -4822,7 +4822,7 @@ Shader "Custom/Planet_Base_OCEANMOD"
                     float r3_w_6 = ((float4(r3_x_10, r3_x_10, r3_y_9, r3_z_9) * cb6_values[5].xxyz)).w;
                     float r3_y_11 = mad(r3_y_10, 0.25, 0.75);
                     float r3_x_11 = max(r3_y_11, mad(cb6_values[0].z, 0.5, 0.75));
-                    float4 r3_xyzw_12 = t1.Sample(s0, float4(r3_x_11, r3_z_10, r3_w_6, r3_x_11));
+                    float4 r3_xyzw_12 = t1.Sample(sampler_linear_clamp, (float4(r3_x_11, r3_z_10, r3_w_6, r3_x_11)).xyz);
                     r3_x_13 = r3_xyzw_12.x;
                     r3_y_13 = r3_xyzw_12.y;
                     r3_z_12 = r3_xyzw_12.z;
@@ -4843,7 +4843,7 @@ Shader "Custom/Planet_Base_OCEANMOD"
                 float4 r3_xyzw_14 = (i.texcoord3.xxyx / i.texcoord3.wwww);
                 float r3_y_14 = r3_xyzw_14.y;
                 float r3_z_13 = r3_xyzw_14.z;
-                float4 r4_xyzw_3 = t0.Sample(s1, float4(r3_y_14, r3_z_13, r3_y_14, r3_y_14));
+                float4 r4_xyzw_3 = t0.Sample(sampler_linear_clamp1, (float4(r3_y_14, r3_z_13, r3_y_14, r3_y_14)).xy);
                 float r2_w_4 = mad(r2_w_3, (dot(float4(r3_x_13, r3_y_13, r3_z_12, r3_w_8), unity_OcclusionMaskSelector) + -r4_xyzw_3.x), r4_xyzw_3.x);
                 float4 r3_xyzw_16 = (r2_w_4.xxxx * _LightColor0.xyzx);
                 float r3_x_16 = r3_xyzw_16.x;
@@ -4982,10 +4982,10 @@ Shader "Custom/Planet_Base_OCEANMOD"
             {
                 float4 cb6_values[7];
             };
-            SamplerState s0 : register(s0);
-            SamplerComparisonState s1 : register(s1);
-            SamplerState s2 : register(s2);
-            SamplerState s3 : register(s3);
+            SamplerState sampler_linear_clamp : register(s0);
+            SamplerComparisonState sampler_comparison_linear_clamp1 : register(s1);
+            SamplerState sampler_linear_clamp2 : register(s2);
+            SamplerState sampler_linear_clamp3 : register(s3);
             Texture2D t0 : register(t0);
             Texture2D t1 : register(t1);
             Texture3D t2 : register(t2);
@@ -5105,7 +5105,7 @@ Shader "Custom/Planet_Base_OCEANMOD"
                     float r2_y_10 = mad(r6_y_7, 0.25, 0.75);
                     float r2_z_5 = mad(cb6_values[0].z, 0.5, 0.75);
                     float r6_x_7 = max(r2_z_5, r2_y_10);
-                    float4 r6_xyzw_8 = t2.Sample(s0, float4(r6_x_7, r6_z_7, r6_w_2, r6_x_7));
+                    float4 r6_xyzw_8 = t2.Sample(sampler_linear_clamp, (float4(r6_x_7, r6_z_7, r6_w_2, r6_x_7)).xyz);
                     r6_x_9 = r6_xyzw_8.x;
                     r6_y_9 = r6_xyzw_8.y;
                     r6_z_9 = r6_xyzw_8.z;
@@ -5163,14 +5163,14 @@ Shader "Custom/Planet_Base_OCEANMOD"
                     float2 r10_zw_3 = ((float4(r7_x_5, r7_x_5, r7_x_5, r7_y_4) * cb0_values[8].yyyy)).zw;
                     float4 r7_xyzw_6 = (r8_xyzw_3 * r9_xyzw_3);
                     float4 r8_xyzw_4 = mad(float4(r2_z_10, r2_w_8, r2_z_10, r2_w_8), cb0_values[8].xyxy, float4(r10_xy_3.x, r10_zw_3.x, r10_xy_3.y, r10_zw_3.x));
-                    float r3_w_1 = t3.SampleCmpLevelZero(s1, (r8_xyzw_4.xyxx).xy, r6_xyz_14.z);
-                    float r4_w_1 = t3.SampleCmpLevelZero(s1, (r8_xyzw_4.zwzz).xy, r6_xyz_14.z);
+                    float r3_w_1 = t3.SampleCmpLevelZero(sampler_comparison_linear_clamp1, (r8_xyzw_4.xyxx).xy, r6_xyz_14.z);
+                    float r4_w_1 = t3.SampleCmpLevelZero(sampler_comparison_linear_clamp1, (r8_xyzw_4.zwzz).xy, r6_xyz_14.z);
                     float r4_w_2 = (r4_w_1 * r7_xyzw_6.y);
                     float r3_w_2 = mad(r7_xyzw_6.x, r3_w_1, r4_w_2);
                     float4 r8_xyzw_5 = mad(float4(r2_z_10, r2_w_8, r2_z_10, r2_w_8), cb0_values[8].xyxy, float4(r10_xy_3.x, r10_zw_3.y, r10_xy_3.y, r10_zw_3.y));
-                    float r2_z_11 = t3.SampleCmpLevelZero(s1, (r8_xyzw_5.xyxx).xy, r6_xyz_14.z);
+                    float r2_z_11 = t3.SampleCmpLevelZero(sampler_comparison_linear_clamp1, (r8_xyzw_5.xyxx).xy, r6_xyz_14.z);
                     float r2_z_12 = mad(r7_xyzw_6.z, r2_z_11, r3_w_2);
-                    float r2_w_9 = t3.SampleCmpLevelZero(s1, (r8_xyzw_5.zwzz).xy, r6_xyz_14.z);
+                    float r2_w_9 = t3.SampleCmpLevelZero(sampler_comparison_linear_clamp1, (r8_xyzw_5.zwzz).xy, r6_xyz_14.z);
                     float r2_z_13 = mad(r7_xyzw_6.w, r2_w_9, r2_z_12);
                     float r2_w_10 = (-cb3_values[24].x + 1);
                     float r2_z_14 = mad(r2_z_13, r2_w_10, cb3_values[24].x);
@@ -5190,10 +5190,10 @@ Shader "Custom/Planet_Base_OCEANMOD"
                 float4 r2_xyzw_17 = (float4(r2_z_16, r2_z_16, r2_z_16, r2_w_12) + float4(0, 0, 0.5, 0.5));
                 float r2_z_17 = r2_xyzw_17.z;
                 float r2_w_13 = r2_xyzw_17.w;
-                float4 r6_xyzw_21 = t0.Sample(s2, float4(r2_z_17, r2_w_13, r2_z_17, r2_z_17));
+                float4 r6_xyzw_21 = t0.Sample(sampler_linear_clamp2, (float4(r2_z_17, r2_w_13, r2_z_17, r2_z_17)).xy);
                 float r2_y_16 = (r2_y_15 * r6_xyzw_21.w);
                 float r2_z_18 = dot(r5_xyzw_4.xyzx, r5_xyzw_4.xyzx);
-                float4 r5_xyzw_5 = t1.Sample(s3, r2_z_18.xxxx);
+                float4 r5_xyzw_5 = t1.Sample(sampler_linear_clamp3, (r2_z_18.xxxx).xy);
                 float r2_y_17 = (r2_y_16 * r5_xyzw_5.x);
                 float4 r2_xyzw_7 = (((mad(r2_x_4, r2_y_13, r2_z_15) * r2_y_17)).xxxx * _LightColor0.xyzx);
                 float r2_x_7 = r2_xyzw_7.x;
@@ -5318,10 +5318,10 @@ Shader "Custom/Planet_Base_OCEANMOD"
             {
                 float4 cb6_values[7];
             };
-            SamplerState s0 : register(s0);
-            SamplerComparisonState s1 : register(s1);
-            SamplerState s2 : register(s2);
-            SamplerState s3 : register(s3);
+            SamplerState sampler_linear_clamp : register(s0);
+            SamplerComparisonState sampler_comparison_linear_clamp1 : register(s1);
+            SamplerState sampler_linear_clamp2 : register(s2);
+            SamplerState sampler_linear_clamp3 : register(s3);
             Texture2D t0 : register(t0);
             Texture2D t1 : register(t1);
             Texture3D t2 : register(t2);
@@ -5440,7 +5440,7 @@ Shader "Custom/Planet_Base_OCEANMOD"
                     float r2_y_10 = mad(r6_y_7, 0.25, 0.75);
                     float r2_z_5 = mad(cb6_values[0].z, 0.5, 0.75);
                     float r6_x_7 = max(r2_z_5, r2_y_10);
-                    float4 r6_xyzw_8 = t2.Sample(s0, float4(r6_x_7, r6_z_7, r6_w_2, r6_x_7));
+                    float4 r6_xyzw_8 = t2.Sample(sampler_linear_clamp, (float4(r6_x_7, r6_z_7, r6_w_2, r6_x_7)).xyz);
                     r6_x_9 = r6_xyzw_8.x;
                     r6_y_9 = r6_xyzw_8.y;
                     r6_z_9 = r6_xyzw_8.z;
@@ -5460,7 +5460,7 @@ Shader "Custom/Planet_Base_OCEANMOD"
                 float4 r6_xyzw_12 = mad(cb3_values[10].xyzw, i.texcoord1.zzzz, r6_xyzw_11);
                 float4 r6_xyzw_13 = (r6_xyzw_12 + cb3_values[11].xyzw);
                 float3 r6_xyz_14 = ((r6_xyzw_13.xyzx / r6_xyzw_13.wwww)).xyz;
-                float r2_z_7 = t3.SampleCmpLevelZero(s1, (r6_xyz_14.xyxx).xy, r6_xyz_14.z);
+                float r2_z_7 = t3.SampleCmpLevelZero(sampler_comparison_linear_clamp1, (r6_xyz_14.xyxx).xy, r6_xyz_14.z);
                 float r2_w_7 = (-cb3_values[24].x + 1);
                 float r2_z_8 = mad(r2_z_7, r2_w_7, cb3_values[24].x);
                 float r2_y_13 = (-r2_z_8 + r2_y_12);
@@ -5471,10 +5471,10 @@ Shader "Custom/Planet_Base_OCEANMOD"
                 float4 r2_xyzw_10 = (float4(r2_z_9, r2_z_9, r2_z_9, r2_w_8) + float4(0, 0, 0.5, 0.5));
                 float r2_z_10 = r2_xyzw_10.z;
                 float r2_w_9 = r2_xyzw_10.w;
-                float4 r6_xyzw_15 = t0.Sample(s2, float4(r2_z_10, r2_w_9, r2_z_10, r2_z_10));
+                float4 r6_xyzw_15 = t0.Sample(sampler_linear_clamp2, (float4(r2_z_10, r2_w_9, r2_z_10, r2_z_10)).xy);
                 float r2_y_16 = (r2_y_15 * r6_xyzw_15.w);
                 float r2_z_11 = dot(r5_xyzw_4.xyzx, r5_xyzw_4.xyzx);
-                float4 r5_xyzw_5 = t1.Sample(s3, r2_z_11.xxxx);
+                float4 r5_xyzw_5 = t1.Sample(sampler_linear_clamp3, (r2_z_11.xxxx).xy);
                 float r2_y_17 = (r2_y_16 * r5_xyzw_5.x);
                 float4 r2_xyzw_7 = (((mad(mad(mad(cb3_values[25].w, r2_y_5, r2_x_2), cb3_values[24].z, cb3_values[24].w), r2_y_13, r2_z_8) * r2_y_17)).xxxx * _LightColor0.xyzx);
                 float r2_x_7 = r2_xyzw_7.x;
@@ -5590,8 +5590,8 @@ Shader "Custom/Planet_Base_OCEANMOD"
             {
                 float4 cb4_values[7];
             };
-            SamplerState s0 : register(s0);
-            SamplerState s1 : register(s1);
+            SamplerState sampler_linear_clamp : register(s0);
+            SamplerState sampler_linear_clamp1 : register(s1);
             Texture2D t0 : register(t0);
             Texture3D t1 : register(t1);
             struct program58Input
@@ -5685,7 +5685,7 @@ Shader "Custom/Planet_Base_OCEANMOD"
                     float r2_w_3 = mad(r4_y_8, 0.25, 0.75);
                     float r3_z_1 = mad(cb4_values[0].z, 0.5, 0.75);
                     float r4_x_8 = max(r2_w_3, r3_z_1);
-                    float4 r4_xyzw_9 = t1.Sample(s0, float4(r4_x_8, r4_z_8, r4_w_2, r4_x_8));
+                    float4 r4_xyzw_9 = t1.Sample(sampler_linear_clamp, (float4(r4_x_8, r4_z_8, r4_w_2, r4_x_8)).xyz);
                     r4_x_10 = r4_xyzw_9.x;
                     r4_y_10 = r4_xyzw_9.y;
                     r4_z_10 = r4_xyzw_9.z;
@@ -5700,7 +5700,7 @@ Shader "Custom/Planet_Base_OCEANMOD"
                     r4_w_4 = r4_xyzw_10.w;
                 }
                 float r2_w_5 = dot(float4(r4_x_10, r4_y_10, r4_z_10, r4_w_4), unity_OcclusionMaskSelector);
-                float4 r3_xyzw_5 = t0.Sample(s1, (((mad(cb0_values[6].xyxx, i.texcoord1.zzzz, (mad(cb0_values[4].xyxx, i.texcoord1.xxxx, ((i.texcoord1.yyyy * cb0_values[5].xyxx)).xyxx)).xyxx)).xyxx + cb0_values[7].xyxx)).xyxx);
+                float4 r3_xyzw_5 = t0.Sample(sampler_linear_clamp1, ((((mad(cb0_values[6].xyxx, i.texcoord1.zzzz, (mad(cb0_values[4].xyxx, i.texcoord1.xxxx, ((i.texcoord1.yyyy * cb0_values[5].xyxx)).xyxx)).xyxx)).xyxx + cb0_values[7].xyxx)).xyxx).xy);
                 float r2_w_6 = (r2_w_5 * r3_xyzw_5.w);
                 float4 r3_xyzw_6 = (r2_w_6.xxxx * _LightColor0.xyzx);
                 float r3_x_6 = r3_xyzw_6.x;
@@ -5825,9 +5825,9 @@ Shader "Custom/Planet_Base_OCEANMOD"
             {
                 float4 cb4_values[7];
             };
-            SamplerState s0 : register(s0);
-            SamplerState s1 : register(s1);
-            SamplerState s2 : register(s2);
+            SamplerState sampler_linear_clamp : register(s0);
+            SamplerState sampler_linear_clamp1 : register(s1);
+            SamplerState sampler_linear_clamp2 : register(s2);
             Texture2D t0 : register(t0);
             TextureCube t1 : register(t1);
             Texture3D t2 : register(t2);
@@ -5923,7 +5923,7 @@ Shader "Custom/Planet_Base_OCEANMOD"
                     float r2_w_5 = mad(r5_y_8, 0.25, 0.75);
                     float r3_w_1 = mad(cb4_values[0].z, 0.5, 0.75);
                     float r5_x_8 = max(r2_w_5, r3_w_1);
-                    float4 r5_xyzw_9 = t2.Sample(s0, float4(r5_x_8, r5_z_8, r5_w_2, r5_x_8));
+                    float4 r5_xyzw_9 = t2.Sample(sampler_linear_clamp, (float4(r5_x_8, r5_z_8, r5_w_2, r5_x_8)).xyz);
                     r5_x_10 = r5_xyzw_9.x;
                     r5_y_10 = r5_xyzw_9.y;
                     r5_z_10 = r5_xyzw_9.z;
@@ -5939,8 +5939,8 @@ Shader "Custom/Planet_Base_OCEANMOD"
                 }
                 float r2_w_7 = dot(float4(r5_x_10, r5_y_10, r5_z_10, r5_w_4), unity_OcclusionMaskSelector);
                 float r3_w_3 = dot(r4_xyz_4.xyzx, r4_xyz_4.xyzx);
-                float4 r5_xyzw_11 = t0.Sample(s2, r3_w_3.xxxx);
-                float4 r4_xyzw_5 = t1.Sample(s1, r4_xyz_4.xyzx);
+                float4 r5_xyzw_11 = t0.Sample(sampler_linear_clamp2, (r3_w_3.xxxx).xy);
+                float4 r4_xyzw_5 = t1.Sample(sampler_linear_clamp1, r4_xyz_4.xyz);
                 float r3_w_4 = (r4_xyzw_5.w * r5_xyzw_11.x);
                 float r2_w_8 = (r2_w_7 * r3_w_4);
                 float3 r4_xyz_6 = ((r2_w_8.xxxx * _LightColor0.xyzx)).xyz;
@@ -6054,9 +6054,9 @@ Shader "Custom/Planet_Base_OCEANMOD"
             {
                 float4 cb4_values[7];
             };
-            SamplerState s0 : register(s0);
-            SamplerState s1 : register(s1);
-            SamplerState s2 : register(s2);
+            SamplerState sampler_linear_clamp : register(s0);
+            SamplerState sampler_linear_clamp1 : register(s1);
+            SamplerState sampler_linear_clamp2 : register(s2);
             Texture2D t0 : register(t0);
             Texture2D t1 : register(t1);
             Texture3D t2 : register(t2);
@@ -6155,7 +6155,7 @@ Shader "Custom/Planet_Base_OCEANMOD"
                     float r2_w_5 = mad(r5_y_8, 0.25, 0.75);
                     float r3_w_1 = mad(cb4_values[0].z, 0.5, 0.75);
                     float r5_x_8 = max(r2_w_5, r3_w_1);
-                    float4 r5_xyzw_9 = t2.Sample(s0, float4(r5_x_8, r5_z_8, r5_w_2, r5_x_8));
+                    float4 r5_xyzw_9 = t2.Sample(sampler_linear_clamp, (float4(r5_x_8, r5_z_8, r5_w_2, r5_x_8)).xyz);
                     r5_x_10 = r5_xyzw_9.x;
                     r5_y_10 = r5_xyzw_9.y;
                     r5_z_10 = r5_xyzw_9.z;
@@ -6172,9 +6172,9 @@ Shader "Custom/Planet_Base_OCEANMOD"
                 float r2_w_7 = dot(float4(r5_x_10, r5_y_10, r5_z_10, r5_w_4), unity_OcclusionMaskSelector);
                 float r3_w_3 = (0 < r4_xyzw_4.z);
                 float r3_w_4 = asfloat(asint(r3_w_3) & asint(1065353216));
-                float4 r5_xyzw_13 = t0.Sample(s1, ((((r4_xyzw_4.xyxx / r4_xyzw_4.wwww)).xyxx + float4(0.5, 0.5, 0, 0))).xyxx);
+                float4 r5_xyzw_13 = t0.Sample(sampler_linear_clamp1, (((((r4_xyzw_4.xyxx / r4_xyzw_4.wwww)).xyxx + float4(0.5, 0.5, 0, 0))).xyxx).xy);
                 float r3_w_5 = (r3_w_4 * r5_xyzw_13.w);
-                float4 r4_xyzw_6 = t1.Sample(s2, (dot(r4_xyzw_4.xyzx, r4_xyzw_4.xyzx)).xxxx);
+                float4 r4_xyzw_6 = t1.Sample(sampler_linear_clamp2, ((dot(r4_xyzw_4.xyzx, r4_xyzw_4.xyzx)).xxxx).xy);
                 float r3_w_6 = (r3_w_5 * r4_xyzw_6.x);
                 float r2_w_8 = (r2_w_7 * r3_w_6);
                 float4 r4_xyzw_7 = (r2_w_8.xxxx * _LightColor0.xyzx);
@@ -6295,7 +6295,7 @@ Shader "Custom/Planet_Base_OCEANMOD"
             {
                 float4 cb4_values[7];
             };
-            SamplerState s0 : register(s0);
+            SamplerState sampler_linear_clamp : register(s0);
             Texture3D t0 : register(t0);
             struct program55Input
             {
@@ -6385,7 +6385,7 @@ Shader "Custom/Planet_Base_OCEANMOD"
                     float r2_w_3 = mad(r3_y_8, 0.25, 0.75);
                     float r3_y_9 = mad(cb4_values[0].z, 0.5, 0.75);
                     float r3_x_8 = max(r2_w_3, r3_y_9);
-                    float4 r3_xyzw_9 = t0.Sample(s0, float4(r3_x_8, r3_z_8, r3_w_2, r3_x_8));
+                    float4 r3_xyzw_9 = t0.Sample(sampler_linear_clamp, (float4(r3_x_8, r3_z_8, r3_w_2, r3_x_8)).xyz);
                     r3_x_10 = r3_xyzw_9.x;
                     r3_y_11 = r3_xyzw_9.y;
                     r3_z_10 = r3_xyzw_9.z;
@@ -6523,8 +6523,8 @@ Shader "Custom/Planet_Base_OCEANMOD"
             {
                 float4 cb4_values[7];
             };
-            SamplerState s0 : register(s0);
-            SamplerState s1 : register(s1);
+            SamplerState sampler_linear_clamp : register(s0);
+            SamplerState sampler_linear_clamp1 : register(s1);
             Texture2D t0 : register(t0);
             Texture3D t1 : register(t1);
             struct program54Input
@@ -6619,7 +6619,7 @@ Shader "Custom/Planet_Base_OCEANMOD"
                     float r2_w_5 = mad(r5_y_8, 0.25, 0.75);
                     float r3_w_1 = mad(cb4_values[0].z, 0.5, 0.75);
                     float r5_x_8 = max(r2_w_5, r3_w_1);
-                    float4 r5_xyzw_9 = t1.Sample(s0, float4(r5_x_8, r5_z_8, r5_w_2, r5_x_8));
+                    float4 r5_xyzw_9 = t1.Sample(sampler_linear_clamp, (float4(r5_x_8, r5_z_8, r5_w_2, r5_x_8)).xyz);
                     r5_x_10 = r5_xyzw_9.x;
                     r5_y_10 = r5_xyzw_9.y;
                     r5_z_10 = r5_xyzw_9.z;
@@ -6635,7 +6635,7 @@ Shader "Custom/Planet_Base_OCEANMOD"
                 }
                 float r2_w_7 = dot(float4(r5_x_10, r5_y_10, r5_z_10, r5_w_4), unity_OcclusionMaskSelector);
                 float r3_w_3 = dot(r4_xyz_4.xyzx, r4_xyz_4.xyzx);
-                float4 r4_xyzw_5 = t0.Sample(s1, r3_w_3.xxxx);
+                float4 r4_xyzw_5 = t0.Sample(sampler_linear_clamp1, (r3_w_3.xxxx).xy);
                 float r2_w_8 = (r2_w_7 * r4_xyzw_5.x);
                 float3 r4_xyz_6 = ((r2_w_8.xxxx * _LightColor0.xyzx)).xyz;
                 float3 unitClipPos_xyz_11 = normalize(i.texcoord0);
@@ -6753,10 +6753,10 @@ Shader "Custom/Planet_Base_OCEANMOD"
             {
                 float4 cb5_values[7];
             };
-            SamplerState s0 : register(s0);
-            SamplerComparisonState s1 : register(s1);
-            SamplerState s2 : register(s2);
-            SamplerState s3 : register(s3);
+            SamplerState sampler_linear_clamp : register(s0);
+            SamplerComparisonState sampler_comparison_linear_clamp1 : register(s1);
+            SamplerState sampler_linear_clamp2 : register(s2);
+            SamplerState sampler_linear_clamp3 : register(s3);
             Texture2D t0 : register(t0);
             TextureCube t1 : register(t1);
             Texture3D t2 : register(t2);
@@ -6867,7 +6867,7 @@ Shader "Custom/Planet_Base_OCEANMOD"
                     float r2_y_10 = mad(r6_y_7, 0.25, 0.75);
                     float r2_z_5 = mad(cb5_values[0].z, 0.5, 0.75);
                     float r6_x_7 = max(r2_z_5, r2_y_10);
-                    float4 r6_xyzw_8 = t2.Sample(s0, float4(r6_x_7, r6_z_7, r6_w_2, r6_x_7));
+                    float4 r6_xyzw_8 = t2.Sample(sampler_linear_clamp, (float4(r6_x_7, r6_z_7, r6_w_2, r6_x_7)).xyz);
                     r6_x_9 = r6_xyzw_8.x;
                     r6_y_9 = r6_xyzw_8.y;
                     r6_z_9 = r6_xyzw_8.z;
@@ -6895,10 +6895,10 @@ Shader "Custom/Planet_Base_OCEANMOD"
                     float r2_z_14 = (cb2_values[2].y / r2_z_13);
                     float r2_z_15 = (r2_z_14 + -cb2_values[2].x);
                     float r2_z_16 = (-r2_z_15 + 1);
-                    float r7_x_2 = t3.SampleCmpLevelZero(s1, (((r6_xyz_10.xyzx + float4(0.0078125, 0.0078125, 0.0078125, 0))).xyzx).xyz, r2_z_16);
-                    float r7_y_2 = t3.SampleCmpLevelZero(s1, (((r6_xyz_10.xyzx + float4(-0.0078125, -0.0078125, 0.0078125, 0))).xyzx).xyz, r2_z_16);
-                    float r7_z_2 = t3.SampleCmpLevelZero(s1, (((r6_xyz_10.xyzx + float4(-0.0078125, 0.0078125, -0.0078125, 0))).xyzx).xyz, r2_z_16);
-                    float r7_w_1 = t3.SampleCmpLevelZero(s1, (((r6_xyz_10.xyzx + float4(0.0078125, -0.0078125, -0.0078125, 0))).xyzx).xyz, r2_z_16);
+                    float r7_x_2 = t3.SampleCmpLevelZero(sampler_comparison_linear_clamp1, (((r6_xyz_10.xyzx + float4(0.0078125, 0.0078125, 0.0078125, 0))).xyzx).xyz, r2_z_16);
+                    float r7_y_2 = t3.SampleCmpLevelZero(sampler_comparison_linear_clamp1, (((r6_xyz_10.xyzx + float4(-0.0078125, -0.0078125, 0.0078125, 0))).xyzx).xyz, r2_z_16);
+                    float r7_z_2 = t3.SampleCmpLevelZero(sampler_comparison_linear_clamp1, (((r6_xyz_10.xyzx + float4(-0.0078125, 0.0078125, -0.0078125, 0))).xyzx).xyz, r2_z_16);
+                    float r7_w_1 = t3.SampleCmpLevelZero(sampler_comparison_linear_clamp1, (((r6_xyz_10.xyzx + float4(0.0078125, -0.0078125, -0.0078125, 0))).xyzx).xyz, r2_z_16);
                     float r2_z_17 = dot(float4(r7_x_2, r7_y_2, r7_z_2, r7_w_1), float4(0.25, 0.25, 0.25, 0.25));
                     float r2_w_7 = (-cb3_values[24].x + 1);
                     float r2_z_18 = mad(r2_z_17, r2_w_7, cb3_values[24].x);
@@ -6911,8 +6911,8 @@ Shader "Custom/Planet_Base_OCEANMOD"
                 }
                 float r2_y_13 = (-r2_z_19 + r2_y_12);
                 float r2_y_14 = dot(r5_xyz_4.xyzx, r5_xyz_4.xyzx);
-                float4 r6_xyzw_13 = t0.Sample(s3, r2_y_14.xxxx);
-                float4 r5_xyzw_5 = t1.Sample(s2, r5_xyz_4.xyzx);
+                float4 r6_xyzw_13 = t0.Sample(sampler_linear_clamp3, (r2_y_14.xxxx).xy);
+                float4 r5_xyzw_5 = t1.Sample(sampler_linear_clamp2, r5_xyz_4.xyz);
                 float r2_y_15 = (r5_xyzw_5.w * r6_xyzw_13.x);
                 float4 r2_xyzw_7 = (((mad(r2_x_4, r2_y_13, r2_z_19) * r2_y_15)).xxxx * _LightColor0.xyzx);
                 float r2_x_7 = r2_xyzw_7.x;
@@ -7024,10 +7024,10 @@ Shader "Custom/Planet_Base_OCEANMOD"
             {
                 float4 cb5_values[7];
             };
-            SamplerState s0 : register(s0);
-            SamplerComparisonState s1 : register(s1);
-            SamplerState s2 : register(s2);
-            SamplerState s3 : register(s3);
+            SamplerState sampler_linear_clamp : register(s0);
+            SamplerComparisonState sampler_comparison_linear_clamp1 : register(s1);
+            SamplerState sampler_linear_clamp2 : register(s2);
+            SamplerState sampler_linear_clamp3 : register(s3);
             Texture2D t0 : register(t0);
             TextureCube t1 : register(t1);
             Texture3D t2 : register(t2);
@@ -7137,7 +7137,7 @@ Shader "Custom/Planet_Base_OCEANMOD"
                     float r2_y_10 = mad(r6_y_7, 0.25, 0.75);
                     float r2_z_5 = mad(cb5_values[0].z, 0.5, 0.75);
                     float r6_x_7 = max(r2_z_5, r2_y_10);
-                    float4 r6_xyzw_8 = t2.Sample(s0, float4(r6_x_7, r6_z_7, r6_w_2, r6_x_7));
+                    float4 r6_xyzw_8 = t2.Sample(sampler_linear_clamp, (float4(r6_x_7, r6_z_7, r6_w_2, r6_x_7)).xyz);
                     r6_x_9 = r6_xyzw_8.x;
                     r6_y_9 = r6_xyzw_8.y;
                     r6_z_9 = r6_xyzw_8.z;
@@ -7161,13 +7161,13 @@ Shader "Custom/Planet_Base_OCEANMOD"
                 float r2_z_12 = (cb2_values[2].y / r2_z_11);
                 float r2_z_13 = (r2_z_12 + -cb2_values[2].x);
                 float r2_z_14 = (-r2_z_13 + 1);
-                float r2_z_15 = t3.SampleCmpLevelZero(s1, r6_xyz_10.xyz, r2_z_14);
+                float r2_z_15 = t3.SampleCmpLevelZero(sampler_comparison_linear_clamp1, r6_xyz_10.xyz, r2_z_14);
                 float r2_w_7 = (-cb3_values[24].x + 1);
                 float r2_z_16 = mad(r2_z_15, r2_w_7, cb3_values[24].x);
                 float r2_y_13 = (-r2_z_16 + r2_y_12);
                 float r2_y_14 = dot(r5_xyz_4.xyzx, r5_xyz_4.xyzx);
-                float4 r6_xyzw_11 = t0.Sample(s3, r2_y_14.xxxx);
-                float4 r5_xyzw_5 = t1.Sample(s2, r5_xyz_4.xyzx);
+                float4 r6_xyzw_11 = t0.Sample(sampler_linear_clamp3, (r2_y_14.xxxx).xy);
+                float4 r5_xyzw_5 = t1.Sample(sampler_linear_clamp2, r5_xyz_4.xyz);
                 float r2_y_15 = (r5_xyzw_5.w * r6_xyzw_11.x);
                 float4 r2_xyzw_7 = (((mad(mad(mad(cb3_values[25].w, r2_y_5, r2_x_2), cb3_values[24].z, cb3_values[24].w), r2_y_13, r2_z_16) * r2_y_15)).xxxx * _LightColor0.xyzx);
                 float r2_x_7 = r2_xyzw_7.x;
@@ -7279,9 +7279,9 @@ Shader "Custom/Planet_Base_OCEANMOD"
             {
                 float4 cb5_values[7];
             };
-            SamplerState s0 : register(s0);
-            SamplerComparisonState s1 : register(s1);
-            SamplerState s2 : register(s2);
+            SamplerState sampler_linear_clamp : register(s0);
+            SamplerComparisonState sampler_comparison_linear_clamp1 : register(s1);
+            SamplerState sampler_linear_clamp2 : register(s2);
             Texture2D t0 : register(t0);
             Texture3D t1 : register(t1);
             TextureCube t2 : register(t2);
@@ -7391,7 +7391,7 @@ Shader "Custom/Planet_Base_OCEANMOD"
                     float r2_y_10 = mad(r6_y_7, 0.25, 0.75);
                     float r2_z_5 = mad(cb5_values[0].z, 0.5, 0.75);
                     float r6_x_7 = max(r2_z_5, r2_y_10);
-                    float4 r6_xyzw_8 = t1.Sample(s0, float4(r6_x_7, r6_z_7, r6_w_2, r6_x_7));
+                    float4 r6_xyzw_8 = t1.Sample(sampler_linear_clamp, (float4(r6_x_7, r6_z_7, r6_w_2, r6_x_7)).xyz);
                     r6_x_9 = r6_xyzw_8.x;
                     r6_y_9 = r6_xyzw_8.y;
                     r6_z_9 = r6_xyzw_8.z;
@@ -7419,10 +7419,10 @@ Shader "Custom/Planet_Base_OCEANMOD"
                     float r2_z_14 = (cb2_values[2].y / r2_z_13);
                     float r2_z_15 = (r2_z_14 + -cb2_values[2].x);
                     float r2_z_16 = (-r2_z_15 + 1);
-                    float r7_x_2 = t2.SampleCmpLevelZero(s1, (((r6_xyz_10.xyzx + float4(0.0078125, 0.0078125, 0.0078125, 0))).xyzx).xyz, r2_z_16);
-                    float r7_y_2 = t2.SampleCmpLevelZero(s1, (((r6_xyz_10.xyzx + float4(-0.0078125, -0.0078125, 0.0078125, 0))).xyzx).xyz, r2_z_16);
-                    float r7_z_2 = t2.SampleCmpLevelZero(s1, (((r6_xyz_10.xyzx + float4(-0.0078125, 0.0078125, -0.0078125, 0))).xyzx).xyz, r2_z_16);
-                    float r7_w_1 = t2.SampleCmpLevelZero(s1, (((r6_xyz_10.xyzx + float4(0.0078125, -0.0078125, -0.0078125, 0))).xyzx).xyz, r2_z_16);
+                    float r7_x_2 = t2.SampleCmpLevelZero(sampler_comparison_linear_clamp1, (((r6_xyz_10.xyzx + float4(0.0078125, 0.0078125, 0.0078125, 0))).xyzx).xyz, r2_z_16);
+                    float r7_y_2 = t2.SampleCmpLevelZero(sampler_comparison_linear_clamp1, (((r6_xyz_10.xyzx + float4(-0.0078125, -0.0078125, 0.0078125, 0))).xyzx).xyz, r2_z_16);
+                    float r7_z_2 = t2.SampleCmpLevelZero(sampler_comparison_linear_clamp1, (((r6_xyz_10.xyzx + float4(-0.0078125, 0.0078125, -0.0078125, 0))).xyzx).xyz, r2_z_16);
+                    float r7_w_1 = t2.SampleCmpLevelZero(sampler_comparison_linear_clamp1, (((r6_xyz_10.xyzx + float4(0.0078125, -0.0078125, -0.0078125, 0))).xyzx).xyz, r2_z_16);
                     float r2_z_17 = dot(float4(r7_x_2, r7_y_2, r7_z_2, r7_w_1), float4(0.25, 0.25, 0.25, 0.25));
                     float r2_w_7 = (-cb3_values[24].x + 1);
                     float r2_z_18 = mad(r2_z_17, r2_w_7, cb3_values[24].x);
@@ -7435,7 +7435,7 @@ Shader "Custom/Planet_Base_OCEANMOD"
                 }
                 float r2_y_13 = (-r2_z_19 + r2_y_12);
                 float r2_y_14 = dot(r5_xyz_4.xyzx, r5_xyz_4.xyzx);
-                float4 r5_xyzw_5 = t0.Sample(s2, r2_y_14.xxxx);
+                float4 r5_xyzw_5 = t0.Sample(sampler_linear_clamp2, (r2_y_14.xxxx).xy);
                 float4 r2_xyzw_7 = (((mad(r2_x_4, r2_y_13, r2_z_19) * r5_xyzw_5.x)).xxxx * _LightColor0.xyzx);
                 float r2_x_7 = r2_xyzw_7.x;
                 float r2_y_15 = r2_xyzw_7.y;
@@ -7546,9 +7546,9 @@ Shader "Custom/Planet_Base_OCEANMOD"
             {
                 float4 cb5_values[7];
             };
-            SamplerState s0 : register(s0);
-            SamplerComparisonState s1 : register(s1);
-            SamplerState s2 : register(s2);
+            SamplerState sampler_linear_clamp : register(s0);
+            SamplerComparisonState sampler_comparison_linear_clamp1 : register(s1);
+            SamplerState sampler_linear_clamp2 : register(s2);
             Texture2D t0 : register(t0);
             Texture3D t1 : register(t1);
             TextureCube t2 : register(t2);
@@ -7657,7 +7657,7 @@ Shader "Custom/Planet_Base_OCEANMOD"
                     float r2_y_10 = mad(r6_y_7, 0.25, 0.75);
                     float r2_z_5 = mad(cb5_values[0].z, 0.5, 0.75);
                     float r6_x_7 = max(r2_z_5, r2_y_10);
-                    float4 r6_xyzw_8 = t1.Sample(s0, float4(r6_x_7, r6_z_7, r6_w_2, r6_x_7));
+                    float4 r6_xyzw_8 = t1.Sample(sampler_linear_clamp, (float4(r6_x_7, r6_z_7, r6_w_2, r6_x_7)).xyz);
                     r6_x_9 = r6_xyzw_8.x;
                     r6_y_9 = r6_xyzw_8.y;
                     r6_z_9 = r6_xyzw_8.z;
@@ -7681,12 +7681,12 @@ Shader "Custom/Planet_Base_OCEANMOD"
                 float r2_z_12 = (cb2_values[2].y / r2_z_11);
                 float r2_z_13 = (r2_z_12 + -cb2_values[2].x);
                 float r2_z_14 = (-r2_z_13 + 1);
-                float r2_z_15 = t2.SampleCmpLevelZero(s1, r6_xyz_10.xyz, r2_z_14);
+                float r2_z_15 = t2.SampleCmpLevelZero(sampler_comparison_linear_clamp1, r6_xyz_10.xyz, r2_z_14);
                 float r2_w_7 = (-cb3_values[24].x + 1);
                 float r2_z_16 = mad(r2_z_15, r2_w_7, cb3_values[24].x);
                 float r2_y_13 = (-r2_z_16 + r2_y_12);
                 float r2_y_14 = dot(r5_xyz_4.xyzx, r5_xyz_4.xyzx);
-                float4 r5_xyzw_5 = t0.Sample(s2, r2_y_14.xxxx);
+                float4 r5_xyzw_5 = t0.Sample(sampler_linear_clamp2, (r2_y_14.xxxx).xy);
                 float4 r2_xyzw_7 = (((mad(mad(mad(cb3_values[25].w, r2_y_5, r2_x_2), cb3_values[24].z, cb3_values[24].w), r2_y_13, r2_z_16) * r5_xyzw_5.x)).xxxx * _LightColor0.xyzx);
                 float r2_x_7 = r2_xyzw_7.x;
                 float r2_y_15 = r2_xyzw_7.y;
@@ -7797,9 +7797,9 @@ Shader "Custom/Planet_Base_OCEANMOD"
             {
                 float4 cb5_values[7];
             };
-            SamplerState s0 : register(s0);
-            SamplerState s1 : register(s1);
-            SamplerState s2 : register(s2);
+            SamplerState sampler_linear_clamp : register(s0);
+            SamplerState sampler_linear_clamp1 : register(s1);
+            SamplerState sampler_linear_clamp2 : register(s2);
             Texture2D t0 : register(t0);
             Texture2D t1 : register(t1);
             Texture3D t2 : register(t2);
@@ -7906,7 +7906,7 @@ Shader "Custom/Planet_Base_OCEANMOD"
                     float r3_z_6 = mad(r4_y_10, 0.25, 0.75);
                     float r3_w_1 = mad(cb5_values[0].z, 0.5, 0.75);
                     float r4_x_10 = max(r3_w_1, r3_z_6);
-                    float4 r4_xyzw_11 = t2.Sample(s0, float4(r4_x_10, r4_z_10, r4_w_2, r4_x_10));
+                    float4 r4_xyzw_11 = t2.Sample(sampler_linear_clamp, (float4(r4_x_10, r4_z_10, r4_w_2, r4_x_10)).xyz);
                     r4_x_12 = r4_xyzw_11.x;
                     r4_y_12 = r4_xyzw_11.y;
                     r4_z_12 = r4_xyzw_11.z;
@@ -7921,10 +7921,10 @@ Shader "Custom/Planet_Base_OCEANMOD"
                     r4_w_4 = r4_xyzw_3.w;
                 }
                 float r3_z_8 = dot(float4(r4_x_12, r4_y_12, r4_z_12, r4_w_4), unity_OcclusionMaskSelector);
-                float4 r4_xyzw_14 = t0.Sample(s1, ((i.texcoord3.xyxx / i.texcoord3.wwww)).xyxx);
+                float4 r4_xyzw_14 = t0.Sample(sampler_linear_clamp1, (((i.texcoord3.xyxx / i.texcoord3.wwww)).xyxx).xy);
                 float r3_z_9 = (r3_z_8 + -r4_xyzw_14.x);
                 float r2_w_4 = mad(r2_w_3, r3_z_9, r4_xyzw_14.x);
-                float4 r3_xyzw_5 = t1.Sample(s2, (((mad(cb0_values[6].xyxx, i.texcoord1.zzzz, (mad(cb0_values[4].xyxx, i.texcoord1.xxxx, ((i.texcoord1.yyyy * cb0_values[5].xyxx)).xyxx)).xyxx)).xyxx + cb0_values[7].xyxx)).xyxx);
+                float4 r3_xyzw_5 = t1.Sample(sampler_linear_clamp2, ((((mad(cb0_values[6].xyxx, i.texcoord1.zzzz, (mad(cb0_values[4].xyxx, i.texcoord1.xxxx, ((i.texcoord1.yyyy * cb0_values[5].xyxx)).xyxx)).xyxx)).xyxx + cb0_values[7].xyxx)).xyxx).xy);
                 float r2_w_5 = (r2_w_4 * r3_xyzw_5.w);
                 float4 r3_xyzw_6 = (r2_w_5.xxxx * _LightColor0.xyzx);
                 float r3_x_6 = r3_xyzw_6.x;
@@ -8050,8 +8050,8 @@ Shader "Custom/Planet_Base_OCEANMOD"
             {
                 float4 cb5_values[7];
             };
-            SamplerState s0 : register(s0);
-            SamplerState s1 : register(s1);
+            SamplerState sampler_linear_clamp : register(s0);
+            SamplerState sampler_linear_clamp1 : register(s1);
             Texture2D t0 : register(t0);
             Texture3D t1 : register(t1);
             struct program48Input
@@ -8171,7 +8171,7 @@ Shader "Custom/Planet_Base_OCEANMOD"
                     float r3_w_6 = ((float4(r3_x_10, r3_x_10, r3_y_9, r3_z_9) * cb5_values[5].xxyz)).w;
                     float r3_y_11 = mad(r3_y_10, 0.25, 0.75);
                     float r3_x_11 = max(r3_y_11, mad(cb5_values[0].z, 0.5, 0.75));
-                    float4 r3_xyzw_12 = t1.Sample(s0, float4(r3_x_11, r3_z_10, r3_w_6, r3_x_11));
+                    float4 r3_xyzw_12 = t1.Sample(sampler_linear_clamp, (float4(r3_x_11, r3_z_10, r3_w_6, r3_x_11)).xyz);
                     r3_x_13 = r3_xyzw_12.x;
                     r3_y_13 = r3_xyzw_12.y;
                     r3_z_12 = r3_xyzw_12.z;
@@ -8192,7 +8192,7 @@ Shader "Custom/Planet_Base_OCEANMOD"
                 float4 r3_xyzw_14 = (i.texcoord3.xxyx / i.texcoord3.wwww);
                 float r3_y_14 = r3_xyzw_14.y;
                 float r3_z_13 = r3_xyzw_14.z;
-                float4 r4_xyzw_3 = t0.Sample(s1, float4(r3_y_14, r3_z_13, r3_y_14, r3_y_14));
+                float4 r4_xyzw_3 = t0.Sample(sampler_linear_clamp1, (float4(r3_y_14, r3_z_13, r3_y_14, r3_y_14)).xy);
                 float r2_w_4 = mad(r2_w_3, (dot(float4(r3_x_13, r3_y_13, r3_z_12, r3_w_8), unity_OcclusionMaskSelector) + -r4_xyzw_3.x), r4_xyzw_3.x);
                 float4 r3_xyzw_16 = (r2_w_4.xxxx * _LightColor0.xyzx);
                 float r3_x_16 = r3_xyzw_16.x;
@@ -8318,10 +8318,10 @@ Shader "Custom/Planet_Base_OCEANMOD"
             {
                 float4 cb5_values[7];
             };
-            SamplerState s0 : register(s0);
-            SamplerComparisonState s1 : register(s1);
-            SamplerState s2 : register(s2);
-            SamplerState s3 : register(s3);
+            SamplerState sampler_linear_clamp : register(s0);
+            SamplerComparisonState sampler_comparison_linear_clamp1 : register(s1);
+            SamplerState sampler_linear_clamp2 : register(s2);
+            SamplerState sampler_linear_clamp3 : register(s3);
             Texture2D t0 : register(t0);
             Texture2D t1 : register(t1);
             Texture3D t2 : register(t2);
@@ -8435,7 +8435,7 @@ Shader "Custom/Planet_Base_OCEANMOD"
                     float r2_y_10 = mad(r6_y_7, 0.25, 0.75);
                     float r2_z_5 = mad(cb5_values[0].z, 0.5, 0.75);
                     float r6_x_7 = max(r2_z_5, r2_y_10);
-                    float4 r6_xyzw_8 = t2.Sample(s0, float4(r6_x_7, r6_z_7, r6_w_2, r6_x_7));
+                    float4 r6_xyzw_8 = t2.Sample(sampler_linear_clamp, (float4(r6_x_7, r6_z_7, r6_w_2, r6_x_7)).xyz);
                     r6_x_9 = r6_xyzw_8.x;
                     r6_y_9 = r6_xyzw_8.y;
                     r6_z_9 = r6_xyzw_8.z;
@@ -8493,14 +8493,14 @@ Shader "Custom/Planet_Base_OCEANMOD"
                     float2 r10_zw_3 = ((float4(r7_x_5, r7_x_5, r7_x_5, r7_y_4) * cb0_values[8].yyyy)).zw;
                     float4 r7_xyzw_6 = (r8_xyzw_3 * r9_xyzw_3);
                     float4 r8_xyzw_4 = mad(float4(r2_z_10, r2_w_8, r2_z_10, r2_w_8), cb0_values[8].xyxy, float4(r10_xy_3.x, r10_zw_3.x, r10_xy_3.y, r10_zw_3.x));
-                    float r3_w_1 = t3.SampleCmpLevelZero(s1, (r8_xyzw_4.xyxx).xy, r6_xyz_14.z);
-                    float r4_w_1 = t3.SampleCmpLevelZero(s1, (r8_xyzw_4.zwzz).xy, r6_xyz_14.z);
+                    float r3_w_1 = t3.SampleCmpLevelZero(sampler_comparison_linear_clamp1, (r8_xyzw_4.xyxx).xy, r6_xyz_14.z);
+                    float r4_w_1 = t3.SampleCmpLevelZero(sampler_comparison_linear_clamp1, (r8_xyzw_4.zwzz).xy, r6_xyz_14.z);
                     float r4_w_2 = (r4_w_1 * r7_xyzw_6.y);
                     float r3_w_2 = mad(r7_xyzw_6.x, r3_w_1, r4_w_2);
                     float4 r8_xyzw_5 = mad(float4(r2_z_10, r2_w_8, r2_z_10, r2_w_8), cb0_values[8].xyxy, float4(r10_xy_3.x, r10_zw_3.y, r10_xy_3.y, r10_zw_3.y));
-                    float r2_z_11 = t3.SampleCmpLevelZero(s1, (r8_xyzw_5.xyxx).xy, r6_xyz_14.z);
+                    float r2_z_11 = t3.SampleCmpLevelZero(sampler_comparison_linear_clamp1, (r8_xyzw_5.xyxx).xy, r6_xyz_14.z);
                     float r2_z_12 = mad(r7_xyzw_6.z, r2_z_11, r3_w_2);
-                    float r2_w_9 = t3.SampleCmpLevelZero(s1, (r8_xyzw_5.zwzz).xy, r6_xyz_14.z);
+                    float r2_w_9 = t3.SampleCmpLevelZero(sampler_comparison_linear_clamp1, (r8_xyzw_5.zwzz).xy, r6_xyz_14.z);
                     float r2_z_13 = mad(r7_xyzw_6.w, r2_w_9, r2_z_12);
                     float r2_w_10 = (-cb3_values[24].x + 1);
                     float r2_z_14 = mad(r2_z_13, r2_w_10, cb3_values[24].x);
@@ -8520,10 +8520,10 @@ Shader "Custom/Planet_Base_OCEANMOD"
                 float4 r2_xyzw_17 = (float4(r2_z_16, r2_z_16, r2_z_16, r2_w_12) + float4(0, 0, 0.5, 0.5));
                 float r2_z_17 = r2_xyzw_17.z;
                 float r2_w_13 = r2_xyzw_17.w;
-                float4 r6_xyzw_21 = t0.Sample(s2, float4(r2_z_17, r2_w_13, r2_z_17, r2_z_17));
+                float4 r6_xyzw_21 = t0.Sample(sampler_linear_clamp2, (float4(r2_z_17, r2_w_13, r2_z_17, r2_z_17)).xy);
                 float r2_y_16 = (r2_y_15 * r6_xyzw_21.w);
                 float r2_z_18 = dot(r5_xyzw_4.xyzx, r5_xyzw_4.xyzx);
-                float4 r5_xyzw_5 = t1.Sample(s3, r2_z_18.xxxx);
+                float4 r5_xyzw_5 = t1.Sample(sampler_linear_clamp3, (r2_z_18.xxxx).xy);
                 float r2_y_17 = (r2_y_16 * r5_xyzw_5.x);
                 float4 r2_xyzw_7 = (((mad(r2_x_4, r2_y_13, r2_z_15) * r2_y_17)).xxxx * _LightColor0.xyzx);
                 float r2_x_7 = r2_xyzw_7.x;
@@ -8635,10 +8635,10 @@ Shader "Custom/Planet_Base_OCEANMOD"
             {
                 float4 cb5_values[7];
             };
-            SamplerState s0 : register(s0);
-            SamplerComparisonState s1 : register(s1);
-            SamplerState s2 : register(s2);
-            SamplerState s3 : register(s3);
+            SamplerState sampler_linear_clamp : register(s0);
+            SamplerComparisonState sampler_comparison_linear_clamp1 : register(s1);
+            SamplerState sampler_linear_clamp2 : register(s2);
+            SamplerState sampler_linear_clamp3 : register(s3);
             Texture2D t0 : register(t0);
             Texture2D t1 : register(t1);
             Texture3D t2 : register(t2);
@@ -8751,7 +8751,7 @@ Shader "Custom/Planet_Base_OCEANMOD"
                     float r2_y_10 = mad(r6_y_7, 0.25, 0.75);
                     float r2_z_5 = mad(cb5_values[0].z, 0.5, 0.75);
                     float r6_x_7 = max(r2_z_5, r2_y_10);
-                    float4 r6_xyzw_8 = t2.Sample(s0, float4(r6_x_7, r6_z_7, r6_w_2, r6_x_7));
+                    float4 r6_xyzw_8 = t2.Sample(sampler_linear_clamp, (float4(r6_x_7, r6_z_7, r6_w_2, r6_x_7)).xyz);
                     r6_x_9 = r6_xyzw_8.x;
                     r6_y_9 = r6_xyzw_8.y;
                     r6_z_9 = r6_xyzw_8.z;
@@ -8771,7 +8771,7 @@ Shader "Custom/Planet_Base_OCEANMOD"
                 float4 r6_xyzw_12 = mad(cb3_values[10].xyzw, i.texcoord1.zzzz, r6_xyzw_11);
                 float4 r6_xyzw_13 = (r6_xyzw_12 + cb3_values[11].xyzw);
                 float3 r6_xyz_14 = ((r6_xyzw_13.xyzx / r6_xyzw_13.wwww)).xyz;
-                float r2_z_7 = t3.SampleCmpLevelZero(s1, (r6_xyz_14.xyxx).xy, r6_xyz_14.z);
+                float r2_z_7 = t3.SampleCmpLevelZero(sampler_comparison_linear_clamp1, (r6_xyz_14.xyxx).xy, r6_xyz_14.z);
                 float r2_w_7 = (-cb3_values[24].x + 1);
                 float r2_z_8 = mad(r2_z_7, r2_w_7, cb3_values[24].x);
                 float r2_y_13 = (-r2_z_8 + r2_y_12);
@@ -8782,10 +8782,10 @@ Shader "Custom/Planet_Base_OCEANMOD"
                 float4 r2_xyzw_10 = (float4(r2_z_9, r2_z_9, r2_z_9, r2_w_8) + float4(0, 0, 0.5, 0.5));
                 float r2_z_10 = r2_xyzw_10.z;
                 float r2_w_9 = r2_xyzw_10.w;
-                float4 r6_xyzw_15 = t0.Sample(s2, float4(r2_z_10, r2_w_9, r2_z_10, r2_z_10));
+                float4 r6_xyzw_15 = t0.Sample(sampler_linear_clamp2, (float4(r2_z_10, r2_w_9, r2_z_10, r2_z_10)).xy);
                 float r2_y_16 = (r2_y_15 * r6_xyzw_15.w);
                 float r2_z_11 = dot(r5_xyzw_4.xyzx, r5_xyzw_4.xyzx);
-                float4 r5_xyzw_5 = t1.Sample(s3, r2_z_11.xxxx);
+                float4 r5_xyzw_5 = t1.Sample(sampler_linear_clamp3, (r2_z_11.xxxx).xy);
                 float r2_y_17 = (r2_y_16 * r5_xyzw_5.x);
                 float4 r2_xyzw_7 = (((mad(mad(mad(cb3_values[25].w, r2_y_5, r2_x_2), cb3_values[24].z, cb3_values[24].w), r2_y_13, r2_z_8) * r2_y_17)).xxxx * _LightColor0.xyzx);
                 float r2_x_7 = r2_xyzw_7.x;
@@ -8888,8 +8888,8 @@ Shader "Custom/Planet_Base_OCEANMOD"
                 float3 unity_ProbeVolumeSizeInv;
                 float3 unity_ProbeVolumeMin;
             };
-            SamplerState s0 : register(s0);
-            SamplerState s1 : register(s1);
+            SamplerState sampler_linear_clamp : register(s0);
+            SamplerState sampler_linear_clamp1 : register(s1);
             Texture2D t0 : register(t0);
             Texture3D t1 : register(t1);
             struct program45Input
@@ -8978,7 +8978,7 @@ Shader "Custom/Planet_Base_OCEANMOD"
                     float r2_w_3 = mad(r4_y_8, 0.25, 0.75);
                     float r3_z_1 = mad(unity_ProbeVolumeParams.z, 0.5, 0.75);
                     float r4_x_8 = max(r2_w_3, r3_z_1);
-                    float4 r4_xyzw_9 = t1.Sample(s0, float4(r4_x_8, r4_z_8, r4_w_2, r4_x_8));
+                    float4 r4_xyzw_9 = t1.Sample(sampler_linear_clamp, (float4(r4_x_8, r4_z_8, r4_w_2, r4_x_8)).xyz);
                     r4_x_10 = r4_xyzw_9.x;
                     r4_y_10 = r4_xyzw_9.y;
                     r4_z_10 = r4_xyzw_9.z;
@@ -8993,7 +8993,7 @@ Shader "Custom/Planet_Base_OCEANMOD"
                     r4_w_4 = r4_xyzw_10.w;
                 }
                 float r2_w_5 = dot(float4(r4_x_10, r4_y_10, r4_z_10, r4_w_4), unity_OcclusionMaskSelector);
-                float4 r3_xyzw_5 = t0.Sample(s1, (((mad(cb0_values[6].xyxx, i.texcoord1.zzzz, (mad(cb0_values[4].xyxx, i.texcoord1.xxxx, ((i.texcoord1.yyyy * cb0_values[5].xyxx)).xyxx)).xyxx)).xyxx + cb0_values[7].xyxx)).xyxx);
+                float4 r3_xyzw_5 = t0.Sample(sampler_linear_clamp1, ((((mad(cb0_values[6].xyxx, i.texcoord1.zzzz, (mad(cb0_values[4].xyxx, i.texcoord1.xxxx, ((i.texcoord1.yyyy * cb0_values[5].xyxx)).xyxx)).xyxx)).xyxx + cb0_values[7].xyxx)).xyxx).xy);
                 float r2_w_6 = (r2_w_5 * r3_xyzw_5.w);
                 float4 r3_xyzw_6 = (r2_w_6.xxxx * _LightColor0.xyzx);
                 float r3_x_6 = r3_xyzw_6.x;
@@ -9105,9 +9105,9 @@ Shader "Custom/Planet_Base_OCEANMOD"
                 float3 unity_ProbeVolumeSizeInv;
                 float3 unity_ProbeVolumeMin;
             };
-            SamplerState s0 : register(s0);
-            SamplerState s1 : register(s1);
-            SamplerState s2 : register(s2);
+            SamplerState sampler_linear_clamp : register(s0);
+            SamplerState sampler_linear_clamp1 : register(s1);
+            SamplerState sampler_linear_clamp2 : register(s2);
             Texture2D t0 : register(t0);
             TextureCube t1 : register(t1);
             Texture3D t2 : register(t2);
@@ -9198,7 +9198,7 @@ Shader "Custom/Planet_Base_OCEANMOD"
                     float r2_w_5 = mad(r5_y_8, 0.25, 0.75);
                     float r3_w_1 = mad(unity_ProbeVolumeParams.z, 0.5, 0.75);
                     float r5_x_8 = max(r2_w_5, r3_w_1);
-                    float4 r5_xyzw_9 = t2.Sample(s0, float4(r5_x_8, r5_z_8, r5_w_2, r5_x_8));
+                    float4 r5_xyzw_9 = t2.Sample(sampler_linear_clamp, (float4(r5_x_8, r5_z_8, r5_w_2, r5_x_8)).xyz);
                     r5_x_10 = r5_xyzw_9.x;
                     r5_y_10 = r5_xyzw_9.y;
                     r5_z_10 = r5_xyzw_9.z;
@@ -9214,8 +9214,8 @@ Shader "Custom/Planet_Base_OCEANMOD"
                 }
                 float r2_w_7 = dot(float4(r5_x_10, r5_y_10, r5_z_10, r5_w_4), unity_OcclusionMaskSelector);
                 float r3_w_3 = dot(r4_xyz_4.xyzx, r4_xyz_4.xyzx);
-                float4 r5_xyzw_11 = t0.Sample(s2, r3_w_3.xxxx);
-                float4 r4_xyzw_5 = t1.Sample(s1, r4_xyz_4.xyzx);
+                float4 r5_xyzw_11 = t0.Sample(sampler_linear_clamp2, (r3_w_3.xxxx).xy);
+                float4 r4_xyzw_5 = t1.Sample(sampler_linear_clamp1, r4_xyz_4.xyz);
                 float r3_w_4 = (r4_xyzw_5.w * r5_xyzw_11.x);
                 float r2_w_8 = (r2_w_7 * r3_w_4);
                 float3 r4_xyz_6 = ((r2_w_8.xxxx * _LightColor0.xyzx)).xyz;
@@ -9316,9 +9316,9 @@ Shader "Custom/Planet_Base_OCEANMOD"
                 float3 unity_ProbeVolumeSizeInv;
                 float3 unity_ProbeVolumeMin;
             };
-            SamplerState s0 : register(s0);
-            SamplerState s1 : register(s1);
-            SamplerState s2 : register(s2);
+            SamplerState sampler_linear_clamp : register(s0);
+            SamplerState sampler_linear_clamp1 : register(s1);
+            SamplerState sampler_linear_clamp2 : register(s2);
             Texture2D t0 : register(t0);
             Texture2D t1 : register(t1);
             Texture3D t2 : register(t2);
@@ -9412,7 +9412,7 @@ Shader "Custom/Planet_Base_OCEANMOD"
                     float r2_w_5 = mad(r5_y_8, 0.25, 0.75);
                     float r3_w_1 = mad(unity_ProbeVolumeParams.z, 0.5, 0.75);
                     float r5_x_8 = max(r2_w_5, r3_w_1);
-                    float4 r5_xyzw_9 = t2.Sample(s0, float4(r5_x_8, r5_z_8, r5_w_2, r5_x_8));
+                    float4 r5_xyzw_9 = t2.Sample(sampler_linear_clamp, (float4(r5_x_8, r5_z_8, r5_w_2, r5_x_8)).xyz);
                     r5_x_10 = r5_xyzw_9.x;
                     r5_y_10 = r5_xyzw_9.y;
                     r5_z_10 = r5_xyzw_9.z;
@@ -9429,9 +9429,9 @@ Shader "Custom/Planet_Base_OCEANMOD"
                 float r2_w_7 = dot(float4(r5_x_10, r5_y_10, r5_z_10, r5_w_4), unity_OcclusionMaskSelector);
                 float r3_w_3 = (0 < r4_xyzw_4.z);
                 float r3_w_4 = asfloat(asint(r3_w_3) & asint(1065353216));
-                float4 r5_xyzw_13 = t0.Sample(s1, ((((r4_xyzw_4.xyxx / r4_xyzw_4.wwww)).xyxx + float4(0.5, 0.5, 0, 0))).xyxx);
+                float4 r5_xyzw_13 = t0.Sample(sampler_linear_clamp1, (((((r4_xyzw_4.xyxx / r4_xyzw_4.wwww)).xyxx + float4(0.5, 0.5, 0, 0))).xyxx).xy);
                 float r3_w_5 = (r3_w_4 * r5_xyzw_13.w);
-                float4 r4_xyzw_6 = t1.Sample(s2, (dot(r4_xyzw_4.xyzx, r4_xyzw_4.xyzx)).xxxx);
+                float4 r4_xyzw_6 = t1.Sample(sampler_linear_clamp2, ((dot(r4_xyzw_4.xyzx, r4_xyzw_4.xyzx)).xxxx).xy);
                 float r3_w_6 = (r3_w_5 * r4_xyzw_6.x);
                 float r2_w_8 = (r2_w_7 * r3_w_6);
                 float4 r4_xyzw_7 = (r2_w_8.xxxx * _LightColor0.xyzx);
@@ -9538,7 +9538,7 @@ Shader "Custom/Planet_Base_OCEANMOD"
                 float3 unity_ProbeVolumeSizeInv;
                 float3 unity_ProbeVolumeMin;
             };
-            SamplerState s0 : register(s0);
+            SamplerState sampler_linear_clamp : register(s0);
             Texture3D t0 : register(t0);
             struct program42Input
             {
@@ -9622,7 +9622,7 @@ Shader "Custom/Planet_Base_OCEANMOD"
                     float r2_w_3 = mad(r3_y_8, 0.25, 0.75);
                     float r3_y_9 = mad(unity_ProbeVolumeParams.z, 0.5, 0.75);
                     float r3_x_8 = max(r2_w_3, r3_y_9);
-                    float4 r3_xyzw_9 = t0.Sample(s0, float4(r3_x_8, r3_z_8, r3_w_2, r3_x_8));
+                    float4 r3_xyzw_9 = t0.Sample(sampler_linear_clamp, (float4(r3_x_8, r3_z_8, r3_w_2, r3_x_8)).xyz);
                     r3_x_10 = r3_xyzw_9.x;
                     r3_y_11 = r3_xyzw_9.y;
                     r3_z_10 = r3_xyzw_9.z;
@@ -9846,7 +9846,7 @@ Shader "Custom/Planet_Base_OCEANMOD"
             {
                 float4 cb2_values[21];
             };
-            SamplerState s0 : register(s0);
+            SamplerState sampler_linear_clamp : register(s0);
             Texture3D t0 : register(t0);
             struct program116Input
             {
@@ -9934,13 +9934,13 @@ Shader "Custom/Planet_Base_OCEANMOD"
                     float r2_w_2 = r2_xyzw_8.w;
                     float r2_y_9 = (cb2_values[0].z * 0.5);
                     float r2_x_8 = min(mad(-cb2_values[0].z, 0.5, 0.25), max((r2_y_8 * 0.25), r2_y_9));
-                    float4 r3_xyzw_3 = t0.Sample(s0, float4(r2_x_8, r2_z_8, r2_w_2, r2_x_8));
-                    float4 r4_xyzw_2 = t0.Sample(s0, ((float4(r2_x_8, r2_z_8, r2_w_2, r2_x_8) + float4(0.25, 0, 0, 0))).xyzx);
+                    float4 r3_xyzw_3 = t0.Sample(sampler_linear_clamp, (float4(r2_x_8, r2_z_8, r2_w_2, r2_x_8)).xyz);
+                    float4 r4_xyzw_2 = t0.Sample(sampler_linear_clamp, (((float4(r2_x_8, r2_z_8, r2_w_2, r2_x_8) + float4(0.25, 0, 0, 0))).xyzx).xyz);
                     float4 r2_xyzw_9 = (float4(r2_x_8, r2_z_8, r2_w_2, r2_x_8) + float4(0.5, 0, 0, 0));
                     float r2_x_9 = r2_xyzw_9.x;
                     float r2_y_10 = r2_xyzw_9.y;
                     float r2_z_9 = r2_xyzw_9.z;
-                    float4 r2_xyzw_10 = t0.Sample(s0, float4(r2_x_9, r2_y_10, r2_z_9, r2_x_9));
+                    float4 r2_xyzw_10 = t0.Sample(sampler_linear_clamp, (float4(r2_x_9, r2_y_10, r2_z_9, r2_x_9)).xyz);
                     TEXCOORD0_xyz_1 = i.texcoord0.xyz;
                     float r5_w_1 = 1;
                     float r3_x_4 = dot(r3_xyzw_3, float4(TEXCOORD0_xyz_1.x, TEXCOORD0_xyz_1.y, TEXCOORD0_xyz_1.z, r5_w_1));
@@ -10140,7 +10140,7 @@ Shader "Custom/Planet_Base_OCEANMOD"
             {
                 float4 cb2_values[21];
             };
-            SamplerState s0 : register(s0);
+            SamplerState sampler_linear_clamp : register(s0);
             Texture3D t0 : register(t0);
             struct program114Input
             {
@@ -10228,13 +10228,13 @@ Shader "Custom/Planet_Base_OCEANMOD"
                     float r2_w_2 = r2_xyzw_8.w;
                     float r2_y_9 = (cb2_values[0].z * 0.5);
                     float r2_x_8 = min(mad(-cb2_values[0].z, 0.5, 0.25), max((r2_y_8 * 0.25), r2_y_9));
-                    float4 r3_xyzw_3 = t0.Sample(s0, float4(r2_x_8, r2_z_8, r2_w_2, r2_x_8));
-                    float4 r4_xyzw_2 = t0.Sample(s0, ((float4(r2_x_8, r2_z_8, r2_w_2, r2_x_8) + float4(0.25, 0, 0, 0))).xyzx);
+                    float4 r3_xyzw_3 = t0.Sample(sampler_linear_clamp, (float4(r2_x_8, r2_z_8, r2_w_2, r2_x_8)).xyz);
+                    float4 r4_xyzw_2 = t0.Sample(sampler_linear_clamp, (((float4(r2_x_8, r2_z_8, r2_w_2, r2_x_8) + float4(0.25, 0, 0, 0))).xyzx).xyz);
                     float4 r2_xyzw_9 = (float4(r2_x_8, r2_z_8, r2_w_2, r2_x_8) + float4(0.5, 0, 0, 0));
                     float r2_x_9 = r2_xyzw_9.x;
                     float r2_y_10 = r2_xyzw_9.y;
                     float r2_z_9 = r2_xyzw_9.z;
-                    float4 r2_xyzw_10 = t0.Sample(s0, float4(r2_x_9, r2_y_10, r2_z_9, r2_x_9));
+                    float4 r2_xyzw_10 = t0.Sample(sampler_linear_clamp, (float4(r2_x_9, r2_y_10, r2_z_9, r2_x_9)).xyz);
                     TEXCOORD0_xyz_1 = i.texcoord0.xyz;
                     float r5_w_1 = 1;
                     float r3_x_4 = dot(r3_xyzw_3, float4(TEXCOORD0_xyz_1.x, TEXCOORD0_xyz_1.y, TEXCOORD0_xyz_1.z, r5_w_1));

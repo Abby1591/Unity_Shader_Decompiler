@@ -25,7 +25,7 @@ Shader "Hidden/FXAA II"
             {
                 float4x4 unity_MatrixVP;
             };
-            SamplerState s0 : register(s0);
+            SamplerState sampler_linear_clamp : register(s0);
             Texture2D t0 : register(t0);
             struct program1Input
             {
@@ -63,15 +63,15 @@ Shader "Hidden/FXAA II"
             {
                 program3Output o = (program3Output)0;
                 float4 r0_xyzw_1 = mad(_MainTex_TexelSize.xyxy, float4(1, 0, 0, 1), i.texcoord0.zwzw);
-                float4 r1_xyzw_1 = t0.Sample(s0, r0_xyzw_1.xyxx);
-                float4 r0_xyzw_2 = t0.Sample(s0, r0_xyzw_1.zwzz);
+                float4 r1_xyzw_1 = t0.Sample(sampler_linear_clamp, (r0_xyzw_1.xyxx).xy);
+                float4 r0_xyzw_2 = t0.Sample(sampler_linear_clamp, (r0_xyzw_1.zwzz).xy);
                 float r0_x_3 = dot(r0_xyzw_2.xyzx, float4(0.299, 0.587, 0.114, 0));
                 float r0_y_3 = dot(r1_xyzw_1.xyzx, float4(0.299, 0.587, 0.114, 0));
                 float2 r0_zw_3 = ((i.texcoord0.zzzw + _MainTex_TexelSize.xxxy)).zw;
-                float4 r1_xyzw_2 = t0.Sample(s0, r0_zw_3.xyxx);
+                float4 r1_xyzw_2 = t0.Sample(sampler_linear_clamp, (r0_zw_3.xyxx).xy);
                 float r0_z_4 = dot(r1_xyzw_2.xyzx, float4(0.299, 0.587, 0.114, 0));
                 float r0_w_4 = (r0_z_4 + r0_y_3);
-                float4 r1_xyzw_3 = t0.Sample(s0, i.texcoord0.zwzz);
+                float4 r1_xyzw_3 = t0.Sample(sampler_linear_clamp, (i.texcoord0.zwzz).xy);
                 float r1_x_4 = dot(r1_xyzw_3.xyzx, float4(0.299, 0.587, 0.114, 0));
                 float r1_y_4 = (r0_x_3 + r1_x_4);
                 float2 r2_yw_1 = ((-r0_w_4.xxxx + r1_y_4.xxxx)).yw;
@@ -89,8 +89,8 @@ Shader "Hidden/FXAA II"
                 float4 r2_xyzw_5 = (min(max((r0_w_11.xxxx * float4(r2_xz_1.x, r2_yw_1.x, r2_xz_1.y, r2_yw_1.y)), float4(-8, -8, -8, -8)), float4(8, 8, 8, 8)) * _MainTex_TexelSize.xyxy);
                 float4 r3_xyzw_1 = mad(r2_xyzw_5, float4(-0.5, -0.5, 0.5, 0.5), i.texcoord0.xyxy);
                 float4 r2_xyzw_6 = mad(r2_xyzw_5.zwzw, float4(-0.16666667, -0.16666667, 0.16666667, 0.16666667), i.texcoord0.xyxy);
-                float4 r4_xyzw_1 = t0.Sample(s0, r3_xyzw_1.xyxx);
-                float4 r3_xyzw_2 = t0.Sample(s0, r3_xyzw_1.zwzz);
+                float4 r4_xyzw_1 = t0.Sample(sampler_linear_clamp, (r3_xyzw_1.xyxx).xy);
+                float4 r3_xyzw_2 = t0.Sample(sampler_linear_clamp, (r3_xyzw_1.zwzz).xy);
                 float4 r1_xyzw_7 = (r3_xyzw_2.xxyz + r4_xyzw_1.xxyz);
                 float r1_y_7 = r1_xyzw_7.y;
                 float r1_z_5 = r1_xyzw_7.z;
@@ -99,8 +99,8 @@ Shader "Hidden/FXAA II"
                 float r1_y_8 = r1_xyzw_8.y;
                 float r1_z_6 = r1_xyzw_8.z;
                 float r1_w_5 = r1_xyzw_8.w;
-                float4 r3_xyzw_3 = t0.Sample(s0, r2_xyzw_6.xyxx);
-                float4 r2_xyzw_7 = t0.Sample(s0, r2_xyzw_6.zwzz);
+                float4 r3_xyzw_3 = t0.Sample(sampler_linear_clamp, (r2_xyzw_6.xyxx).xy);
+                float4 r2_xyzw_7 = t0.Sample(sampler_linear_clamp, (r2_xyzw_6.zwzz).xy);
                 float3 r2_xyz_8 = ((r2_xyzw_7.xyzx + r3_xyzw_3.xyzx)).xyz;
                 float4 r1_xyzw_9 = mad(r2_xyz_8.xxyz, float4(0, 0.25, 0.25, 0.25), float4(r1_y_8, r1_y_8, r1_z_6, r1_w_5));
                 float r1_y_9 = r1_xyzw_9.y;
@@ -111,7 +111,7 @@ Shader "Hidden/FXAA II"
                 float r0_z_5 = min(r0_y_3, r1_x_4);
                 float r0_y_4 = max(r0_y_3, r1_x_4);
                 float r0_y_5 = min(r2_w_8, r0_z_5);
-                float4 r3_xyzw_4 = t0.Sample(s0, i.texcoord0.xyxx);
+                float4 r3_xyzw_4 = t0.Sample(sampler_linear_clamp, (i.texcoord0.xyxx).xy);
                 float r0_z_6 = dot(r3_xyzw_4.xyzx, float4(0.299, 0.587, 0.114, 0));
                 float r0_y_6 = min(r0_y_5, r0_z_6);
                 float r0_x_6 = max(max(max(r0_z_4, r0_x_3), r0_y_4), r0_z_6);

@@ -31,7 +31,7 @@ Shader "Hidden/FXAA III (Console)"
             {
                 float4x4 unity_MatrixVP;
             };
-            SamplerState s0 : register(s0);
+            SamplerState sampler_linear_clamp : register(s0);
             Texture2D t0 : register(t0);
             struct program1Input
             {
@@ -78,15 +78,15 @@ Shader "Hidden/FXAA III (Console)"
             program3Output frag(program3Input i)
             {
                 program3Output o = (program3Output)0;
-                float4 r0_xyzw_1 = t0.Sample(s0, i.texcoord1.xyxx);
+                float4 r0_xyzw_1 = t0.Sample(sampler_linear_clamp, (i.texcoord1.xyxx).xy);
                 float r0_x_2 = dot(r0_xyzw_1.xyzx, float4(0.22, 0.707, 0.071, 0));
-                float4 r1_xyzw_1 = t0.Sample(s0, i.texcoord1.xwxx);
+                float4 r1_xyzw_1 = t0.Sample(sampler_linear_clamp, (i.texcoord1.xwxx).xy);
                 float r0_y_2 = dot(r1_xyzw_1.xyzx, float4(0.22, 0.707, 0.071, 0));
-                float4 r1_xyzw_2 = t0.Sample(s0, i.texcoord1.zyzz);
+                float4 r1_xyzw_2 = t0.Sample(sampler_linear_clamp, (i.texcoord1.zyzz).xy);
                 float r0_z_2 = dot(r1_xyzw_2.xyzx, float4(0.22, 0.707, 0.071, 0));
-                float4 r1_xyzw_3 = t0.Sample(s0, i.texcoord1.zwzz);
+                float4 r1_xyzw_3 = t0.Sample(sampler_linear_clamp, (i.texcoord1.zwzz).xy);
                 float r0_w_2 = dot(r1_xyzw_3.xyzx, float4(0.22, 0.707, 0.071, 0));
-                float4 r1_xyzw_4 = t0.Sample(s0, i.texcoord0.xyxx);
+                float4 r1_xyzw_4 = t0.Sample(sampler_linear_clamp, (i.texcoord0.xyxx).xy);
                 float r1_w_5 = dot(r1_xyzw_4.xyzx, float4(0.22, 0.707, 0.071, 0));
                 float r0_z_3 = (r0_z_2 + 0.0026041667);
                 float2 r2_xz_1 = (max(float4(r0_y_2, r0_y_2, r0_w_2, r0_y_2), float4(r0_x_2, r0_x_2, r0_z_3, r0_x_2))).xz;
@@ -111,11 +111,11 @@ Shader "Hidden/FXAA III (Console)"
                     float4 r0_xyzw_4 = mad(-float4(r0_x_6, r0_x_6, r0_x_6, r0_y_4), i.texcoord2.zzzw, i.texcoord0.xxxy);
                     float r0_z_4 = r0_xyzw_4.z;
                     float r0_w_3 = r0_xyzw_4.w;
-                    float4 r3_xyzw_2 = t0.Sample(s0, float4(r0_z_4, r0_w_3, r0_z_4, r0_z_4));
+                    float4 r3_xyzw_2 = t0.Sample(sampler_linear_clamp, (float4(r0_z_4, r0_w_3, r0_z_4, r0_z_4)).xy);
                     float4 r0_xyzw_5 = mad(float4(r0_x_6, r0_x_6, r0_x_6, r0_y_4), i.texcoord2.zzzw, i.texcoord0.xxxy);
                     float r0_z_5 = r0_xyzw_5.z;
                     float r0_w_4 = r0_xyzw_5.w;
-                    float4 r4_xyzw_1 = t0.Sample(s0, float4(r0_z_5, r0_w_4, r0_z_5, r0_z_5));
+                    float4 r4_xyzw_1 = t0.Sample(sampler_linear_clamp, (float4(r0_z_5, r0_w_4, r0_z_5, r0_z_5)).xy);
                     float r0_z_6 = min(abs(r0_y_4), abs(r0_x_6));
                     float r0_z_7 = (r0_z_6 * _EdgeSharpness);
                     float4 r0_xyzw_7 = (float4(r0_x_6, r0_y_4, r0_x_6, r0_x_6) / r0_z_7.xxxx);
@@ -129,11 +129,11 @@ Shader "Hidden/FXAA III (Console)"
                     float r0_y_7 = r0_xyzw_9.y;
                     float r0_z_8 = (mad(-float4(r0_x_9, r0_x_9, r0_x_9, r0_y_7), i.texcoord3.zzzw, i.texcoord0.xxxy)).z;
                     float r0_w_5 = (mad(-float4(r0_x_9, r0_x_9, r0_x_9, r0_y_7), i.texcoord3.zzzw, i.texcoord0.xxxy)).w;
-                    float4 r5_xyzw_1 = t0.Sample(s0, float4(r0_z_8, r0_w_5, r0_z_8, r0_z_8));
+                    float4 r5_xyzw_1 = t0.Sample(sampler_linear_clamp, (float4(r0_z_8, r0_w_5, r0_z_8, r0_z_8)).xy);
                     float4 r0_xyzw_10 = mad(float4(r0_x_9, r0_y_7, r0_x_9, r0_x_9), i.texcoord3.zwzz, i.texcoord0.xyxx);
                     float r0_x_10 = r0_xyzw_10.x;
                     float r0_y_8 = r0_xyzw_10.y;
-                    float4 r0_xyzw_11 = t0.Sample(s0, float4(r0_x_10, r0_y_8, r0_x_10, r0_x_10));
+                    float4 r0_xyzw_11 = t0.Sample(sampler_linear_clamp, (float4(r0_x_10, r0_y_8, r0_x_10, r0_x_10)).xy);
                     float4 r3_xyzw_3 = (r3_xyzw_2.xyzx + r4_xyzw_1.xyzx);
                     float r3_x_3 = r3_xyzw_3.x;
                     float r3_y_3 = r3_xyzw_3.y;

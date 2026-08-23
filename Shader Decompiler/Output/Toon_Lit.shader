@@ -38,9 +38,9 @@ Shader "Toon/Lit"
                 float3 unity_ProbeVolumeMin;
                 float4x4 unity_MatrixVP;
             };
-            SamplerState s0 : register(s0);
-            SamplerState s1 : register(s1);
-            SamplerState s2 : register(s2);
+            SamplerState sampler_linear_clamp : register(s0);
+            SamplerState sampler_linear_clamp1 : register(s1);
+            SamplerState sampler_linear_clamp2 : register(s2);
             Texture2D t0 : register(t0);
             Texture2D t1 : register(t1);
             Texture3D t2 : register(t2);
@@ -101,7 +101,7 @@ Shader "Toon/Lit"
             program32Output frag(program32Input i)
             {
                 program32Output o = (program32Output)0;
-                float4 r0_xyzw_1 = t0.Sample(s2, i.texcoord0.xyxx);
+                float4 r0_xyzw_1 = t0.Sample(sampler_linear_clamp2, (i.texcoord0.xyxx).xy);
                 float3 r0_xyz_2 = ((r0_xyzw_1.xyzx * _Color.xyzx)).xyz;
                 float r0_w_2 = (unity_ProbeVolumeParams.x == 1);
                 float r1_x_10;
@@ -120,7 +120,7 @@ Shader "Toon/Lit"
                     float r0_w_4 = mad(r1_y_8, 0.25, 0.75);
                     float r1_y_9 = mad(unity_ProbeVolumeParams.z, 0.5, 0.75);
                     float r1_x_8 = max(r0_w_4, r1_y_9);
-                    float4 r1_xyzw_9 = t2.Sample(s0, float4(r1_x_8, r1_z_8, r1_w_2, r1_x_8));
+                    float4 r1_xyzw_9 = t2.Sample(sampler_linear_clamp, (float4(r1_x_8, r1_z_8, r1_w_2, r1_x_8)).xyz);
                     r1_x_10 = r1_xyzw_9.x;
                     r1_y_11 = r1_xyzw_9.y;
                     r1_z_10 = r1_xyzw_9.z;
@@ -135,7 +135,7 @@ Shader "Toon/Lit"
                     r1_w_4 = r1_xyzw_10.w;
                 }
                 float r0_w_6 = dot(float4(r1_x_10, r1_y_11, r1_z_10, r1_w_4), unity_OcclusionMaskSelector);
-                float4 r1_xyzw_13 = t1.Sample(s1, (mad(dot(i.texcoord1.xyzx, _WorldSpaceLightPos0.xyzx), 0.5, 0.5)).xxxx);
+                float4 r1_xyzw_13 = t1.Sample(sampler_linear_clamp1, ((mad(dot(i.texcoord1.xyzx, _WorldSpaceLightPos0.xyzx), 0.5, 0.5)).xxxx).xy);
                 float4 r1_xyzw_14 = (r1_xyzw_13.xyzx * ((r0_xyz_2.xyzx * _LightColor0.xyzx)).xyzx);
                 float r1_x_14 = r1_xyzw_14.x;
                 float r1_y_13 = r1_xyzw_14.y;
@@ -197,10 +197,10 @@ Shader "Toon/Lit"
             {
                 float4 cb6_values[7];
             };
-            SamplerState s0 : register(s0);
-            SamplerState s1 : register(s1);
-            SamplerState s2 : register(s2);
-            SamplerState s3 : register(s3);
+            SamplerState sampler_linear_clamp : register(s0);
+            SamplerState sampler_linear_clamp1 : register(s1);
+            SamplerState sampler_linear_clamp2 : register(s2);
+            SamplerState sampler_linear_clamp3 : register(s3);
             Texture2D t0 : register(t0);
             Texture2D t1 : register(t1);
             Texture2D t2 : register(t2);
@@ -290,7 +290,7 @@ Shader "Toon/Lit"
             program39Output frag(program39Input i)
             {
                 program39Output o = (program39Output)0;
-                float4 r0_xyzw_1 = t0.Sample(s3, i.texcoord0.xyxx);
+                float4 r0_xyzw_1 = t0.Sample(sampler_linear_clamp3, (i.texcoord0.xyxx).xy);
                 float3 r0_xyz_2 = ((r0_xyzw_1.xyzx * _Color.xyzx)).xyz;
                 float r2_x_1 = cb4_values[9].z;
                 float r2_y_1 = cb4_values[10].z;
@@ -334,7 +334,7 @@ Shader "Toon/Lit"
                     float r1_w_6 = ((float4(r1_x_10, r1_x_10, r1_y_9, r1_z_9) * cb6_values[5].xxyz)).w;
                     float r1_y_11 = mad(r1_y_10, 0.25, 0.75);
                     float r1_x_11 = max(r1_y_11, mad(cb6_values[0].z, 0.5, 0.75));
-                    float4 r1_xyzw_12 = t3.Sample(s0, float4(r1_x_11, r1_z_10, r1_w_6, r1_x_11));
+                    float4 r1_xyzw_12 = t3.Sample(sampler_linear_clamp, (float4(r1_x_11, r1_z_10, r1_w_6, r1_x_11)).xyz);
                     r1_x_13 = r1_xyzw_12.x;
                     r1_y_13 = r1_xyzw_12.y;
                     r1_z_12 = r1_xyzw_12.z;
@@ -355,9 +355,9 @@ Shader "Toon/Lit"
                 float4 r1_xyzw_14 = (i.texcoord5.xxyx / i.texcoord5.wwww);
                 float r1_y_14 = r1_xyzw_14.y;
                 float r1_z_13 = r1_xyzw_14.z;
-                float4 r2_xyzw_4 = t1.Sample(s1, float4(r1_y_14, r1_z_13, r1_y_14, r1_y_14));
+                float4 r2_xyzw_4 = t1.Sample(sampler_linear_clamp1, (float4(r1_y_14, r1_z_13, r1_y_14, r1_y_14)).xy);
                 float r0_w_5 = mad(r0_w_4, (dot(float4(r1_x_13, r1_y_13, r1_z_12, r1_w_8), cb2_values[46].xyzw) + -r2_xyzw_4.x), r2_xyzw_4.x);
-                float4 r1_xyzw_18 = t2.Sample(s2, (mad(dot(i.texcoord1.xyzx, unity_ProbeVolumeParams.xyzx), 0.5, 0.5)).xxxx);
+                float4 r1_xyzw_18 = t2.Sample(sampler_linear_clamp2, ((mad(dot(i.texcoord1.xyzx, unity_ProbeVolumeParams.xyzx), 0.5, 0.5)).xxxx).xy);
                 float4 r2_xyzw_5 = (r0_xyz_2.xyzx * _LightColor0.xyzx);
                 float r2_x_5 = r2_xyzw_5.x;
                 float r2_y_3 = r2_xyzw_5.y;
@@ -428,10 +428,10 @@ Shader "Toon/Lit"
             {
                 float4 cb6_values[7];
             };
-            SamplerState s0 : register(s0);
-            SamplerState s1 : register(s1);
-            SamplerState s2 : register(s2);
-            SamplerState s3 : register(s3);
+            SamplerState sampler_linear_clamp : register(s0);
+            SamplerState sampler_linear_clamp1 : register(s1);
+            SamplerState sampler_linear_clamp2 : register(s2);
+            SamplerState sampler_linear_clamp3 : register(s3);
             Texture2D t0 : register(t0);
             Texture2D t1 : register(t1);
             Texture2D t2 : register(t2);
@@ -509,7 +509,7 @@ Shader "Toon/Lit"
             program38Output frag(program38Input i)
             {
                 program38Output o = (program38Output)0;
-                float4 r0_xyzw_1 = t0.Sample(s3, i.texcoord0.xyxx);
+                float4 r0_xyzw_1 = t0.Sample(sampler_linear_clamp3, (i.texcoord0.xyxx).xy);
                 float3 r0_xyz_2 = ((r0_xyzw_1.xyzx * _Color.xyzx)).xyz;
                 float r2_x_1 = cb4_values[9].z;
                 float r2_y_1 = cb4_values[10].z;
@@ -553,7 +553,7 @@ Shader "Toon/Lit"
                     float r1_w_6 = ((float4(r1_x_10, r1_x_10, r1_y_9, r1_z_9) * cb6_values[5].xxyz)).w;
                     float r1_y_11 = mad(r1_y_10, 0.25, 0.75);
                     float r1_x_11 = max(r1_y_11, mad(cb6_values[0].z, 0.5, 0.75));
-                    float4 r1_xyzw_12 = t3.Sample(s0, float4(r1_x_11, r1_z_10, r1_w_6, r1_x_11));
+                    float4 r1_xyzw_12 = t3.Sample(sampler_linear_clamp, (float4(r1_x_11, r1_z_10, r1_w_6, r1_x_11)).xyz);
                     r1_x_13 = r1_xyzw_12.x;
                     r1_y_13 = r1_xyzw_12.y;
                     r1_z_12 = r1_xyzw_12.z;
@@ -574,9 +574,9 @@ Shader "Toon/Lit"
                 float4 r1_xyzw_14 = (i.texcoord5.xxyx / i.texcoord5.wwww);
                 float r1_y_14 = r1_xyzw_14.y;
                 float r1_z_13 = r1_xyzw_14.z;
-                float4 r2_xyzw_4 = t1.Sample(s1, float4(r1_y_14, r1_z_13, r1_y_14, r1_y_14));
+                float4 r2_xyzw_4 = t1.Sample(sampler_linear_clamp1, (float4(r1_y_14, r1_z_13, r1_y_14, r1_y_14)).xy);
                 float r0_w_5 = mad(r0_w_4, (dot(float4(r1_x_13, r1_y_13, r1_z_12, r1_w_8), cb2_values[46].xyzw) + -r2_xyzw_4.x), r2_xyzw_4.x);
-                float4 r1_xyzw_18 = t2.Sample(s2, (mad(dot(i.texcoord1.xyzx, unity_ProbeVolumeParams.xyzx), 0.5, 0.5)).xxxx);
+                float4 r1_xyzw_18 = t2.Sample(sampler_linear_clamp2, ((mad(dot(i.texcoord1.xyzx, unity_ProbeVolumeParams.xyzx), 0.5, 0.5)).xxxx).xy);
                 float4 r2_xyzw_5 = (r0_xyz_2.xyzx * _LightColor0.xyzx);
                 float r2_x_5 = r2_xyzw_5.x;
                 float r2_y_3 = r2_xyzw_5.y;
@@ -642,9 +642,9 @@ Shader "Toon/Lit"
             {
                 float4 cb5_values[2];
             };
-            SamplerState s0 : register(s0);
-            SamplerState s1 : register(s1);
-            SamplerState s2 : register(s2);
+            SamplerState sampler_linear_clamp : register(s0);
+            SamplerState sampler_linear_clamp1 : register(s1);
+            SamplerState sampler_linear_clamp2 : register(s2);
             Texture2D t0 : register(t0);
             Texture2D t1 : register(t1);
             Texture3D t2 : register(t2);
@@ -752,7 +752,7 @@ Shader "Toon/Lit"
             program37Output frag(program37Input i)
             {
                 program37Output o = (program37Output)0;
-                float4 r0_xyzw_1 = t0.Sample(s2, i.texcoord0.xyxx);
+                float4 r0_xyzw_1 = t0.Sample(sampler_linear_clamp2, (i.texcoord0.xyxx).xy);
                 float3 r0_xyz_2 = ((r0_xyzw_1.xyzx * _Color.xyzx)).xyz;
                 float r0_w_2 = (cb3_values[0].x == 1);
                 float r1_x_10;
@@ -770,7 +770,7 @@ Shader "Toon/Lit"
                     float r0_w_4 = mad(r1_y_8, 0.25, 0.75);
                     float r1_y_9 = mad(cb3_values[0].z, 0.5, 0.75);
                     float r1_x_8 = max(r0_w_4, r1_y_9);
-                    float4 r1_xyzw_9 = t2.Sample(s0, float4(r1_x_8, r1_z_8, r1_w_2, r1_x_8));
+                    float4 r1_xyzw_9 = t2.Sample(sampler_linear_clamp, (float4(r1_x_8, r1_z_8, r1_w_2, r1_x_8)).xyz);
                     r1_x_10 = r1_xyzw_9.x;
                     r1_y_11 = r1_xyzw_9.y;
                     r1_z_10 = r1_xyzw_9.z;
@@ -785,7 +785,7 @@ Shader "Toon/Lit"
                     r1_w_4 = r1_xyzw_10.w;
                 }
                 float r0_w_6 = dot(float4(r1_x_10, r1_y_11, r1_z_10, r1_w_4), unity_OcclusionMaskSelector);
-                float4 r1_xyzw_13 = t1.Sample(s1, (mad(dot(i.texcoord1.xyzx, _WorldSpaceLightPos0.xyzx), 0.5, 0.5)).xxxx);
+                float4 r1_xyzw_13 = t1.Sample(sampler_linear_clamp1, ((mad(dot(i.texcoord1.xyzx, _WorldSpaceLightPos0.xyzx), 0.5, 0.5)).xxxx).xy);
                 float4 r1_xyzw_14 = (r1_xyzw_13.xyzx * ((r0_xyz_2.xyzx * _LightColor0.xyzx)).xyzx);
                 float r1_x_14 = r1_xyzw_14.x;
                 float r1_y_13 = r1_xyzw_14.y;
@@ -839,9 +839,9 @@ Shader "Toon/Lit"
             {
                 float4 cb4_values[2];
             };
-            SamplerState s0 : register(s0);
-            SamplerState s1 : register(s1);
-            SamplerState s2 : register(s2);
+            SamplerState sampler_linear_clamp : register(s0);
+            SamplerState sampler_linear_clamp1 : register(s1);
+            SamplerState sampler_linear_clamp2 : register(s2);
             Texture2D t0 : register(t0);
             Texture2D t1 : register(t1);
             Texture3D t2 : register(t2);
@@ -909,7 +909,7 @@ Shader "Toon/Lit"
             program36Output frag(program36Input i)
             {
                 program36Output o = (program36Output)0;
-                float4 r0_xyzw_1 = t0.Sample(s2, i.texcoord0.xyxx);
+                float4 r0_xyzw_1 = t0.Sample(sampler_linear_clamp2, (i.texcoord0.xyxx).xy);
                 float3 r0_xyz_2 = ((r0_xyzw_1.xyzx * _Color.xyzx)).xyz;
                 float r0_w_2 = (cb3_values[0].x == 1);
                 float r1_x_10;
@@ -927,7 +927,7 @@ Shader "Toon/Lit"
                     float r0_w_4 = mad(r1_y_8, 0.25, 0.75);
                     float r1_y_9 = mad(cb3_values[0].z, 0.5, 0.75);
                     float r1_x_8 = max(r0_w_4, r1_y_9);
-                    float4 r1_xyzw_9 = t2.Sample(s0, float4(r1_x_8, r1_z_8, r1_w_2, r1_x_8));
+                    float4 r1_xyzw_9 = t2.Sample(sampler_linear_clamp, (float4(r1_x_8, r1_z_8, r1_w_2, r1_x_8)).xyz);
                     r1_x_10 = r1_xyzw_9.x;
                     r1_y_11 = r1_xyzw_9.y;
                     r1_z_10 = r1_xyzw_9.z;
@@ -942,7 +942,7 @@ Shader "Toon/Lit"
                     r1_w_4 = r1_xyzw_10.w;
                 }
                 float r0_w_6 = dot(float4(r1_x_10, r1_y_11, r1_z_10, r1_w_4), unity_OcclusionMaskSelector);
-                float4 r1_xyzw_13 = t1.Sample(s1, (mad(dot(i.texcoord1.xyzx, _WorldSpaceLightPos0.xyzx), 0.5, 0.5)).xxxx);
+                float4 r1_xyzw_13 = t1.Sample(sampler_linear_clamp1, ((mad(dot(i.texcoord1.xyzx, _WorldSpaceLightPos0.xyzx), 0.5, 0.5)).xxxx).xy);
                 float4 r1_xyzw_14 = (r1_xyzw_13.xyzx * ((r0_xyz_2.xyzx * _LightColor0.xyzx)).xyzx);
                 float r1_x_14 = r1_xyzw_14.x;
                 float r1_y_13 = r1_xyzw_14.y;
@@ -1001,10 +1001,10 @@ Shader "Toon/Lit"
             {
                 float4 cb5_values[7];
             };
-            SamplerState s0 : register(s0);
-            SamplerState s1 : register(s1);
-            SamplerState s2 : register(s2);
-            SamplerState s3 : register(s3);
+            SamplerState sampler_linear_clamp : register(s0);
+            SamplerState sampler_linear_clamp1 : register(s1);
+            SamplerState sampler_linear_clamp2 : register(s2);
+            SamplerState sampler_linear_clamp3 : register(s3);
             Texture2D t0 : register(t0);
             Texture2D t1 : register(t1);
             Texture2D t2 : register(t2);
@@ -1093,7 +1093,7 @@ Shader "Toon/Lit"
             program35Output frag(program35Input i)
             {
                 program35Output o = (program35Output)0;
-                float4 r0_xyzw_1 = t0.Sample(s3, i.texcoord0.xyxx);
+                float4 r0_xyzw_1 = t0.Sample(sampler_linear_clamp3, (i.texcoord0.xyxx).xy);
                 float3 r0_xyz_2 = ((r0_xyzw_1.xyzx * _Color.xyzx)).xyz;
                 float r2_x_1 = cb4_values[9].z;
                 float r2_y_1 = cb4_values[10].z;
@@ -1137,7 +1137,7 @@ Shader "Toon/Lit"
                     float r1_w_6 = ((float4(r1_x_10, r1_x_10, r1_y_9, r1_z_9) * cb5_values[5].xxyz)).w;
                     float r1_y_11 = mad(r1_y_10, 0.25, 0.75);
                     float r1_x_11 = max(r1_y_11, mad(cb5_values[0].z, 0.5, 0.75));
-                    float4 r1_xyzw_12 = t3.Sample(s0, float4(r1_x_11, r1_z_10, r1_w_6, r1_x_11));
+                    float4 r1_xyzw_12 = t3.Sample(sampler_linear_clamp, (float4(r1_x_11, r1_z_10, r1_w_6, r1_x_11)).xyz);
                     r1_x_13 = r1_xyzw_12.x;
                     r1_y_13 = r1_xyzw_12.y;
                     r1_z_12 = r1_xyzw_12.z;
@@ -1158,9 +1158,9 @@ Shader "Toon/Lit"
                 float4 r1_xyzw_14 = (i.texcoord5.xxyx / i.texcoord5.wwww);
                 float r1_y_14 = r1_xyzw_14.y;
                 float r1_z_13 = r1_xyzw_14.z;
-                float4 r2_xyzw_4 = t1.Sample(s1, float4(r1_y_14, r1_z_13, r1_y_14, r1_y_14));
+                float4 r2_xyzw_4 = t1.Sample(sampler_linear_clamp1, (float4(r1_y_14, r1_z_13, r1_y_14, r1_y_14)).xy);
                 float r0_w_5 = mad(r0_w_4, (dot(float4(r1_x_13, r1_y_13, r1_z_12, r1_w_8), cb2_values[46].xyzw) + -r2_xyzw_4.x), r2_xyzw_4.x);
-                float4 r1_xyzw_18 = t2.Sample(s2, (mad(dot(i.texcoord1.xyzx, unity_ProbeVolumeParams.xyzx), 0.5, 0.5)).xxxx);
+                float4 r1_xyzw_18 = t2.Sample(sampler_linear_clamp2, ((mad(dot(i.texcoord1.xyzx, unity_ProbeVolumeParams.xyzx), 0.5, 0.5)).xxxx).xy);
                 float4 r2_xyzw_5 = (r0_xyz_2.xyzx * _LightColor0.xyzx);
                 float r2_x_5 = r2_xyzw_5.x;
                 float r2_y_3 = r2_xyzw_5.y;
@@ -1222,10 +1222,10 @@ Shader "Toon/Lit"
             {
                 float4 cb5_values[7];
             };
-            SamplerState s0 : register(s0);
-            SamplerState s1 : register(s1);
-            SamplerState s2 : register(s2);
-            SamplerState s3 : register(s3);
+            SamplerState sampler_linear_clamp : register(s0);
+            SamplerState sampler_linear_clamp1 : register(s1);
+            SamplerState sampler_linear_clamp2 : register(s2);
+            SamplerState sampler_linear_clamp3 : register(s3);
             Texture2D t0 : register(t0);
             Texture2D t1 : register(t1);
             Texture2D t2 : register(t2);
@@ -1300,7 +1300,7 @@ Shader "Toon/Lit"
             program34Output frag(program34Input i)
             {
                 program34Output o = (program34Output)0;
-                float4 r0_xyzw_1 = t0.Sample(s3, i.texcoord0.xyxx);
+                float4 r0_xyzw_1 = t0.Sample(sampler_linear_clamp3, (i.texcoord0.xyxx).xy);
                 float3 r0_xyz_2 = ((r0_xyzw_1.xyzx * _Color.xyzx)).xyz;
                 float r2_x_1 = cb4_values[9].z;
                 float r2_y_1 = cb4_values[10].z;
@@ -1344,7 +1344,7 @@ Shader "Toon/Lit"
                     float r1_w_6 = ((float4(r1_x_10, r1_x_10, r1_y_9, r1_z_9) * cb5_values[5].xxyz)).w;
                     float r1_y_11 = mad(r1_y_10, 0.25, 0.75);
                     float r1_x_11 = max(r1_y_11, mad(cb5_values[0].z, 0.5, 0.75));
-                    float4 r1_xyzw_12 = t3.Sample(s0, float4(r1_x_11, r1_z_10, r1_w_6, r1_x_11));
+                    float4 r1_xyzw_12 = t3.Sample(sampler_linear_clamp, (float4(r1_x_11, r1_z_10, r1_w_6, r1_x_11)).xyz);
                     r1_x_13 = r1_xyzw_12.x;
                     r1_y_13 = r1_xyzw_12.y;
                     r1_z_12 = r1_xyzw_12.z;
@@ -1365,9 +1365,9 @@ Shader "Toon/Lit"
                 float4 r1_xyzw_14 = (i.texcoord5.xxyx / i.texcoord5.wwww);
                 float r1_y_14 = r1_xyzw_14.y;
                 float r1_z_13 = r1_xyzw_14.z;
-                float4 r2_xyzw_4 = t1.Sample(s1, float4(r1_y_14, r1_z_13, r1_y_14, r1_y_14));
+                float4 r2_xyzw_4 = t1.Sample(sampler_linear_clamp1, (float4(r1_y_14, r1_z_13, r1_y_14, r1_y_14)).xy);
                 float r0_w_5 = mad(r0_w_4, (dot(float4(r1_x_13, r1_y_13, r1_z_12, r1_w_8), cb2_values[46].xyzw) + -r2_xyzw_4.x), r2_xyzw_4.x);
-                float4 r1_xyzw_18 = t2.Sample(s2, (mad(dot(i.texcoord1.xyzx, unity_ProbeVolumeParams.xyzx), 0.5, 0.5)).xxxx);
+                float4 r1_xyzw_18 = t2.Sample(sampler_linear_clamp2, ((mad(dot(i.texcoord1.xyzx, unity_ProbeVolumeParams.xyzx), 0.5, 0.5)).xxxx).xy);
                 float4 r2_xyzw_5 = (r0_xyz_2.xyzx * _LightColor0.xyzx);
                 float r2_x_5 = r2_xyzw_5.x;
                 float r2_y_3 = r2_xyzw_5.y;
@@ -1421,9 +1421,9 @@ Shader "Toon/Lit"
             {
                 float4 cb3_values[21];
             };
-            SamplerState s0 : register(s0);
-            SamplerState s1 : register(s1);
-            SamplerState s2 : register(s2);
+            SamplerState sampler_linear_clamp : register(s0);
+            SamplerState sampler_linear_clamp1 : register(s1);
+            SamplerState sampler_linear_clamp2 : register(s2);
             Texture2D t0 : register(t0);
             Texture2D t1 : register(t1);
             Texture3D t2 : register(t2);
@@ -1498,7 +1498,7 @@ Shader "Toon/Lit"
             program33Output frag(program33Input i)
             {
                 program33Output o = (program33Output)0;
-                float4 r0_xyzw_1 = t0.Sample(s2, i.texcoord0.xyxx);
+                float4 r0_xyzw_1 = t0.Sample(sampler_linear_clamp2, (i.texcoord0.xyxx).xy);
                 float3 r0_xyz_2 = ((r0_xyzw_1.xyzx * _Color.xyzx)).xyz;
                 float r0_w_2 = (unity_ProbeVolumeParams.x == 1);
                 float r1_x_10;
@@ -1517,7 +1517,7 @@ Shader "Toon/Lit"
                     float r0_w_4 = mad(r1_y_8, 0.25, 0.75);
                     float r1_y_9 = mad(unity_ProbeVolumeParams.z, 0.5, 0.75);
                     float r1_x_8 = max(r0_w_4, r1_y_9);
-                    float4 r1_xyzw_9 = t2.Sample(s0, float4(r1_x_8, r1_z_8, r1_w_2, r1_x_8));
+                    float4 r1_xyzw_9 = t2.Sample(sampler_linear_clamp, (float4(r1_x_8, r1_z_8, r1_w_2, r1_x_8)).xyz);
                     r1_x_10 = r1_xyzw_9.x;
                     r1_y_11 = r1_xyzw_9.y;
                     r1_z_10 = r1_xyzw_9.z;
@@ -1532,7 +1532,7 @@ Shader "Toon/Lit"
                     r1_w_4 = r1_xyzw_10.w;
                 }
                 float r0_w_6 = dot(float4(r1_x_10, r1_y_11, r1_z_10, r1_w_4), unity_OcclusionMaskSelector);
-                float4 r1_xyzw_13 = t1.Sample(s1, (mad(dot(i.texcoord1.xyzx, _WorldSpaceLightPos0.xyzx), 0.5, 0.5)).xxxx);
+                float4 r1_xyzw_13 = t1.Sample(sampler_linear_clamp1, ((mad(dot(i.texcoord1.xyzx, _WorldSpaceLightPos0.xyzx), 0.5, 0.5)).xxxx).xy);
                 float4 r1_xyzw_14 = (r1_xyzw_13.xyzx * ((r0_xyz_2.xyzx * _LightColor0.xyzx)).xyzx);
                 float r1_x_14 = r1_xyzw_14.x;
                 float r1_y_13 = r1_xyzw_14.y;
@@ -1578,10 +1578,10 @@ Shader "Toon/Lit"
                 float3 unity_ProbeVolumeMin;
                 float4x4 unity_MatrixVP;
             };
-            SamplerState s0 : register(s0);
-            SamplerState s1 : register(s1);
-            SamplerState s2 : register(s2);
-            SamplerState s3 : register(s3);
+            SamplerState sampler_linear_clamp : register(s0);
+            SamplerState sampler_linear_clamp1 : register(s1);
+            SamplerState sampler_linear_clamp2 : register(s2);
+            SamplerState sampler_linear_clamp3 : register(s3);
             Texture2D t0 : register(t0);
             Texture2D t1 : register(t1);
             Texture2D t2 : register(t2);
@@ -1651,7 +1651,7 @@ Shader "Toon/Lit"
                 float3 r0_xyz_1 = ((-i.texcoord2.xyzx + _WorldSpaceLightPos0.xyzx)).xyz;
                 float r0_w_1 = dot(r0_xyz_1.xyzx, r0_xyz_1.xyzx);
                 float r0_w_2 = rsqrt(r0_w_1);
-                float4 r1_xyzw_1 = t0.Sample(s3, i.texcoord0.xyxx);
+                float4 r1_xyzw_1 = t0.Sample(sampler_linear_clamp3, (i.texcoord0.xyxx).xy);
                 float3 r2_xyz_4 = (((mad(cb0_values[6].xyzx, i.texcoord2.zzzz, (mad(cb0_values[4].xyzx, i.texcoord2.xxxx, ((i.texcoord2.yyyy * cb0_values[5].xyzx)).xyzx)).xyzx)).xyzx + cb0_values[7].xyzx)).xyz;
                 float r0_w_3 = (unity_ProbeVolumeParams.x == 1);
                 float r3_x_10;
@@ -1670,7 +1670,7 @@ Shader "Toon/Lit"
                     float r0_w_5 = mad(r3_y_8, 0.25, 0.75);
                     float r1_w_2 = mad(unity_ProbeVolumeParams.z, 0.5, 0.75);
                     float r3_x_8 = max(r0_w_5, r1_w_2);
-                    float4 r3_xyzw_9 = t3.Sample(s0, float4(r3_x_8, r3_z_8, r3_w_2, r3_x_8));
+                    float4 r3_xyzw_9 = t3.Sample(sampler_linear_clamp, (float4(r3_x_8, r3_z_8, r3_w_2, r3_x_8)).xyz);
                     r3_x_10 = r3_xyzw_9.x;
                     r3_y_10 = r3_xyzw_9.y;
                     r3_z_10 = r3_xyzw_9.z;
@@ -1686,8 +1686,8 @@ Shader "Toon/Lit"
                 }
                 float r0_w_7 = dot(float4(r3_x_10, r3_y_10, r3_z_10, r3_w_4), unity_OcclusionMaskSelector);
                 float r1_w_4 = dot(r2_xyz_4.xyzx, r2_xyz_4.xyzx);
-                float4 r2_xyzw_5 = t1.Sample(s1, r1_w_4.xxxx);
-                float4 r3_xyzw_11 = t2.Sample(s2, (mad(dot(i.texcoord1.xyzx, ((r0_w_2.xxxx * r0_xyz_1.xyzx)).xyzx), 0.5, 0.5)).xxxx);
+                float4 r2_xyzw_5 = t1.Sample(sampler_linear_clamp1, (r1_w_4.xxxx).xy);
+                float4 r3_xyzw_11 = t2.Sample(sampler_linear_clamp2, ((mad(dot(i.texcoord1.xyzx, ((r0_w_2.xxxx * r0_xyz_1.xyzx)).xyzx), 0.5, 0.5)).xxxx).xy);
                 float4 r0_xyzw_5 = (((r1_xyzw_1.xyzx * cb0_values[8].xyzx)).xyzx * _LightColor0.xyzx);
                 float r0_x_5 = r0_xyzw_5.x;
                 float r0_y_3 = r0_xyzw_5.y;
@@ -1742,10 +1742,10 @@ Shader "Toon/Lit"
             {
                 float4 cb4_values[2];
             };
-            SamplerState s0 : register(s0);
-            SamplerState s1 : register(s1);
-            SamplerState s2 : register(s2);
-            SamplerState s3 : register(s3);
+            SamplerState sampler_linear_clamp : register(s0);
+            SamplerState sampler_linear_clamp1 : register(s1);
+            SamplerState sampler_linear_clamp2 : register(s2);
+            SamplerState sampler_linear_clamp3 : register(s3);
             Texture2D t0 : register(t0);
             Texture2D t1 : register(t1);
             Texture2D t2 : register(t2);
@@ -1814,7 +1814,7 @@ Shader "Toon/Lit"
             program67Output frag(program67Input i)
             {
                 program67Output o = (program67Output)0;
-                float4 r0_xyzw_1 = t0.Sample(s3, i.texcoord0.xyxx);
+                float4 r0_xyzw_1 = t0.Sample(sampler_linear_clamp3, (i.texcoord0.xyxx).xy);
                 float r0_w_2 = (unity_ProbeVolumeParams.x == 1);
                 float r2_x_10;
                 float r2_y_10;
@@ -1832,7 +1832,7 @@ Shader "Toon/Lit"
                     float r0_w_4 = mad(r2_y_8, 0.25, 0.75);
                     float r1_z_1 = mad(unity_ProbeVolumeParams.z, 0.5, 0.75);
                     float r2_x_8 = max(r0_w_4, r1_z_1);
-                    float4 r2_xyzw_9 = t3.Sample(s0, float4(r2_x_8, r2_z_8, r2_w_2, r2_x_8));
+                    float4 r2_xyzw_9 = t3.Sample(sampler_linear_clamp, (float4(r2_x_8, r2_z_8, r2_w_2, r2_x_8)).xyz);
                     r2_x_10 = r2_xyzw_9.x;
                     r2_y_10 = r2_xyzw_9.y;
                     r2_z_10 = r2_xyzw_9.z;
@@ -1847,8 +1847,8 @@ Shader "Toon/Lit"
                     r2_w_4 = r2_xyzw_10.w;
                 }
                 float r0_w_6 = dot(float4(r2_x_10, r2_y_10, r2_z_10, r2_w_4), unity_OcclusionMaskSelector);
-                float4 r1_xyzw_5 = t1.Sample(s1, (((mad(cb0_values[6].xyxx, i.texcoord2.zzzz, (mad(cb0_values[4].xyxx, i.texcoord2.xxxx, ((i.texcoord2.yyyy * cb0_values[5].xyxx)).xyxx)).xyxx)).xyxx + cb0_values[7].xyxx)).xyxx);
-                float4 r2_xyzw_11 = t2.Sample(s2, (mad(dot(i.texcoord1.xyzx, _WorldSpaceLightPos0.xyzx), 0.5, 0.5)).xxxx);
+                float4 r1_xyzw_5 = t1.Sample(sampler_linear_clamp1, ((((mad(cb0_values[6].xyxx, i.texcoord2.zzzz, (mad(cb0_values[4].xyxx, i.texcoord2.xxxx, ((i.texcoord2.yyyy * cb0_values[5].xyxx)).xyxx)).xyxx)).xyxx + cb0_values[7].xyxx)).xyxx).xy);
+                float4 r2_xyzw_11 = t2.Sample(sampler_linear_clamp2, ((mad(dot(i.texcoord1.xyzx, _WorldSpaceLightPos0.xyzx), 0.5, 0.5)).xxxx).xy);
                 float r0_w_7 = dot(r1_xyzw_5.wwww, r0_w_6.xxxx);
                 float TEXCOORD1_w_8 = i.texcoord5.x;
                 o.sv_Target0.xyz = ((((r0_w_7.xxxx * ((r2_xyzw_11.xyzx * ((((r0_xyzw_1.xyzx * cb0_values[8].xyzx)).xyzx * _LightColor0.xyzx)).xyzx)).xyzx)).xyzx * TEXCOORD1_w_8.xxxx)).xyz;
@@ -1896,11 +1896,11 @@ Shader "Toon/Lit"
             {
                 float4 cb4_values[2];
             };
-            SamplerState s0 : register(s0);
-            SamplerState s1 : register(s1);
-            SamplerState s2 : register(s2);
-            SamplerState s3 : register(s3);
-            SamplerState s4 : register(s4);
+            SamplerState sampler_linear_clamp : register(s0);
+            SamplerState sampler_linear_clamp1 : register(s1);
+            SamplerState sampler_linear_clamp2 : register(s2);
+            SamplerState sampler_linear_clamp3 : register(s3);
+            SamplerState sampler_linear_clamp4 : register(s4);
             Texture2D t0 : register(t0);
             Texture2D t1 : register(t1);
             TextureCube t2 : register(t2);
@@ -1981,7 +1981,7 @@ Shader "Toon/Lit"
                 float3 r0_xyz_1 = ((-i.texcoord2.xyzx + _WorldSpaceLightPos0.xyzx)).xyz;
                 float r0_w_1 = dot(r0_xyz_1.xyzx, r0_xyz_1.xyzx);
                 float r0_w_2 = rsqrt(r0_w_1);
-                float4 r1_xyzw_1 = t0.Sample(s4, i.texcoord0.xyxx);
+                float4 r1_xyzw_1 = t0.Sample(sampler_linear_clamp4, (i.texcoord0.xyxx).xy);
                 float3 r2_xyz_4 = (((mad(cb0_values[6].xyzx, i.texcoord2.zzzz, (mad(cb0_values[4].xyzx, i.texcoord2.xxxx, ((i.texcoord2.yyyy * cb0_values[5].xyzx)).xyzx)).xyzx)).xyzx + cb0_values[7].xyzx)).xyz;
                 float r0_w_3 = (unity_ProbeVolumeParams.x == 1);
                 float r3_x_10;
@@ -2000,7 +2000,7 @@ Shader "Toon/Lit"
                     float r0_w_5 = mad(r3_y_8, 0.25, 0.75);
                     float r1_w_2 = mad(unity_ProbeVolumeParams.z, 0.5, 0.75);
                     float r3_x_8 = max(r0_w_5, r1_w_2);
-                    float4 r3_xyzw_9 = t4.Sample(s0, float4(r3_x_8, r3_z_8, r3_w_2, r3_x_8));
+                    float4 r3_xyzw_9 = t4.Sample(sampler_linear_clamp, (float4(r3_x_8, r3_z_8, r3_w_2, r3_x_8)).xyz);
                     r3_x_10 = r3_xyzw_9.x;
                     r3_y_10 = r3_xyzw_9.y;
                     r3_z_10 = r3_xyzw_9.z;
@@ -2016,10 +2016,10 @@ Shader "Toon/Lit"
                 }
                 float r0_w_7 = dot(float4(r3_x_10, r3_y_10, r3_z_10, r3_w_4), unity_OcclusionMaskSelector);
                 float r1_w_4 = dot(r2_xyz_4.xyzx, r2_xyz_4.xyzx);
-                float4 r3_xyzw_11 = t1.Sample(s2, r1_w_4.xxxx);
-                float4 r2_xyzw_5 = t2.Sample(s1, r2_xyz_4.xyzx);
+                float4 r3_xyzw_11 = t1.Sample(sampler_linear_clamp2, (r1_w_4.xxxx).xy);
+                float4 r2_xyzw_5 = t2.Sample(sampler_linear_clamp1, r2_xyz_4.xyz);
                 float r1_w_5 = (r2_xyzw_5.w * r3_xyzw_11.x);
-                float4 r2_xyzw_6 = t3.Sample(s3, (mad(dot(i.texcoord1.xyzx, ((r0_w_2.xxxx * r0_xyz_1.xyzx)).xyzx), 0.5, 0.5)).xxxx);
+                float4 r2_xyzw_6 = t3.Sample(sampler_linear_clamp3, ((mad(dot(i.texcoord1.xyzx, ((r0_w_2.xxxx * r0_xyz_1.xyzx)).xyzx), 0.5, 0.5)).xxxx).xy);
                 float4 r0_xyzw_5 = (((r1_xyzw_1.xyzx * cb0_values[8].xyzx)).xyzx * _LightColor0.xyzx);
                 float r0_x_5 = r0_xyzw_5.x;
                 float r0_y_3 = r0_xyzw_5.y;
@@ -2079,11 +2079,11 @@ Shader "Toon/Lit"
             {
                 float4 cb4_values[2];
             };
-            SamplerState s0 : register(s0);
-            SamplerState s1 : register(s1);
-            SamplerState s2 : register(s2);
-            SamplerState s3 : register(s3);
-            SamplerState s4 : register(s4);
+            SamplerState sampler_linear_clamp : register(s0);
+            SamplerState sampler_linear_clamp1 : register(s1);
+            SamplerState sampler_linear_clamp2 : register(s2);
+            SamplerState sampler_linear_clamp3 : register(s3);
+            SamplerState sampler_linear_clamp4 : register(s4);
             Texture2D t0 : register(t0);
             Texture2D t1 : register(t1);
             Texture2D t2 : register(t2);
@@ -2159,7 +2159,7 @@ Shader "Toon/Lit"
                 float3 r0_xyz_1 = ((-i.texcoord2.xyzx + _WorldSpaceLightPos0.xyzx)).xyz;
                 float r0_w_1 = dot(r0_xyz_1.xyzx, r0_xyz_1.xyzx);
                 float r0_w_2 = rsqrt(r0_w_1);
-                float4 r1_xyzw_1 = t0.Sample(s4, i.texcoord0.xyxx);
+                float4 r1_xyzw_1 = t0.Sample(sampler_linear_clamp4, (i.texcoord0.xyxx).xy);
                 float4 r2_xyzw_4 = (mad(cb0_values[6].xyzw, i.texcoord2.zzzz, mad(cb0_values[4].xyzw, i.texcoord2.xxxx, (i.texcoord2.yyyy * cb0_values[5].xyzw))) + cb0_values[7].xyzw);
                 float r0_w_3 = (unity_ProbeVolumeParams.x == 1);
                 float r3_x_10;
@@ -2178,7 +2178,7 @@ Shader "Toon/Lit"
                     float r0_w_5 = mad(r3_y_8, 0.25, 0.75);
                     float r1_w_2 = mad(unity_ProbeVolumeParams.z, 0.5, 0.75);
                     float r3_x_8 = max(r0_w_5, r1_w_2);
-                    float4 r3_xyzw_9 = t4.Sample(s0, float4(r3_x_8, r3_z_8, r3_w_2, r3_x_8));
+                    float4 r3_xyzw_9 = t4.Sample(sampler_linear_clamp, (float4(r3_x_8, r3_z_8, r3_w_2, r3_x_8)).xyz);
                     r3_x_10 = r3_xyzw_9.x;
                     r3_y_10 = r3_xyzw_9.y;
                     r3_z_10 = r3_xyzw_9.z;
@@ -2195,11 +2195,11 @@ Shader "Toon/Lit"
                 float r0_w_7 = dot(float4(r3_x_10, r3_y_10, r3_z_10, r3_w_4), unity_OcclusionMaskSelector);
                 float r1_w_4 = (0 < r2_xyzw_4.z);
                 float r1_w_5 = asfloat(asint(r1_w_4) & asint(1065353216));
-                float4 r3_xyzw_13 = t1.Sample(s1, ((((r2_xyzw_4.xyxx / r2_xyzw_4.wwww)).xyxx + float4(0.5, 0.5, 0, 0))).xyxx);
+                float4 r3_xyzw_13 = t1.Sample(sampler_linear_clamp1, (((((r2_xyzw_4.xyxx / r2_xyzw_4.wwww)).xyxx + float4(0.5, 0.5, 0, 0))).xyxx).xy);
                 float r1_w_6 = (r1_w_5 * r3_xyzw_13.w);
-                float4 r2_xyzw_6 = t2.Sample(s2, (dot(r2_xyzw_4.xyzx, r2_xyzw_4.xyzx)).xxxx);
+                float4 r2_xyzw_6 = t2.Sample(sampler_linear_clamp2, ((dot(r2_xyzw_4.xyzx, r2_xyzw_4.xyzx)).xxxx).xy);
                 float r1_w_7 = (r1_w_6 * r2_xyzw_6.x);
-                float4 r2_xyzw_7 = t3.Sample(s3, (mad(dot(i.texcoord1.xyzx, ((r0_w_2.xxxx * r0_xyz_1.xyzx)).xyzx), 0.5, 0.5)).xxxx);
+                float4 r2_xyzw_7 = t3.Sample(sampler_linear_clamp3, ((mad(dot(i.texcoord1.xyzx, ((r0_w_2.xxxx * r0_xyz_1.xyzx)).xyzx), 0.5, 0.5)).xxxx).xy);
                 float4 r0_xyzw_5 = (((r1_xyzw_1.xyzx * cb0_values[8].xyzx)).xyzx * _LightColor0.xyzx);
                 float r0_x_5 = r0_xyzw_5.x;
                 float r0_y_3 = r0_xyzw_5.y;
@@ -2259,9 +2259,9 @@ Shader "Toon/Lit"
             {
                 float4 cb4_values[2];
             };
-            SamplerState s0 : register(s0);
-            SamplerState s1 : register(s1);
-            SamplerState s2 : register(s2);
+            SamplerState sampler_linear_clamp : register(s0);
+            SamplerState sampler_linear_clamp1 : register(s1);
+            SamplerState sampler_linear_clamp2 : register(s2);
             Texture2D t0 : register(t0);
             Texture2D t1 : register(t1);
             Texture3D t2 : register(t2);
@@ -2326,7 +2326,7 @@ Shader "Toon/Lit"
             program64Output frag(program64Input i)
             {
                 program64Output o = (program64Output)0;
-                float4 r0_xyzw_1 = t0.Sample(s2, i.texcoord0.xyxx);
+                float4 r0_xyzw_1 = t0.Sample(sampler_linear_clamp2, (i.texcoord0.xyxx).xy);
                 float r0_w_2 = (unity_ProbeVolumeParams.x == 1);
                 float r1_x_10;
                 float r1_y_11;
@@ -2344,7 +2344,7 @@ Shader "Toon/Lit"
                     float r0_w_4 = mad(r1_y_8, 0.25, 0.75);
                     float r1_y_9 = mad(unity_ProbeVolumeParams.z, 0.5, 0.75);
                     float r1_x_8 = max(r0_w_4, r1_y_9);
-                    float4 r1_xyzw_9 = t2.Sample(s0, float4(r1_x_8, r1_z_8, r1_w_2, r1_x_8));
+                    float4 r1_xyzw_9 = t2.Sample(sampler_linear_clamp, (float4(r1_x_8, r1_z_8, r1_w_2, r1_x_8)).xyz);
                     r1_x_10 = r1_xyzw_9.x;
                     r1_y_11 = r1_xyzw_9.y;
                     r1_z_10 = r1_xyzw_9.z;
@@ -2359,7 +2359,7 @@ Shader "Toon/Lit"
                     r1_w_4 = r1_xyzw_10.w;
                 }
                 float r0_w_6 = dot(float4(r1_x_10, r1_y_11, r1_z_10, r1_w_4), unity_OcclusionMaskSelector);
-                float4 r1_xyzw_13 = t1.Sample(s1, (mad(dot(i.texcoord1.xyzx, _WorldSpaceLightPos0.xyzx), 0.5, 0.5)).xxxx);
+                float4 r1_xyzw_13 = t1.Sample(sampler_linear_clamp1, ((mad(dot(i.texcoord1.xyzx, _WorldSpaceLightPos0.xyzx), 0.5, 0.5)).xxxx).xy);
                 float r0_w_7 = (r0_w_6 + r0_w_6);
                 float TEXCOORD0_w_8 = i.texcoord5.x;
                 o.sv_Target0.xyz = ((((r0_w_7.xxxx * ((r1_xyzw_13.xyzx * ((((r0_xyzw_1.xyzx * cb0_values[4].xyzx)).xyzx * _LightColor0.xyzx)).xyzx)).xyzx)).xyzx * TEXCOORD0_w_8.xxxx)).xyz;
@@ -2407,10 +2407,10 @@ Shader "Toon/Lit"
             {
                 float4 cb4_values[2];
             };
-            SamplerState s0 : register(s0);
-            SamplerState s1 : register(s1);
-            SamplerState s2 : register(s2);
-            SamplerState s3 : register(s3);
+            SamplerState sampler_linear_clamp : register(s0);
+            SamplerState sampler_linear_clamp1 : register(s1);
+            SamplerState sampler_linear_clamp2 : register(s2);
+            SamplerState sampler_linear_clamp3 : register(s3);
             Texture2D t0 : register(t0);
             Texture2D t1 : register(t1);
             Texture2D t2 : register(t2);
@@ -2490,7 +2490,7 @@ Shader "Toon/Lit"
                 float3 r0_xyz_1 = ((-i.texcoord2.xyzx + _WorldSpaceLightPos0.xyzx)).xyz;
                 float r0_w_1 = dot(r0_xyz_1.xyzx, r0_xyz_1.xyzx);
                 float r0_w_2 = rsqrt(r0_w_1);
-                float4 r1_xyzw_1 = t0.Sample(s3, i.texcoord0.xyxx);
+                float4 r1_xyzw_1 = t0.Sample(sampler_linear_clamp3, (i.texcoord0.xyxx).xy);
                 float3 r2_xyz_4 = (((mad(cb0_values[6].xyzx, i.texcoord2.zzzz, (mad(cb0_values[4].xyzx, i.texcoord2.xxxx, ((i.texcoord2.yyyy * cb0_values[5].xyzx)).xyzx)).xyzx)).xyzx + cb0_values[7].xyzx)).xyz;
                 float r0_w_3 = (unity_ProbeVolumeParams.x == 1);
                 float r3_x_10;
@@ -2509,7 +2509,7 @@ Shader "Toon/Lit"
                     float r0_w_5 = mad(r3_y_8, 0.25, 0.75);
                     float r1_w_2 = mad(unity_ProbeVolumeParams.z, 0.5, 0.75);
                     float r3_x_8 = max(r0_w_5, r1_w_2);
-                    float4 r3_xyzw_9 = t3.Sample(s0, float4(r3_x_8, r3_z_8, r3_w_2, r3_x_8));
+                    float4 r3_xyzw_9 = t3.Sample(sampler_linear_clamp, (float4(r3_x_8, r3_z_8, r3_w_2, r3_x_8)).xyz);
                     r3_x_10 = r3_xyzw_9.x;
                     r3_y_10 = r3_xyzw_9.y;
                     r3_z_10 = r3_xyzw_9.z;
@@ -2525,8 +2525,8 @@ Shader "Toon/Lit"
                 }
                 float r0_w_7 = dot(float4(r3_x_10, r3_y_10, r3_z_10, r3_w_4), unity_OcclusionMaskSelector);
                 float r1_w_4 = dot(r2_xyz_4.xyzx, r2_xyz_4.xyzx);
-                float4 r2_xyzw_5 = t1.Sample(s1, r1_w_4.xxxx);
-                float4 r3_xyzw_11 = t2.Sample(s2, (mad(dot(i.texcoord1.xyzx, ((r0_w_2.xxxx * r0_xyz_1.xyzx)).xyzx), 0.5, 0.5)).xxxx);
+                float4 r2_xyzw_5 = t1.Sample(sampler_linear_clamp1, (r1_w_4.xxxx).xy);
+                float4 r3_xyzw_11 = t2.Sample(sampler_linear_clamp2, ((mad(dot(i.texcoord1.xyzx, ((r0_w_2.xxxx * r0_xyz_1.xyzx)).xyzx), 0.5, 0.5)).xxxx).xy);
                 float4 r0_xyzw_5 = (((r1_xyzw_1.xyzx * cb0_values[8].xyzx)).xyzx * _LightColor0.xyzx);
                 float r0_x_5 = r0_xyzw_5.x;
                 float r0_y_3 = r0_xyzw_5.y;
@@ -2577,10 +2577,10 @@ Shader "Toon/Lit"
                 float3 unity_ProbeVolumeMin;
                 float4x4 unity_MatrixVP;
             };
-            SamplerState s0 : register(s0);
-            SamplerState s1 : register(s1);
-            SamplerState s2 : register(s2);
-            SamplerState s3 : register(s3);
+            SamplerState sampler_linear_clamp : register(s0);
+            SamplerState sampler_linear_clamp1 : register(s1);
+            SamplerState sampler_linear_clamp2 : register(s2);
+            SamplerState sampler_linear_clamp3 : register(s3);
             Texture2D t0 : register(t0);
             Texture2D t1 : register(t1);
             Texture2D t2 : register(t2);
@@ -2647,7 +2647,7 @@ Shader "Toon/Lit"
             program62Output frag(program62Input i)
             {
                 program62Output o = (program62Output)0;
-                float4 r0_xyzw_1 = t0.Sample(s3, i.texcoord0.xyxx);
+                float4 r0_xyzw_1 = t0.Sample(sampler_linear_clamp3, (i.texcoord0.xyxx).xy);
                 float r0_w_2 = (unity_ProbeVolumeParams.x == 1);
                 float r2_x_10;
                 float r2_y_10;
@@ -2665,7 +2665,7 @@ Shader "Toon/Lit"
                     float r0_w_4 = mad(r2_y_8, 0.25, 0.75);
                     float r1_z_1 = mad(unity_ProbeVolumeParams.z, 0.5, 0.75);
                     float r2_x_8 = max(r0_w_4, r1_z_1);
-                    float4 r2_xyzw_9 = t3.Sample(s0, float4(r2_x_8, r2_z_8, r2_w_2, r2_x_8));
+                    float4 r2_xyzw_9 = t3.Sample(sampler_linear_clamp, (float4(r2_x_8, r2_z_8, r2_w_2, r2_x_8)).xyz);
                     r2_x_10 = r2_xyzw_9.x;
                     r2_y_10 = r2_xyzw_9.y;
                     r2_z_10 = r2_xyzw_9.z;
@@ -2680,8 +2680,8 @@ Shader "Toon/Lit"
                     r2_w_4 = r2_xyzw_10.w;
                 }
                 float r0_w_6 = dot(float4(r2_x_10, r2_y_10, r2_z_10, r2_w_4), unity_OcclusionMaskSelector);
-                float4 r1_xyzw_5 = t1.Sample(s1, (((mad(cb0_values[6].xyxx, i.texcoord2.zzzz, (mad(cb0_values[4].xyxx, i.texcoord2.xxxx, ((i.texcoord2.yyyy * cb0_values[5].xyxx)).xyxx)).xyxx)).xyxx + cb0_values[7].xyxx)).xyxx);
-                float4 r2_xyzw_11 = t2.Sample(s2, (mad(dot(i.texcoord1.xyzx, _WorldSpaceLightPos0.xyzx), 0.5, 0.5)).xxxx);
+                float4 r1_xyzw_5 = t1.Sample(sampler_linear_clamp1, ((((mad(cb0_values[6].xyxx, i.texcoord2.zzzz, (mad(cb0_values[4].xyxx, i.texcoord2.xxxx, ((i.texcoord2.yyyy * cb0_values[5].xyxx)).xyxx)).xyxx)).xyxx + cb0_values[7].xyxx)).xyxx).xy);
+                float4 r2_xyzw_11 = t2.Sample(sampler_linear_clamp2, ((mad(dot(i.texcoord1.xyzx, _WorldSpaceLightPos0.xyzx), 0.5, 0.5)).xxxx).xy);
                 float r0_w_7 = dot(r1_xyzw_5.wwww, r0_w_6.xxxx);
                 o.sv_Target0.xyz = ((r0_w_7.xxxx * ((r2_xyzw_11.xyzx * ((((r0_xyzw_1.xyzx * cb0_values[8].xyzx)).xyzx * _LightColor0.xyzx)).xyzx)).xyzx)).xyz;
                 o.sv_Target0.w = 1;
@@ -2719,11 +2719,11 @@ Shader "Toon/Lit"
                 float3 unity_ProbeVolumeMin;
                 float4x4 unity_MatrixVP;
             };
-            SamplerState s0 : register(s0);
-            SamplerState s1 : register(s1);
-            SamplerState s2 : register(s2);
-            SamplerState s3 : register(s3);
-            SamplerState s4 : register(s4);
+            SamplerState sampler_linear_clamp : register(s0);
+            SamplerState sampler_linear_clamp1 : register(s1);
+            SamplerState sampler_linear_clamp2 : register(s2);
+            SamplerState sampler_linear_clamp3 : register(s3);
+            SamplerState sampler_linear_clamp4 : register(s4);
             Texture2D t0 : register(t0);
             Texture2D t1 : register(t1);
             TextureCube t2 : register(t2);
@@ -2794,7 +2794,7 @@ Shader "Toon/Lit"
                 float3 r0_xyz_1 = ((-i.texcoord2.xyzx + _WorldSpaceLightPos0.xyzx)).xyz;
                 float r0_w_1 = dot(r0_xyz_1.xyzx, r0_xyz_1.xyzx);
                 float r0_w_2 = rsqrt(r0_w_1);
-                float4 r1_xyzw_1 = t0.Sample(s4, i.texcoord0.xyxx);
+                float4 r1_xyzw_1 = t0.Sample(sampler_linear_clamp4, (i.texcoord0.xyxx).xy);
                 float3 r2_xyz_4 = (((mad(cb0_values[6].xyzx, i.texcoord2.zzzz, (mad(cb0_values[4].xyzx, i.texcoord2.xxxx, ((i.texcoord2.yyyy * cb0_values[5].xyzx)).xyzx)).xyzx)).xyzx + cb0_values[7].xyzx)).xyz;
                 float r0_w_3 = (unity_ProbeVolumeParams.x == 1);
                 float r3_x_10;
@@ -2813,7 +2813,7 @@ Shader "Toon/Lit"
                     float r0_w_5 = mad(r3_y_8, 0.25, 0.75);
                     float r1_w_2 = mad(unity_ProbeVolumeParams.z, 0.5, 0.75);
                     float r3_x_8 = max(r0_w_5, r1_w_2);
-                    float4 r3_xyzw_9 = t4.Sample(s0, float4(r3_x_8, r3_z_8, r3_w_2, r3_x_8));
+                    float4 r3_xyzw_9 = t4.Sample(sampler_linear_clamp, (float4(r3_x_8, r3_z_8, r3_w_2, r3_x_8)).xyz);
                     r3_x_10 = r3_xyzw_9.x;
                     r3_y_10 = r3_xyzw_9.y;
                     r3_z_10 = r3_xyzw_9.z;
@@ -2829,10 +2829,10 @@ Shader "Toon/Lit"
                 }
                 float r0_w_7 = dot(float4(r3_x_10, r3_y_10, r3_z_10, r3_w_4), unity_OcclusionMaskSelector);
                 float r1_w_4 = dot(r2_xyz_4.xyzx, r2_xyz_4.xyzx);
-                float4 r3_xyzw_11 = t1.Sample(s2, r1_w_4.xxxx);
-                float4 r2_xyzw_5 = t2.Sample(s1, r2_xyz_4.xyzx);
+                float4 r3_xyzw_11 = t1.Sample(sampler_linear_clamp2, (r1_w_4.xxxx).xy);
+                float4 r2_xyzw_5 = t2.Sample(sampler_linear_clamp1, r2_xyz_4.xyz);
                 float r1_w_5 = (r2_xyzw_5.w * r3_xyzw_11.x);
-                float4 r2_xyzw_6 = t3.Sample(s3, (mad(dot(i.texcoord1.xyzx, ((r0_w_2.xxxx * r0_xyz_1.xyzx)).xyzx), 0.5, 0.5)).xxxx);
+                float4 r2_xyzw_6 = t3.Sample(sampler_linear_clamp3, ((mad(dot(i.texcoord1.xyzx, ((r0_w_2.xxxx * r0_xyz_1.xyzx)).xyzx), 0.5, 0.5)).xxxx).xy);
                 float4 r0_xyzw_5 = (((r1_xyzw_1.xyzx * cb0_values[8].xyzx)).xyzx * _LightColor0.xyzx);
                 float r0_x_5 = r0_xyzw_5.x;
                 float r0_y_3 = r0_xyzw_5.y;
@@ -2878,11 +2878,11 @@ Shader "Toon/Lit"
                 float3 unity_ProbeVolumeMin;
                 float4x4 unity_MatrixVP;
             };
-            SamplerState s0 : register(s0);
-            SamplerState s1 : register(s1);
-            SamplerState s2 : register(s2);
-            SamplerState s3 : register(s3);
-            SamplerState s4 : register(s4);
+            SamplerState sampler_linear_clamp : register(s0);
+            SamplerState sampler_linear_clamp1 : register(s1);
+            SamplerState sampler_linear_clamp2 : register(s2);
+            SamplerState sampler_linear_clamp3 : register(s3);
+            SamplerState sampler_linear_clamp4 : register(s4);
             Texture2D t0 : register(t0);
             Texture2D t1 : register(t1);
             Texture2D t2 : register(t2);
@@ -2956,7 +2956,7 @@ Shader "Toon/Lit"
                 float3 r0_xyz_1 = ((-i.texcoord2.xyzx + _WorldSpaceLightPos0.xyzx)).xyz;
                 float r0_w_1 = dot(r0_xyz_1.xyzx, r0_xyz_1.xyzx);
                 float r0_w_2 = rsqrt(r0_w_1);
-                float4 r1_xyzw_1 = t0.Sample(s4, i.texcoord0.xyxx);
+                float4 r1_xyzw_1 = t0.Sample(sampler_linear_clamp4, (i.texcoord0.xyxx).xy);
                 float4 r2_xyzw_4 = (mad(cb0_values[6].xyzw, i.texcoord2.zzzz, mad(cb0_values[4].xyzw, i.texcoord2.xxxx, (i.texcoord2.yyyy * cb0_values[5].xyzw))) + cb0_values[7].xyzw);
                 float r0_w_3 = (unity_ProbeVolumeParams.x == 1);
                 float r3_x_10;
@@ -2975,7 +2975,7 @@ Shader "Toon/Lit"
                     float r0_w_5 = mad(r3_y_8, 0.25, 0.75);
                     float r1_w_2 = mad(unity_ProbeVolumeParams.z, 0.5, 0.75);
                     float r3_x_8 = max(r0_w_5, r1_w_2);
-                    float4 r3_xyzw_9 = t4.Sample(s0, float4(r3_x_8, r3_z_8, r3_w_2, r3_x_8));
+                    float4 r3_xyzw_9 = t4.Sample(sampler_linear_clamp, (float4(r3_x_8, r3_z_8, r3_w_2, r3_x_8)).xyz);
                     r3_x_10 = r3_xyzw_9.x;
                     r3_y_10 = r3_xyzw_9.y;
                     r3_z_10 = r3_xyzw_9.z;
@@ -2992,11 +2992,11 @@ Shader "Toon/Lit"
                 float r0_w_7 = dot(float4(r3_x_10, r3_y_10, r3_z_10, r3_w_4), unity_OcclusionMaskSelector);
                 float r1_w_4 = (0 < r2_xyzw_4.z);
                 float r1_w_5 = asfloat(asint(r1_w_4) & asint(1065353216));
-                float4 r3_xyzw_13 = t1.Sample(s1, ((((r2_xyzw_4.xyxx / r2_xyzw_4.wwww)).xyxx + float4(0.5, 0.5, 0, 0))).xyxx);
+                float4 r3_xyzw_13 = t1.Sample(sampler_linear_clamp1, (((((r2_xyzw_4.xyxx / r2_xyzw_4.wwww)).xyxx + float4(0.5, 0.5, 0, 0))).xyxx).xy);
                 float r1_w_6 = (r1_w_5 * r3_xyzw_13.w);
-                float4 r2_xyzw_6 = t2.Sample(s2, (dot(r2_xyzw_4.xyzx, r2_xyzw_4.xyzx)).xxxx);
+                float4 r2_xyzw_6 = t2.Sample(sampler_linear_clamp2, ((dot(r2_xyzw_4.xyzx, r2_xyzw_4.xyzx)).xxxx).xy);
                 float r1_w_7 = (r1_w_6 * r2_xyzw_6.x);
-                float4 r2_xyzw_7 = t3.Sample(s3, (mad(dot(i.texcoord1.xyzx, ((r0_w_2.xxxx * r0_xyz_1.xyzx)).xyzx), 0.5, 0.5)).xxxx);
+                float4 r2_xyzw_7 = t3.Sample(sampler_linear_clamp3, ((mad(dot(i.texcoord1.xyzx, ((r0_w_2.xxxx * r0_xyz_1.xyzx)).xyzx), 0.5, 0.5)).xxxx).xy);
                 float4 r0_xyzw_5 = (((r1_xyzw_1.xyzx * cb0_values[8].xyzx)).xyzx * _LightColor0.xyzx);
                 float r0_x_5 = r0_xyzw_5.x;
                 float r0_y_3 = r0_xyzw_5.y;
@@ -3042,9 +3042,9 @@ Shader "Toon/Lit"
                 float3 unity_ProbeVolumeMin;
                 float4x4 unity_MatrixVP;
             };
-            SamplerState s0 : register(s0);
-            SamplerState s1 : register(s1);
-            SamplerState s2 : register(s2);
+            SamplerState sampler_linear_clamp : register(s0);
+            SamplerState sampler_linear_clamp1 : register(s1);
+            SamplerState sampler_linear_clamp2 : register(s2);
             Texture2D t0 : register(t0);
             Texture2D t1 : register(t1);
             Texture3D t2 : register(t2);
@@ -3102,7 +3102,7 @@ Shader "Toon/Lit"
             program59Output frag(program59Input i)
             {
                 program59Output o = (program59Output)0;
-                float4 r0_xyzw_1 = t0.Sample(s2, i.texcoord0.xyxx);
+                float4 r0_xyzw_1 = t0.Sample(sampler_linear_clamp2, (i.texcoord0.xyxx).xy);
                 float r0_w_2 = (unity_ProbeVolumeParams.x == 1);
                 float r1_x_10;
                 float r1_y_11;
@@ -3120,7 +3120,7 @@ Shader "Toon/Lit"
                     float r0_w_4 = mad(r1_y_8, 0.25, 0.75);
                     float r1_y_9 = mad(unity_ProbeVolumeParams.z, 0.5, 0.75);
                     float r1_x_8 = max(r0_w_4, r1_y_9);
-                    float4 r1_xyzw_9 = t2.Sample(s0, float4(r1_x_8, r1_z_8, r1_w_2, r1_x_8));
+                    float4 r1_xyzw_9 = t2.Sample(sampler_linear_clamp, (float4(r1_x_8, r1_z_8, r1_w_2, r1_x_8)).xyz);
                     r1_x_10 = r1_xyzw_9.x;
                     r1_y_11 = r1_xyzw_9.y;
                     r1_z_10 = r1_xyzw_9.z;
@@ -3135,7 +3135,7 @@ Shader "Toon/Lit"
                     r1_w_4 = r1_xyzw_10.w;
                 }
                 float r0_w_6 = dot(float4(r1_x_10, r1_y_11, r1_z_10, r1_w_4), unity_OcclusionMaskSelector);
-                float4 r1_xyzw_13 = t1.Sample(s1, (mad(dot(i.texcoord1.xyzx, _WorldSpaceLightPos0.xyzx), 0.5, 0.5)).xxxx);
+                float4 r1_xyzw_13 = t1.Sample(sampler_linear_clamp1, ((mad(dot(i.texcoord1.xyzx, _WorldSpaceLightPos0.xyzx), 0.5, 0.5)).xxxx).xy);
                 float r0_w_7 = (r0_w_6 + r0_w_6);
                 o.sv_Target0.xyz = ((r0_w_7.xxxx * ((r1_xyzw_13.xyzx * ((((r0_xyzw_1.xyzx * cb0_values[4].xyzx)).xyzx * _LightColor0.xyzx)).xyzx)).xyzx)).xyz;
                 o.sv_Target0.w = 1;
