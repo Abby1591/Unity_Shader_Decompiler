@@ -12,6 +12,8 @@ Shader "PicaVoxel/PicaVoxel Diffuse"
         #include "UnityCG.cginc"
         #pragma surface surf Lambert
 
+        uniform float4 _Tint;
+
         struct Input
         {
             float4 vertexColor : COLOR;

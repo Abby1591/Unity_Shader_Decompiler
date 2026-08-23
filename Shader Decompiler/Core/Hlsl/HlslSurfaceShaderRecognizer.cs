@@ -221,6 +221,26 @@ public static class HlslSurfaceShaderRecognizer
         sb.AppendLine($"        #pragma surface surf {model}");
         if (model == "Standard")
             sb.AppendLine("        #pragma target 3.0");
+
+        var usedProps = new List<(string Name, string Type)>();
+        foreach (ShaderProperty p in metadata.Properties)
+        {
+            if (!surf.Contains(p.Name)) continue;
+            string type = p.Type switch
+            {
+                "2" or "3" => "float",
+                "0" or "1" => "float4",
+                _ => "float4"
+            };
+            usedProps.Add((p.Name, type));
+        }
+        if (usedProps.Count > 0)
+        {
+            sb.AppendLine();
+            foreach (var (name, type) in usedProps.OrderBy(x => x.Name))
+                sb.AppendLine($"        uniform {type} {name};");
+        }
+
         sb.AppendLine();
         sb.AppendLine(input);
         sb.AppendLine();

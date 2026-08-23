@@ -15,6 +15,10 @@ Shader "PicaVoxel/PicaVoxel PBR"
         #pragma surface surf Standard
         #pragma target 3.0
 
+        uniform float _Gloss;
+        uniform float _Metallic;
+        uniform float4 _Tint;
+
         struct Input
         {
             float4 vertexColor : COLOR;
