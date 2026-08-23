@@ -144,7 +144,9 @@ Shader "Custom/Planet_Clouds"
                 float TEXCOORD2_y_1 = i.texcoord2.w;
                 float TEXCOORD3_z_1 = i.texcoord3.w;
                 float3 viewDir_xyz_1 = ((-float4(TEXCOORD1_x_1, TEXCOORD2_y_1, TEXCOORD3_z_1, TEXCOORD1_x_1) + _WorldSpaceCameraPos.xyzx)).xyz;
-                float3 unitViewDir_xyz_1 = normalize(viewDir_xyz_1);
+                float r0_w_1 = dot(viewDir_xyz_1.xyzx, viewDir_xyz_1.xyzx);
+                float r0_w_2 = rsqrt(r0_w_1);
+                float3 unitViewDir_xyz_1 = ((r0_w_2.xxxx * viewDir_xyz_1.xyzx)).xyz;
                 float4 r3_xyzw_1 = t0.Sample(s2, i.texcoord0.xyxx);
                 float4 r4_xyzw_1 = t1.Sample(s3, i.texcoord0.xyxx);
                 float r1_w_1 = (r3_xyzw_1.w * _AlphaScale);
@@ -463,7 +465,9 @@ Shader "Custom/Planet_Clouds"
                 float TEXCOORD2_y_1 = i.texcoord2.w;
                 float TEXCOORD3_z_1 = i.texcoord3.w;
                 float3 viewDir_xyz_1 = ((-float4(TEXCOORD1_x_1, TEXCOORD2_y_1, TEXCOORD3_z_1, TEXCOORD1_x_1) + _WorldSpaceCameraPos.xyzx)).xyz;
-                float3 unitViewDir_xyz_1 = normalize(viewDir_xyz_1);
+                float r0_w_1 = dot(viewDir_xyz_1.xyzx, viewDir_xyz_1.xyzx);
+                float r0_w_2 = rsqrt(r0_w_1);
+                float3 unitViewDir_xyz_1 = ((r0_w_2.xxxx * viewDir_xyz_1.xyzx)).xyz;
                 float4 r3_xyzw_1 = t0.Sample(s2, i.texcoord0.xyxx);
                 float4 r4_xyzw_1 = t1.Sample(s3, i.texcoord0.xyxx);
                 float r1_w_1 = (r3_xyzw_1.w * _AlphaScale);
@@ -834,7 +838,9 @@ Shader "Custom/Planet_Clouds"
                 float TEXCOORD2_y_1 = i.texcoord2.w;
                 float TEXCOORD3_z_1 = i.texcoord3.w;
                 float3 viewDir_xyz_1 = ((-float4(TEXCOORD1_x_1, TEXCOORD2_y_1, TEXCOORD3_z_1, TEXCOORD1_x_1) + _WorldSpaceCameraPos.xyzx)).xyz;
-                float3 unitViewDir_xyz_1 = normalize(viewDir_xyz_1);
+                float r0_w_1 = dot(viewDir_xyz_1.xyzx, viewDir_xyz_1.xyzx);
+                float r0_w_2 = rsqrt(r0_w_1);
+                float3 unitViewDir_xyz_1 = ((r0_w_2.xxxx * viewDir_xyz_1.xyzx)).xyz;
                 float4 r3_xyzw_1 = t0.Sample(s2, i.texcoord0.xyxx);
                 float4 r4_xyzw_1 = t1.Sample(s3, i.texcoord0.xyxx);
                 float r1_w_1 = (r3_xyzw_1.w * _AlphaScale);
@@ -1156,7 +1162,9 @@ Shader "Custom/Planet_Clouds"
                 float TEXCOORD2_y_1 = i.texcoord2.w;
                 float TEXCOORD3_z_1 = i.texcoord3.w;
                 float3 viewDir_xyz_1 = ((-float4(TEXCOORD1_x_1, TEXCOORD2_y_1, TEXCOORD3_z_1, TEXCOORD1_x_1) + _WorldSpaceCameraPos.xyzx)).xyz;
-                float3 unitViewDir_xyz_1 = normalize(viewDir_xyz_1);
+                float r0_w_1 = dot(viewDir_xyz_1.xyzx, viewDir_xyz_1.xyzx);
+                float r0_w_2 = rsqrt(r0_w_1);
+                float3 unitViewDir_xyz_1 = ((r0_w_2.xxxx * viewDir_xyz_1.xyzx)).xyz;
                 float4 r3_xyzw_1 = t0.Sample(s2, i.texcoord0.xyxx);
                 float4 r4_xyzw_1 = t1.Sample(s3, i.texcoord0.xyxx);
                 float r1_w_1 = (r3_xyzw_1.w * _AlphaScale);
@@ -1498,7 +1506,9 @@ Shader "Custom/Planet_Clouds"
             {
                 program37Output o = (program37Output)0;
                 float3 r0_xyz_1 = ((-i.texcoord4.xyzx + _WorldSpaceLightPos0.xyzx)).xyz;
-                float3 r1_xyz_1 = normalize(r0_xyz_1);
+                float r0_w_1 = dot(r0_xyz_1.xyzx, r0_xyz_1.xyzx);
+                float r0_w_2 = rsqrt(r0_w_1);
+                float3 r1_xyz_1 = ((r0_w_2.xxxx * r0_xyz_1.xyzx)).xyz;
                 float3 r2_xyz_1 = ((-i.texcoord4.xyzx + _WorldSpaceCameraPos.xyzx)).xyz;
                 float3 r2_xyz_2 = normalize(r2_xyz_1);
                 float4 r3_xyzw_1 = t0.Sample(s2, i.texcoord0.xyxx);
@@ -2011,7 +2021,9 @@ Shader "Custom/Planet_Clouds"
             {
                 program45Output o = (program45Output)0;
                 float3 r0_xyz_1 = ((-i.texcoord4.xyzx + _WorldSpaceLightPos0.xyzx)).xyz;
-                float3 r1_xyz_1 = normalize(r0_xyz_1);
+                float r0_w_1 = dot(r0_xyz_1.xyzx, r0_xyz_1.xyzx);
+                float r0_w_2 = rsqrt(r0_w_1);
+                float3 r1_xyz_1 = ((r0_w_2.xxxx * r0_xyz_1.xyzx)).xyz;
                 float3 r2_xyz_1 = ((-i.texcoord4.xyzx + _WorldSpaceCameraPos.xyzx)).xyz;
                 float3 r2_xyz_2 = normalize(r2_xyz_1);
                 float4 r3_xyzw_1 = t0.Sample(s3, i.texcoord0.xyxx);
@@ -2273,7 +2285,9 @@ Shader "Custom/Planet_Clouds"
             {
                 program44Output o = (program44Output)0;
                 float3 r0_xyz_1 = ((-i.texcoord4.xyzx + _WorldSpaceLightPos0.xyzx)).xyz;
-                float3 r1_xyz_1 = normalize(r0_xyz_1);
+                float r0_w_1 = dot(r0_xyz_1.xyzx, r0_xyz_1.xyzx);
+                float r0_w_2 = rsqrt(r0_w_1);
+                float3 r1_xyz_1 = ((r0_w_2.xxxx * r0_xyz_1.xyzx)).xyz;
                 float3 r2_xyz_1 = ((-i.texcoord4.xyzx + _WorldSpaceCameraPos.xyzx)).xyz;
                 float3 r2_xyz_2 = normalize(r2_xyz_1);
                 float4 r3_xyzw_1 = t0.Sample(s3, i.texcoord0.xyxx);
@@ -2782,7 +2796,9 @@ Shader "Custom/Planet_Clouds"
             {
                 program42Output o = (program42Output)0;
                 float3 r0_xyz_1 = ((-i.texcoord4.xyzx + _WorldSpaceLightPos0.xyzx)).xyz;
-                float3 r1_xyz_1 = normalize(r0_xyz_1);
+                float r0_w_1 = dot(r0_xyz_1.xyzx, r0_xyz_1.xyzx);
+                float r0_w_2 = rsqrt(r0_w_1);
+                float3 r1_xyz_1 = ((r0_w_2.xxxx * r0_xyz_1.xyzx)).xyz;
                 float3 r2_xyz_1 = ((-i.texcoord4.xyzx + _WorldSpaceCameraPos.xyzx)).xyz;
                 float3 r2_xyz_2 = normalize(r2_xyz_1);
                 float4 r3_xyzw_1 = t0.Sample(s2, i.texcoord0.xyxx);
@@ -3277,7 +3293,9 @@ Shader "Custom/Planet_Clouds"
             {
                 program40Output o = (program40Output)0;
                 float3 r0_xyz_1 = ((-i.texcoord4.xyzx + _WorldSpaceLightPos0.xyzx)).xyz;
-                float3 r1_xyz_1 = normalize(r0_xyz_1);
+                float r0_w_1 = dot(r0_xyz_1.xyzx, r0_xyz_1.xyzx);
+                float r0_w_2 = rsqrt(r0_w_1);
+                float3 r1_xyz_1 = ((r0_w_2.xxxx * r0_xyz_1.xyzx)).xyz;
                 float3 r2_xyz_1 = ((-i.texcoord4.xyzx + _WorldSpaceCameraPos.xyzx)).xyz;
                 float3 r2_xyz_2 = normalize(r2_xyz_1);
                 float4 r3_xyzw_1 = t0.Sample(s3, i.texcoord0.xyxx);
@@ -3522,7 +3540,9 @@ Shader "Custom/Planet_Clouds"
             {
                 program39Output o = (program39Output)0;
                 float3 r0_xyz_1 = ((-i.texcoord4.xyzx + _WorldSpaceLightPos0.xyzx)).xyz;
-                float3 r1_xyz_1 = normalize(r0_xyz_1);
+                float r0_w_1 = dot(r0_xyz_1.xyzx, r0_xyz_1.xyzx);
+                float r0_w_2 = rsqrt(r0_w_1);
+                float3 r1_xyz_1 = ((r0_w_2.xxxx * r0_xyz_1.xyzx)).xyz;
                 float3 r2_xyz_1 = ((-i.texcoord4.xyzx + _WorldSpaceCameraPos.xyzx)).xyz;
                 float3 r2_xyz_2 = normalize(r2_xyz_1);
                 float4 r3_xyzw_1 = t0.Sample(s3, i.texcoord0.xyxx);

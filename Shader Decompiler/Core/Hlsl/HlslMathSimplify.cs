@@ -1139,6 +1139,20 @@ internal static class HlslMathSimplify
             int resultDims = resultType switch { "float2" => 2, "float3" => 3, "float4" => 4, _ => 0 };
             if (normDims < resultDims) continue;
 
+            bool rsrUsedElsewhere = false;
+            for (int j = 0; j < lines.Length; j++)
+            {
+                if (j == i || j == i + 1 || j == i + 2 || drop[j]) continue;
+                if (lines[j].Contains($" {rsr} ") || lines[j].Contains($" {rsr}.") ||
+                    lines[j].Contains($"({rsr}.") || lines[j].Contains($",{rsr} ") ||
+                    lines[j].Contains($",{rsr}.") || lines[j].EndsWith($" {rsr}"))
+                {
+                    rsrUsedElsewhere = true;
+                    break;
+                }
+            }
+            if (rsrUsedElsewhere) continue;
+
             matchCount++;
             drop[i + 1] = true;
             drop[i + 2] = true;
