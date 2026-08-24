@@ -22,8 +22,8 @@ Shader "Hidden/BlurAndFlares"
             {
                 float4x4 unity_MatrixVP;
             };
-            SamplerState sampler_MainTex : register(s0);
-            Texture2D _MainTex : register(t0);
+            SamplerState sampler_MainTex;
+            Texture2D _MainTex;
             struct program1Input
             {
                 float4 position0 : POSITION0;
@@ -83,8 +83,8 @@ Shader "Hidden/BlurAndFlares"
             {
                 float4x4 unity_MatrixVP;
             };
-            SamplerState sampler_MainTex : register(s0);
-            Texture2D _MainTex : register(t0);
+            SamplerState sampler_MainTex;
+            Texture2D _MainTex;
             struct program5Input
             {
                 float4 position0 : POSITION0;
@@ -173,8 +173,8 @@ Shader "Hidden/BlurAndFlares"
             {
                 float4x4 unity_MatrixVP;
             };
-            SamplerState sampler_MainTex : register(s0);
-            Texture2D _MainTex : register(t0);
+            SamplerState sampler_MainTex;
+            Texture2D _MainTex;
             struct program7Input
             {
                 float4 position0 : POSITION0;
@@ -263,8 +263,8 @@ Shader "Hidden/BlurAndFlares"
             {
                 float4x4 unity_MatrixVP;
             };
-            SamplerState sampler_MainTex : register(s0);
-            Texture2D _MainTex : register(t0);
+            SamplerState sampler_MainTex;
+            Texture2D _MainTex;
             struct program11Input
             {
                 float4 position0 : POSITION0;

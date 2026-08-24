@@ -33,8 +33,8 @@ Shader "Sprites/GrayScale"
             {
                 float4x4 unity_MatrixVP;
             };
-            SamplerState sampler_MainTex : register(s0);
-            Texture2D _MainTex : register(t0);
+            SamplerState sampler_MainTex;
+            Texture2D _MainTex;
             struct program2Input
             {
                 float4 position0 : POSITION0;
@@ -111,8 +111,8 @@ Shader "Sprites/GrayScale"
             {
                 float4 cb3_values[21];
             };
-            SamplerState sampler_MainTex : register(s0);
-            Texture2D _MainTex : register(t0);
+            SamplerState sampler_MainTex;
+            Texture2D _MainTex;
             struct program3Input
             {
                 float4 position0 : POSITION0;

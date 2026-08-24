@@ -55,12 +55,12 @@ Shader "Knife/Soft Holo Cone"
             {
                 float4x4 unity_MatrixVP;
             };
-            SamplerState sampler_Mask : register(s0);
-            SamplerState sampler_Mask2 : register(s1);
-            SamplerState sampler_texcoord : register(s2);
-            Texture2D _Mask : register(t0);
-            Texture2D _Mask2 : register(t1);
-            Texture2D _texcoord : register(t2);
+            SamplerState sampler_Mask;
+            SamplerState sampler_Mask2;
+            SamplerState sampler_texcoord;
+            Texture2D _Mask;
+            Texture2D _Mask2;
+            Texture2D _texcoord;
             struct program3Input
             {
                 float4 position0 : POSITION0;
@@ -221,12 +221,12 @@ Shader "Knife/Soft Holo Cone"
             {
                 float4 cb4_values[21];
             };
-            SamplerState sampler_Mask : register(s0);
-            SamplerState sampler_Mask2 : register(s1);
-            SamplerState sampler_texcoord : register(s2);
-            Texture2D _Mask : register(t0);
-            Texture2D _Mask2 : register(t1);
-            Texture2D _texcoord : register(t2);
+            SamplerState sampler_Mask;
+            SamplerState sampler_Mask2;
+            SamplerState sampler_texcoord;
+            Texture2D _Mask;
+            Texture2D _Mask2;
+            Texture2D _texcoord;
             struct program7Input
             {
                 float4 position0 : POSITION0;
@@ -426,12 +426,12 @@ Shader "Knife/Soft Holo Cone"
             {
                 float4x4 unity_MatrixVP;
             };
-            SamplerState sampler_Mask : register(s0);
-            SamplerState sampler_Mask2 : register(s1);
-            SamplerState sampler_texcoord : register(s2);
-            Texture2D _Mask : register(t0);
-            Texture2D _Mask2 : register(t1);
-            Texture2D _texcoord : register(t2);
+            SamplerState sampler_Mask;
+            SamplerState sampler_Mask2;
+            SamplerState sampler_texcoord;
+            Texture2D _Mask;
+            Texture2D _Mask2;
+            Texture2D _texcoord;
             struct program6Input
             {
                 float4 position0 : POSITION0;
@@ -598,12 +598,12 @@ Shader "Knife/Soft Holo Cone"
             {
                 float4 cb4_values[21];
             };
-            SamplerState sampler_Mask : register(s0);
-            SamplerState sampler_Mask2 : register(s1);
-            SamplerState sampler_texcoord : register(s2);
-            Texture2D _Mask : register(t0);
-            Texture2D _Mask2 : register(t1);
-            Texture2D _texcoord : register(t2);
+            SamplerState sampler_Mask;
+            SamplerState sampler_Mask2;
+            SamplerState sampler_texcoord;
+            Texture2D _Mask;
+            Texture2D _Mask2;
+            Texture2D _texcoord;
             struct program4Input
             {
                 float4 position0 : POSITION0;
@@ -792,12 +792,12 @@ Shader "Knife/Soft Holo Cone"
             {
                 float4x4 unity_MatrixVP;
             };
-            SamplerState sampler_Mask : register(s0);
-            SamplerState sampler_Mask2 : register(s1);
-            SamplerState sampler_texcoord : register(s2);
-            Texture2D _Mask : register(t0);
-            Texture2D _Mask2 : register(t1);
-            Texture2D _texcoord : register(t2);
+            SamplerState sampler_Mask;
+            SamplerState sampler_Mask2;
+            SamplerState sampler_texcoord;
+            Texture2D _Mask;
+            Texture2D _Mask2;
+            Texture2D _texcoord;
             struct program17Input
             {
                 float4 position0 : POSITION0;
@@ -958,12 +958,12 @@ Shader "Knife/Soft Holo Cone"
             {
                 float4x4 unity_MatrixVP;
             };
-            SamplerState sampler_Mask : register(s0);
-            SamplerState sampler_Mask2 : register(s1);
-            SamplerState sampler_texcoord : register(s2);
-            Texture2D _Mask : register(t0);
-            Texture2D _Mask2 : register(t1);
-            Texture2D _texcoord : register(t2);
+            SamplerState sampler_Mask;
+            SamplerState sampler_Mask2;
+            SamplerState sampler_texcoord;
+            Texture2D _Mask;
+            Texture2D _Mask2;
+            Texture2D _texcoord;
             struct program26Input
             {
                 float4 position0 : POSITION0;
@@ -1120,12 +1120,12 @@ Shader "Knife/Soft Holo Cone"
             {
                 float4x4 unity_MatrixVP;
             };
-            SamplerState sampler_Mask : register(s0);
-            SamplerState sampler_Mask2 : register(s1);
-            SamplerState sampler_texcoord : register(s2);
-            Texture2D _Mask : register(t0);
-            Texture2D _Mask2 : register(t1);
-            Texture2D _texcoord : register(t2);
+            SamplerState sampler_Mask;
+            SamplerState sampler_Mask2;
+            SamplerState sampler_texcoord;
+            Texture2D _Mask;
+            Texture2D _Mask2;
+            Texture2D _texcoord;
             struct program24Input
             {
                 float4 position0 : POSITION0;
@@ -1281,12 +1281,12 @@ Shader "Knife/Soft Holo Cone"
             {
                 float4x4 unity_MatrixVP;
             };
-            SamplerState sampler_Mask : register(s0);
-            SamplerState sampler_Mask2 : register(s1);
-            SamplerState sampler_texcoord : register(s2);
-            Texture2D _Mask : register(t0);
-            Texture2D _Mask2 : register(t1);
-            Texture2D _texcoord : register(t2);
+            SamplerState sampler_Mask;
+            SamplerState sampler_Mask2;
+            SamplerState sampler_texcoord;
+            Texture2D _Mask;
+            Texture2D _Mask2;
+            Texture2D _texcoord;
             struct program23Input
             {
                 float4 position0 : POSITION0;
@@ -1438,12 +1438,12 @@ Shader "Knife/Soft Holo Cone"
             {
                 float4x4 unity_MatrixVP;
             };
-            SamplerState sampler_Mask : register(s0);
-            SamplerState sampler_Mask2 : register(s1);
-            SamplerState sampler_texcoord : register(s2);
-            Texture2D _Mask : register(t0);
-            Texture2D _Mask2 : register(t1);
-            Texture2D _texcoord : register(t2);
+            SamplerState sampler_Mask;
+            SamplerState sampler_Mask2;
+            SamplerState sampler_texcoord;
+            Texture2D _Mask;
+            Texture2D _Mask2;
+            Texture2D _texcoord;
             struct program22Input
             {
                 float4 position0 : POSITION0;
@@ -1607,12 +1607,12 @@ Shader "Knife/Soft Holo Cone"
             {
                 float4x4 unity_MatrixVP;
             };
-            SamplerState sampler_Mask : register(s0);
-            SamplerState sampler_Mask2 : register(s1);
-            SamplerState sampler_texcoord : register(s2);
-            Texture2D _Mask : register(t0);
-            Texture2D _Mask2 : register(t1);
-            Texture2D _texcoord : register(t2);
+            SamplerState sampler_Mask;
+            SamplerState sampler_Mask2;
+            SamplerState sampler_texcoord;
+            Texture2D _Mask;
+            Texture2D _Mask2;
+            Texture2D _texcoord;
             struct program21Input
             {
                 float4 position0 : POSITION0;
@@ -1766,12 +1766,12 @@ Shader "Knife/Soft Holo Cone"
             {
                 float4x4 unity_MatrixVP;
             };
-            SamplerState sampler_Mask : register(s0);
-            SamplerState sampler_Mask2 : register(s1);
-            SamplerState sampler_texcoord : register(s2);
-            Texture2D _Mask : register(t0);
-            Texture2D _Mask2 : register(t1);
-            Texture2D _texcoord : register(t2);
+            SamplerState sampler_Mask;
+            SamplerState sampler_Mask2;
+            SamplerState sampler_texcoord;
+            Texture2D _Mask;
+            Texture2D _Mask2;
+            Texture2D _texcoord;
             struct program19Input
             {
                 float4 position0 : POSITION0;
@@ -1936,12 +1936,12 @@ Shader "Knife/Soft Holo Cone"
             {
                 float4x4 unity_MatrixVP;
             };
-            SamplerState sampler_Mask : register(s0);
-            SamplerState sampler_Mask2 : register(s1);
-            SamplerState sampler_texcoord : register(s2);
-            Texture2D _Mask : register(t0);
-            Texture2D _Mask2 : register(t1);
-            Texture2D _texcoord : register(t2);
+            SamplerState sampler_Mask;
+            SamplerState sampler_Mask2;
+            SamplerState sampler_texcoord;
+            Texture2D _Mask;
+            Texture2D _Mask2;
+            Texture2D _texcoord;
             struct program18Input
             {
                 float4 position0 : POSITION0;
@@ -2092,14 +2092,14 @@ Shader "Knife/Soft Holo Cone"
             {
                 float4x4 unity_MatrixVP;
             };
-            SamplerState sampler_Mask : register(s0);
-            SamplerState sampler_Mask2 : register(s1);
-            SamplerState sampler_texcoord : register(s2);
-            SamplerState sampler_linear_clamp3 : register(s3);
-            Texture2D _Mask : register(t0);
-            Texture2D _Mask2 : register(t1);
-            Texture2D _texcoord : register(t2);
-            Texture3D t3 : register(t3);
+            SamplerState sampler_Mask;
+            SamplerState sampler_Mask2;
+            SamplerState sampler_texcoord;
+            SamplerState sampler_linear_clamp3;
+            Texture2D _Mask;
+            Texture2D _Mask2;
+            Texture2D _texcoord;
+            Texture3D t3;
             struct program40Input
             {
                 float4 position0 : POSITION0;
@@ -2283,14 +2283,14 @@ Shader "Knife/Soft Holo Cone"
             {
                 float4x4 unity_MatrixVP;
             };
-            SamplerState sampler_Mask : register(s0);
-            SamplerState sampler_Mask2 : register(s1);
-            SamplerState sampler_texcoord : register(s2);
-            SamplerState sampler_linear_clamp3 : register(s3);
-            Texture2D _Mask : register(t0);
-            Texture2D _Mask2 : register(t1);
-            Texture2D _texcoord : register(t2);
-            Texture3D t3 : register(t3);
+            SamplerState sampler_Mask;
+            SamplerState sampler_Mask2;
+            SamplerState sampler_texcoord;
+            SamplerState sampler_linear_clamp3;
+            Texture2D _Mask;
+            Texture2D _Mask2;
+            Texture2D _texcoord;
+            Texture3D t3;
             struct program41Input
             {
                 float4 position0 : POSITION0;

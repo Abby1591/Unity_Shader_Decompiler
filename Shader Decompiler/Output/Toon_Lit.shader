@@ -38,12 +38,12 @@ Shader "Toon/Lit"
                 float3 unity_ProbeVolumeMin;
                 float4x4 unity_MatrixVP;
             };
-            SamplerState sampler_linear_clamp : register(s0);
-            SamplerState sampler_Ramp : register(s1);
-            SamplerState sampler_MainTex : register(s2);
-            Texture2D _MainTex : register(t0);
-            Texture2D _Ramp : register(t1);
-            Texture3D t2 : register(t2);
+            SamplerState sampler_linear_clamp;
+            SamplerState sampler_Ramp;
+            SamplerState sampler_MainTex;
+            Texture2D _MainTex;
+            Texture2D _Ramp;
+            Texture3D t2;
             struct program12Input
             {
                 float4 position0 : POSITION0;
@@ -197,14 +197,14 @@ Shader "Toon/Lit"
             {
                 float4 cb6_values[7];
             };
-            SamplerState sampler_linear_clamp : register(s0);
-            SamplerState sampler_Ramp : register(s1);
-            SamplerState sampler_linear_clamp2 : register(s2);
-            SamplerState sampler_MainTex : register(s3);
-            Texture2D _MainTex : register(t0);
-            Texture2D _Ramp : register(t1);
-            Texture2D t2 : register(t2);
-            Texture3D t3 : register(t3);
+            SamplerState sampler_linear_clamp;
+            SamplerState sampler_Ramp;
+            SamplerState sampler_linear_clamp2;
+            SamplerState sampler_MainTex;
+            Texture2D _MainTex;
+            Texture2D _Ramp;
+            Texture2D t2;
+            Texture3D t3;
             struct program23Input
             {
                 float4 position0 : POSITION0;
@@ -428,14 +428,14 @@ Shader "Toon/Lit"
             {
                 float4 cb6_values[7];
             };
-            SamplerState sampler_linear_clamp : register(s0);
-            SamplerState sampler_Ramp : register(s1);
-            SamplerState sampler_linear_clamp2 : register(s2);
-            SamplerState sampler_MainTex : register(s3);
-            Texture2D _MainTex : register(t0);
-            Texture2D _Ramp : register(t1);
-            Texture2D t2 : register(t2);
-            Texture3D t3 : register(t3);
+            SamplerState sampler_linear_clamp;
+            SamplerState sampler_Ramp;
+            SamplerState sampler_linear_clamp2;
+            SamplerState sampler_MainTex;
+            Texture2D _MainTex;
+            Texture2D _Ramp;
+            Texture2D t2;
+            Texture3D t3;
             struct program22Input
             {
                 float4 position0 : POSITION0;
@@ -642,12 +642,12 @@ Shader "Toon/Lit"
             {
                 float4 cb5_values[2];
             };
-            SamplerState sampler_linear_clamp : register(s0);
-            SamplerState sampler_Ramp : register(s1);
-            SamplerState sampler_MainTex : register(s2);
-            Texture2D _MainTex : register(t0);
-            Texture2D _Ramp : register(t1);
-            Texture3D t2 : register(t2);
+            SamplerState sampler_linear_clamp;
+            SamplerState sampler_Ramp;
+            SamplerState sampler_MainTex;
+            Texture2D _MainTex;
+            Texture2D _Ramp;
+            Texture3D t2;
             struct program21Input
             {
                 float4 position0 : POSITION0;
@@ -839,12 +839,12 @@ Shader "Toon/Lit"
             {
                 float4 cb4_values[2];
             };
-            SamplerState sampler_linear_clamp : register(s0);
-            SamplerState sampler_Ramp : register(s1);
-            SamplerState sampler_MainTex : register(s2);
-            Texture2D _MainTex : register(t0);
-            Texture2D _Ramp : register(t1);
-            Texture3D t2 : register(t2);
+            SamplerState sampler_linear_clamp;
+            SamplerState sampler_Ramp;
+            SamplerState sampler_MainTex;
+            Texture2D _MainTex;
+            Texture2D _Ramp;
+            Texture3D t2;
             struct program20Input
             {
                 float4 position0 : POSITION0;
@@ -1001,14 +1001,14 @@ Shader "Toon/Lit"
             {
                 float4 cb5_values[7];
             };
-            SamplerState sampler_linear_clamp : register(s0);
-            SamplerState sampler_Ramp : register(s1);
-            SamplerState sampler_linear_clamp2 : register(s2);
-            SamplerState sampler_MainTex : register(s3);
-            Texture2D _MainTex : register(t0);
-            Texture2D _Ramp : register(t1);
-            Texture2D t2 : register(t2);
-            Texture3D t3 : register(t3);
+            SamplerState sampler_linear_clamp;
+            SamplerState sampler_Ramp;
+            SamplerState sampler_linear_clamp2;
+            SamplerState sampler_MainTex;
+            Texture2D _MainTex;
+            Texture2D _Ramp;
+            Texture2D t2;
+            Texture3D t3;
             struct program15Input
             {
                 float4 position0 : POSITION0;
@@ -1222,14 +1222,14 @@ Shader "Toon/Lit"
             {
                 float4 cb5_values[7];
             };
-            SamplerState sampler_linear_clamp : register(s0);
-            SamplerState sampler_Ramp : register(s1);
-            SamplerState sampler_linear_clamp2 : register(s2);
-            SamplerState sampler_MainTex : register(s3);
-            Texture2D _MainTex : register(t0);
-            Texture2D _Ramp : register(t1);
-            Texture2D t2 : register(t2);
-            Texture3D t3 : register(t3);
+            SamplerState sampler_linear_clamp;
+            SamplerState sampler_Ramp;
+            SamplerState sampler_linear_clamp2;
+            SamplerState sampler_MainTex;
+            Texture2D _MainTex;
+            Texture2D _Ramp;
+            Texture2D t2;
+            Texture3D t3;
             struct program14Input
             {
                 float4 position0 : POSITION0;
@@ -1421,12 +1421,12 @@ Shader "Toon/Lit"
             {
                 float4 cb3_values[21];
             };
-            SamplerState sampler_linear_clamp : register(s0);
-            SamplerState sampler_Ramp : register(s1);
-            SamplerState sampler_MainTex : register(s2);
-            Texture2D _MainTex : register(t0);
-            Texture2D _Ramp : register(t1);
-            Texture3D t2 : register(t2);
+            SamplerState sampler_linear_clamp;
+            SamplerState sampler_Ramp;
+            SamplerState sampler_MainTex;
+            Texture2D _MainTex;
+            Texture2D _Ramp;
+            Texture3D t2;
             struct program13Input
             {
                 float4 position0 : POSITION0;
@@ -1578,14 +1578,14 @@ Shader "Toon/Lit"
                 float3 unity_ProbeVolumeMin;
                 float4x4 unity_MatrixVP;
             };
-            SamplerState sampler_linear_clamp : register(s0);
-            SamplerState sampler_Ramp : register(s1);
-            SamplerState sampler_linear_clamp2 : register(s2);
-            SamplerState sampler_MainTex : register(s3);
-            Texture2D _MainTex : register(t0);
-            Texture2D _Ramp : register(t1);
-            Texture2D t2 : register(t2);
-            Texture3D t3 : register(t3);
+            SamplerState sampler_linear_clamp;
+            SamplerState sampler_Ramp;
+            SamplerState sampler_linear_clamp2;
+            SamplerState sampler_MainTex;
+            Texture2D _MainTex;
+            Texture2D _Ramp;
+            Texture2D t2;
+            Texture3D t3;
             struct program44Input
             {
                 float4 position0 : POSITION0;
@@ -1742,14 +1742,14 @@ Shader "Toon/Lit"
             {
                 float4 cb4_values[2];
             };
-            SamplerState sampler_linear_clamp : register(s0);
-            SamplerState sampler_Ramp : register(s1);
-            SamplerState sampler_linear_clamp2 : register(s2);
-            SamplerState sampler_MainTex : register(s3);
-            Texture2D _MainTex : register(t0);
-            Texture2D _Ramp : register(t1);
-            Texture2D t2 : register(t2);
-            Texture3D t3 : register(t3);
+            SamplerState sampler_linear_clamp;
+            SamplerState sampler_Ramp;
+            SamplerState sampler_linear_clamp2;
+            SamplerState sampler_MainTex;
+            Texture2D _MainTex;
+            Texture2D _Ramp;
+            Texture2D t2;
+            Texture3D t3;
             struct program53Input
             {
                 float4 position0 : POSITION0;
@@ -1896,16 +1896,16 @@ Shader "Toon/Lit"
             {
                 float4 cb4_values[2];
             };
-            SamplerState sampler_linear_clamp : register(s0);
-            SamplerState sampler_linear_clamp1 : register(s1);
-            SamplerState sampler_Ramp : register(s2);
-            SamplerState sampler_linear_clamp3 : register(s3);
-            SamplerState sampler_MainTex : register(s4);
-            Texture2D _MainTex : register(t0);
-            Texture2D _Ramp : register(t1);
-            TextureCube t2 : register(t2);
-            Texture2D t3 : register(t3);
-            Texture3D t4 : register(t4);
+            SamplerState sampler_linear_clamp;
+            SamplerState sampler_linear_clamp1;
+            SamplerState sampler_Ramp;
+            SamplerState sampler_linear_clamp3;
+            SamplerState sampler_MainTex;
+            Texture2D _MainTex;
+            Texture2D _Ramp;
+            TextureCube t2;
+            Texture2D t3;
+            Texture3D t4;
             struct program52Input
             {
                 float4 position0 : POSITION0;
@@ -2079,16 +2079,16 @@ Shader "Toon/Lit"
             {
                 float4 cb4_values[2];
             };
-            SamplerState sampler_linear_clamp : register(s0);
-            SamplerState sampler_Ramp : register(s1);
-            SamplerState sampler_linear_clamp2 : register(s2);
-            SamplerState sampler_linear_clamp3 : register(s3);
-            SamplerState sampler_MainTex : register(s4);
-            Texture2D _MainTex : register(t0);
-            Texture2D _Ramp : register(t1);
-            Texture2D t2 : register(t2);
-            Texture2D t3 : register(t3);
-            Texture3D t4 : register(t4);
+            SamplerState sampler_linear_clamp;
+            SamplerState sampler_Ramp;
+            SamplerState sampler_linear_clamp2;
+            SamplerState sampler_linear_clamp3;
+            SamplerState sampler_MainTex;
+            Texture2D _MainTex;
+            Texture2D _Ramp;
+            Texture2D t2;
+            Texture2D t3;
+            Texture3D t4;
             struct program51Input
             {
                 float4 position0 : POSITION0;
@@ -2259,12 +2259,12 @@ Shader "Toon/Lit"
             {
                 float4 cb4_values[2];
             };
-            SamplerState sampler_linear_clamp : register(s0);
-            SamplerState sampler_Ramp : register(s1);
-            SamplerState sampler_MainTex : register(s2);
-            Texture2D _MainTex : register(t0);
-            Texture2D _Ramp : register(t1);
-            Texture3D t2 : register(t2);
+            SamplerState sampler_linear_clamp;
+            SamplerState sampler_Ramp;
+            SamplerState sampler_MainTex;
+            Texture2D _MainTex;
+            Texture2D _Ramp;
+            Texture3D t2;
             struct program50Input
             {
                 float4 position0 : POSITION0;
@@ -2407,14 +2407,14 @@ Shader "Toon/Lit"
             {
                 float4 cb4_values[2];
             };
-            SamplerState sampler_linear_clamp : register(s0);
-            SamplerState sampler_Ramp : register(s1);
-            SamplerState sampler_linear_clamp2 : register(s2);
-            SamplerState sampler_MainTex : register(s3);
-            Texture2D _MainTex : register(t0);
-            Texture2D _Ramp : register(t1);
-            Texture2D t2 : register(t2);
-            Texture3D t3 : register(t3);
+            SamplerState sampler_linear_clamp;
+            SamplerState sampler_Ramp;
+            SamplerState sampler_linear_clamp2;
+            SamplerState sampler_MainTex;
+            Texture2D _MainTex;
+            Texture2D _Ramp;
+            Texture2D t2;
+            Texture3D t3;
             struct program49Input
             {
                 float4 position0 : POSITION0;
@@ -2577,14 +2577,14 @@ Shader "Toon/Lit"
                 float3 unity_ProbeVolumeMin;
                 float4x4 unity_MatrixVP;
             };
-            SamplerState sampler_linear_clamp : register(s0);
-            SamplerState sampler_Ramp : register(s1);
-            SamplerState sampler_linear_clamp2 : register(s2);
-            SamplerState sampler_MainTex : register(s3);
-            Texture2D _MainTex : register(t0);
-            Texture2D _Ramp : register(t1);
-            Texture2D t2 : register(t2);
-            Texture3D t3 : register(t3);
+            SamplerState sampler_linear_clamp;
+            SamplerState sampler_Ramp;
+            SamplerState sampler_linear_clamp2;
+            SamplerState sampler_MainTex;
+            Texture2D _MainTex;
+            Texture2D _Ramp;
+            Texture2D t2;
+            Texture3D t3;
             struct program48Input
             {
                 float4 position0 : POSITION0;
@@ -2719,16 +2719,16 @@ Shader "Toon/Lit"
                 float3 unity_ProbeVolumeMin;
                 float4x4 unity_MatrixVP;
             };
-            SamplerState sampler_linear_clamp : register(s0);
-            SamplerState sampler_linear_clamp1 : register(s1);
-            SamplerState sampler_Ramp : register(s2);
-            SamplerState sampler_linear_clamp3 : register(s3);
-            SamplerState sampler_MainTex : register(s4);
-            Texture2D _MainTex : register(t0);
-            Texture2D _Ramp : register(t1);
-            TextureCube t2 : register(t2);
-            Texture2D t3 : register(t3);
-            Texture3D t4 : register(t4);
+            SamplerState sampler_linear_clamp;
+            SamplerState sampler_linear_clamp1;
+            SamplerState sampler_Ramp;
+            SamplerState sampler_linear_clamp3;
+            SamplerState sampler_MainTex;
+            Texture2D _MainTex;
+            Texture2D _Ramp;
+            TextureCube t2;
+            Texture2D t3;
+            Texture3D t4;
             struct program47Input
             {
                 float4 position0 : POSITION0;
@@ -2878,16 +2878,16 @@ Shader "Toon/Lit"
                 float3 unity_ProbeVolumeMin;
                 float4x4 unity_MatrixVP;
             };
-            SamplerState sampler_linear_clamp : register(s0);
-            SamplerState sampler_Ramp : register(s1);
-            SamplerState sampler_linear_clamp2 : register(s2);
-            SamplerState sampler_linear_clamp3 : register(s3);
-            SamplerState sampler_MainTex : register(s4);
-            Texture2D _MainTex : register(t0);
-            Texture2D _Ramp : register(t1);
-            Texture2D t2 : register(t2);
-            Texture2D t3 : register(t3);
-            Texture3D t4 : register(t4);
+            SamplerState sampler_linear_clamp;
+            SamplerState sampler_Ramp;
+            SamplerState sampler_linear_clamp2;
+            SamplerState sampler_linear_clamp3;
+            SamplerState sampler_MainTex;
+            Texture2D _MainTex;
+            Texture2D _Ramp;
+            Texture2D t2;
+            Texture2D t3;
+            Texture3D t4;
             struct program46Input
             {
                 float4 position0 : POSITION0;
@@ -3042,12 +3042,12 @@ Shader "Toon/Lit"
                 float3 unity_ProbeVolumeMin;
                 float4x4 unity_MatrixVP;
             };
-            SamplerState sampler_linear_clamp : register(s0);
-            SamplerState sampler_Ramp : register(s1);
-            SamplerState sampler_MainTex : register(s2);
-            Texture2D _MainTex : register(t0);
-            Texture2D _Ramp : register(t1);
-            Texture3D t2 : register(t2);
+            SamplerState sampler_linear_clamp;
+            SamplerState sampler_Ramp;
+            SamplerState sampler_MainTex;
+            Texture2D _MainTex;
+            Texture2D _Ramp;
+            Texture3D t2;
             struct program45Input
             {
                 float4 position0 : POSITION0;

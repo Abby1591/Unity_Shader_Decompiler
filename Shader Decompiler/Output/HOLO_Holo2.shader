@@ -90,14 +90,14 @@ Shader "HOLO/Holo2"
                 float4x4 unity_MatrixV;
                 float4x4 unity_MatrixVP;
             };
-            SamplerState sampler_MainTex : register(s0);
-            Texture2D _MainTex : register(t0);
-            SamplerState sampler_Diffuse : register(s1);
-            SamplerState sampler_MainTex2 : register(s2);
-            SamplerState sampler_originalDiffuse : register(s3);
-            Texture2D _originalDiffuse : register(t1);
-            Texture2D _Diffuse : register(t2);
-            Texture2D _N_map : register(t3);
+            SamplerState sampler_MainTex;
+            Texture2D _MainTex;
+            SamplerState sampler_Diffuse;
+            SamplerState sampler_MainTex2;
+            SamplerState sampler_originalDiffuse;
+            Texture2D _originalDiffuse;
+            Texture2D _Diffuse;
+            Texture2D _N_map;
             struct program1Input
             {
                 float4 position0 : POSITION0;

@@ -24,8 +24,8 @@ Shader "ProFlares/Textured Flare Shader Linear "
             {
                 float4x4 unity_MatrixVP;
             };
-            SamplerState sampler_MainTex : register(s0);
-            Texture2D _MainTex : register(t0);
+            SamplerState sampler_MainTex;
+            Texture2D _MainTex;
             struct program1Input
             {
                 float4 position0 : POSITION0;

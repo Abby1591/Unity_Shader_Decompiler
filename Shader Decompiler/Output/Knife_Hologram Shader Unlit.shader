@@ -257,12 +257,12 @@ Shader "Knife/Hologram Shader Unlit"
                 float4x4 unity_MatrixVP;
                 float4 cb3_values[13];
             };
-            SamplerState sampler_Line1 : register(s0);
-            SamplerState sampler_Line2 : register(s1);
-            SamplerState sampler_LineGlitch : register(s2);
-            Texture2D _Line1 : register(t0);
-            Texture2D _Line2 : register(t1);
-            Texture2D _LineGlitch : register(t2);
+            SamplerState sampler_Line1;
+            SamplerState sampler_Line2;
+            SamplerState sampler_LineGlitch;
+            Texture2D _Line1;
+            Texture2D _Line2;
+            Texture2D _LineGlitch;
             struct program7Input
             {
                 float4 position0 : POSITION0;
@@ -1212,12 +1212,12 @@ Shader "Knife/Hologram Shader Unlit"
             {
                 float4x4 unity_MatrixVP;
             };
-            SamplerState sampler_Line1 : register(s0);
-            SamplerState sampler_Line2 : register(s1);
-            SamplerState sampler_LineGlitch : register(s2);
-            Texture2D _Line1 : register(t0);
-            Texture2D _Line2 : register(t1);
-            Texture2D _LineGlitch : register(t2);
+            SamplerState sampler_Line1;
+            SamplerState sampler_Line2;
+            SamplerState sampler_LineGlitch;
+            Texture2D _Line1;
+            Texture2D _Line2;
+            Texture2D _LineGlitch;
             struct program6Input
             {
                 float4 position0 : POSITION0;
@@ -1519,10 +1519,10 @@ Shader "Knife/Hologram Shader Unlit"
                 float4x4 unity_MatrixVP;
                 float4 cb3_values[13];
             };
-            SamplerState sampler_Line1 : register(s0);
-            SamplerState sampler_Line2 : register(s1);
-            Texture2D _Line1 : register(t0);
-            Texture2D _Line2 : register(t1);
+            SamplerState sampler_Line1;
+            SamplerState sampler_Line2;
+            Texture2D _Line1;
+            Texture2D _Line2;
             struct program5Input
             {
                 float4 position0 : POSITION0;
@@ -2386,12 +2386,12 @@ Shader "Knife/Hologram Shader Unlit"
                 float4x4 unity_MatrixVP;
                 float4 cb3_values[13];
             };
-            SamplerState sampler_Line1 : register(s0);
-            Texture2D _Line1 : register(t0);
-            SamplerState sampler_Line2 : register(s1);
-            SamplerState sampler_LineGlitch : register(s2);
-            Texture2D _Line2 : register(t1);
-            Texture2D _LineGlitch : register(t2);
+            SamplerState sampler_Line1;
+            Texture2D _Line1;
+            SamplerState sampler_Line2;
+            SamplerState sampler_LineGlitch;
+            Texture2D _Line2;
+            Texture2D _LineGlitch;
             struct program4Input
             {
                 float4 position0 : POSITION0;

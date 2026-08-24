@@ -38,10 +38,10 @@ Shader "Custom/Hologram_Flicker"
             {
                 float4x4 unity_MatrixVP;
             };
-            SamplerState sampler_MainTex : register(s0);
-            SamplerState sampler_SecondTex : register(s1);
-            Texture2D _MainTex : register(t0);
-            Texture2D _SecondTex : register(t1);
+            SamplerState sampler_MainTex;
+            SamplerState sampler_SecondTex;
+            Texture2D _MainTex;
+            Texture2D _SecondTex;
             struct program1Input
             {
                 float4 position0 : POSITION0;

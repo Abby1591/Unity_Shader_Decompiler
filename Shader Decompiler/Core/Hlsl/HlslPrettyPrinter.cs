@@ -41,7 +41,7 @@ public static class HlslPrettyPrinter
     // into one giant nested expression.
     private const int MaxFuseNodes = 16;
 
-    public static string Print(HlslShaderNode shader, bool fuseTemps = true)
+    public static string Print(HlslShaderNode shader, bool fuseTemps = true, bool stripRegisterBindings = false)
     {
         var sb = new StringBuilder();
         sb.Append("Shader \"").Append(shader.Name).Append("\"\n{\n");
@@ -49,7 +49,7 @@ public static class HlslPrettyPrinter
         PrintProperties(sb, shader.Properties);
 
         foreach (HlslSubShaderNode ss in shader.SubShaders)
-            PrintSubShader(sb, ss, fuseTemps);
+            PrintSubShader(sb, ss, fuseTemps, stripRegisterBindings);
 
         if (!string.IsNullOrEmpty(shader.Fallback))
             sb.Append("    Fallback \"").Append(shader.Fallback).Append("\"\n");
@@ -134,7 +134,7 @@ public static class HlslPrettyPrinter
 
     // ---------- Stage 5: SubShader ----------
 
-    private static void PrintSubShader(StringBuilder sb, HlslSubShaderNode ss, bool fuseTemps)
+    private static void PrintSubShader(StringBuilder sb, HlslSubShaderNode ss, bool fuseTemps, bool stripRegisterBindings)
     {
         sb.Append("    SubShader\n    {\n");
         PrintTags(sb, ss.Tags, indent: "        ");
@@ -142,7 +142,7 @@ public static class HlslPrettyPrinter
             sb.Append("        LOD ").Append(lod).Append('\n');
 
         foreach (HlslPassNode pass in ss.Passes)
-            PrintPass(sb, pass, fuseTemps);
+            PrintPass(sb, pass, fuseTemps, stripRegisterBindings);
 
         sb.Append("    }\n");
     }
@@ -158,7 +158,7 @@ public static class HlslPrettyPrinter
 
     // ---------- Stage 6/14: Pass ----------
 
-    private static void PrintPass(StringBuilder sb, HlslPassNode pass, bool fuseTemps)
+    private static void PrintPass(StringBuilder sb, HlslPassNode pass, bool fuseTemps, bool stripRegisterBindings)
     {
         sb.Append("        Pass\n        {\n");
         if (!string.IsNullOrEmpty(pass.Name))
@@ -191,7 +191,7 @@ public static class HlslPrettyPrinter
         var stageInterpolators = new Dictionary<string, string>();
 
         foreach (HlslResourceNode res in pass.Resources)
-            PrintResource(sb, res);
+            PrintResource(sb, res, stripRegisterBindings);
 
         foreach (HlslStructNode s in pass.Structs)
             PrintStruct(sb, s);
@@ -267,9 +267,12 @@ public static class HlslPrettyPrinter
 
     // ---------- Stage 7: Resources ----------
 
-    private static void PrintResource(StringBuilder sb, HlslResourceNode res)
+    private static void PrintResource(StringBuilder sb, HlslResourceNode res, bool stripRegisterBindings)
     {
-        string reg = RegisterBinding(res);
+        string reg = stripRegisterBindings && res.Kind is HlslResourceKind.Texture or HlslResourceKind.Sampler
+            ? ""
+            : RegisterBinding(res);
+        string regSuffix = string.IsNullOrEmpty(reg) ? "" : " : " + reg;
 
         switch (res.Kind)
         {
@@ -297,13 +300,13 @@ public static class HlslPrettyPrinter
                 break;
 
             case HlslResourceKind.Texture:
-                sb.Append("            ").Append(res.TypeHint ?? "Texture2D").Append(' ').Append(res.Name).Append(" : ").Append(reg).Append(";\n");
+                sb.Append("            ").Append(res.TypeHint ?? "Texture2D").Append(' ').Append(res.Name).Append(regSuffix).Append(";\n");
                 break;
 
             case HlslResourceKind.Sampler:
                 // TypeHint distinguishes a comparison sampler (used by
                 // SampleCmp/GatherCmp) from a regular one.
-                sb.Append("            ").Append(res.TypeHint ?? "SamplerState").Append(' ').Append(res.Name).Append(" : ").Append(reg).Append(";\n");
+                sb.Append("            ").Append(res.TypeHint ?? "SamplerState").Append(' ').Append(res.Name).Append(regSuffix).Append(";\n");
                 break;
 
             case HlslResourceKind.Uav:

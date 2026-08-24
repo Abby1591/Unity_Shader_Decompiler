@@ -31,10 +31,10 @@ Shader "Toon/Basic"
                 float4x4 unity_MatrixV;
                 float4x4 unity_MatrixVP;
             };
-            SamplerState sampler_MainTex : register(s0);
-            SamplerState sampler_ToonShade : register(s1);
-            Texture2D _MainTex : register(t0);
-            TextureCube _ToonShade : register(t1);
+            SamplerState sampler_MainTex;
+            SamplerState sampler_ToonShade;
+            Texture2D _MainTex;
+            TextureCube _ToonShade;
             struct program2Input
             {
                 float4 position0 : POSITION0;
@@ -118,10 +118,10 @@ Shader "Toon/Basic"
             {
                 float4 cb4_values[2];
             };
-            SamplerState sampler_MainTex : register(s0);
-            SamplerState sampler_ToonShade : register(s1);
-            Texture2D _MainTex : register(t0);
-            TextureCube _ToonShade : register(t1);
+            SamplerState sampler_MainTex;
+            SamplerState sampler_ToonShade;
+            Texture2D _MainTex;
+            TextureCube _ToonShade;
             struct program3Input
             {
                 float4 position0 : POSITION0;

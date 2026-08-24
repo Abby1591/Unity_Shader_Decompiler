@@ -66,11 +66,11 @@ Shader "Custom/Planet_Base_OCEANMOD"
                 float3 unity_ProbeVolumeSizeInv;
                 float3 unity_ProbeVolumeMin;
             };
-            SamplerState sampler_linear_clamp : register(s0);
-            SamplerState sampler_linear_clamp1 : register(s1);
-            TextureCube t0 : register(t0);
-            TextureCube t1 : register(t1);
-            Texture3D t2 : register(t2);
+            SamplerState sampler_linear_clamp;
+            SamplerState sampler_linear_clamp1;
+            TextureCube t0;
+            TextureCube t1;
+            Texture3D t2;
             struct program6Input
             {
                 float4 position0 : POSITION0;
@@ -401,13 +401,13 @@ Shader "Custom/Planet_Base_OCEANMOD"
             {
                 float4 cb7_values[7];
             };
-            SamplerState sampler_linear_clamp : register(s0);
-            SamplerState sampler_linear_clamp1 : register(s1);
-            SamplerState sampler_linear_clamp2 : register(s2);
-            Texture2D t0 : register(t0);
-            TextureCube t1 : register(t1);
-            TextureCube t2 : register(t2);
-            Texture3D t3 : register(t3);
+            SamplerState sampler_linear_clamp;
+            SamplerState sampler_linear_clamp1;
+            SamplerState sampler_linear_clamp2;
+            Texture2D t0;
+            TextureCube t1;
+            TextureCube t2;
+            Texture3D t3;
             struct program17Input
             {
                 float4 position0 : POSITION0;
@@ -852,13 +852,13 @@ Shader "Custom/Planet_Base_OCEANMOD"
             {
                 float4 cb7_values[7];
             };
-            SamplerState sampler_linear_clamp : register(s0);
-            SamplerState sampler_linear_clamp1 : register(s1);
-            SamplerState sampler_linear_clamp2 : register(s2);
-            Texture2D t0 : register(t0);
-            TextureCube t1 : register(t1);
-            TextureCube t2 : register(t2);
-            Texture3D t3 : register(t3);
+            SamplerState sampler_linear_clamp;
+            SamplerState sampler_linear_clamp1;
+            SamplerState sampler_linear_clamp2;
+            Texture2D t0;
+            TextureCube t1;
+            TextureCube t2;
+            Texture3D t3;
             struct program16Input
             {
                 float4 position0 : POSITION0;
@@ -1204,11 +1204,11 @@ Shader "Custom/Planet_Base_OCEANMOD"
             {
                 float4 cb5_values[7];
             };
-            SamplerState sampler_linear_clamp : register(s0);
-            SamplerState sampler_linear_clamp1 : register(s1);
-            TextureCube t0 : register(t0);
-            TextureCube t1 : register(t1);
-            Texture3D t2 : register(t2);
+            SamplerState sampler_linear_clamp;
+            SamplerState sampler_linear_clamp1;
+            TextureCube t0;
+            TextureCube t1;
+            Texture3D t2;
             struct program15Input
             {
                 float4 position0 : POSITION0;
@@ -1612,11 +1612,11 @@ Shader "Custom/Planet_Base_OCEANMOD"
             {
                 float4 cb5_values[7];
             };
-            SamplerState sampler_linear_clamp : register(s0);
-            SamplerState sampler_linear_clamp1 : register(s1);
-            TextureCube t0 : register(t0);
-            TextureCube t1 : register(t1);
-            Texture3D t2 : register(t2);
+            SamplerState sampler_linear_clamp;
+            SamplerState sampler_linear_clamp1;
+            TextureCube t0;
+            TextureCube t1;
+            Texture3D t2;
             struct program14Input
             {
                 float4 position0 : POSITION0;
@@ -1963,13 +1963,13 @@ Shader "Custom/Planet_Base_OCEANMOD"
             {
                 float4 cb6_values[7];
             };
-            SamplerState sampler_linear_clamp : register(s0);
-            SamplerState sampler_linear_clamp1 : register(s1);
-            SamplerState sampler_linear_clamp2 : register(s2);
-            Texture2D t0 : register(t0);
-            TextureCube t1 : register(t1);
-            TextureCube t2 : register(t2);
-            Texture3D t3 : register(t3);
+            SamplerState sampler_linear_clamp;
+            SamplerState sampler_linear_clamp1;
+            SamplerState sampler_linear_clamp2;
+            Texture2D t0;
+            TextureCube t1;
+            TextureCube t2;
+            Texture3D t3;
             struct program9Input
             {
                 float4 position0 : POSITION0;
@@ -2394,13 +2394,13 @@ Shader "Custom/Planet_Base_OCEANMOD"
             {
                 float4 cb6_values[7];
             };
-            SamplerState sampler_linear_clamp : register(s0);
-            SamplerState sampler_linear_clamp1 : register(s1);
-            SamplerState sampler_linear_clamp2 : register(s2);
-            Texture2D t0 : register(t0);
-            TextureCube t1 : register(t1);
-            TextureCube t2 : register(t2);
-            Texture3D t3 : register(t3);
+            SamplerState sampler_linear_clamp;
+            SamplerState sampler_linear_clamp1;
+            SamplerState sampler_linear_clamp2;
+            Texture2D t0;
+            TextureCube t1;
+            TextureCube t2;
+            Texture3D t3;
             struct program8Input
             {
                 float4 position0 : POSITION0;
@@ -2725,11 +2725,11 @@ Shader "Custom/Planet_Base_OCEANMOD"
                 float3 unity_ProbeVolumeSizeInv;
                 float3 unity_ProbeVolumeMin;
             };
-            SamplerState sampler_linear_clamp : register(s0);
-            SamplerState sampler_linear_clamp1 : register(s1);
-            TextureCube t0 : register(t0);
-            TextureCube t1 : register(t1);
-            Texture3D t2 : register(t2);
+            SamplerState sampler_linear_clamp;
+            SamplerState sampler_linear_clamp1;
+            TextureCube t0;
+            TextureCube t1;
+            Texture3D t2;
             struct program7Input
             {
                 float4 position0 : POSITION0;
@@ -3091,10 +3091,10 @@ Shader "Custom/Planet_Base_OCEANMOD"
                 float3 unity_ProbeVolumeSizeInv;
                 float3 unity_ProbeVolumeMin;
             };
-            SamplerState sampler_linear_clamp : register(s0);
-            SamplerState sampler_linear_clamp1 : register(s1);
-            Texture2D t0 : register(t0);
-            Texture3D t1 : register(t1);
+            SamplerState sampler_linear_clamp;
+            SamplerState sampler_linear_clamp1;
+            Texture2D t0;
+            Texture3D t1;
             struct program41Input
             {
                 float4 position0 : POSITION0;
@@ -3311,14 +3311,14 @@ Shader "Custom/Planet_Base_OCEANMOD"
             {
                 float4 cb6_values[7];
             };
-            SamplerState sampler_linear_clamp : register(s0);
-            SamplerComparisonState sampler_comparison_linear_clamp1 : register(s1);
-            SamplerState sampler_linear_clamp2 : register(s2);
-            SamplerState sampler_linear_clamp3 : register(s3);
-            Texture2D t0 : register(t0);
-            TextureCube t1 : register(t1);
-            Texture3D t2 : register(t2);
-            TextureCube t3 : register(t3);
+            SamplerState sampler_linear_clamp;
+            SamplerComparisonState sampler_comparison_linear_clamp1;
+            SamplerState sampler_linear_clamp2;
+            SamplerState sampler_linear_clamp3;
+            Texture2D t0;
+            TextureCube t1;
+            Texture3D t2;
+            TextureCube t3;
             struct program66Input
             {
                 float4 position0 : POSITION0;
@@ -3601,14 +3601,14 @@ Shader "Custom/Planet_Base_OCEANMOD"
             {
                 float4 cb6_values[7];
             };
-            SamplerState sampler_linear_clamp : register(s0);
-            SamplerComparisonState sampler_comparison_linear_clamp1 : register(s1);
-            SamplerState sampler_linear_clamp2 : register(s2);
-            SamplerState sampler_linear_clamp3 : register(s3);
-            Texture2D t0 : register(t0);
-            TextureCube t1 : register(t1);
-            Texture3D t2 : register(t2);
-            TextureCube t3 : register(t3);
+            SamplerState sampler_linear_clamp;
+            SamplerComparisonState sampler_comparison_linear_clamp1;
+            SamplerState sampler_linear_clamp2;
+            SamplerState sampler_linear_clamp3;
+            Texture2D t0;
+            TextureCube t1;
+            Texture3D t2;
+            TextureCube t3;
             struct program65Input
             {
                 float4 position0 : POSITION0;
@@ -3875,12 +3875,12 @@ Shader "Custom/Planet_Base_OCEANMOD"
             {
                 float4 cb6_values[7];
             };
-            SamplerState sampler_linear_clamp : register(s0);
-            SamplerComparisonState sampler_comparison_linear_clamp1 : register(s1);
-            SamplerState sampler_linear_clamp2 : register(s2);
-            Texture2D t0 : register(t0);
-            Texture3D t1 : register(t1);
-            TextureCube t2 : register(t2);
+            SamplerState sampler_linear_clamp;
+            SamplerComparisonState sampler_comparison_linear_clamp1;
+            SamplerState sampler_linear_clamp2;
+            Texture2D t0;
+            Texture3D t1;
+            TextureCube t2;
             struct program64Input
             {
                 float4 position0 : POSITION0;
@@ -4161,12 +4161,12 @@ Shader "Custom/Planet_Base_OCEANMOD"
             {
                 float4 cb6_values[7];
             };
-            SamplerState sampler_linear_clamp : register(s0);
-            SamplerComparisonState sampler_comparison_linear_clamp1 : register(s1);
-            SamplerState sampler_linear_clamp2 : register(s2);
-            Texture2D t0 : register(t0);
-            Texture3D t1 : register(t1);
-            TextureCube t2 : register(t2);
+            SamplerState sampler_linear_clamp;
+            SamplerComparisonState sampler_comparison_linear_clamp1;
+            SamplerState sampler_linear_clamp2;
+            Texture2D t0;
+            Texture3D t1;
+            TextureCube t2;
             struct program63Input
             {
                 float4 position0 : POSITION0;
@@ -4431,12 +4431,12 @@ Shader "Custom/Planet_Base_OCEANMOD"
             {
                 float4 cb6_values[7];
             };
-            SamplerState sampler_linear_clamp : register(s0);
-            SamplerState sampler_linear_clamp1 : register(s1);
-            SamplerState sampler_linear_clamp2 : register(s2);
-            Texture2D t0 : register(t0);
-            Texture2D t1 : register(t1);
-            Texture3D t2 : register(t2);
+            SamplerState sampler_linear_clamp;
+            SamplerState sampler_linear_clamp1;
+            SamplerState sampler_linear_clamp2;
+            Texture2D t0;
+            Texture2D t1;
+            Texture3D t2;
             struct program62Input
             {
                 float4 position0 : POSITION0;
@@ -4698,10 +4698,10 @@ Shader "Custom/Planet_Base_OCEANMOD"
             {
                 float4 cb6_values[7];
             };
-            SamplerState sampler_linear_clamp : register(s0);
-            SamplerState sampler_linear_clamp1 : register(s1);
-            Texture2D t0 : register(t0);
-            Texture3D t1 : register(t1);
+            SamplerState sampler_linear_clamp;
+            SamplerState sampler_linear_clamp1;
+            Texture2D t0;
+            Texture3D t1;
             struct program61Input
             {
                 float4 position0 : POSITION0;
@@ -4982,14 +4982,14 @@ Shader "Custom/Planet_Base_OCEANMOD"
             {
                 float4 cb6_values[7];
             };
-            SamplerState sampler_linear_clamp : register(s0);
-            SamplerComparisonState sampler_comparison_linear_clamp1 : register(s1);
-            SamplerState sampler_linear_clamp2 : register(s2);
-            SamplerState sampler_linear_clamp3 : register(s3);
-            Texture2D t0 : register(t0);
-            Texture2D t1 : register(t1);
-            Texture3D t2 : register(t2);
-            Texture2D t3 : register(t3);
+            SamplerState sampler_linear_clamp;
+            SamplerComparisonState sampler_comparison_linear_clamp1;
+            SamplerState sampler_linear_clamp2;
+            SamplerState sampler_linear_clamp3;
+            Texture2D t0;
+            Texture2D t1;
+            Texture3D t2;
+            Texture2D t3;
             struct program60Input
             {
                 float4 position0 : POSITION0;
@@ -5318,14 +5318,14 @@ Shader "Custom/Planet_Base_OCEANMOD"
             {
                 float4 cb6_values[7];
             };
-            SamplerState sampler_linear_clamp : register(s0);
-            SamplerComparisonState sampler_comparison_linear_clamp1 : register(s1);
-            SamplerState sampler_linear_clamp2 : register(s2);
-            SamplerState sampler_linear_clamp3 : register(s3);
-            Texture2D t0 : register(t0);
-            Texture2D t1 : register(t1);
-            Texture3D t2 : register(t2);
-            Texture2D t3 : register(t3);
+            SamplerState sampler_linear_clamp;
+            SamplerComparisonState sampler_comparison_linear_clamp1;
+            SamplerState sampler_linear_clamp2;
+            SamplerState sampler_linear_clamp3;
+            Texture2D t0;
+            Texture2D t1;
+            Texture3D t2;
+            Texture2D t3;
             struct program59Input
             {
                 float4 position0 : POSITION0;
@@ -5590,10 +5590,10 @@ Shader "Custom/Planet_Base_OCEANMOD"
             {
                 float4 cb4_values[7];
             };
-            SamplerState sampler_linear_clamp : register(s0);
-            SamplerState sampler_linear_clamp1 : register(s1);
-            Texture2D t0 : register(t0);
-            Texture3D t1 : register(t1);
+            SamplerState sampler_linear_clamp;
+            SamplerState sampler_linear_clamp1;
+            Texture2D t0;
+            Texture3D t1;
             struct program58Input
             {
                 float4 position0 : POSITION0;
@@ -5825,12 +5825,12 @@ Shader "Custom/Planet_Base_OCEANMOD"
             {
                 float4 cb4_values[7];
             };
-            SamplerState sampler_linear_clamp : register(s0);
-            SamplerState sampler_linear_clamp1 : register(s1);
-            SamplerState sampler_linear_clamp2 : register(s2);
-            Texture2D t0 : register(t0);
-            TextureCube t1 : register(t1);
-            Texture3D t2 : register(t2);
+            SamplerState sampler_linear_clamp;
+            SamplerState sampler_linear_clamp1;
+            SamplerState sampler_linear_clamp2;
+            Texture2D t0;
+            TextureCube t1;
+            Texture3D t2;
             struct program57Input
             {
                 float4 position0 : POSITION0;
@@ -6054,12 +6054,12 @@ Shader "Custom/Planet_Base_OCEANMOD"
             {
                 float4 cb4_values[7];
             };
-            SamplerState sampler_linear_clamp : register(s0);
-            SamplerState sampler_linear_clamp1 : register(s1);
-            SamplerState sampler_linear_clamp2 : register(s2);
-            Texture2D t0 : register(t0);
-            Texture2D t1 : register(t1);
-            Texture3D t2 : register(t2);
+            SamplerState sampler_linear_clamp;
+            SamplerState sampler_linear_clamp1;
+            SamplerState sampler_linear_clamp2;
+            Texture2D t0;
+            Texture2D t1;
+            Texture3D t2;
             struct program56Input
             {
                 float4 position0 : POSITION0;
@@ -6295,8 +6295,8 @@ Shader "Custom/Planet_Base_OCEANMOD"
             {
                 float4 cb4_values[7];
             };
-            SamplerState sampler_linear_clamp : register(s0);
-            Texture3D t0 : register(t0);
+            SamplerState sampler_linear_clamp;
+            Texture3D t0;
             struct program55Input
             {
                 float4 position0 : POSITION0;
@@ -6523,10 +6523,10 @@ Shader "Custom/Planet_Base_OCEANMOD"
             {
                 float4 cb4_values[7];
             };
-            SamplerState sampler_linear_clamp : register(s0);
-            SamplerState sampler_linear_clamp1 : register(s1);
-            Texture2D t0 : register(t0);
-            Texture3D t1 : register(t1);
+            SamplerState sampler_linear_clamp;
+            SamplerState sampler_linear_clamp1;
+            Texture2D t0;
+            Texture3D t1;
             struct program54Input
             {
                 float4 position0 : POSITION0;
@@ -6753,14 +6753,14 @@ Shader "Custom/Planet_Base_OCEANMOD"
             {
                 float4 cb5_values[7];
             };
-            SamplerState sampler_linear_clamp : register(s0);
-            SamplerComparisonState sampler_comparison_linear_clamp1 : register(s1);
-            SamplerState sampler_linear_clamp2 : register(s2);
-            SamplerState sampler_linear_clamp3 : register(s3);
-            Texture2D t0 : register(t0);
-            TextureCube t1 : register(t1);
-            Texture3D t2 : register(t2);
-            TextureCube t3 : register(t3);
+            SamplerState sampler_linear_clamp;
+            SamplerComparisonState sampler_comparison_linear_clamp1;
+            SamplerState sampler_linear_clamp2;
+            SamplerState sampler_linear_clamp3;
+            Texture2D t0;
+            TextureCube t1;
+            Texture3D t2;
+            TextureCube t3;
             struct program53Input
             {
                 float4 position0 : POSITION0;
@@ -7024,14 +7024,14 @@ Shader "Custom/Planet_Base_OCEANMOD"
             {
                 float4 cb5_values[7];
             };
-            SamplerState sampler_linear_clamp : register(s0);
-            SamplerComparisonState sampler_comparison_linear_clamp1 : register(s1);
-            SamplerState sampler_linear_clamp2 : register(s2);
-            SamplerState sampler_linear_clamp3 : register(s3);
-            Texture2D t0 : register(t0);
-            TextureCube t1 : register(t1);
-            Texture3D t2 : register(t2);
-            TextureCube t3 : register(t3);
+            SamplerState sampler_linear_clamp;
+            SamplerComparisonState sampler_comparison_linear_clamp1;
+            SamplerState sampler_linear_clamp2;
+            SamplerState sampler_linear_clamp3;
+            Texture2D t0;
+            TextureCube t1;
+            Texture3D t2;
+            TextureCube t3;
             struct program52Input
             {
                 float4 position0 : POSITION0;
@@ -7279,12 +7279,12 @@ Shader "Custom/Planet_Base_OCEANMOD"
             {
                 float4 cb5_values[7];
             };
-            SamplerState sampler_linear_clamp : register(s0);
-            SamplerComparisonState sampler_comparison_linear_clamp1 : register(s1);
-            SamplerState sampler_linear_clamp2 : register(s2);
-            Texture2D t0 : register(t0);
-            Texture3D t1 : register(t1);
-            TextureCube t2 : register(t2);
+            SamplerState sampler_linear_clamp;
+            SamplerComparisonState sampler_comparison_linear_clamp1;
+            SamplerState sampler_linear_clamp2;
+            Texture2D t0;
+            Texture3D t1;
+            TextureCube t2;
             struct program51Input
             {
                 float4 position0 : POSITION0;
@@ -7546,12 +7546,12 @@ Shader "Custom/Planet_Base_OCEANMOD"
             {
                 float4 cb5_values[7];
             };
-            SamplerState sampler_linear_clamp : register(s0);
-            SamplerComparisonState sampler_comparison_linear_clamp1 : register(s1);
-            SamplerState sampler_linear_clamp2 : register(s2);
-            Texture2D t0 : register(t0);
-            Texture3D t1 : register(t1);
-            TextureCube t2 : register(t2);
+            SamplerState sampler_linear_clamp;
+            SamplerComparisonState sampler_comparison_linear_clamp1;
+            SamplerState sampler_linear_clamp2;
+            Texture2D t0;
+            Texture3D t1;
+            TextureCube t2;
             struct program50Input
             {
                 float4 position0 : POSITION0;
@@ -7797,12 +7797,12 @@ Shader "Custom/Planet_Base_OCEANMOD"
             {
                 float4 cb5_values[7];
             };
-            SamplerState sampler_linear_clamp : register(s0);
-            SamplerState sampler_linear_clamp1 : register(s1);
-            SamplerState sampler_linear_clamp2 : register(s2);
-            Texture2D t0 : register(t0);
-            Texture2D t1 : register(t1);
-            Texture3D t2 : register(t2);
+            SamplerState sampler_linear_clamp;
+            SamplerState sampler_linear_clamp1;
+            SamplerState sampler_linear_clamp2;
+            Texture2D t0;
+            Texture2D t1;
+            Texture3D t2;
             struct program49Input
             {
                 float4 position0 : POSITION0;
@@ -8050,10 +8050,10 @@ Shader "Custom/Planet_Base_OCEANMOD"
             {
                 float4 cb5_values[7];
             };
-            SamplerState sampler_linear_clamp : register(s0);
-            SamplerState sampler_linear_clamp1 : register(s1);
-            Texture2D t0 : register(t0);
-            Texture3D t1 : register(t1);
+            SamplerState sampler_linear_clamp;
+            SamplerState sampler_linear_clamp1;
+            Texture2D t0;
+            Texture3D t1;
             struct program48Input
             {
                 float4 position0 : POSITION0;
@@ -8318,14 +8318,14 @@ Shader "Custom/Planet_Base_OCEANMOD"
             {
                 float4 cb5_values[7];
             };
-            SamplerState sampler_linear_clamp : register(s0);
-            SamplerComparisonState sampler_comparison_linear_clamp1 : register(s1);
-            SamplerState sampler_linear_clamp2 : register(s2);
-            SamplerState sampler_linear_clamp3 : register(s3);
-            Texture2D t0 : register(t0);
-            Texture2D t1 : register(t1);
-            Texture3D t2 : register(t2);
-            Texture2D t3 : register(t3);
+            SamplerState sampler_linear_clamp;
+            SamplerComparisonState sampler_comparison_linear_clamp1;
+            SamplerState sampler_linear_clamp2;
+            SamplerState sampler_linear_clamp3;
+            Texture2D t0;
+            Texture2D t1;
+            Texture3D t2;
+            Texture2D t3;
             struct program47Input
             {
                 float4 position0 : POSITION0;
@@ -8635,14 +8635,14 @@ Shader "Custom/Planet_Base_OCEANMOD"
             {
                 float4 cb5_values[7];
             };
-            SamplerState sampler_linear_clamp : register(s0);
-            SamplerComparisonState sampler_comparison_linear_clamp1 : register(s1);
-            SamplerState sampler_linear_clamp2 : register(s2);
-            SamplerState sampler_linear_clamp3 : register(s3);
-            Texture2D t0 : register(t0);
-            Texture2D t1 : register(t1);
-            Texture3D t2 : register(t2);
-            Texture2D t3 : register(t3);
+            SamplerState sampler_linear_clamp;
+            SamplerComparisonState sampler_comparison_linear_clamp1;
+            SamplerState sampler_linear_clamp2;
+            SamplerState sampler_linear_clamp3;
+            Texture2D t0;
+            Texture2D t1;
+            Texture3D t2;
+            Texture2D t3;
             struct program46Input
             {
                 float4 position0 : POSITION0;
@@ -8888,10 +8888,10 @@ Shader "Custom/Planet_Base_OCEANMOD"
                 float3 unity_ProbeVolumeSizeInv;
                 float3 unity_ProbeVolumeMin;
             };
-            SamplerState sampler_linear_clamp : register(s0);
-            SamplerState sampler_linear_clamp1 : register(s1);
-            Texture2D t0 : register(t0);
-            Texture3D t1 : register(t1);
+            SamplerState sampler_linear_clamp;
+            SamplerState sampler_linear_clamp1;
+            Texture2D t0;
+            Texture3D t1;
             struct program45Input
             {
                 float4 position0 : POSITION0;
@@ -9105,12 +9105,12 @@ Shader "Custom/Planet_Base_OCEANMOD"
                 float3 unity_ProbeVolumeSizeInv;
                 float3 unity_ProbeVolumeMin;
             };
-            SamplerState sampler_linear_clamp : register(s0);
-            SamplerState sampler_linear_clamp1 : register(s1);
-            SamplerState sampler_linear_clamp2 : register(s2);
-            Texture2D t0 : register(t0);
-            TextureCube t1 : register(t1);
-            Texture3D t2 : register(t2);
+            SamplerState sampler_linear_clamp;
+            SamplerState sampler_linear_clamp1;
+            SamplerState sampler_linear_clamp2;
+            Texture2D t0;
+            TextureCube t1;
+            Texture3D t2;
             struct program44Input
             {
                 float4 position0 : POSITION0;
@@ -9316,12 +9316,12 @@ Shader "Custom/Planet_Base_OCEANMOD"
                 float3 unity_ProbeVolumeSizeInv;
                 float3 unity_ProbeVolumeMin;
             };
-            SamplerState sampler_linear_clamp : register(s0);
-            SamplerState sampler_linear_clamp1 : register(s1);
-            SamplerState sampler_linear_clamp2 : register(s2);
-            Texture2D t0 : register(t0);
-            Texture2D t1 : register(t1);
-            Texture3D t2 : register(t2);
+            SamplerState sampler_linear_clamp;
+            SamplerState sampler_linear_clamp1;
+            SamplerState sampler_linear_clamp2;
+            Texture2D t0;
+            Texture2D t1;
+            Texture3D t2;
             struct program43Input
             {
                 float4 position0 : POSITION0;
@@ -9538,8 +9538,8 @@ Shader "Custom/Planet_Base_OCEANMOD"
                 float3 unity_ProbeVolumeSizeInv;
                 float3 unity_ProbeVolumeMin;
             };
-            SamplerState sampler_linear_clamp : register(s0);
-            Texture3D t0 : register(t0);
+            SamplerState sampler_linear_clamp;
+            Texture3D t0;
             struct program42Input
             {
                 float4 position0 : POSITION0;
@@ -9846,8 +9846,8 @@ Shader "Custom/Planet_Base_OCEANMOD"
             {
                 float4 cb2_values[21];
             };
-            SamplerState sampler_linear_clamp : register(s0);
-            Texture3D t0 : register(t0);
+            SamplerState sampler_linear_clamp;
+            Texture3D t0;
             struct program116Input
             {
                 float4 position0 : POSITION0;
@@ -10140,8 +10140,8 @@ Shader "Custom/Planet_Base_OCEANMOD"
             {
                 float4 cb2_values[21];
             };
-            SamplerState sampler_linear_clamp : register(s0);
-            Texture3D t0 : register(t0);
+            SamplerState sampler_linear_clamp;
+            Texture3D t0;
             struct program114Input
             {
                 float4 position0 : POSITION0;

@@ -68,15 +68,15 @@ Shader "Custom/Planet_Clouds_Atmosphere"
                 float3 unity_ProbeVolumeSizeInv;
                 float3 unity_ProbeVolumeMin;
             };
-            SamplerState sampler_linear_clamp : register(s0);
-            SamplerState sampler_linear_clamp1 : register(s1);
-            SamplerState sampler_MainTex : register(s2);
-            SamplerState sampler_BumpMap : register(s3);
-            Texture2D _MainTex : register(t0);
-            Texture2D _BumpMap : register(t1);
-            TextureCube t2 : register(t2);
-            TextureCube t3 : register(t3);
-            Texture3D t4 : register(t4);
+            SamplerState sampler_linear_clamp;
+            SamplerState sampler_linear_clamp1;
+            SamplerState sampler_MainTex;
+            SamplerState sampler_BumpMap;
+            Texture2D _MainTex;
+            Texture2D _BumpMap;
+            TextureCube t2;
+            TextureCube t3;
+            Texture3D t4;
             struct program3Input
             {
                 float4 position0 : POSITION0;
@@ -379,15 +379,15 @@ Shader "Custom/Planet_Clouds_Atmosphere"
             {
                 float4 cb5_values[7];
             };
-            SamplerState sampler_linear_clamp : register(s0);
-            SamplerState sampler_linear_clamp1 : register(s1);
-            SamplerState sampler_MainTex : register(s2);
-            SamplerState sampler_BumpMap : register(s3);
-            Texture2D _MainTex : register(t0);
-            Texture2D _BumpMap : register(t1);
-            TextureCube t2 : register(t2);
-            TextureCube t3 : register(t3);
-            Texture3D t4 : register(t4);
+            SamplerState sampler_linear_clamp;
+            SamplerState sampler_linear_clamp1;
+            SamplerState sampler_MainTex;
+            SamplerState sampler_BumpMap;
+            Texture2D _MainTex;
+            Texture2D _BumpMap;
+            TextureCube t2;
+            TextureCube t3;
+            Texture3D t4;
             struct program7Input
             {
                 float4 position0 : POSITION0;
@@ -758,15 +758,15 @@ Shader "Custom/Planet_Clouds_Atmosphere"
             {
                 float4 cb5_values[7];
             };
-            SamplerState sampler_linear_clamp : register(s0);
-            SamplerState sampler_linear_clamp1 : register(s1);
-            SamplerState sampler_MainTex : register(s2);
-            SamplerState sampler_BumpMap : register(s3);
-            Texture2D _MainTex : register(t0);
-            Texture2D _BumpMap : register(t1);
-            TextureCube t2 : register(t2);
-            TextureCube t3 : register(t3);
-            Texture3D t4 : register(t4);
+            SamplerState sampler_linear_clamp;
+            SamplerState sampler_linear_clamp1;
+            SamplerState sampler_MainTex;
+            SamplerState sampler_BumpMap;
+            Texture2D _MainTex;
+            Texture2D _BumpMap;
+            TextureCube t2;
+            TextureCube t3;
+            Texture3D t4;
             struct program6Input
             {
                 float4 position0 : POSITION0;
@@ -1080,15 +1080,15 @@ Shader "Custom/Planet_Clouds_Atmosphere"
                 float3 unity_ProbeVolumeSizeInv;
                 float3 unity_ProbeVolumeMin;
             };
-            SamplerState sampler_linear_clamp : register(s0);
-            SamplerState sampler_linear_clamp1 : register(s1);
-            SamplerState sampler_MainTex : register(s2);
-            SamplerState sampler_BumpMap : register(s3);
-            Texture2D _MainTex : register(t0);
-            Texture2D _BumpMap : register(t1);
-            TextureCube t2 : register(t2);
-            TextureCube t3 : register(t3);
-            Texture3D t4 : register(t4);
+            SamplerState sampler_linear_clamp;
+            SamplerState sampler_linear_clamp1;
+            SamplerState sampler_MainTex;
+            SamplerState sampler_BumpMap;
+            Texture2D _MainTex;
+            Texture2D _BumpMap;
+            TextureCube t2;
+            TextureCube t3;
+            Texture3D t4;
             struct program4Input
             {
                 float4 position0 : POSITION0;
@@ -1437,14 +1437,14 @@ Shader "Custom/Planet_Clouds_Atmosphere"
                 float3 unity_ProbeVolumeSizeInv;
                 float3 unity_ProbeVolumeMin;
             };
-            SamplerState sampler_linear_clamp : register(s0);
-            SamplerState sampler_linear_clamp1 : register(s1);
-            SamplerState sampler_MainTex : register(s2);
-            SamplerState sampler_BumpMap : register(s3);
-            Texture2D _MainTex : register(t0);
-            Texture2D _BumpMap : register(t1);
-            Texture2D t2 : register(t2);
-            Texture3D t3 : register(t3);
+            SamplerState sampler_linear_clamp;
+            SamplerState sampler_linear_clamp1;
+            SamplerState sampler_MainTex;
+            SamplerState sampler_BumpMap;
+            Texture2D _MainTex;
+            Texture2D _BumpMap;
+            Texture2D t2;
+            Texture3D t3;
             struct program19Input
             {
                 float4 position0 : POSITION0;
@@ -1694,14 +1694,14 @@ Shader "Custom/Planet_Clouds_Atmosphere"
             {
                 float4 cb4_values[7];
             };
-            SamplerState sampler_linear_clamp : register(s0);
-            SamplerState sampler_linear_clamp1 : register(s1);
-            SamplerState sampler_MainTex : register(s2);
-            SamplerState sampler_BumpMap : register(s3);
-            Texture2D _MainTex : register(t0);
-            Texture2D _BumpMap : register(t1);
-            Texture2D t2 : register(t2);
-            Texture3D t3 : register(t3);
+            SamplerState sampler_linear_clamp;
+            SamplerState sampler_linear_clamp1;
+            SamplerState sampler_MainTex;
+            SamplerState sampler_BumpMap;
+            Texture2D _MainTex;
+            Texture2D _BumpMap;
+            Texture2D t2;
+            Texture3D t3;
             struct program28Input
             {
                 float4 position0 : POSITION0;
@@ -1964,16 +1964,16 @@ Shader "Custom/Planet_Clouds_Atmosphere"
             {
                 float4 cb4_values[7];
             };
-            SamplerState sampler_linear_clamp : register(s0);
-            SamplerState sampler_linear_clamp1 : register(s1);
-            SamplerState sampler_linear_clamp2 : register(s2);
-            SamplerState sampler_MainTex : register(s3);
-            SamplerState sampler_BumpMap : register(s4);
-            Texture2D _MainTex : register(t0);
-            Texture2D _BumpMap : register(t1);
-            Texture2D t2 : register(t2);
-            TextureCube t3 : register(t3);
-            Texture3D t4 : register(t4);
+            SamplerState sampler_linear_clamp;
+            SamplerState sampler_linear_clamp1;
+            SamplerState sampler_linear_clamp2;
+            SamplerState sampler_MainTex;
+            SamplerState sampler_BumpMap;
+            Texture2D _MainTex;
+            Texture2D _BumpMap;
+            Texture2D t2;
+            TextureCube t3;
+            Texture3D t4;
             struct program27Input
             {
                 float4 position0 : POSITION0;
@@ -2237,16 +2237,16 @@ Shader "Custom/Planet_Clouds_Atmosphere"
             {
                 float4 cb4_values[7];
             };
-            SamplerState sampler_linear_clamp : register(s0);
-            SamplerState sampler_linear_clamp1 : register(s1);
-            SamplerState sampler_linear_clamp2 : register(s2);
-            SamplerState sampler_MainTex : register(s3);
-            SamplerState sampler_BumpMap : register(s4);
-            Texture2D _MainTex : register(t0);
-            Texture2D _BumpMap : register(t1);
-            Texture2D t2 : register(t2);
-            Texture2D t3 : register(t3);
-            Texture3D t4 : register(t4);
+            SamplerState sampler_linear_clamp;
+            SamplerState sampler_linear_clamp1;
+            SamplerState sampler_linear_clamp2;
+            SamplerState sampler_MainTex;
+            SamplerState sampler_BumpMap;
+            Texture2D _MainTex;
+            Texture2D _BumpMap;
+            Texture2D t2;
+            Texture2D t3;
+            Texture3D t4;
             struct program26Input
             {
                 float4 position0 : POSITION0;
@@ -2513,12 +2513,12 @@ Shader "Custom/Planet_Clouds_Atmosphere"
             {
                 float4 cb4_values[7];
             };
-            SamplerState sampler_linear_clamp : register(s0);
-            SamplerState sampler_MainTex : register(s1);
-            SamplerState sampler_BumpMap : register(s2);
-            Texture2D _MainTex : register(t0);
-            Texture2D _BumpMap : register(t1);
-            Texture3D t2 : register(t2);
+            SamplerState sampler_linear_clamp;
+            SamplerState sampler_MainTex;
+            SamplerState sampler_BumpMap;
+            Texture2D _MainTex;
+            Texture2D _BumpMap;
+            Texture3D t2;
             struct program25Input
             {
                 float4 position0 : POSITION0;
@@ -2768,14 +2768,14 @@ Shader "Custom/Planet_Clouds_Atmosphere"
             {
                 float4 cb4_values[7];
             };
-            SamplerState sampler_linear_clamp : register(s0);
-            SamplerState sampler_linear_clamp1 : register(s1);
-            SamplerState sampler_MainTex : register(s2);
-            SamplerState sampler_BumpMap : register(s3);
-            Texture2D _MainTex : register(t0);
-            Texture2D _BumpMap : register(t1);
-            Texture2D t2 : register(t2);
-            Texture3D t3 : register(t3);
+            SamplerState sampler_linear_clamp;
+            SamplerState sampler_linear_clamp1;
+            SamplerState sampler_MainTex;
+            SamplerState sampler_BumpMap;
+            Texture2D _MainTex;
+            Texture2D _BumpMap;
+            Texture2D t2;
+            Texture3D t3;
             struct program24Input
             {
                 float4 position0 : POSITION0;
@@ -3032,14 +3032,14 @@ Shader "Custom/Planet_Clouds_Atmosphere"
                 float3 unity_ProbeVolumeSizeInv;
                 float3 unity_ProbeVolumeMin;
             };
-            SamplerState sampler_linear_clamp : register(s0);
-            SamplerState sampler_linear_clamp1 : register(s1);
-            SamplerState sampler_MainTex : register(s2);
-            SamplerState sampler_BumpMap : register(s3);
-            Texture2D _MainTex : register(t0);
-            Texture2D _BumpMap : register(t1);
-            Texture2D t2 : register(t2);
-            Texture3D t3 : register(t3);
+            SamplerState sampler_linear_clamp;
+            SamplerState sampler_linear_clamp1;
+            SamplerState sampler_MainTex;
+            SamplerState sampler_BumpMap;
+            Texture2D _MainTex;
+            Texture2D _BumpMap;
+            Texture2D t2;
+            Texture3D t3;
             struct program23Input
             {
                 float4 position0 : POSITION0;
@@ -3285,16 +3285,16 @@ Shader "Custom/Planet_Clouds_Atmosphere"
                 float3 unity_ProbeVolumeSizeInv;
                 float3 unity_ProbeVolumeMin;
             };
-            SamplerState sampler_linear_clamp : register(s0);
-            SamplerState sampler_linear_clamp1 : register(s1);
-            SamplerState sampler_linear_clamp2 : register(s2);
-            SamplerState sampler_MainTex : register(s3);
-            SamplerState sampler_BumpMap : register(s4);
-            Texture2D _MainTex : register(t0);
-            Texture2D _BumpMap : register(t1);
-            Texture2D t2 : register(t2);
-            TextureCube t3 : register(t3);
-            Texture3D t4 : register(t4);
+            SamplerState sampler_linear_clamp;
+            SamplerState sampler_linear_clamp1;
+            SamplerState sampler_linear_clamp2;
+            SamplerState sampler_MainTex;
+            SamplerState sampler_BumpMap;
+            Texture2D _MainTex;
+            Texture2D _BumpMap;
+            Texture2D t2;
+            TextureCube t3;
+            Texture3D t4;
             struct program22Input
             {
                 float4 position0 : POSITION0;
@@ -3541,16 +3541,16 @@ Shader "Custom/Planet_Clouds_Atmosphere"
                 float3 unity_ProbeVolumeSizeInv;
                 float3 unity_ProbeVolumeMin;
             };
-            SamplerState sampler_linear_clamp : register(s0);
-            SamplerState sampler_linear_clamp1 : register(s1);
-            SamplerState sampler_linear_clamp2 : register(s2);
-            SamplerState sampler_MainTex : register(s3);
-            SamplerState sampler_BumpMap : register(s4);
-            Texture2D _MainTex : register(t0);
-            Texture2D _BumpMap : register(t1);
-            Texture2D t2 : register(t2);
-            Texture2D t3 : register(t3);
-            Texture3D t4 : register(t4);
+            SamplerState sampler_linear_clamp;
+            SamplerState sampler_linear_clamp1;
+            SamplerState sampler_linear_clamp2;
+            SamplerState sampler_MainTex;
+            SamplerState sampler_BumpMap;
+            Texture2D _MainTex;
+            Texture2D _BumpMap;
+            Texture2D t2;
+            Texture2D t3;
+            Texture3D t4;
             struct program21Input
             {
                 float4 position0 : POSITION0;
@@ -3800,12 +3800,12 @@ Shader "Custom/Planet_Clouds_Atmosphere"
                 float3 unity_ProbeVolumeSizeInv;
                 float3 unity_ProbeVolumeMin;
             };
-            SamplerState sampler_linear_clamp : register(s0);
-            SamplerState sampler_MainTex : register(s1);
-            SamplerState sampler_BumpMap : register(s2);
-            Texture2D _MainTex : register(t0);
-            Texture2D _BumpMap : register(t1);
-            Texture3D t2 : register(t2);
+            SamplerState sampler_linear_clamp;
+            SamplerState sampler_MainTex;
+            SamplerState sampler_BumpMap;
+            Texture2D _MainTex;
+            Texture2D _BumpMap;
+            Texture3D t2;
             struct program20Input
             {
                 float4 position0 : POSITION0;
@@ -4153,8 +4153,8 @@ Shader "Custom/Planet_Clouds_Atmosphere"
                 float4 _WorldSpaceLightPos0;
                 float4 cb2_values[21];
             };
-            SamplerState sampler_MainTex : register(s0);
-            Texture2D _MainTex : register(t0);
+            SamplerState sampler_MainTex;
+            Texture2D _MainTex;
             struct program63Input
             {
                 float4 position0 : POSITION0;
@@ -4292,8 +4292,8 @@ Shader "Custom/Planet_Clouds_Atmosphere"
                 float4 _WorldSpaceLightPos0;
                 float4 cb2_values[21];
             };
-            SamplerState sampler_MainTex : register(s0);
-            Texture2D _MainTex : register(t0);
+            SamplerState sampler_MainTex;
+            Texture2D _MainTex;
             struct program67Input
             {
                 float4 position0 : POSITION0;
@@ -4430,10 +4430,10 @@ Shader "Custom/Planet_Clouds_Atmosphere"
                 float4 _WorldSpaceLightPos0;
                 float4 cb2_values[21];
             };
-            SamplerState sampler_BumpMap : register(s0);
-            SamplerState sampler_MainTex : register(s1);
-            Texture2D _MainTex : register(t0);
-            TextureCube _BumpMap : register(t1);
+            SamplerState sampler_BumpMap;
+            SamplerState sampler_MainTex;
+            Texture2D _MainTex;
+            TextureCube _BumpMap;
             struct program66Input
             {
                 float4 position0 : POSITION0;
@@ -4573,10 +4573,10 @@ Shader "Custom/Planet_Clouds_Atmosphere"
                 float4 _WorldSpaceLightPos0;
                 float4 cb2_values[21];
             };
-            SamplerState sampler_MainTex : register(s0);
-            SamplerState sampler_BumpMap : register(s1);
-            Texture2D _MainTex : register(t0);
-            Texture2D _BumpMap : register(t1);
+            SamplerState sampler_MainTex;
+            SamplerState sampler_BumpMap;
+            Texture2D _MainTex;
+            Texture2D _BumpMap;
             struct program65Input
             {
                 float4 position0 : POSITION0;

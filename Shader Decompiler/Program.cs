@@ -411,16 +411,17 @@ internal class Program
 
         bool surfaceReconstruct = !args.Contains("--no-surface-shaders");
         bool keepPasses = args.Contains("--keep-passes");
+        bool keepRegisterBindings = args.Contains("--keep-register-bindings");
 
-        PrintFullShaderOutput(project, astShader, !args.Contains("--no-fuse-temps"), surfaceReconstruct, keepPasses, outRoot);
+        PrintFullShaderOutput(project, astShader, !args.Contains("--no-fuse-temps"), surfaceReconstruct, keepPasses, keepRegisterBindings, outRoot);
 
         Console.WriteLine();
         Console.WriteLine("Finished.");
     }
 
-    private static void PrintFullShaderOutput(ShaderProject project, HlslShaderNode astShader, bool fuseTemps, bool surfaceReconstruct, bool keepPasses, string outRoot)
+    private static void PrintFullShaderOutput(ShaderProject project, HlslShaderNode astShader, bool fuseTemps, bool surfaceReconstruct, bool keepPasses, bool keepRegisterBindings, string outRoot)
     {
-        string text = HlslPrettyPrinter.Print(astShader, fuseTemps);
+        string text = HlslPrettyPrinter.Print(astShader, fuseTemps, !keepRegisterBindings);
 
         // Stage 13.5 — surface-shader recognition: when a pass carries the
         // compiled signature of a `#pragma surface surf ...` source, rewrite

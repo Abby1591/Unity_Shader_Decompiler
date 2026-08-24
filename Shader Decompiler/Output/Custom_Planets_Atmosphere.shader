@@ -173,8 +173,8 @@ Shader "Custom/Planets_Atmosphere"
                 float4 _WorldSpaceLightPos0;
                 float4 cb2_values[21];
             };
-            SamplerState sampler_linear_clamp : register(s0);
-            Texture2D t0 : register(t0);
+            SamplerState sampler_linear_clamp;
+            Texture2D t0;
             struct program16Input
             {
                 float4 position0 : POSITION0;
@@ -308,8 +308,8 @@ Shader "Custom/Planets_Atmosphere"
                 float4 _WorldSpaceLightPos0;
                 float4 cb2_values[21];
             };
-            SamplerState sampler_linear_clamp : register(s0);
-            Texture2D t0 : register(t0);
+            SamplerState sampler_linear_clamp;
+            Texture2D t0;
             struct program20Input
             {
                 float4 position0 : POSITION0;
@@ -442,10 +442,10 @@ Shader "Custom/Planets_Atmosphere"
                 float4 _WorldSpaceLightPos0;
                 float4 cb2_values[21];
             };
-            SamplerState sampler_linear_clamp : register(s0);
-            SamplerState sampler_linear_clamp1 : register(s1);
-            Texture2D t0 : register(t0);
-            TextureCube t1 : register(t1);
+            SamplerState sampler_linear_clamp;
+            SamplerState sampler_linear_clamp1;
+            Texture2D t0;
+            TextureCube t1;
             struct program19Input
             {
                 float4 position0 : POSITION0;
@@ -581,10 +581,10 @@ Shader "Custom/Planets_Atmosphere"
                 float4 _WorldSpaceLightPos0;
                 float4 cb2_values[21];
             };
-            SamplerState sampler_linear_clamp : register(s0);
-            SamplerState sampler_linear_clamp1 : register(s1);
-            Texture2D t0 : register(t0);
-            Texture2D t1 : register(t1);
+            SamplerState sampler_linear_clamp;
+            SamplerState sampler_linear_clamp1;
+            Texture2D t0;
+            Texture2D t1;
             struct program18Input
             {
                 float4 position0 : POSITION0;
