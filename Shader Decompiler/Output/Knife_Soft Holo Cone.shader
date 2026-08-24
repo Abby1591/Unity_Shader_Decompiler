@@ -55,12 +55,12 @@ Shader "Knife/Soft Holo Cone"
             {
                 float4x4 unity_MatrixVP;
             };
-            SamplerState sampler_linear_clamp : register(s0);
-            SamplerState sampler_linear_clamp1 : register(s1);
-            SamplerState sampler_linear_clamp2 : register(s2);
-            Texture2D t0 : register(t0);
-            Texture2D t1 : register(t1);
-            Texture2D t2 : register(t2);
+            SamplerState sampler_Mask : register(s0);
+            SamplerState sampler_Mask2 : register(s1);
+            SamplerState sampler_texcoord : register(s2);
+            Texture2D _Mask : register(t0);
+            Texture2D _Mask2 : register(t1);
+            Texture2D _texcoord : register(t2);
             struct program3Input
             {
                 float4 position0 : POSITION0;
@@ -133,14 +133,14 @@ Shader "Knife/Soft Holo Cone"
                 program11Output o = (program11Output)0;
                 #define LinearEyeDepth(d) (1.0 / (_ZBufferParams.z * (d) + _ZBufferParams.w))
                 float2 uvMask2_xy_1 = (mad(i.texcoord0.xyxx, _Mask2_ST.xyxx, _Mask2_ST.zwzz)).xy;
-                float4 r0_xyzw_3 = t0.Sample(sampler_linear_clamp, ((mad(_Time.yyyy, _Mask2Speed.xyxx, uvMask2_xy_1.xyxx)).xyxx).xy);
+                float4 r0_xyzw_3 = _Mask.Sample(sampler_Mask, ((mad(_Time.yyyy, _Mask2Speed.xyxx, uvMask2_xy_1.xyxx)).xyxx).xy);
                 float r0_y_4 = ((float4(1, 1, 1, 1) / _MaskSoftness2)).y;
                 float r0_x_4 = (r0_y_4 * r0_xyzw_3.x);
                 float r0_y_5 = mad(r0_x_4, -2, 3);
                 float4 uvMask_xyzw_6 = mad(i.texcoord0.xxyx, _Mask_ST.xxyx, _Mask_ST.zzwz);
                 float uvMask_y_6 = uvMask_xyzw_6.y;
                 float uvMask_z_2 = uvMask_xyzw_6.z;
-                float4 sampleMask_xyzw_1 = t1.Sample(sampler_linear_clamp1, (float4(uvMask_y_6, uvMask_z_2, uvMask_y_6, uvMask_y_6)).xy);
+                float4 sampleMask_xyzw_1 = _Mask2.Sample(sampler_Mask2, (float4(uvMask_y_6, uvMask_z_2, uvMask_y_6, uvMask_y_6)).xy);
                 float r0_y_7 = ((float4(1, 1, 1, 1) / _MaskSoftness)).y;
                 float r0_y_8 = (r0_y_7 * sampleMask_xyzw_1.x);
                 float r0_z_3 = mad(r0_y_8, -2, 3);
@@ -165,7 +165,7 @@ Shader "Knife/Soft Holo Cone"
                 float r0_y_18 = r0_xyzw_18.y;
                 float r0_z_8 = r0_xyzw_18.z;
                 float r0_w_4 = r0_xyzw_18.w;
-                float4 r1_xyzw_4 = t2.Sample(sampler_linear_clamp2, (float4(r0_y_18, r0_z_8, r0_y_18, r0_y_18)).xy);
+                float4 r1_xyzw_4 = _texcoord.Sample(sampler_texcoord, (float4(r0_y_18, r0_z_8, r0_y_18, r0_y_18)).xy);
                 float r0_y_20 = LinearEyeDepth(r0_w_4);
                 float r0_z_10 = LinearEyeDepth(r1_xyzw_4.x);
                 float r0_y_21 = (-r0_y_20 + r0_z_10);
@@ -221,12 +221,12 @@ Shader "Knife/Soft Holo Cone"
             {
                 float4 cb4_values[21];
             };
-            SamplerState sampler_linear_clamp : register(s0);
-            SamplerState sampler_linear_clamp1 : register(s1);
-            SamplerState sampler_linear_clamp2 : register(s2);
-            Texture2D t0 : register(t0);
-            Texture2D t1 : register(t1);
-            Texture2D t2 : register(t2);
+            SamplerState sampler_Mask : register(s0);
+            SamplerState sampler_Mask2 : register(s1);
+            SamplerState sampler_texcoord : register(s2);
+            Texture2D _Mask : register(t0);
+            Texture2D _Mask2 : register(t1);
+            Texture2D _texcoord : register(t2);
             struct program7Input
             {
                 float4 position0 : POSITION0;
@@ -339,14 +339,14 @@ Shader "Knife/Soft Holo Cone"
                 program14Output o = (program14Output)0;
                 #define LinearEyeDepth(d) (1.0 / (_ZBufferParams.z * (d) + _ZBufferParams.w))
                 float2 uvMask2_xy_1 = (mad(i.texcoord0.xyxx, _Mask2_ST.xyxx, _Mask2_ST.zwzz)).xy;
-                float4 r0_xyzw_3 = t0.Sample(sampler_linear_clamp, ((mad(_Time.yyyy, _Mask2Speed.xyxx, uvMask2_xy_1.xyxx)).xyxx).xy);
+                float4 r0_xyzw_3 = _Mask.Sample(sampler_Mask, ((mad(_Time.yyyy, _Mask2Speed.xyxx, uvMask2_xy_1.xyxx)).xyxx).xy);
                 float r0_y_4 = ((float4(1, 1, 1, 1) / _MaskSoftness2)).y;
                 float r0_x_4 = (r0_y_4 * r0_xyzw_3.x);
                 float r0_y_5 = mad(r0_x_4, -2, 3);
                 float4 uvMask_xyzw_6 = mad(i.texcoord0.xxyx, _Mask_ST.xxyx, _Mask_ST.zzwz);
                 float uvMask_y_6 = uvMask_xyzw_6.y;
                 float uvMask_z_2 = uvMask_xyzw_6.z;
-                float4 sampleMask_xyzw_1 = t1.Sample(sampler_linear_clamp1, (float4(uvMask_y_6, uvMask_z_2, uvMask_y_6, uvMask_y_6)).xy);
+                float4 sampleMask_xyzw_1 = _Mask2.Sample(sampler_Mask2, (float4(uvMask_y_6, uvMask_z_2, uvMask_y_6, uvMask_y_6)).xy);
                 float r0_y_7 = ((float4(1, 1, 1, 1) / _MaskSoftness)).y;
                 float r0_y_8 = (r0_y_7 * sampleMask_xyzw_1.x);
                 float r0_z_3 = mad(r0_y_8, -2, 3);
@@ -371,7 +371,7 @@ Shader "Knife/Soft Holo Cone"
                 float r0_y_18 = r0_xyzw_18.y;
                 float r0_z_8 = r0_xyzw_18.z;
                 float r0_w_4 = r0_xyzw_18.w;
-                float4 r1_xyzw_4 = t2.Sample(sampler_linear_clamp2, (float4(r0_y_18, r0_z_8, r0_y_18, r0_y_18)).xy);
+                float4 r1_xyzw_4 = _texcoord.Sample(sampler_texcoord, (float4(r0_y_18, r0_z_8, r0_y_18, r0_y_18)).xy);
                 float r0_y_20 = LinearEyeDepth(r0_w_4);
                 float r0_z_10 = LinearEyeDepth(r1_xyzw_4.x);
                 float r0_y_21 = (-r0_y_20 + r0_z_10);
@@ -426,12 +426,12 @@ Shader "Knife/Soft Holo Cone"
             {
                 float4x4 unity_MatrixVP;
             };
-            SamplerState sampler_linear_clamp : register(s0);
-            SamplerState sampler_linear_clamp1 : register(s1);
-            SamplerState sampler_linear_clamp2 : register(s2);
-            Texture2D t0 : register(t0);
-            Texture2D t1 : register(t1);
-            Texture2D t2 : register(t2);
+            SamplerState sampler_Mask : register(s0);
+            SamplerState sampler_Mask2 : register(s1);
+            SamplerState sampler_texcoord : register(s2);
+            Texture2D _Mask : register(t0);
+            Texture2D _Mask2 : register(t1);
+            Texture2D _texcoord : register(t2);
             struct program6Input
             {
                 float4 position0 : POSITION0;
@@ -507,14 +507,14 @@ Shader "Knife/Soft Holo Cone"
                 program13Output o = (program13Output)0;
                 #define LinearEyeDepth(d) (1.0 / (_ZBufferParams.z * (d) + _ZBufferParams.w))
                 float2 uvMask2_xy_1 = (mad(i.texcoord0.xyxx, _Mask2_ST.xyxx, _Mask2_ST.zwzz)).xy;
-                float4 r0_xyzw_3 = t0.Sample(sampler_linear_clamp, ((mad(_Time.yyyy, _Mask2Speed.xyxx, uvMask2_xy_1.xyxx)).xyxx).xy);
+                float4 r0_xyzw_3 = _Mask.Sample(sampler_Mask, ((mad(_Time.yyyy, _Mask2Speed.xyxx, uvMask2_xy_1.xyxx)).xyxx).xy);
                 float r0_y_4 = ((float4(1, 1, 1, 1) / _MaskSoftness2)).y;
                 float r0_x_4 = (r0_y_4 * r0_xyzw_3.x);
                 float r0_y_5 = mad(r0_x_4, -2, 3);
                 float4 uvMask_xyzw_6 = mad(i.texcoord0.xxyx, _Mask_ST.xxyx, _Mask_ST.zzwz);
                 float uvMask_y_6 = uvMask_xyzw_6.y;
                 float uvMask_z_2 = uvMask_xyzw_6.z;
-                float4 sampleMask_xyzw_1 = t1.Sample(sampler_linear_clamp1, (float4(uvMask_y_6, uvMask_z_2, uvMask_y_6, uvMask_y_6)).xy);
+                float4 sampleMask_xyzw_1 = _Mask2.Sample(sampler_Mask2, (float4(uvMask_y_6, uvMask_z_2, uvMask_y_6, uvMask_y_6)).xy);
                 float r0_y_7 = ((float4(1, 1, 1, 1) / _MaskSoftness)).y;
                 float r0_y_8 = (r0_y_7 * sampleMask_xyzw_1.x);
                 float r0_z_3 = mad(r0_y_8, -2, 3);
@@ -539,7 +539,7 @@ Shader "Knife/Soft Holo Cone"
                 float r0_y_18 = r0_xyzw_18.y;
                 float r0_z_8 = r0_xyzw_18.z;
                 float r0_w_4 = r0_xyzw_18.w;
-                float4 r1_xyzw_4 = t2.Sample(sampler_linear_clamp2, (float4(r0_y_18, r0_z_8, r0_y_18, r0_y_18)).xy);
+                float4 r1_xyzw_4 = _texcoord.Sample(sampler_texcoord, (float4(r0_y_18, r0_z_8, r0_y_18, r0_y_18)).xy);
                 float r0_y_20 = LinearEyeDepth(r0_w_4);
                 float r0_z_10 = LinearEyeDepth(r1_xyzw_4.x);
                 float r0_y_21 = (-r0_y_20 + r0_z_10);
@@ -598,12 +598,12 @@ Shader "Knife/Soft Holo Cone"
             {
                 float4 cb4_values[21];
             };
-            SamplerState sampler_linear_clamp : register(s0);
-            SamplerState sampler_linear_clamp1 : register(s1);
-            SamplerState sampler_linear_clamp2 : register(s2);
-            Texture2D t0 : register(t0);
-            Texture2D t1 : register(t1);
-            Texture2D t2 : register(t2);
+            SamplerState sampler_Mask : register(s0);
+            SamplerState sampler_Mask2 : register(s1);
+            SamplerState sampler_texcoord : register(s2);
+            Texture2D _Mask : register(t0);
+            Texture2D _Mask2 : register(t1);
+            Texture2D _texcoord : register(t2);
             struct program4Input
             {
                 float4 position0 : POSITION0;
@@ -710,14 +710,14 @@ Shader "Knife/Soft Holo Cone"
                 program12Output o = (program12Output)0;
                 #define LinearEyeDepth(d) (1.0 / (_ZBufferParams.z * (d) + _ZBufferParams.w))
                 float2 uvMask2_xy_1 = (mad(i.texcoord0.xyxx, _Mask2_ST.xyxx, _Mask2_ST.zwzz)).xy;
-                float4 r0_xyzw_3 = t0.Sample(sampler_linear_clamp, ((mad(_Time.yyyy, _Mask2Speed.xyxx, uvMask2_xy_1.xyxx)).xyxx).xy);
+                float4 r0_xyzw_3 = _Mask.Sample(sampler_Mask, ((mad(_Time.yyyy, _Mask2Speed.xyxx, uvMask2_xy_1.xyxx)).xyxx).xy);
                 float r0_y_4 = ((float4(1, 1, 1, 1) / _MaskSoftness2)).y;
                 float r0_x_4 = (r0_y_4 * r0_xyzw_3.x);
                 float r0_y_5 = mad(r0_x_4, -2, 3);
                 float4 uvMask_xyzw_6 = mad(i.texcoord0.xxyx, _Mask_ST.xxyx, _Mask_ST.zzwz);
                 float uvMask_y_6 = uvMask_xyzw_6.y;
                 float uvMask_z_2 = uvMask_xyzw_6.z;
-                float4 sampleMask_xyzw_1 = t1.Sample(sampler_linear_clamp1, (float4(uvMask_y_6, uvMask_z_2, uvMask_y_6, uvMask_y_6)).xy);
+                float4 sampleMask_xyzw_1 = _Mask2.Sample(sampler_Mask2, (float4(uvMask_y_6, uvMask_z_2, uvMask_y_6, uvMask_y_6)).xy);
                 float r0_y_7 = ((float4(1, 1, 1, 1) / _MaskSoftness)).y;
                 float r0_y_8 = (r0_y_7 * sampleMask_xyzw_1.x);
                 float r0_z_3 = mad(r0_y_8, -2, 3);
@@ -742,7 +742,7 @@ Shader "Knife/Soft Holo Cone"
                 float r0_y_18 = r0_xyzw_18.y;
                 float r0_z_8 = r0_xyzw_18.z;
                 float r0_w_4 = r0_xyzw_18.w;
-                float4 r1_xyzw_4 = t2.Sample(sampler_linear_clamp2, (float4(r0_y_18, r0_z_8, r0_y_18, r0_y_18)).xy);
+                float4 r1_xyzw_4 = _texcoord.Sample(sampler_texcoord, (float4(r0_y_18, r0_z_8, r0_y_18, r0_y_18)).xy);
                 float r0_y_20 = LinearEyeDepth(r0_w_4);
                 float r0_z_10 = LinearEyeDepth(r1_xyzw_4.x);
                 float r0_y_21 = (-r0_y_20 + r0_z_10);
@@ -792,12 +792,12 @@ Shader "Knife/Soft Holo Cone"
             {
                 float4x4 unity_MatrixVP;
             };
-            SamplerState sampler_linear_clamp : register(s0);
-            SamplerState sampler_linear_clamp1 : register(s1);
-            SamplerState sampler_linear_clamp2 : register(s2);
-            Texture2D t0 : register(t0);
-            Texture2D t1 : register(t1);
-            Texture2D t2 : register(t2);
+            SamplerState sampler_Mask : register(s0);
+            SamplerState sampler_Mask2 : register(s1);
+            SamplerState sampler_texcoord : register(s2);
+            Texture2D _Mask : register(t0);
+            Texture2D _Mask2 : register(t1);
+            Texture2D _texcoord : register(t2);
             struct program17Input
             {
                 float4 position0 : POSITION0;
@@ -876,14 +876,14 @@ Shader "Knife/Soft Holo Cone"
             {
                 program29Output o = (program29Output)0;
                 #define LinearEyeDepth(d) (1.0 / (_ZBufferParams.z * (d) + _ZBufferParams.w))
-                float4 r0_xyzw_3 = t0.Sample(sampler_linear_clamp, ((mad(_Time.yyyy, cb0_values[9].yzyy, (mad(i.texcoord0.xyxx, cb0_values[10].xyxx, cb0_values[10].zwzz)).xyxx)).xyxx).xy);
+                float4 r0_xyzw_3 = _Mask.Sample(sampler_Mask, ((mad(_Time.yyyy, cb0_values[9].yzyy, (mad(i.texcoord0.xyxx, cb0_values[10].xyxx, cb0_values[10].zwzz)).xyxx)).xyxx).xy);
                 float r0_y_4 = ((float4(1, 1, 1, 1) / _Softness)).y;
                 float r0_x_4 = (r0_y_4 * r0_xyzw_3.x);
                 float r0_y_5 = mad(r0_x_4, -2, 3);
                 float4 uvTexcoord_xyzw_6 = mad(i.texcoord0.xxyx, _texcoord_ST.xxyx, _texcoord_ST.zzwz);
                 float uvTexcoord_y_6 = uvTexcoord_xyzw_6.y;
                 float uvTexcoord_z_2 = uvTexcoord_xyzw_6.z;
-                float4 sampleTexcoord_xyzw_1 = t1.Sample(sampler_linear_clamp1, (float4(uvTexcoord_y_6, uvTexcoord_z_2, uvTexcoord_y_6, uvTexcoord_y_6)).xy);
+                float4 sampleTexcoord_xyzw_1 = _Mask2.Sample(sampler_Mask2, (float4(uvTexcoord_y_6, uvTexcoord_z_2, uvTexcoord_y_6, uvTexcoord_y_6)).xy);
                 float r0_y_7 = ((float4(1, 1, 1, 1) / _DepthFadeDistance)).y;
                 float r0_y_8 = (r0_y_7 * sampleTexcoord_xyzw_1.x);
                 float r0_z_3 = mad(r0_y_8, -2, 3);
@@ -908,7 +908,7 @@ Shader "Knife/Soft Holo Cone"
                 float r0_y_18 = r0_xyzw_18.y;
                 float r0_z_8 = r0_xyzw_18.z;
                 float r0_w_4 = r0_xyzw_18.w;
-                float4 r1_xyzw_4 = t2.Sample(sampler_linear_clamp2, (float4(r0_y_18, r0_z_8, r0_y_18, r0_y_18)).xy);
+                float4 r1_xyzw_4 = _texcoord.Sample(sampler_texcoord, (float4(r0_y_18, r0_z_8, r0_y_18, r0_y_18)).xy);
                 float r0_y_20 = LinearEyeDepth(r0_w_4);
                 float r0_z_10 = LinearEyeDepth(r1_xyzw_4.x);
                 float r0_y_21 = (-r0_y_20 + r0_z_10);
@@ -958,12 +958,12 @@ Shader "Knife/Soft Holo Cone"
             {
                 float4x4 unity_MatrixVP;
             };
-            SamplerState sampler_linear_clamp : register(s0);
-            SamplerState sampler_linear_clamp1 : register(s1);
-            SamplerState sampler_linear_clamp2 : register(s2);
-            Texture2D t0 : register(t0);
-            Texture2D t1 : register(t1);
-            Texture2D t2 : register(t2);
+            SamplerState sampler_Mask : register(s0);
+            SamplerState sampler_Mask2 : register(s1);
+            SamplerState sampler_texcoord : register(s2);
+            Texture2D _Mask : register(t0);
+            Texture2D _Mask2 : register(t1);
+            Texture2D _texcoord : register(t2);
             struct program26Input
             {
                 float4 position0 : POSITION0;
@@ -1038,14 +1038,14 @@ Shader "Knife/Soft Holo Cone"
             {
                 program38Output o = (program38Output)0;
                 #define LinearEyeDepth(d) (1.0 / (_ZBufferParams.z * (d) + _ZBufferParams.w))
-                float4 r0_xyzw_3 = t0.Sample(sampler_linear_clamp, ((mad(_Time.yyyy, cb0_values[9].yzyy, (mad(i.texcoord0.xyxx, cb0_values[10].xyxx, cb0_values[10].zwzz)).xyxx)).xyxx).xy);
+                float4 r0_xyzw_3 = _Mask.Sample(sampler_Mask, ((mad(_Time.yyyy, cb0_values[9].yzyy, (mad(i.texcoord0.xyxx, cb0_values[10].xyxx, cb0_values[10].zwzz)).xyxx)).xyxx).xy);
                 float r0_y_4 = ((float4(1, 1, 1, 1) / _Softness)).y;
                 float r0_x_4 = (r0_y_4 * r0_xyzw_3.x);
                 float r0_y_5 = mad(r0_x_4, -2, 3);
                 float4 uvTexcoord_xyzw_6 = mad(i.texcoord0.xxyx, _texcoord_ST.xxyx, _texcoord_ST.zzwz);
                 float uvTexcoord_y_6 = uvTexcoord_xyzw_6.y;
                 float uvTexcoord_z_2 = uvTexcoord_xyzw_6.z;
-                float4 sampleTexcoord_xyzw_1 = t1.Sample(sampler_linear_clamp1, (float4(uvTexcoord_y_6, uvTexcoord_z_2, uvTexcoord_y_6, uvTexcoord_y_6)).xy);
+                float4 sampleTexcoord_xyzw_1 = _Mask2.Sample(sampler_Mask2, (float4(uvTexcoord_y_6, uvTexcoord_z_2, uvTexcoord_y_6, uvTexcoord_y_6)).xy);
                 float r0_y_7 = ((float4(1, 1, 1, 1) / _DepthFadeDistance)).y;
                 float r0_y_8 = (r0_y_7 * sampleTexcoord_xyzw_1.x);
                 float r0_z_3 = mad(r0_y_8, -2, 3);
@@ -1070,7 +1070,7 @@ Shader "Knife/Soft Holo Cone"
                 float r0_y_18 = r0_xyzw_18.y;
                 float r0_z_8 = r0_xyzw_18.z;
                 float r0_w_4 = r0_xyzw_18.w;
-                float4 r1_xyzw_4 = t2.Sample(sampler_linear_clamp2, (float4(r0_y_18, r0_z_8, r0_y_18, r0_y_18)).xy);
+                float4 r1_xyzw_4 = _texcoord.Sample(sampler_texcoord, (float4(r0_y_18, r0_z_8, r0_y_18, r0_y_18)).xy);
                 float r0_y_20 = LinearEyeDepth(r0_w_4);
                 float r0_z_10 = LinearEyeDepth(r1_xyzw_4.x);
                 float r0_y_21 = (-r0_y_20 + r0_z_10);
@@ -1120,12 +1120,12 @@ Shader "Knife/Soft Holo Cone"
             {
                 float4x4 unity_MatrixVP;
             };
-            SamplerState sampler_linear_clamp : register(s0);
-            SamplerState sampler_linear_clamp1 : register(s1);
-            SamplerState sampler_linear_clamp2 : register(s2);
-            Texture2D t0 : register(t0);
-            Texture2D t1 : register(t1);
-            Texture2D t2 : register(t2);
+            SamplerState sampler_Mask : register(s0);
+            SamplerState sampler_Mask2 : register(s1);
+            SamplerState sampler_texcoord : register(s2);
+            Texture2D _Mask : register(t0);
+            Texture2D _Mask2 : register(t1);
+            Texture2D _texcoord : register(t2);
             struct program24Input
             {
                 float4 position0 : POSITION0;
@@ -1200,14 +1200,14 @@ Shader "Knife/Soft Holo Cone"
             {
                 program36Output o = (program36Output)0;
                 #define LinearEyeDepth(d) (1.0 / (_ZBufferParams.z * (d) + _ZBufferParams.w))
-                float4 r0_xyzw_3 = t0.Sample(sampler_linear_clamp, ((mad(_Time.yyyy, cb0_values[9].yzyy, (mad(i.texcoord0.xyxx, cb0_values[10].xyxx, cb0_values[10].zwzz)).xyxx)).xyxx).xy);
+                float4 r0_xyzw_3 = _Mask.Sample(sampler_Mask, ((mad(_Time.yyyy, cb0_values[9].yzyy, (mad(i.texcoord0.xyxx, cb0_values[10].xyxx, cb0_values[10].zwzz)).xyxx)).xyxx).xy);
                 float r0_y_4 = ((float4(1, 1, 1, 1) / _Softness)).y;
                 float r0_x_4 = (r0_y_4 * r0_xyzw_3.x);
                 float r0_y_5 = mad(r0_x_4, -2, 3);
                 float4 uvTexcoord_xyzw_6 = mad(i.texcoord0.xxyx, _texcoord_ST.xxyx, _texcoord_ST.zzwz);
                 float uvTexcoord_y_6 = uvTexcoord_xyzw_6.y;
                 float uvTexcoord_z_2 = uvTexcoord_xyzw_6.z;
-                float4 sampleTexcoord_xyzw_1 = t1.Sample(sampler_linear_clamp1, (float4(uvTexcoord_y_6, uvTexcoord_z_2, uvTexcoord_y_6, uvTexcoord_y_6)).xy);
+                float4 sampleTexcoord_xyzw_1 = _Mask2.Sample(sampler_Mask2, (float4(uvTexcoord_y_6, uvTexcoord_z_2, uvTexcoord_y_6, uvTexcoord_y_6)).xy);
                 float r0_y_7 = ((float4(1, 1, 1, 1) / _DepthFadeDistance)).y;
                 float r0_y_8 = (r0_y_7 * sampleTexcoord_xyzw_1.x);
                 float r0_z_3 = mad(r0_y_8, -2, 3);
@@ -1232,7 +1232,7 @@ Shader "Knife/Soft Holo Cone"
                 float r0_y_18 = r0_xyzw_18.y;
                 float r0_z_8 = r0_xyzw_18.z;
                 float r0_w_4 = r0_xyzw_18.w;
-                float4 r1_xyzw_4 = t2.Sample(sampler_linear_clamp2, (float4(r0_y_18, r0_z_8, r0_y_18, r0_y_18)).xy);
+                float4 r1_xyzw_4 = _texcoord.Sample(sampler_texcoord, (float4(r0_y_18, r0_z_8, r0_y_18, r0_y_18)).xy);
                 float r0_y_20 = LinearEyeDepth(r0_w_4);
                 float r0_z_10 = LinearEyeDepth(r1_xyzw_4.x);
                 float r0_y_21 = (-r0_y_20 + r0_z_10);
@@ -1281,12 +1281,12 @@ Shader "Knife/Soft Holo Cone"
             {
                 float4x4 unity_MatrixVP;
             };
-            SamplerState sampler_linear_clamp : register(s0);
-            SamplerState sampler_linear_clamp1 : register(s1);
-            SamplerState sampler_linear_clamp2 : register(s2);
-            Texture2D t0 : register(t0);
-            Texture2D t1 : register(t1);
-            Texture2D t2 : register(t2);
+            SamplerState sampler_Mask : register(s0);
+            SamplerState sampler_Mask2 : register(s1);
+            SamplerState sampler_texcoord : register(s2);
+            Texture2D _Mask : register(t0);
+            Texture2D _Mask2 : register(t1);
+            Texture2D _texcoord : register(t2);
             struct program23Input
             {
                 float4 position0 : POSITION0;
@@ -1356,14 +1356,14 @@ Shader "Knife/Soft Holo Cone"
                 program35Output o = (program35Output)0;
                 #define LinearEyeDepth(d) (1.0 / (_ZBufferParams.z * (d) + _ZBufferParams.w))
                 float2 uvMask2_xy_1 = (mad(i.texcoord0.xyxx, _Mask2_ST.xyxx, _Mask2_ST.zwzz)).xy;
-                float4 r0_xyzw_3 = t0.Sample(sampler_linear_clamp, ((mad(_Time.yyyy, _Mask2Speed.xyxx, uvMask2_xy_1.xyxx)).xyxx).xy);
+                float4 r0_xyzw_3 = _Mask.Sample(sampler_Mask, ((mad(_Time.yyyy, _Mask2Speed.xyxx, uvMask2_xy_1.xyxx)).xyxx).xy);
                 float r0_y_4 = ((float4(1, 1, 1, 1) / _MaskSoftness2)).y;
                 float r0_x_4 = (r0_y_4 * r0_xyzw_3.x);
                 float r0_y_5 = mad(r0_x_4, -2, 3);
                 float4 uvMask_xyzw_6 = mad(i.texcoord0.xxyx, _Mask_ST.xxyx, _Mask_ST.zzwz);
                 float uvMask_y_6 = uvMask_xyzw_6.y;
                 float uvMask_z_2 = uvMask_xyzw_6.z;
-                float4 sampleMask_xyzw_1 = t1.Sample(sampler_linear_clamp1, (float4(uvMask_y_6, uvMask_z_2, uvMask_y_6, uvMask_y_6)).xy);
+                float4 sampleMask_xyzw_1 = _Mask2.Sample(sampler_Mask2, (float4(uvMask_y_6, uvMask_z_2, uvMask_y_6, uvMask_y_6)).xy);
                 float r0_y_7 = ((float4(1, 1, 1, 1) / _MaskSoftness)).y;
                 float r0_y_8 = (r0_y_7 * sampleMask_xyzw_1.x);
                 float r0_z_3 = mad(r0_y_8, -2, 3);
@@ -1388,7 +1388,7 @@ Shader "Knife/Soft Holo Cone"
                 float r0_y_18 = r0_xyzw_18.y;
                 float r0_z_8 = r0_xyzw_18.z;
                 float r0_w_4 = r0_xyzw_18.w;
-                float4 r1_xyzw_4 = t2.Sample(sampler_linear_clamp2, (float4(r0_y_18, r0_z_8, r0_y_18, r0_y_18)).xy);
+                float4 r1_xyzw_4 = _texcoord.Sample(sampler_texcoord, (float4(r0_y_18, r0_z_8, r0_y_18, r0_y_18)).xy);
                 float r0_y_20 = LinearEyeDepth(r0_w_4);
                 float r0_z_10 = LinearEyeDepth(r1_xyzw_4.x);
                 float r0_y_21 = (-r0_y_20 + r0_z_10);
@@ -1438,12 +1438,12 @@ Shader "Knife/Soft Holo Cone"
             {
                 float4x4 unity_MatrixVP;
             };
-            SamplerState sampler_linear_clamp : register(s0);
-            SamplerState sampler_linear_clamp1 : register(s1);
-            SamplerState sampler_linear_clamp2 : register(s2);
-            Texture2D t0 : register(t0);
-            Texture2D t1 : register(t1);
-            Texture2D t2 : register(t2);
+            SamplerState sampler_Mask : register(s0);
+            SamplerState sampler_Mask2 : register(s1);
+            SamplerState sampler_texcoord : register(s2);
+            Texture2D _Mask : register(t0);
+            Texture2D _Mask2 : register(t1);
+            Texture2D _texcoord : register(t2);
             struct program22Input
             {
                 float4 position0 : POSITION0;
@@ -1525,14 +1525,14 @@ Shader "Knife/Soft Holo Cone"
             {
                 program34Output o = (program34Output)0;
                 #define LinearEyeDepth(d) (1.0 / (_ZBufferParams.z * (d) + _ZBufferParams.w))
-                float4 r0_xyzw_3 = t0.Sample(sampler_linear_clamp, ((mad(_Time.yyyy, cb0_values[9].yzyy, (mad(i.texcoord0.xyxx, cb0_values[10].xyxx, cb0_values[10].zwzz)).xyxx)).xyxx).xy);
+                float4 r0_xyzw_3 = _Mask.Sample(sampler_Mask, ((mad(_Time.yyyy, cb0_values[9].yzyy, (mad(i.texcoord0.xyxx, cb0_values[10].xyxx, cb0_values[10].zwzz)).xyxx)).xyxx).xy);
                 float r0_y_4 = ((float4(1, 1, 1, 1) / _Softness)).y;
                 float r0_x_4 = (r0_y_4 * r0_xyzw_3.x);
                 float r0_y_5 = mad(r0_x_4, -2, 3);
                 float4 uvTexcoord_xyzw_6 = mad(i.texcoord0.xxyx, _texcoord_ST.xxyx, _texcoord_ST.zzwz);
                 float uvTexcoord_y_6 = uvTexcoord_xyzw_6.y;
                 float uvTexcoord_z_2 = uvTexcoord_xyzw_6.z;
-                float4 sampleTexcoord_xyzw_1 = t1.Sample(sampler_linear_clamp1, (float4(uvTexcoord_y_6, uvTexcoord_z_2, uvTexcoord_y_6, uvTexcoord_y_6)).xy);
+                float4 sampleTexcoord_xyzw_1 = _Mask2.Sample(sampler_Mask2, (float4(uvTexcoord_y_6, uvTexcoord_z_2, uvTexcoord_y_6, uvTexcoord_y_6)).xy);
                 float r0_y_7 = ((float4(1, 1, 1, 1) / _DepthFadeDistance)).y;
                 float r0_y_8 = (r0_y_7 * sampleTexcoord_xyzw_1.x);
                 float r0_z_3 = mad(r0_y_8, -2, 3);
@@ -1557,7 +1557,7 @@ Shader "Knife/Soft Holo Cone"
                 float r0_y_18 = r0_xyzw_18.y;
                 float r0_z_8 = r0_xyzw_18.z;
                 float r0_w_4 = r0_xyzw_18.w;
-                float4 r1_xyzw_4 = t2.Sample(sampler_linear_clamp2, (float4(r0_y_18, r0_z_8, r0_y_18, r0_y_18)).xy);
+                float4 r1_xyzw_4 = _texcoord.Sample(sampler_texcoord, (float4(r0_y_18, r0_z_8, r0_y_18, r0_y_18)).xy);
                 float r0_y_20 = LinearEyeDepth(r0_w_4);
                 float r0_z_10 = LinearEyeDepth(r1_xyzw_4.x);
                 float r0_y_21 = (-r0_y_20 + r0_z_10);
@@ -1607,12 +1607,12 @@ Shader "Knife/Soft Holo Cone"
             {
                 float4x4 unity_MatrixVP;
             };
-            SamplerState sampler_linear_clamp : register(s0);
-            SamplerState sampler_linear_clamp1 : register(s1);
-            SamplerState sampler_linear_clamp2 : register(s2);
-            Texture2D t0 : register(t0);
-            Texture2D t1 : register(t1);
-            Texture2D t2 : register(t2);
+            SamplerState sampler_Mask : register(s0);
+            SamplerState sampler_Mask2 : register(s1);
+            SamplerState sampler_texcoord : register(s2);
+            Texture2D _Mask : register(t0);
+            Texture2D _Mask2 : register(t1);
+            Texture2D _texcoord : register(t2);
             struct program21Input
             {
                 float4 position0 : POSITION0;
@@ -1684,14 +1684,14 @@ Shader "Knife/Soft Holo Cone"
             {
                 program33Output o = (program33Output)0;
                 #define LinearEyeDepth(d) (1.0 / (_ZBufferParams.z * (d) + _ZBufferParams.w))
-                float4 r0_xyzw_3 = t0.Sample(sampler_linear_clamp, ((mad(_Time.yyyy, cb0_values[9].yzyy, (mad(i.texcoord0.xyxx, cb0_values[10].xyxx, cb0_values[10].zwzz)).xyxx)).xyxx).xy);
+                float4 r0_xyzw_3 = _Mask.Sample(sampler_Mask, ((mad(_Time.yyyy, cb0_values[9].yzyy, (mad(i.texcoord0.xyxx, cb0_values[10].xyxx, cb0_values[10].zwzz)).xyxx)).xyxx).xy);
                 float r0_y_4 = ((float4(1, 1, 1, 1) / _Softness)).y;
                 float r0_x_4 = (r0_y_4 * r0_xyzw_3.x);
                 float r0_y_5 = mad(r0_x_4, -2, 3);
                 float4 uvTexcoord_xyzw_6 = mad(i.texcoord0.xxyx, _texcoord_ST.xxyx, _texcoord_ST.zzwz);
                 float uvTexcoord_y_6 = uvTexcoord_xyzw_6.y;
                 float uvTexcoord_z_2 = uvTexcoord_xyzw_6.z;
-                float4 sampleTexcoord_xyzw_1 = t1.Sample(sampler_linear_clamp1, (float4(uvTexcoord_y_6, uvTexcoord_z_2, uvTexcoord_y_6, uvTexcoord_y_6)).xy);
+                float4 sampleTexcoord_xyzw_1 = _Mask2.Sample(sampler_Mask2, (float4(uvTexcoord_y_6, uvTexcoord_z_2, uvTexcoord_y_6, uvTexcoord_y_6)).xy);
                 float r0_y_7 = ((float4(1, 1, 1, 1) / _DepthFadeDistance)).y;
                 float r0_y_8 = (r0_y_7 * sampleTexcoord_xyzw_1.x);
                 float r0_z_3 = mad(r0_y_8, -2, 3);
@@ -1716,7 +1716,7 @@ Shader "Knife/Soft Holo Cone"
                 float r0_y_18 = r0_xyzw_18.y;
                 float r0_z_8 = r0_xyzw_18.z;
                 float r0_w_4 = r0_xyzw_18.w;
-                float4 r1_xyzw_4 = t2.Sample(sampler_linear_clamp2, (float4(r0_y_18, r0_z_8, r0_y_18, r0_y_18)).xy);
+                float4 r1_xyzw_4 = _texcoord.Sample(sampler_texcoord, (float4(r0_y_18, r0_z_8, r0_y_18, r0_y_18)).xy);
                 float r0_y_20 = LinearEyeDepth(r0_w_4);
                 float r0_z_10 = LinearEyeDepth(r1_xyzw_4.x);
                 float r0_y_21 = (-r0_y_20 + r0_z_10);
@@ -1766,12 +1766,12 @@ Shader "Knife/Soft Holo Cone"
             {
                 float4x4 unity_MatrixVP;
             };
-            SamplerState sampler_linear_clamp : register(s0);
-            SamplerState sampler_linear_clamp1 : register(s1);
-            SamplerState sampler_linear_clamp2 : register(s2);
-            Texture2D t0 : register(t0);
-            Texture2D t1 : register(t1);
-            Texture2D t2 : register(t2);
+            SamplerState sampler_Mask : register(s0);
+            SamplerState sampler_Mask2 : register(s1);
+            SamplerState sampler_texcoord : register(s2);
+            Texture2D _Mask : register(t0);
+            Texture2D _Mask2 : register(t1);
+            Texture2D _texcoord : register(t2);
             struct program19Input
             {
                 float4 position0 : POSITION0;
@@ -1855,14 +1855,14 @@ Shader "Knife/Soft Holo Cone"
             {
                 program31Output o = (program31Output)0;
                 #define LinearEyeDepth(d) (1.0 / (_ZBufferParams.z * (d) + _ZBufferParams.w))
-                float4 r0_xyzw_3 = t0.Sample(sampler_linear_clamp, ((mad(_Time.yyyy, cb0_values[9].yzyy, (mad(i.texcoord0.xyxx, cb0_values[10].xyxx, cb0_values[10].zwzz)).xyxx)).xyxx).xy);
+                float4 r0_xyzw_3 = _Mask.Sample(sampler_Mask, ((mad(_Time.yyyy, cb0_values[9].yzyy, (mad(i.texcoord0.xyxx, cb0_values[10].xyxx, cb0_values[10].zwzz)).xyxx)).xyxx).xy);
                 float r0_y_4 = ((float4(1, 1, 1, 1) / _Softness)).y;
                 float r0_x_4 = (r0_y_4 * r0_xyzw_3.x);
                 float r0_y_5 = mad(r0_x_4, -2, 3);
                 float4 uvTexcoord_xyzw_6 = mad(i.texcoord0.xxyx, _texcoord_ST.xxyx, _texcoord_ST.zzwz);
                 float uvTexcoord_y_6 = uvTexcoord_xyzw_6.y;
                 float uvTexcoord_z_2 = uvTexcoord_xyzw_6.z;
-                float4 sampleTexcoord_xyzw_1 = t1.Sample(sampler_linear_clamp1, (float4(uvTexcoord_y_6, uvTexcoord_z_2, uvTexcoord_y_6, uvTexcoord_y_6)).xy);
+                float4 sampleTexcoord_xyzw_1 = _Mask2.Sample(sampler_Mask2, (float4(uvTexcoord_y_6, uvTexcoord_z_2, uvTexcoord_y_6, uvTexcoord_y_6)).xy);
                 float r0_y_7 = ((float4(1, 1, 1, 1) / _DepthFadeDistance)).y;
                 float r0_y_8 = (r0_y_7 * sampleTexcoord_xyzw_1.x);
                 float r0_z_3 = mad(r0_y_8, -2, 3);
@@ -1887,7 +1887,7 @@ Shader "Knife/Soft Holo Cone"
                 float r0_y_18 = r0_xyzw_18.y;
                 float r0_z_8 = r0_xyzw_18.z;
                 float r0_w_4 = r0_xyzw_18.w;
-                float4 r1_xyzw_4 = t2.Sample(sampler_linear_clamp2, (float4(r0_y_18, r0_z_8, r0_y_18, r0_y_18)).xy);
+                float4 r1_xyzw_4 = _texcoord.Sample(sampler_texcoord, (float4(r0_y_18, r0_z_8, r0_y_18, r0_y_18)).xy);
                 float r0_y_20 = LinearEyeDepth(r0_w_4);
                 float r0_z_10 = LinearEyeDepth(r1_xyzw_4.x);
                 float r0_y_21 = (-r0_y_20 + r0_z_10);
@@ -1936,12 +1936,12 @@ Shader "Knife/Soft Holo Cone"
             {
                 float4x4 unity_MatrixVP;
             };
-            SamplerState sampler_linear_clamp : register(s0);
-            SamplerState sampler_linear_clamp1 : register(s1);
-            SamplerState sampler_linear_clamp2 : register(s2);
-            Texture2D t0 : register(t0);
-            Texture2D t1 : register(t1);
-            Texture2D t2 : register(t2);
+            SamplerState sampler_Mask : register(s0);
+            SamplerState sampler_Mask2 : register(s1);
+            SamplerState sampler_texcoord : register(s2);
+            Texture2D _Mask : register(t0);
+            Texture2D _Mask2 : register(t1);
+            Texture2D _texcoord : register(t2);
             struct program18Input
             {
                 float4 position0 : POSITION0;
@@ -2008,14 +2008,14 @@ Shader "Knife/Soft Holo Cone"
                 program30Output o = (program30Output)0;
                 #define LinearEyeDepth(d) (1.0 / (_ZBufferParams.z * (d) + _ZBufferParams.w))
                 float2 uvMask2_xy_1 = (mad(i.texcoord0.xyxx, _Mask2_ST.xyxx, _Mask2_ST.zwzz)).xy;
-                float4 r0_xyzw_3 = t0.Sample(sampler_linear_clamp, ((mad(_Time.yyyy, _Mask2Speed.xyxx, uvMask2_xy_1.xyxx)).xyxx).xy);
+                float4 r0_xyzw_3 = _Mask.Sample(sampler_Mask, ((mad(_Time.yyyy, _Mask2Speed.xyxx, uvMask2_xy_1.xyxx)).xyxx).xy);
                 float r0_y_4 = ((float4(1, 1, 1, 1) / _MaskSoftness2)).y;
                 float r0_x_4 = (r0_y_4 * r0_xyzw_3.x);
                 float r0_y_5 = mad(r0_x_4, -2, 3);
                 float4 uvMask_xyzw_6 = mad(i.texcoord0.xxyx, _Mask_ST.xxyx, _Mask_ST.zzwz);
                 float uvMask_y_6 = uvMask_xyzw_6.y;
                 float uvMask_z_2 = uvMask_xyzw_6.z;
-                float4 sampleMask_xyzw_1 = t1.Sample(sampler_linear_clamp1, (float4(uvMask_y_6, uvMask_z_2, uvMask_y_6, uvMask_y_6)).xy);
+                float4 sampleMask_xyzw_1 = _Mask2.Sample(sampler_Mask2, (float4(uvMask_y_6, uvMask_z_2, uvMask_y_6, uvMask_y_6)).xy);
                 float r0_y_7 = ((float4(1, 1, 1, 1) / _MaskSoftness)).y;
                 float r0_y_8 = (r0_y_7 * sampleMask_xyzw_1.x);
                 float r0_z_3 = mad(r0_y_8, -2, 3);
@@ -2040,7 +2040,7 @@ Shader "Knife/Soft Holo Cone"
                 float r0_y_18 = r0_xyzw_18.y;
                 float r0_z_8 = r0_xyzw_18.z;
                 float r0_w_4 = r0_xyzw_18.w;
-                float4 r1_xyzw_4 = t2.Sample(sampler_linear_clamp2, (float4(r0_y_18, r0_z_8, r0_y_18, r0_y_18)).xy);
+                float4 r1_xyzw_4 = _texcoord.Sample(sampler_texcoord, (float4(r0_y_18, r0_z_8, r0_y_18, r0_y_18)).xy);
                 float r0_y_20 = LinearEyeDepth(r0_w_4);
                 float r0_z_10 = LinearEyeDepth(r1_xyzw_4.x);
                 float r0_y_21 = (-r0_y_20 + r0_z_10);
@@ -2092,13 +2092,13 @@ Shader "Knife/Soft Holo Cone"
             {
                 float4x4 unity_MatrixVP;
             };
-            SamplerState sampler_linear_clamp : register(s0);
-            SamplerState sampler_linear_clamp1 : register(s1);
-            SamplerState sampler_linear_clamp2 : register(s2);
+            SamplerState sampler_Mask : register(s0);
+            SamplerState sampler_Mask2 : register(s1);
+            SamplerState sampler_texcoord : register(s2);
             SamplerState sampler_linear_clamp3 : register(s3);
-            Texture2D t0 : register(t0);
-            Texture2D t1 : register(t1);
-            Texture2D t2 : register(t2);
+            Texture2D _Mask : register(t0);
+            Texture2D _Mask2 : register(t1);
+            Texture2D _texcoord : register(t2);
             Texture3D t3 : register(t3);
             struct program40Input
             {
@@ -2193,14 +2193,14 @@ Shader "Knife/Soft Holo Cone"
                 program43Output o = (program43Output)0;
                 #define LinearEyeDepth(d) (1.0 / (_ZBufferParams.z * (d) + _ZBufferParams.w))
                 float2 uvMask2_xy_1 = (mad(i.texcoord1.xyxx, _Mask2_ST.xyxx, _Mask2_ST.zwzz)).xy;
-                float4 r0_xyzw_3 = t0.Sample(sampler_linear_clamp, ((mad(_Time.yyyy, _Mask2Speed.xyxx, uvMask2_xy_1.xyxx)).xyxx).xy);
+                float4 r0_xyzw_3 = _Mask.Sample(sampler_Mask, ((mad(_Time.yyyy, _Mask2Speed.xyxx, uvMask2_xy_1.xyxx)).xyxx).xy);
                 float r0_y_4 = ((float4(1, 1, 1, 1) / _MaskSoftness2)).y;
                 float r0_x_4 = (r0_y_4 * r0_xyzw_3.x);
                 float r0_y_5 = mad(r0_x_4, -2, 3);
                 float4 uvMask_xyzw_6 = mad(i.texcoord1.xxyx, _Mask_ST.xxyx, _Mask_ST.zzwz);
                 float uvMask_y_6 = uvMask_xyzw_6.y;
                 float uvMask_z_2 = uvMask_xyzw_6.z;
-                float4 sampleMask_xyzw_1 = t1.Sample(sampler_linear_clamp1, (float4(uvMask_y_6, uvMask_z_2, uvMask_y_6, uvMask_y_6)).xy);
+                float4 sampleMask_xyzw_1 = _Mask2.Sample(sampler_Mask2, (float4(uvMask_y_6, uvMask_z_2, uvMask_y_6, uvMask_y_6)).xy);
                 float r0_y_7 = ((float4(1, 1, 1, 1) / _MaskSoftness)).y;
                 float r0_y_8 = (r0_y_7 * sampleMask_xyzw_1.x);
                 float r0_z_3 = mad(r0_y_8, -2, 3);
@@ -2225,7 +2225,7 @@ Shader "Knife/Soft Holo Cone"
                 float r0_y_18 = r0_xyzw_18.y;
                 float r0_z_8 = r0_xyzw_18.z;
                 float r0_w_4 = r0_xyzw_18.w;
-                float4 r1_xyzw_4 = t2.Sample(sampler_linear_clamp2, (float4(r0_y_18, r0_z_8, r0_y_18, r0_y_18)).xy);
+                float4 r1_xyzw_4 = _texcoord.Sample(sampler_texcoord, (float4(r0_y_18, r0_z_8, r0_y_18, r0_y_18)).xy);
                 float r0_y_20 = LinearEyeDepth(r0_w_4);
                 float r0_z_10 = LinearEyeDepth(r1_xyzw_4.x);
                 float r0_y_21 = (-r0_y_20 + r0_z_10);
@@ -2283,13 +2283,13 @@ Shader "Knife/Soft Holo Cone"
             {
                 float4x4 unity_MatrixVP;
             };
-            SamplerState sampler_linear_clamp : register(s0);
-            SamplerState sampler_linear_clamp1 : register(s1);
-            SamplerState sampler_linear_clamp2 : register(s2);
+            SamplerState sampler_Mask : register(s0);
+            SamplerState sampler_Mask2 : register(s1);
+            SamplerState sampler_texcoord : register(s2);
             SamplerState sampler_linear_clamp3 : register(s3);
-            Texture2D t0 : register(t0);
-            Texture2D t1 : register(t1);
-            Texture2D t2 : register(t2);
+            Texture2D _Mask : register(t0);
+            Texture2D _Mask2 : register(t1);
+            Texture2D _texcoord : register(t2);
             Texture3D t3 : register(t3);
             struct program41Input
             {
@@ -2381,14 +2381,14 @@ Shader "Knife/Soft Holo Cone"
                 program44Output o = (program44Output)0;
                 #define LinearEyeDepth(d) (1.0 / (_ZBufferParams.z * (d) + _ZBufferParams.w))
                 float2 uvMask2_xy_1 = (mad(i.texcoord1.xyxx, _Mask2_ST.xyxx, _Mask2_ST.zwzz)).xy;
-                float4 r0_xyzw_3 = t0.Sample(sampler_linear_clamp, ((mad(_Time.yyyy, _Mask2Speed.xyxx, uvMask2_xy_1.xyxx)).xyxx).xy);
+                float4 r0_xyzw_3 = _Mask.Sample(sampler_Mask, ((mad(_Time.yyyy, _Mask2Speed.xyxx, uvMask2_xy_1.xyxx)).xyxx).xy);
                 float r0_y_4 = ((float4(1, 1, 1, 1) / _MaskSoftness2)).y;
                 float r0_x_4 = (r0_y_4 * r0_xyzw_3.x);
                 float r0_y_5 = mad(r0_x_4, -2, 3);
                 float4 uvMask_xyzw_6 = mad(i.texcoord1.xxyx, _Mask_ST.xxyx, _Mask_ST.zzwz);
                 float uvMask_y_6 = uvMask_xyzw_6.y;
                 float uvMask_z_2 = uvMask_xyzw_6.z;
-                float4 sampleMask_xyzw_1 = t1.Sample(sampler_linear_clamp1, (float4(uvMask_y_6, uvMask_z_2, uvMask_y_6, uvMask_y_6)).xy);
+                float4 sampleMask_xyzw_1 = _Mask2.Sample(sampler_Mask2, (float4(uvMask_y_6, uvMask_z_2, uvMask_y_6, uvMask_y_6)).xy);
                 float r0_y_7 = ((float4(1, 1, 1, 1) / _MaskSoftness)).y;
                 float r0_y_8 = (r0_y_7 * sampleMask_xyzw_1.x);
                 float r0_z_3 = mad(r0_y_8, -2, 3);
@@ -2413,7 +2413,7 @@ Shader "Knife/Soft Holo Cone"
                 float r0_y_18 = r0_xyzw_18.y;
                 float r0_z_8 = r0_xyzw_18.z;
                 float r0_w_4 = r0_xyzw_18.w;
-                float4 r1_xyzw_4 = t2.Sample(sampler_linear_clamp2, (float4(r0_y_18, r0_z_8, r0_y_18, r0_y_18)).xy);
+                float4 r1_xyzw_4 = _texcoord.Sample(sampler_texcoord, (float4(r0_y_18, r0_z_8, r0_y_18, r0_y_18)).xy);
                 float r0_y_20 = LinearEyeDepth(r0_w_4);
                 float r0_z_10 = LinearEyeDepth(r1_xyzw_4.x);
                 float r0_y_21 = (-r0_y_20 + r0_z_10);

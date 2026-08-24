@@ -22,8 +22,8 @@ Shader "Hidden/DLAA"
             {
                 float4x4 unity_MatrixVP;
             };
-            SamplerState sampler_linear_clamp : register(s0);
-            Texture2D t0 : register(t0);
+            SamplerState sampler_MainTex : register(s0);
+            Texture2D _MainTex : register(t0);
             struct program1Input
             {
                 float4 position0 : POSITION0;
@@ -58,10 +58,10 @@ Shader "Hidden/DLAA"
             program3Output frag(program3Input i)
             {
                 program3Output o = (program3Output)0;
-                float4 r0_xyzw_2 = t0.Sample(sampler_linear_clamp, (((i.texcoord0.xyxx + -_MainTex_TexelSize.xyxx)).xyxx).xy);
+                float4 r0_xyzw_2 = _MainTex.Sample(sampler_MainTex, (((i.texcoord0.xyxx + -_MainTex_TexelSize.xyxx)).xyxx).xy);
                 float4 r1_xyzw_1 = mad(_MainTex_TexelSize.xyxy, float4(1, -1, -1, 1), i.texcoord0.xyxy);
-                float4 r2_xyzw_1 = t0.Sample(sampler_linear_clamp, (r1_xyzw_1.xyxx).xy);
-                float4 r1_xyzw_2 = t0.Sample(sampler_linear_clamp, (r1_xyzw_1.zwzz).xy);
+                float4 r2_xyzw_1 = _MainTex.Sample(sampler_MainTex, (r1_xyzw_1.xyxx).xy);
+                float4 r1_xyzw_2 = _MainTex.Sample(sampler_MainTex, (r1_xyzw_1.zwzz).xy);
                 float4 r0_xyzw_3 = (r0_xyzw_2.xyzx + r2_xyzw_1.xyzx);
                 float r0_x_3 = r0_xyzw_3.x;
                 float r0_y_3 = r0_xyzw_3.y;
@@ -70,12 +70,12 @@ Shader "Hidden/DLAA"
                 float r0_x_4 = r0_xyzw_4.x;
                 float r0_y_4 = r0_xyzw_4.y;
                 float r0_z_3 = r0_xyzw_4.z;
-                float4 r1_xyzw_4 = t0.Sample(sampler_linear_clamp, (((i.texcoord0.xyxx + _MainTex_TexelSize.xyxx)).xyxx).xy);
+                float4 r1_xyzw_4 = _MainTex.Sample(sampler_MainTex, (((i.texcoord0.xyxx + _MainTex_TexelSize.xyxx)).xyxx).xy);
                 float4 r0_xyzw_5 = (float4(r0_x_4, r0_y_4, r0_z_3, r0_x_4) + r1_xyzw_4.xyzx);
                 float r0_x_5 = r0_xyzw_5.x;
                 float r0_y_5 = r0_xyzw_5.y;
                 float r0_z_4 = r0_xyzw_5.z;
-                float4 r1_xyzw_5 = t0.Sample(sampler_linear_clamp, (i.texcoord0.xyxx).xy);
+                float4 r1_xyzw_5 = _MainTex.Sample(sampler_MainTex, (i.texcoord0.xyxx).xy);
                 float4 r0_xyzw_6 = mad(-r1_xyzw_5.xyzx, float4(4, 4, 4, 0), float4(r0_x_5, r0_y_5, r0_z_4, r0_x_5));
                 float r0_x_6 = r0_xyzw_6.x;
                 float r0_y_6 = r0_xyzw_6.y;

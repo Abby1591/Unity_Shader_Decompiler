@@ -290,7 +290,7 @@ public sealed class HlslCBufferVariable
 
 public sealed class HlslResourceNode
 {
-    public string Name { get; init; } = "";
+    public string Name { get; set; } = "";
     public HlslResourceKind Kind { get; init; }
     public uint Slot { get; init; }
 

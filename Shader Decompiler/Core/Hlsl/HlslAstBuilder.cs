@@ -229,7 +229,8 @@ public static class HlslAstBuilder
     // output compiles.
     public static IEnumerable<HlslResourceNode> BuildResources(
         List<IRDeclaration> declarations, RdefChunk? rdef = null, List<IRBlock>? blocks = null,
-        Dictionary<(int Slot, string Stage), CbufferMetadata>? cbuffers = null, string stage = "")
+        Dictionary<(int Slot, string Stage), CbufferMetadata>? cbuffers = null, string stage = "",
+        Dictionary<uint, string>? textureNames = null)
     {
         Dictionary<uint, uint> maxCbufferSlot = BuildMaxCbufferSlot(blocks, cbuffers, stage);
 
@@ -299,9 +300,12 @@ public static class HlslAstBuilder
                     break;
 
                 case IRDeclaration.IRResourceDeclaration res:
+                    string texName = (textureNames is not null && textureNames.TryGetValue(res.Slot, out string? pname))
+                        ? pname
+                        : res.SymbolicName ?? $"t{res.Slot}";
                     yield return new HlslResourceNode
                     {
-                        Name = res.SymbolicName ?? $"t{res.Slot}",
+                        Name = texName,
                         Kind = HlslResourceKind.Texture,
                         Slot = res.Slot,
                         TypeHint = TextureTypeHint(res.Dimension),
@@ -310,20 +314,28 @@ public static class HlslAstBuilder
 
                 case IRDeclaration.IRSamplerDeclaration samp:
                     bool isComparison = ComparisonSamplers(blocks).Contains(samp.Slot);
+                    // Unity pairs samplers with textures by naming convention:
+                    // "sampler_<TextureName>" must match a Texture2D named
+                    // "<TextureName>".  Build the mapping from the IR's
+                    // Sample() calls to find which texture each sampler serves.
+                    string sampName;
+                    if (textureNames is not null
+                        && SamplerToTextureSlot(blocks, samp.Slot) is uint texSlot
+                        && textureNames.TryGetValue(texSlot, out string? pairedTex))
+                    {
+                        // Unity convention: "sampler_<TextureName>" where
+                        // TextureName has no leading underscore — so
+                        // Texture2D _MainTex pairs with SamplerState sampler_MainTex.
+                        string stripped = pairedTex.StartsWith('_') ? pairedTex[1..] : pairedTex;
+                        sampName = $"sampler_{stripped}";
+                    }
+                    else
+                        sampName = samp.SymbolicName ?? SamplerInlineName(samp.Slot, isComparison);
                     yield return new HlslResourceNode
                     {
-                        // Unity's HLSL compiler does not recognise standalone
-                        // SamplerState variables (e.g. "s0").  The variable
-                        // name must either match a paired texture name or be
-                        // a recognised inline sampler name containing filter +
-                        // wrap modes (e.g. "sampler_linear_clamp").  We emit
-                        // the latter, picking a unique inline name per slot.
-                        Name = samp.SymbolicName ?? SamplerInlineName(samp.Slot, isComparison),
+                        Name = sampName,
                         Kind = HlslResourceKind.Sampler,
                         Slot = samp.Slot,
-                        // A sampler used by a comparison operation (sample_c,
-                        // sample_c_lz, gather_c) must be a SamplerComparisonState
-                        // — the plain SamplerState has no SampleCmp overload.
                         TypeHint = isComparison
                             ? "SamplerComparisonState"
                             : "SamplerState",
@@ -444,6 +456,29 @@ public static class HlslAstBuilder
             }
         }
         return result;
+    }
+
+    // Returns the texture register slot used with a given sampler slot
+    // in the first Sample/SampleLevel/SampleBias/SampleGrad/Gather call
+    // found in the IR, or null if the sampler is never used.
+    private static uint? SamplerToTextureSlot(List<IRBlock>? blocks, uint samplerSlot)
+    {
+        if (blocks is null) return null;
+        foreach (IRBlock block in blocks)
+        {
+            foreach (IRStatement stmt in block.Statements)
+            {
+                foreach (IRExpression expr in AllExpressions(stmt))
+                {
+                    if (expr is not IRExpression.TextureOperationExpression tex)
+                        continue;
+                    if (tex.Sampler is { RegisterType: RegisterType.Sampler } s && s.Index == samplerSlot
+                        && tex.Resource is { RegisterType: RegisterType.Resource } r)
+                        return r.Index;
+                }
+            }
+        }
+        return null;
     }
 
     // Returns a Unity-recognised inline sampler name for the given slot.

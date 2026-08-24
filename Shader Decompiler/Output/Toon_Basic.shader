@@ -31,10 +31,10 @@ Shader "Toon/Basic"
                 float4x4 unity_MatrixV;
                 float4x4 unity_MatrixVP;
             };
-            SamplerState sampler_linear_clamp : register(s0);
-            SamplerState sampler_linear_clamp1 : register(s1);
-            Texture2D t0 : register(t0);
-            TextureCube t1 : register(t1);
+            SamplerState sampler_MainTex : register(s0);
+            SamplerState sampler_ToonShade : register(s1);
+            Texture2D _MainTex : register(t0);
+            TextureCube _ToonShade : register(t1);
             struct program2Input
             {
                 float4 position0 : POSITION0;
@@ -78,8 +78,8 @@ Shader "Toon/Basic"
             program6Output frag(program6Input i)
             {
                 program6Output o = (program6Output)0;
-                float4 r0_xyzw_1 = t1.Sample(sampler_linear_clamp1, i.texcoord1.xyz);
-                float4 r1_xyzw_1 = t0.Sample(sampler_linear_clamp, (i.texcoord0.xyxx).xy);
+                float4 r0_xyzw_1 = _ToonShade.Sample(sampler_ToonShade, i.texcoord1.xyz);
+                float4 r1_xyzw_1 = _MainTex.Sample(sampler_MainTex, (i.texcoord0.xyxx).xy);
                 float4 r1_xyzw_2 = (r1_xyzw_1 * _Color);
                 o.sv_Target0.xyz = ((((r0_xyzw_1.xyzx + r0_xyzw_1.xyzx)).xyzx * r1_xyzw_2.xyzx)).xyz;
                 o.sv_Target0.w = r1_xyzw_2.w;
@@ -118,10 +118,10 @@ Shader "Toon/Basic"
             {
                 float4 cb4_values[2];
             };
-            SamplerState sampler_linear_clamp : register(s0);
-            SamplerState sampler_linear_clamp1 : register(s1);
-            Texture2D t0 : register(t0);
-            TextureCube t1 : register(t1);
+            SamplerState sampler_MainTex : register(s0);
+            SamplerState sampler_ToonShade : register(s1);
+            Texture2D _MainTex : register(t0);
+            TextureCube _ToonShade : register(t1);
             struct program3Input
             {
                 float4 position0 : POSITION0;
@@ -194,8 +194,8 @@ Shader "Toon/Basic"
             program7Output frag(program7Input i)
             {
                 program7Output o = (program7Output)0;
-                float4 r0_xyzw_1 = t1.Sample(sampler_linear_clamp1, i.texcoord1.xyz);
-                float4 r1_xyzw_1 = t0.Sample(sampler_linear_clamp, (i.texcoord0.xyxx).xy);
+                float4 r0_xyzw_1 = _ToonShade.Sample(sampler_ToonShade, i.texcoord1.xyz);
+                float4 r1_xyzw_1 = _MainTex.Sample(sampler_MainTex, (i.texcoord0.xyxx).xy);
                 float4 r1_xyzw_2 = (r1_xyzw_1 * _Color);
                 o.sv_Target0.w = r1_xyzw_2.w;
                 float TEXCOORD0_w_2 = i.texcoord2.x;

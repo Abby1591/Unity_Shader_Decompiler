@@ -38,10 +38,10 @@ Shader "Custom/Hologram_Flicker"
             {
                 float4x4 unity_MatrixVP;
             };
-            SamplerState sampler_linear_clamp : register(s0);
-            SamplerState sampler_linear_clamp1 : register(s1);
-            Texture2D t0 : register(t0);
-            Texture2D t1 : register(t1);
+            SamplerState sampler_MainTex : register(s0);
+            SamplerState sampler_SecondTex : register(s1);
+            Texture2D _MainTex : register(t0);
+            Texture2D _SecondTex : register(t1);
             struct program1Input
             {
                 float4 position0 : POSITION0;
@@ -85,8 +85,8 @@ Shader "Custom/Hologram_Flicker"
                 float r0_x_9 = mad(-_Time.x, _ReverseSpeed, r0_x_8);
                 float2 r1_xz_1 = (frac(float4(r0_y_1, r0_y_1, r0_x_9, r0_y_1))).xz;
                 float2 TEXCOORD0_yw_1 = (i.texcoord0.yyyy).yw;
-                float4 r0_xyzw_10 = t0.Sample(sampler_linear_clamp, (float4(r1_xz_1.x, TEXCOORD0_yw_1.x, r1_xz_1.x, r1_xz_1.x)).xy);
-                float4 r1_xyzw_2 = t1.Sample(sampler_linear_clamp1, (float4(r1_xz_1.y, TEXCOORD0_yw_1.y, r1_xz_1.y, r1_xz_1.y)).xy);
+                float4 r0_xyzw_10 = _MainTex.Sample(sampler_MainTex, (float4(r1_xz_1.x, TEXCOORD0_yw_1.x, r1_xz_1.x, r1_xz_1.x)).xy);
+                float4 r1_xyzw_2 = _SecondTex.Sample(sampler_SecondTex, (float4(r1_xz_1.y, TEXCOORD0_yw_1.y, r1_xz_1.y, r1_xz_1.y)).xy);
                 float4 r0_xyzw_11 = (r0_xyzw_10 + r1_xyzw_2);
                 o.sv_Target0.w = (r0_xyzw_11.w + min(frac((sin(_Time.x) * 43758.547)), _FlickerAmount));
                 o.sv_Target0.xyz = r0_xyzw_11.xyz;

@@ -391,6 +391,10 @@ public static class HlslPrettyPrinter
         // emits the same name the declaration used (Unity-recognised inline
         // names like "sampler_linear_clamp" instead of bare "s0").
         public Dictionary<int, string> SamplerNameBySlot { get; } = new();
+
+        // Texture variable name by register slot — used so RenderRegisterRead
+        // emits the Property-matched name (e.g. "_MainTex") instead of "t0".
+        public Dictionary<int, string> TextureNameBySlot { get; } = new();
     }
 
     private static void PrintFunction(
@@ -428,7 +432,10 @@ public static class HlslPrettyPrinter
             foreach (HlslResourceNode res in resources)
             {
                 if (res.Kind == HlslResourceKind.Texture)
+                {
                     ctx.TextureTypeBySlot[(int)res.Slot] = res.TypeHint ?? "Texture2D";
+                    ctx.TextureNameBySlot[(int)res.Slot] = res.Name;
+                }
                 if (res.Kind == HlslResourceKind.Sampler)
                     ctx.SamplerNameBySlot[(int)res.Slot] = res.Name;
             }
@@ -1382,7 +1389,9 @@ public static class HlslPrettyPrinter
             RegisterType.IndexableTemp => IndexedName("x", reg, ctx),
             RegisterType.Input => $"v{reg.Index}",
             RegisterType.Output => $"o{reg.Index}",
-            RegisterType.Resource => $"t{reg.Index}",
+            RegisterType.Resource => ctx.TextureNameBySlot.TryGetValue((int)reg.Index, out string? tName)
+                ? tName
+                : $"t{reg.Index}",
             RegisterType.Sampler => ctx.SamplerNameBySlot.TryGetValue((int)reg.Index, out string? sName)
                 ? sName
                 : $"s{reg.Index}",

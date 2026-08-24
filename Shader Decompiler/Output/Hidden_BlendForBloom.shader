@@ -27,10 +27,10 @@ Shader "Hidden/BlendForBloom"
             {
                 float4x4 unity_MatrixVP;
             };
-            SamplerState sampler_linear_clamp : register(s0);
-            SamplerState sampler_linear_clamp1 : register(s1);
-            Texture2D t0 : register(t0);
-            Texture2D t1 : register(t1);
+            SamplerState sampler_ColorBuffer : register(s0);
+            SamplerState sampler_MainTex : register(s1);
+            Texture2D _MainTex : register(t0);
+            Texture2D _ColorBuffer : register(t1);
             struct program1Input
             {
                 float4 position0 : POSITION0;
@@ -70,8 +70,8 @@ Shader "Hidden/BlendForBloom"
             program3Output frag(program3Input i)
             {
                 program3Output o = (program3Output)0;
-                float4 r0_xyzw_1 = t0.Sample(sampler_linear_clamp1, (i.texcoord0.xyxx).xy);
-                float4 r1_xyzw_1 = t1.Sample(sampler_linear_clamp, (i.texcoord1.xyxx).xy);
+                float4 r0_xyzw_1 = _MainTex.Sample(sampler_MainTex, (i.texcoord0.xyxx).xy);
+                float4 r1_xyzw_1 = _ColorBuffer.Sample(sampler_ColorBuffer, (i.texcoord1.xyxx).xy);
                 o.sv_Target0.xyzw = mad(mad(-r0_xyzw_1, _Intensity.xxxx, float4(1, 1, 1, 1)), (-r1_xyzw_1 + float4(1, 1, 1, 1)), float4(1, 1, 1, 1));
                 return o;
             }
@@ -96,8 +96,8 @@ Shader "Hidden/BlendForBloom"
             {
                 float4x4 unity_MatrixVP;
             };
-            SamplerState sampler_linear_clamp : register(s0);
-            Texture2D t0 : register(t0);
+            SamplerState sampler_MainTex : register(s0);
+            Texture2D _MainTex : register(t0);
             struct program5Input
             {
                 float4 position0 : POSITION0;
@@ -144,11 +144,11 @@ Shader "Hidden/BlendForBloom"
             program7Output frag(program7Input i)
             {
                 program7Output o = (program7Output)0;
-                float4 r0_xyzw_1 = t0.Sample(sampler_linear_clamp, (i.texcoord4.xyxx).xy);
-                float4 r1_xyzw_1 = t0.Sample(sampler_linear_clamp, (i.texcoord0.xyxx).xy);
-                float4 r1_xyzw_2 = t0.Sample(sampler_linear_clamp, (i.texcoord1.xyxx).xy);
-                float4 r1_xyzw_3 = t0.Sample(sampler_linear_clamp, (i.texcoord2.xyxx).xy);
-                float4 r1_xyzw_4 = t0.Sample(sampler_linear_clamp, (i.texcoord3.xyxx).xy);
+                float4 r0_xyzw_1 = _MainTex.Sample(sampler_MainTex, (i.texcoord4.xyxx).xy);
+                float4 r1_xyzw_1 = _MainTex.Sample(sampler_MainTex, (i.texcoord0.xyxx).xy);
+                float4 r1_xyzw_2 = _MainTex.Sample(sampler_MainTex, (i.texcoord1.xyxx).xy);
+                float4 r1_xyzw_3 = _MainTex.Sample(sampler_MainTex, (i.texcoord2.xyxx).xy);
+                float4 r1_xyzw_4 = _MainTex.Sample(sampler_MainTex, (i.texcoord3.xyxx).xy);
                 o.sv_Target0.xyzw = max(max(max(max(r0_xyzw_1, r1_xyzw_1), r1_xyzw_2), r1_xyzw_3), r1_xyzw_4);
                 return o;
             }

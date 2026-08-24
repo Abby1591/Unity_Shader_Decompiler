@@ -523,6 +523,17 @@ private static string InterfaceInterpKey(List<Parser.DXBC.Chunks.SignatureElemen
         if (candidates.Count == 0)
             return;
 
+        // Build texture property name mapping: texture properties (type=4) in
+        // declaration order map to t-register slots (0, 1, 2, ...).  This lets
+        // the decompiler emit "Texture2D _MainTex : register(t0)" instead of
+        // "Texture2D t0 : register(t0)" — Unity needs variable names matching
+        // the Properties block to bind textures at runtime.
+        var textureNames = new Dictionary<uint, string>();
+        uint texSlot = 0;
+        foreach (HlslPropertyNode prop in astShader.Properties)
+            if (prop.Kind == HlslPropertyKind.Texture)
+                textureNames[texSlot++] = prop.Name;
+
         foreach (SubprogramCandidate c in candidates)
             c.Hash = Convert.ToHexString(SHA256.HashData(c.DxbcBytes));
 
@@ -604,8 +615,8 @@ private static string InterfaceInterpKey(List<Parser.DXBC.Chunks.SignatureElemen
                     subshaderByPass[pass] = ss;
                 }
 
-                AttachPassProgram(pass, v);
-                AttachPassProgram(pass, f);
+                AttachPassProgram(pass, v, textureNames);
+                AttachPassProgram(pass, f, textureNames);
                 totalPasses++;
             }
 
@@ -613,7 +624,7 @@ private static string InterfaceInterpKey(List<Parser.DXBC.Chunks.SignatureElemen
             // (geometry/hull/domain/compute), attach to the shell pass.
             foreach (SubprogramCandidate o in others)
             {
-                AttachPassProgram(shell, o);
+                AttachPassProgram(shell, o, textureNames);
                 totalPasses++;
             }
 
@@ -636,12 +647,12 @@ private static string InterfaceInterpKey(List<Parser.DXBC.Chunks.SignatureElemen
 
     // Attaches one candidate's function, resources and structs to a pass,
     // unioning cbuffer members the way the previous streaming loop did.
-    private static void AttachPassProgram(HlslPassNode pass, SubprogramCandidate c)
+    private static void AttachPassProgram(HlslPassNode pass, SubprogramCandidate c, Dictionary<uint, string>? textureNames = null)
     {
         AttachFunction(pass, c.Function);
 
         var resources = HlslAstBuilder.BuildResources(
-            c.Pipeline.Program.Declarations, c.Dxbc.ResourceDefinition, c.Pipeline.Blocks, pass.Cbuffers, c.Stage.ToString()).ToList();
+            c.Pipeline.Program.Declarations, c.Dxbc.ResourceDefinition, c.Pipeline.Blocks, pass.Cbuffers, c.Stage.ToString(), textureNames).ToList();
         foreach (HlslResourceNode res in resources)
         {
             HlslResourceNode? existing = pass.Resources.FirstOrDefault(r =>
@@ -649,6 +660,14 @@ private static string InterfaceInterpKey(List<Parser.DXBC.Chunks.SignatureElemen
 
             if (existing is null)
             {
+                // Sampler name collision: two different sampler slots may both
+                // map to the same texture property (e.g. s0 and s2 both serve
+                // _MainTex).  Append the slot index to make the name unique.
+                if (res.Kind == HlslResourceKind.Sampler
+                    && pass.Resources.Any(r => r.Kind == HlslResourceKind.Sampler && r.Name == res.Name))
+                {
+                    res.Name = $"{res.Name}{res.Slot}";
+                }
                 pass.Resources.Add(res);
             }
             else if (res.Kind == HlslResourceKind.ConstantBuffer)

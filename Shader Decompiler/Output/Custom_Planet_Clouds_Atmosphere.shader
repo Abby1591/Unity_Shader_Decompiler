@@ -70,10 +70,10 @@ Shader "Custom/Planet_Clouds_Atmosphere"
             };
             SamplerState sampler_linear_clamp : register(s0);
             SamplerState sampler_linear_clamp1 : register(s1);
-            SamplerState sampler_linear_clamp2 : register(s2);
-            SamplerState sampler_linear_clamp3 : register(s3);
-            Texture2D t0 : register(t0);
-            Texture2D t1 : register(t1);
+            SamplerState sampler_MainTex : register(s2);
+            SamplerState sampler_BumpMap : register(s3);
+            Texture2D _MainTex : register(t0);
+            Texture2D _BumpMap : register(t1);
             TextureCube t2 : register(t2);
             TextureCube t3 : register(t3);
             Texture3D t4 : register(t4);
@@ -156,8 +156,8 @@ Shader "Custom/Planet_Clouds_Atmosphere"
                 float r0_w_1 = dot(viewDir_xyz_1.xyzx, viewDir_xyz_1.xyzx);
                 float r0_w_2 = rsqrt(r0_w_1);
                 float3 unitViewDir_xyz_1 = ((r0_w_2.xxxx * viewDir_xyz_1.xyzx)).xyz;
-                float4 r3_xyzw_1 = t0.Sample(sampler_linear_clamp2, (i.texcoord0.xyxx).xy);
-                float4 r4_xyzw_1 = t1.Sample(sampler_linear_clamp3, (i.texcoord0.xyxx).xy);
+                float4 r3_xyzw_1 = _MainTex.Sample(sampler_MainTex, (i.texcoord0.xyxx).xy);
+                float4 r4_xyzw_1 = _BumpMap.Sample(sampler_BumpMap, (i.texcoord0.xyxx).xy);
                 float r1_w_1 = (r3_xyzw_1.w * _AlphaScale);
                 float r4_x_2 = (r4_xyzw_1.w * r4_xyzw_1.x);
                 float4 r4_xyzw_3 = mad(float4(r4_x_2, r4_xyzw_1.y, r4_x_2, r4_x_2), float4(2, 2, 0, 0), float4(-1, -1, 0, 0));
@@ -381,10 +381,10 @@ Shader "Custom/Planet_Clouds_Atmosphere"
             };
             SamplerState sampler_linear_clamp : register(s0);
             SamplerState sampler_linear_clamp1 : register(s1);
-            SamplerState sampler_linear_clamp2 : register(s2);
-            SamplerState sampler_linear_clamp3 : register(s3);
-            Texture2D t0 : register(t0);
-            Texture2D t1 : register(t1);
+            SamplerState sampler_MainTex : register(s2);
+            SamplerState sampler_BumpMap : register(s3);
+            Texture2D _MainTex : register(t0);
+            Texture2D _BumpMap : register(t1);
             TextureCube t2 : register(t2);
             TextureCube t3 : register(t3);
             Texture3D t4 : register(t4);
@@ -477,8 +477,8 @@ Shader "Custom/Planet_Clouds_Atmosphere"
                 float r0_w_1 = dot(viewDir_xyz_1.xyzx, viewDir_xyz_1.xyzx);
                 float r0_w_2 = rsqrt(r0_w_1);
                 float3 unitViewDir_xyz_1 = ((r0_w_2.xxxx * viewDir_xyz_1.xyzx)).xyz;
-                float4 r3_xyzw_1 = t0.Sample(sampler_linear_clamp2, (i.texcoord0.xyxx).xy);
-                float4 r4_xyzw_1 = t1.Sample(sampler_linear_clamp3, (i.texcoord0.xyxx).xy);
+                float4 r3_xyzw_1 = _MainTex.Sample(sampler_MainTex, (i.texcoord0.xyxx).xy);
+                float4 r4_xyzw_1 = _BumpMap.Sample(sampler_BumpMap, (i.texcoord0.xyxx).xy);
                 float r1_w_1 = (r3_xyzw_1.w * _AlphaScale);
                 float r4_x_2 = (r4_xyzw_1.w * r4_xyzw_1.x);
                 float4 r4_xyzw_3 = mad(float4(r4_x_2, r4_xyzw_1.y, r4_x_2, r4_x_2), float4(2, 2, 0, 0), float4(-1, -1, 0, 0));
@@ -760,10 +760,10 @@ Shader "Custom/Planet_Clouds_Atmosphere"
             };
             SamplerState sampler_linear_clamp : register(s0);
             SamplerState sampler_linear_clamp1 : register(s1);
-            SamplerState sampler_linear_clamp2 : register(s2);
-            SamplerState sampler_linear_clamp3 : register(s3);
-            Texture2D t0 : register(t0);
-            Texture2D t1 : register(t1);
+            SamplerState sampler_MainTex : register(s2);
+            SamplerState sampler_BumpMap : register(s3);
+            Texture2D _MainTex : register(t0);
+            Texture2D _BumpMap : register(t1);
             TextureCube t2 : register(t2);
             TextureCube t3 : register(t3);
             Texture3D t4 : register(t4);
@@ -850,8 +850,8 @@ Shader "Custom/Planet_Clouds_Atmosphere"
                 float r0_w_1 = dot(viewDir_xyz_1.xyzx, viewDir_xyz_1.xyzx);
                 float r0_w_2 = rsqrt(r0_w_1);
                 float3 unitViewDir_xyz_1 = ((r0_w_2.xxxx * viewDir_xyz_1.xyzx)).xyz;
-                float4 r3_xyzw_1 = t0.Sample(sampler_linear_clamp2, (i.texcoord0.xyxx).xy);
-                float4 r4_xyzw_1 = t1.Sample(sampler_linear_clamp3, (i.texcoord0.xyxx).xy);
+                float4 r3_xyzw_1 = _MainTex.Sample(sampler_MainTex, (i.texcoord0.xyxx).xy);
+                float4 r4_xyzw_1 = _BumpMap.Sample(sampler_BumpMap, (i.texcoord0.xyxx).xy);
                 float r1_w_1 = (r3_xyzw_1.w * _AlphaScale);
                 float r4_x_2 = (r4_xyzw_1.w * r4_xyzw_1.x);
                 float4 r4_xyzw_3 = mad(float4(r4_x_2, r4_xyzw_1.y, r4_x_2, r4_x_2), float4(2, 2, 0, 0), float4(-1, -1, 0, 0));
@@ -1082,10 +1082,10 @@ Shader "Custom/Planet_Clouds_Atmosphere"
             };
             SamplerState sampler_linear_clamp : register(s0);
             SamplerState sampler_linear_clamp1 : register(s1);
-            SamplerState sampler_linear_clamp2 : register(s2);
-            SamplerState sampler_linear_clamp3 : register(s3);
-            Texture2D t0 : register(t0);
-            Texture2D t1 : register(t1);
+            SamplerState sampler_MainTex : register(s2);
+            SamplerState sampler_BumpMap : register(s3);
+            Texture2D _MainTex : register(t0);
+            Texture2D _BumpMap : register(t1);
             TextureCube t2 : register(t2);
             TextureCube t3 : register(t3);
             Texture3D t4 : register(t4);
@@ -1174,8 +1174,8 @@ Shader "Custom/Planet_Clouds_Atmosphere"
                 float r0_w_1 = dot(viewDir_xyz_1.xyzx, viewDir_xyz_1.xyzx);
                 float r0_w_2 = rsqrt(r0_w_1);
                 float3 unitViewDir_xyz_1 = ((r0_w_2.xxxx * viewDir_xyz_1.xyzx)).xyz;
-                float4 r3_xyzw_1 = t0.Sample(sampler_linear_clamp2, (i.texcoord0.xyxx).xy);
-                float4 r4_xyzw_1 = t1.Sample(sampler_linear_clamp3, (i.texcoord0.xyxx).xy);
+                float4 r3_xyzw_1 = _MainTex.Sample(sampler_MainTex, (i.texcoord0.xyxx).xy);
+                float4 r4_xyzw_1 = _BumpMap.Sample(sampler_BumpMap, (i.texcoord0.xyxx).xy);
                 float r1_w_1 = (r3_xyzw_1.w * _AlphaScale);
                 float r4_x_2 = (r4_xyzw_1.w * r4_xyzw_1.x);
                 float4 r4_xyzw_3 = mad(float4(r4_x_2, r4_xyzw_1.y, r4_x_2, r4_x_2), float4(2, 2, 0, 0), float4(-1, -1, 0, 0));
@@ -1439,10 +1439,10 @@ Shader "Custom/Planet_Clouds_Atmosphere"
             };
             SamplerState sampler_linear_clamp : register(s0);
             SamplerState sampler_linear_clamp1 : register(s1);
-            SamplerState sampler_linear_clamp2 : register(s2);
-            SamplerState sampler_linear_clamp3 : register(s3);
-            Texture2D t0 : register(t0);
-            Texture2D t1 : register(t1);
+            SamplerState sampler_MainTex : register(s2);
+            SamplerState sampler_BumpMap : register(s3);
+            Texture2D _MainTex : register(t0);
+            Texture2D _BumpMap : register(t1);
             Texture2D t2 : register(t2);
             Texture3D t3 : register(t3);
             struct program19Input
@@ -1529,8 +1529,8 @@ Shader "Custom/Planet_Clouds_Atmosphere"
                 float3 r1_xyz_1 = ((r0_w_2.xxxx * r0_xyz_1.xyzx)).xyz;
                 float3 r2_xyz_1 = ((-i.texcoord4.xyzx + _WorldSpaceCameraPos.xyzx)).xyz;
                 float3 r2_xyz_2 = normalize(r2_xyz_1);
-                float4 r3_xyzw_1 = t0.Sample(sampler_linear_clamp2, (i.texcoord0.xyxx).xy);
-                float4 r4_xyzw_1 = t1.Sample(sampler_linear_clamp3, (i.texcoord0.xyxx).xy);
+                float4 r3_xyzw_1 = _MainTex.Sample(sampler_MainTex, (i.texcoord0.xyxx).xy);
+                float4 r4_xyzw_1 = _BumpMap.Sample(sampler_BumpMap, (i.texcoord0.xyxx).xy);
                 float r1_w_3 = (r3_xyzw_1.w * cb0_values[8].y);
                 float r4_x_2 = (r4_xyzw_1.w * r4_xyzw_1.x);
                 float4 r4_xyzw_3 = mad(float4(r4_x_2, r4_xyzw_1.y, r4_x_2, r4_x_2), float4(2, 2, 0, 0), float4(-1, -1, 0, 0));
@@ -1696,10 +1696,10 @@ Shader "Custom/Planet_Clouds_Atmosphere"
             };
             SamplerState sampler_linear_clamp : register(s0);
             SamplerState sampler_linear_clamp1 : register(s1);
-            SamplerState sampler_linear_clamp2 : register(s2);
-            SamplerState sampler_linear_clamp3 : register(s3);
-            Texture2D t0 : register(t0);
-            Texture2D t1 : register(t1);
+            SamplerState sampler_MainTex : register(s2);
+            SamplerState sampler_BumpMap : register(s3);
+            Texture2D _MainTex : register(t0);
+            Texture2D _BumpMap : register(t1);
             Texture2D t2 : register(t2);
             Texture3D t3 : register(t3);
             struct program28Input
@@ -1790,8 +1790,8 @@ Shader "Custom/Planet_Clouds_Atmosphere"
                 float3 r0_xyz_1 = ((-i.texcoord4.xyzx + _WorldSpaceCameraPos.xyzx)).xyz;
                 float r0_w_1 = dot(r0_xyz_1.xyzx, r0_xyz_1.xyzx);
                 float r0_w_2 = rsqrt(r0_w_1);
-                float4 r2_xyzw_1 = t0.Sample(sampler_linear_clamp2, (i.texcoord0.xyxx).xy);
-                float4 r3_xyzw_1 = t1.Sample(sampler_linear_clamp3, (i.texcoord0.xyxx).xy);
+                float4 r2_xyzw_1 = _MainTex.Sample(sampler_MainTex, (i.texcoord0.xyxx).xy);
+                float4 r3_xyzw_1 = _BumpMap.Sample(sampler_BumpMap, (i.texcoord0.xyxx).xy);
                 float r1_w_1 = (r2_xyzw_1.w * cb0_values[8].y);
                 float r3_x_2 = (r3_xyzw_1.w * r3_xyzw_1.x);
                 float4 r3_xyzw_3 = mad(float4(r3_x_2, r3_xyzw_1.y, r3_x_2, r3_x_2), float4(2, 2, 0, 0), float4(-1, -1, 0, 0));
@@ -1967,10 +1967,10 @@ Shader "Custom/Planet_Clouds_Atmosphere"
             SamplerState sampler_linear_clamp : register(s0);
             SamplerState sampler_linear_clamp1 : register(s1);
             SamplerState sampler_linear_clamp2 : register(s2);
-            SamplerState sampler_linear_clamp3 : register(s3);
-            SamplerState sampler_linear_clamp4 : register(s4);
-            Texture2D t0 : register(t0);
-            Texture2D t1 : register(t1);
+            SamplerState sampler_MainTex : register(s3);
+            SamplerState sampler_BumpMap : register(s4);
+            Texture2D _MainTex : register(t0);
+            Texture2D _BumpMap : register(t1);
             Texture2D t2 : register(t2);
             TextureCube t3 : register(t3);
             Texture3D t4 : register(t4);
@@ -2062,8 +2062,8 @@ Shader "Custom/Planet_Clouds_Atmosphere"
                 float3 r1_xyz_1 = ((r0_w_2.xxxx * r0_xyz_1.xyzx)).xyz;
                 float3 r2_xyz_1 = ((-i.texcoord4.xyzx + _WorldSpaceCameraPos.xyzx)).xyz;
                 float3 r2_xyz_2 = normalize(r2_xyz_1);
-                float4 r3_xyzw_1 = t0.Sample(sampler_linear_clamp3, (i.texcoord0.xyxx).xy);
-                float4 r4_xyzw_1 = t1.Sample(sampler_linear_clamp4, (i.texcoord0.xyxx).xy);
+                float4 r3_xyzw_1 = _MainTex.Sample(sampler_MainTex, (i.texcoord0.xyxx).xy);
+                float4 r4_xyzw_1 = _BumpMap.Sample(sampler_BumpMap, (i.texcoord0.xyxx).xy);
                 float r1_w_3 = (r3_xyzw_1.w * cb0_values[8].y);
                 float r4_x_2 = (r4_xyzw_1.w * r4_xyzw_1.x);
                 float4 r4_xyzw_3 = mad(float4(r4_x_2, r4_xyzw_1.y, r4_x_2, r4_x_2), float4(2, 2, 0, 0), float4(-1, -1, 0, 0));
@@ -2240,10 +2240,10 @@ Shader "Custom/Planet_Clouds_Atmosphere"
             SamplerState sampler_linear_clamp : register(s0);
             SamplerState sampler_linear_clamp1 : register(s1);
             SamplerState sampler_linear_clamp2 : register(s2);
-            SamplerState sampler_linear_clamp3 : register(s3);
-            SamplerState sampler_linear_clamp4 : register(s4);
-            Texture2D t0 : register(t0);
-            Texture2D t1 : register(t1);
+            SamplerState sampler_MainTex : register(s3);
+            SamplerState sampler_BumpMap : register(s4);
+            Texture2D _MainTex : register(t0);
+            Texture2D _BumpMap : register(t1);
             Texture2D t2 : register(t2);
             Texture2D t3 : register(t3);
             Texture3D t4 : register(t4);
@@ -2335,8 +2335,8 @@ Shader "Custom/Planet_Clouds_Atmosphere"
                 float3 r1_xyz_1 = ((r0_w_2.xxxx * r0_xyz_1.xyzx)).xyz;
                 float3 r2_xyz_1 = ((-i.texcoord4.xyzx + _WorldSpaceCameraPos.xyzx)).xyz;
                 float3 r2_xyz_2 = normalize(r2_xyz_1);
-                float4 r3_xyzw_1 = t0.Sample(sampler_linear_clamp3, (i.texcoord0.xyxx).xy);
-                float4 r4_xyzw_1 = t1.Sample(sampler_linear_clamp4, (i.texcoord0.xyxx).xy);
+                float4 r3_xyzw_1 = _MainTex.Sample(sampler_MainTex, (i.texcoord0.xyxx).xy);
+                float4 r4_xyzw_1 = _BumpMap.Sample(sampler_BumpMap, (i.texcoord0.xyxx).xy);
                 float r1_w_3 = (r3_xyzw_1.w * cb0_values[8].y);
                 float r4_x_2 = (r4_xyzw_1.w * r4_xyzw_1.x);
                 float4 r4_xyzw_3 = mad(float4(r4_x_2, r4_xyzw_1.y, r4_x_2, r4_x_2), float4(2, 2, 0, 0), float4(-1, -1, 0, 0));
@@ -2514,10 +2514,10 @@ Shader "Custom/Planet_Clouds_Atmosphere"
                 float4 cb4_values[7];
             };
             SamplerState sampler_linear_clamp : register(s0);
-            SamplerState sampler_linear_clamp1 : register(s1);
-            SamplerState sampler_linear_clamp2 : register(s2);
-            Texture2D t0 : register(t0);
-            Texture2D t1 : register(t1);
+            SamplerState sampler_MainTex : register(s1);
+            SamplerState sampler_BumpMap : register(s2);
+            Texture2D _MainTex : register(t0);
+            Texture2D _BumpMap : register(t1);
             Texture3D t2 : register(t2);
             struct program25Input
             {
@@ -2599,8 +2599,8 @@ Shader "Custom/Planet_Clouds_Atmosphere"
                 float3 r0_xyz_1 = ((-i.texcoord4.xyzx + _WorldSpaceCameraPos.xyzx)).xyz;
                 float r0_w_1 = dot(r0_xyz_1.xyzx, r0_xyz_1.xyzx);
                 float r0_w_2 = rsqrt(r0_w_1);
-                float4 r2_xyzw_1 = t0.Sample(sampler_linear_clamp1, (i.texcoord0.xyxx).xy);
-                float4 r3_xyzw_1 = t1.Sample(sampler_linear_clamp2, (i.texcoord0.xyxx).xy);
+                float4 r2_xyzw_1 = _MainTex.Sample(sampler_MainTex, (i.texcoord0.xyxx).xy);
+                float4 r3_xyzw_1 = _BumpMap.Sample(sampler_BumpMap, (i.texcoord0.xyxx).xy);
                 float r1_w_1 = (r2_xyzw_1.w * cb0_values[4].y);
                 float r3_x_2 = (r3_xyzw_1.w * r3_xyzw_1.x);
                 float4 r3_xyzw_3 = mad(float4(r3_x_2, r3_xyzw_1.y, r3_x_2, r3_x_2), float4(2, 2, 0, 0), float4(-1, -1, 0, 0));
@@ -2770,10 +2770,10 @@ Shader "Custom/Planet_Clouds_Atmosphere"
             };
             SamplerState sampler_linear_clamp : register(s0);
             SamplerState sampler_linear_clamp1 : register(s1);
-            SamplerState sampler_linear_clamp2 : register(s2);
-            SamplerState sampler_linear_clamp3 : register(s3);
-            Texture2D t0 : register(t0);
-            Texture2D t1 : register(t1);
+            SamplerState sampler_MainTex : register(s2);
+            SamplerState sampler_BumpMap : register(s3);
+            Texture2D _MainTex : register(t0);
+            Texture2D _BumpMap : register(t1);
             Texture2D t2 : register(t2);
             Texture3D t3 : register(t3);
             struct program24Input
@@ -2864,8 +2864,8 @@ Shader "Custom/Planet_Clouds_Atmosphere"
                 float3 r1_xyz_1 = ((r0_w_2.xxxx * r0_xyz_1.xyzx)).xyz;
                 float3 r2_xyz_1 = ((-i.texcoord4.xyzx + _WorldSpaceCameraPos.xyzx)).xyz;
                 float3 r2_xyz_2 = normalize(r2_xyz_1);
-                float4 r3_xyzw_1 = t0.Sample(sampler_linear_clamp2, (i.texcoord0.xyxx).xy);
-                float4 r4_xyzw_1 = t1.Sample(sampler_linear_clamp3, (i.texcoord0.xyxx).xy);
+                float4 r3_xyzw_1 = _MainTex.Sample(sampler_MainTex, (i.texcoord0.xyxx).xy);
+                float4 r4_xyzw_1 = _BumpMap.Sample(sampler_BumpMap, (i.texcoord0.xyxx).xy);
                 float r1_w_3 = (r3_xyzw_1.w * cb0_values[8].y);
                 float r4_x_2 = (r4_xyzw_1.w * r4_xyzw_1.x);
                 float4 r4_xyzw_3 = mad(float4(r4_x_2, r4_xyzw_1.y, r4_x_2, r4_x_2), float4(2, 2, 0, 0), float4(-1, -1, 0, 0));
@@ -3034,10 +3034,10 @@ Shader "Custom/Planet_Clouds_Atmosphere"
             };
             SamplerState sampler_linear_clamp : register(s0);
             SamplerState sampler_linear_clamp1 : register(s1);
-            SamplerState sampler_linear_clamp2 : register(s2);
-            SamplerState sampler_linear_clamp3 : register(s3);
-            Texture2D t0 : register(t0);
-            Texture2D t1 : register(t1);
+            SamplerState sampler_MainTex : register(s2);
+            SamplerState sampler_BumpMap : register(s3);
+            Texture2D _MainTex : register(t0);
+            Texture2D _BumpMap : register(t1);
             Texture2D t2 : register(t2);
             Texture3D t3 : register(t3);
             struct program23Input
@@ -3124,8 +3124,8 @@ Shader "Custom/Planet_Clouds_Atmosphere"
                 float3 r0_xyz_1 = ((-i.texcoord4.xyzx + _WorldSpaceCameraPos.xyzx)).xyz;
                 float r0_w_1 = dot(r0_xyz_1.xyzx, r0_xyz_1.xyzx);
                 float r0_w_2 = rsqrt(r0_w_1);
-                float4 r2_xyzw_1 = t0.Sample(sampler_linear_clamp2, (i.texcoord0.xyxx).xy);
-                float4 r3_xyzw_1 = t1.Sample(sampler_linear_clamp3, (i.texcoord0.xyxx).xy);
+                float4 r2_xyzw_1 = _MainTex.Sample(sampler_MainTex, (i.texcoord0.xyxx).xy);
+                float4 r3_xyzw_1 = _BumpMap.Sample(sampler_BumpMap, (i.texcoord0.xyxx).xy);
                 float r1_w_1 = (r2_xyzw_1.w * cb0_values[8].y);
                 float r3_x_2 = (r3_xyzw_1.w * r3_xyzw_1.x);
                 float4 r3_xyzw_3 = mad(float4(r3_x_2, r3_xyzw_1.y, r3_x_2, r3_x_2), float4(2, 2, 0, 0), float4(-1, -1, 0, 0));
@@ -3288,10 +3288,10 @@ Shader "Custom/Planet_Clouds_Atmosphere"
             SamplerState sampler_linear_clamp : register(s0);
             SamplerState sampler_linear_clamp1 : register(s1);
             SamplerState sampler_linear_clamp2 : register(s2);
-            SamplerState sampler_linear_clamp3 : register(s3);
-            SamplerState sampler_linear_clamp4 : register(s4);
-            Texture2D t0 : register(t0);
-            Texture2D t1 : register(t1);
+            SamplerState sampler_MainTex : register(s3);
+            SamplerState sampler_BumpMap : register(s4);
+            Texture2D _MainTex : register(t0);
+            Texture2D _BumpMap : register(t1);
             Texture2D t2 : register(t2);
             TextureCube t3 : register(t3);
             Texture3D t4 : register(t4);
@@ -3379,8 +3379,8 @@ Shader "Custom/Planet_Clouds_Atmosphere"
                 float3 r1_xyz_1 = ((r0_w_2.xxxx * r0_xyz_1.xyzx)).xyz;
                 float3 r2_xyz_1 = ((-i.texcoord4.xyzx + _WorldSpaceCameraPos.xyzx)).xyz;
                 float3 r2_xyz_2 = normalize(r2_xyz_1);
-                float4 r3_xyzw_1 = t0.Sample(sampler_linear_clamp3, (i.texcoord0.xyxx).xy);
-                float4 r4_xyzw_1 = t1.Sample(sampler_linear_clamp4, (i.texcoord0.xyxx).xy);
+                float4 r3_xyzw_1 = _MainTex.Sample(sampler_MainTex, (i.texcoord0.xyxx).xy);
+                float4 r4_xyzw_1 = _BumpMap.Sample(sampler_BumpMap, (i.texcoord0.xyxx).xy);
                 float r1_w_3 = (r3_xyzw_1.w * cb0_values[8].y);
                 float r4_x_2 = (r4_xyzw_1.w * r4_xyzw_1.x);
                 float4 r4_xyzw_3 = mad(float4(r4_x_2, r4_xyzw_1.y, r4_x_2, r4_x_2), float4(2, 2, 0, 0), float4(-1, -1, 0, 0));
@@ -3544,10 +3544,10 @@ Shader "Custom/Planet_Clouds_Atmosphere"
             SamplerState sampler_linear_clamp : register(s0);
             SamplerState sampler_linear_clamp1 : register(s1);
             SamplerState sampler_linear_clamp2 : register(s2);
-            SamplerState sampler_linear_clamp3 : register(s3);
-            SamplerState sampler_linear_clamp4 : register(s4);
-            Texture2D t0 : register(t0);
-            Texture2D t1 : register(t1);
+            SamplerState sampler_MainTex : register(s3);
+            SamplerState sampler_BumpMap : register(s4);
+            Texture2D _MainTex : register(t0);
+            Texture2D _BumpMap : register(t1);
             Texture2D t2 : register(t2);
             Texture2D t3 : register(t3);
             Texture3D t4 : register(t4);
@@ -3635,8 +3635,8 @@ Shader "Custom/Planet_Clouds_Atmosphere"
                 float3 r1_xyz_1 = ((r0_w_2.xxxx * r0_xyz_1.xyzx)).xyz;
                 float3 r2_xyz_1 = ((-i.texcoord4.xyzx + _WorldSpaceCameraPos.xyzx)).xyz;
                 float3 r2_xyz_2 = normalize(r2_xyz_1);
-                float4 r3_xyzw_1 = t0.Sample(sampler_linear_clamp3, (i.texcoord0.xyxx).xy);
-                float4 r4_xyzw_1 = t1.Sample(sampler_linear_clamp4, (i.texcoord0.xyxx).xy);
+                float4 r3_xyzw_1 = _MainTex.Sample(sampler_MainTex, (i.texcoord0.xyxx).xy);
+                float4 r4_xyzw_1 = _BumpMap.Sample(sampler_BumpMap, (i.texcoord0.xyxx).xy);
                 float r1_w_3 = (r3_xyzw_1.w * cb0_values[8].y);
                 float r4_x_2 = (r4_xyzw_1.w * r4_xyzw_1.x);
                 float4 r4_xyzw_3 = mad(float4(r4_x_2, r4_xyzw_1.y, r4_x_2, r4_x_2), float4(2, 2, 0, 0), float4(-1, -1, 0, 0));
@@ -3801,10 +3801,10 @@ Shader "Custom/Planet_Clouds_Atmosphere"
                 float3 unity_ProbeVolumeMin;
             };
             SamplerState sampler_linear_clamp : register(s0);
-            SamplerState sampler_linear_clamp1 : register(s1);
-            SamplerState sampler_linear_clamp2 : register(s2);
-            Texture2D t0 : register(t0);
-            Texture2D t1 : register(t1);
+            SamplerState sampler_MainTex : register(s1);
+            SamplerState sampler_BumpMap : register(s2);
+            Texture2D _MainTex : register(t0);
+            Texture2D _BumpMap : register(t1);
             Texture3D t2 : register(t2);
             struct program20Input
             {
@@ -3882,8 +3882,8 @@ Shader "Custom/Planet_Clouds_Atmosphere"
                 float3 r0_xyz_1 = ((-i.texcoord4.xyzx + _WorldSpaceCameraPos.xyzx)).xyz;
                 float r0_w_1 = dot(r0_xyz_1.xyzx, r0_xyz_1.xyzx);
                 float r0_w_2 = rsqrt(r0_w_1);
-                float4 r2_xyzw_1 = t0.Sample(sampler_linear_clamp1, (i.texcoord0.xyxx).xy);
-                float4 r3_xyzw_1 = t1.Sample(sampler_linear_clamp2, (i.texcoord0.xyxx).xy);
+                float4 r2_xyzw_1 = _MainTex.Sample(sampler_MainTex, (i.texcoord0.xyxx).xy);
+                float4 r3_xyzw_1 = _BumpMap.Sample(sampler_BumpMap, (i.texcoord0.xyxx).xy);
                 float r1_w_1 = (r2_xyzw_1.w * cb0_values[4].y);
                 float r3_x_2 = (r3_xyzw_1.w * r3_xyzw_1.x);
                 float4 r3_xyzw_3 = mad(float4(r3_x_2, r3_xyzw_1.y, r3_x_2, r3_x_2), float4(2, 2, 0, 0), float4(-1, -1, 0, 0));
@@ -4153,8 +4153,8 @@ Shader "Custom/Planet_Clouds_Atmosphere"
                 float4 _WorldSpaceLightPos0;
                 float4 cb2_values[21];
             };
-            SamplerState sampler_linear_clamp : register(s0);
-            Texture2D t0 : register(t0);
+            SamplerState sampler_MainTex : register(s0);
+            Texture2D _MainTex : register(t0);
             struct program63Input
             {
                 float4 position0 : POSITION0;
@@ -4233,7 +4233,7 @@ Shader "Custom/Planet_Clouds_Atmosphere"
                 float r1_y_2 = mad(r1_x_2, 0.875, 0.125);
                 float r0_x_14 = (mad(r0_y_9, mad(mad(-r0_z_6, r0_x_10, 1), cb0_values[9].x, -cb0_values[9].y), cb0_values[9].y) * (r1_x_2 + r1_x_2));
                 float r1_y_3 = dot(i.texcoord2.xyzx, i.texcoord2.xyzx);
-                float4 r2_xyzw_6 = t0.Sample(sampler_linear_clamp, (r1_y_3.xxxx).xy);
+                float4 r2_xyzw_6 = _MainTex.Sample(sampler_MainTex, (r1_y_3.xxxx).xy);
                 float4 r1_xyzw_4 = (r2_xyzw_6.xxxx * cb0_values[6].xxyz);
                 float r1_y_4 = r1_xyzw_4.y;
                 float r1_z_2 = r1_xyzw_4.z;
@@ -4292,8 +4292,8 @@ Shader "Custom/Planet_Clouds_Atmosphere"
                 float4 _WorldSpaceLightPos0;
                 float4 cb2_values[21];
             };
-            SamplerState sampler_linear_clamp : register(s0);
-            Texture2D t0 : register(t0);
+            SamplerState sampler_MainTex : register(s0);
+            Texture2D _MainTex : register(t0);
             struct program67Input
             {
                 float4 position0 : POSITION0;
@@ -4371,7 +4371,7 @@ Shader "Custom/Planet_Clouds_Atmosphere"
                 float r1_x_2 = dot(unitWorldNormal_xyz_1.xyzx, ((r1_w_2.xxxx * r2_xyz_4.xyzx)).xyzx);
                 float r1_y_2 = mad(r1_x_2, 0.875, 0.125);
                 float r0_x_14 = (mad(r0_y_9, mad(mad(-r0_z_6, r0_x_10, 1), cb0_values[9].x, -cb0_values[9].y), cb0_values[9].y) * (r1_x_2 + r1_x_2));
-                float4 r2_xyzw_6 = t0.Sample(sampler_linear_clamp, (i.texcoord2.xyxx).xy);
+                float4 r2_xyzw_6 = _MainTex.Sample(sampler_MainTex, (i.texcoord2.xyxx).xy);
                 float4 r1_xyzw_3 = (r2_xyzw_6.wwww * cb0_values[6].xxyz);
                 float r1_y_3 = r1_xyzw_3.y;
                 float r1_z_2 = r1_xyzw_3.z;
@@ -4430,10 +4430,10 @@ Shader "Custom/Planet_Clouds_Atmosphere"
                 float4 _WorldSpaceLightPos0;
                 float4 cb2_values[21];
             };
-            SamplerState sampler_linear_clamp : register(s0);
-            SamplerState sampler_linear_clamp1 : register(s1);
-            Texture2D t0 : register(t0);
-            TextureCube t1 : register(t1);
+            SamplerState sampler_BumpMap : register(s0);
+            SamplerState sampler_MainTex : register(s1);
+            Texture2D _MainTex : register(t0);
+            TextureCube _BumpMap : register(t1);
             struct program66Input
             {
                 float4 position0 : POSITION0;
@@ -4512,8 +4512,8 @@ Shader "Custom/Planet_Clouds_Atmosphere"
                 float r1_y_2 = mad(r1_x_2, 0.875, 0.125);
                 float r0_x_14 = (mad(r0_y_9, mad(mad(-r0_z_6, r0_x_10, 1), cb0_values[9].x, -cb0_values[9].y), cb0_values[9].y) * (r1_x_2 + r1_x_2));
                 float r1_y_3 = dot(i.texcoord2.xyzx, i.texcoord2.xyzx);
-                float4 r2_xyzw_6 = t0.Sample(sampler_linear_clamp1, (r1_y_3.xxxx).xy);
-                float4 r3_xyzw_1 = t1.Sample(sampler_linear_clamp, i.texcoord2.xyz);
+                float4 r2_xyzw_6 = _MainTex.Sample(sampler_MainTex, (r1_y_3.xxxx).xy);
+                float4 r3_xyzw_1 = _BumpMap.Sample(sampler_BumpMap, i.texcoord2.xyz);
                 float r1_y_4 = (r2_xyzw_6.x * r3_xyzw_1.w);
                 float4 r1_xyzw_5 = (r1_y_4.xxxx * cb0_values[6].xxyz);
                 float r1_y_5 = r1_xyzw_5.y;
@@ -4573,10 +4573,10 @@ Shader "Custom/Planet_Clouds_Atmosphere"
                 float4 _WorldSpaceLightPos0;
                 float4 cb2_values[21];
             };
-            SamplerState sampler_linear_clamp : register(s0);
-            SamplerState sampler_linear_clamp1 : register(s1);
-            Texture2D t0 : register(t0);
-            Texture2D t1 : register(t1);
+            SamplerState sampler_MainTex : register(s0);
+            SamplerState sampler_BumpMap : register(s1);
+            Texture2D _MainTex : register(t0);
+            Texture2D _BumpMap : register(t1);
             struct program65Input
             {
                 float4 position0 : POSITION0;
@@ -4626,9 +4626,9 @@ Shader "Custom/Planet_Clouds_Atmosphere"
             program74Output frag(program74Input i)
             {
                 program74Output o = (program74Output)0;
-                float4 r0_xyzw_3 = t0.Sample(sampler_linear_clamp, (((((i.texcoord2.xyxx / i.texcoord2.wwww)).xyxx + float4(0.5, 0.5, 0, 0))).xyxx).xy);
+                float4 r0_xyzw_3 = _MainTex.Sample(sampler_MainTex, (((((i.texcoord2.xyxx / i.texcoord2.wwww)).xyxx + float4(0.5, 0.5, 0, 0))).xyxx).xy);
                 float r0_y_4 = dot(i.texcoord2.xyzx, i.texcoord2.xyzx);
-                float4 r1_xyzw_1 = t1.Sample(sampler_linear_clamp1, (r0_y_4.xxxx).xy);
+                float4 r1_xyzw_1 = _BumpMap.Sample(sampler_BumpMap, (r0_y_4.xxxx).xy);
                 float4 r0_xyzw_8 = ((((r0_xyzw_3.w * asfloat(asint((float)((0 < i.texcoord2.z))) & asint(1065353216))) * r1_xyzw_1.x)).xxxx * cb0_values[6].xyzx);
                 float r0_x_8 = r0_xyzw_8.x;
                 float r0_y_5 = r0_xyzw_8.y;

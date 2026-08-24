@@ -257,12 +257,12 @@ Shader "Knife/Hologram Shader Unlit"
                 float4x4 unity_MatrixVP;
                 float4 cb3_values[13];
             };
-            SamplerState sampler_linear_clamp : register(s0);
-            SamplerState sampler_linear_clamp1 : register(s1);
-            SamplerState sampler_linear_clamp2 : register(s2);
-            Texture2D t0 : register(t0);
-            Texture2D t1 : register(t1);
-            Texture2D t2 : register(t2);
+            SamplerState sampler_Line1 : register(s0);
+            SamplerState sampler_Line2 : register(s1);
+            SamplerState sampler_LineGlitch : register(s2);
+            Texture2D _Line1 : register(t0);
+            Texture2D _Line2 : register(t1);
+            Texture2D _LineGlitch : register(t2);
             struct program7Input
             {
                 float4 position0 : POSITION0;
@@ -953,7 +953,7 @@ Shader "Knife/Hologram Shader Unlit"
                 float r0_y_20 = mad(r0_y_19, r0_z_17, cb0_values[15].x);
                 float r0_z_18 = mad(cb1_values[0].y, cb0_values[10].w, cb0_values[4].z);
                 float r0_z_19 = mad(i.texcoord1.w, cb0_values[10].z, r0_z_18);
-                float4 r1_xyzw_29 = t0.Sample(sampler_linear_clamp, (r0_z_19.xxxx).xy);
+                float4 r1_xyzw_29 = _Line1.Sample(sampler_Line1, (r0_z_19.xxxx).xy);
                 float r0_z_20 = (r1_xyzw_29.x + -cb0_values[11].x);
                 float r0_z_21 = (r0_z_20 * cb0_values[11].y);
                 float4 r1_xyzw_30 = (r0_z_21.xxxx * _MainColor.xyzx);
@@ -963,7 +963,7 @@ Shader "Knife/Hologram Shader Unlit"
                 float r2_w_4 = (r0_z_21 * cb0_values[11].z);
                 float r0_z_22 = mad(cb1_values[0].y, cb0_values[12].x, cb0_values[4].z);
                 float r0_z_23 = mad(i.texcoord1.w, cb0_values[11].w, r0_z_22);
-                float4 r3_xyzw_21 = t1.Sample(sampler_linear_clamp1, (r0_z_23.xxxx).xy);
+                float4 r3_xyzw_21 = _Line2.Sample(sampler_Line2, (r0_z_23.xxxx).xy);
                 float r0_z_24 = (r3_xyzw_21.x + -cb0_values[12].y);
                 float r0_z_25 = (r0_z_24 * cb0_values[12].z);
                 float4 r3_xyzw_22 = (r0_z_25.xxxx * _MainColor.xyzx);
@@ -1172,7 +1172,7 @@ Shader "Knife/Hologram Shader Unlit"
                 float4 r0_xyzw_25 = mad(i.texcoord3.xxyx, cb3_values[5].xxyx, cb3_values[5].zzwz);
                 float r0_y_25 = r0_xyzw_25.y;
                 float r0_z_37 = r0_xyzw_25.z;
-                float4 r2_xyzw_51 = t2.Sample(sampler_linear_clamp2, (float4(r0_y_25, r0_z_37, r0_y_25, r0_y_25)).xy);
+                float4 r2_xyzw_51 = _LineGlitch.Sample(sampler_LineGlitch, (float4(r0_y_25, r0_z_37, r0_y_25, r0_y_25)).xy);
                 float r0_y_26 = (r2_xyzw_51.x + -1);
                 float r0_y_27 = mad(cb0_values[21].y, r0_y_26, 1);
                 float r1_w_27 = ((r0_y_27 * ((mad(dot(r2_xyzw_50, float4(r6_x_10, r6_y_10, r6_z_10, r6_w_6)), 21, 0.5) + -cb0_values[18].w) * r0_z_36)) * _Alpha);
@@ -1212,12 +1212,12 @@ Shader "Knife/Hologram Shader Unlit"
             {
                 float4x4 unity_MatrixVP;
             };
-            SamplerState sampler_linear_clamp : register(s0);
-            SamplerState sampler_linear_clamp1 : register(s1);
-            SamplerState sampler_linear_clamp2 : register(s2);
-            Texture2D t0 : register(t0);
-            Texture2D t1 : register(t1);
-            Texture2D t2 : register(t2);
+            SamplerState sampler_Line1 : register(s0);
+            SamplerState sampler_Line2 : register(s1);
+            SamplerState sampler_LineGlitch : register(s2);
+            Texture2D _Line1 : register(t0);
+            Texture2D _Line2 : register(t1);
+            Texture2D _LineGlitch : register(t2);
             struct program6Input
             {
                 float4 position0 : POSITION0;
@@ -1388,7 +1388,7 @@ Shader "Knife/Hologram Shader Unlit"
                 float r0_x_18 = mad(cb0_values[7].y, (mad(mad(dot(r3_xyz_6.xyzx, float4(r4_x_4, r4_yz_4.x, r4_yz_4.y, r4_x_4)), 65, 0.5), 2.61, -0.61) + -1), 1);
                 float r0_y_14 = mad(cb1_values[0].y, cb0_values[10].w, cb0_values[4].z);
                 float r0_y_15 = mad(i.texcoord1.w, cb0_values[10].z, r0_y_14);
-                float4 r1_xyzw_4 = t0.Sample(sampler_linear_clamp, (r0_y_15.xxxx).xy);
+                float4 r1_xyzw_4 = _Line1.Sample(sampler_Line1, (r0_y_15.xxxx).xy);
                 float r0_y_16 = (r1_xyzw_4.x + -cb0_values[11].x);
                 float r0_y_17 = (r0_y_16 * cb0_values[11].y);
                 float4 r1_xyzw_5 = (r0_y_17.xxxx * _MainColor.xyzx);
@@ -1398,7 +1398,7 @@ Shader "Knife/Hologram Shader Unlit"
                 float r2_x_11 = (r0_y_17 * cb0_values[11].z);
                 float r0_y_18 = mad(cb1_values[0].y, cb0_values[12].x, cb0_values[4].z);
                 float r0_y_19 = mad(i.texcoord1.w, cb0_values[11].w, r0_y_18);
-                float4 r3_xyzw_7 = t1.Sample(sampler_linear_clamp1, (r0_y_19.xxxx).xy);
+                float4 r3_xyzw_7 = _Line2.Sample(sampler_Line2, (r0_y_19.xxxx).xy);
                 float r0_y_20 = (r3_xyzw_7.x + -cb0_values[12].y);
                 float r0_y_21 = (r0_y_20 * cb0_values[12].z);
                 float r0_y_22 = (r0_y_21 * cb0_values[12].w);
@@ -1417,8 +1417,8 @@ Shader "Knife/Hologram Shader Unlit"
                 float r0_y_23 = r0_xyzw_23.y;
                 float r0_z_14 = r0_xyzw_23.z;
                 float r0_w_6 = r0_xyzw_23.w;
-                float r2_x_12 = (t2.Sample(sampler_linear_clamp2, (float4(r0_y_23, r0_z_14, r0_y_23, r0_y_23)).xy)).x;
-                float4 r2_xyzw_15 = t2.Sample(sampler_linear_clamp2, (float4(r0_y_23, r0_z_14, r0_y_23, r0_y_23)).xy);
+                float r2_x_12 = (_LineGlitch.Sample(sampler_LineGlitch, (float4(r0_y_23, r0_z_14, r0_y_23, r0_y_23)).xy)).x;
+                float4 r2_xyzw_15 = _LineGlitch.Sample(sampler_LineGlitch, (float4(r0_y_23, r0_z_14, r0_y_23, r0_y_23)).xy);
                 float r2_y_15 = r2_xyzw_15.y;
                 float r2_z_12 = r2_xyzw_15.z;
                 float r2_w_5 = r2_xyzw_15.w;
@@ -1452,8 +1452,8 @@ Shader "Knife/Hologram Shader Unlit"
                 float r0_x_19 = r0_xyzw_19.x;
                 float r0_z_17 = r0_xyzw_19.z;
                 float r0_w_7 = r0_xyzw_19.w;
-                float r2_x_15 = (t2.Sample(sampler_linear_clamp2, (float4(r0_x_19, r0_z_17, r0_x_19, r0_x_19)).xy)).x;
-                float4 r2_xyzw_18 = t2.Sample(sampler_linear_clamp2, (float4(r0_x_19, r0_z_17, r0_x_19, r0_x_19)).xy);
+                float r2_x_15 = (_LineGlitch.Sample(sampler_LineGlitch, (float4(r0_x_19, r0_z_17, r0_x_19, r0_x_19)).xy)).x;
+                float4 r2_xyzw_18 = _LineGlitch.Sample(sampler_LineGlitch, (float4(r0_x_19, r0_z_17, r0_x_19, r0_x_19)).xy);
                 float r2_y_18 = r2_xyzw_18.y;
                 float r2_z_15 = r2_xyzw_18.z;
                 float r2_w_6 = r2_xyzw_18.w;
@@ -1519,10 +1519,10 @@ Shader "Knife/Hologram Shader Unlit"
                 float4x4 unity_MatrixVP;
                 float4 cb3_values[13];
             };
-            SamplerState sampler_linear_clamp : register(s0);
-            SamplerState sampler_linear_clamp1 : register(s1);
-            Texture2D t0 : register(t0);
-            Texture2D t1 : register(t1);
+            SamplerState sampler_Line1 : register(s0);
+            SamplerState sampler_Line2 : register(s1);
+            Texture2D _Line1 : register(t0);
+            Texture2D _Line2 : register(t1);
             struct program5Input
             {
                 float4 position0 : POSITION0;
@@ -2093,7 +2093,7 @@ Shader "Knife/Hologram Shader Unlit"
                 float r0_y_26 = (-cb0_values[15].x + cb0_values[15].y);
                 float r0_y_27 = mad(cb1_values[0].y, cb0_values[10].w, cb0_values[4].z);
                 float r0_y_28 = mad(i.texcoord1.w, cb0_values[10].z, r0_y_27);
-                float4 r1_xyzw_5 = t0.Sample(sampler_linear_clamp, (r0_y_28.xxxx).xy);
+                float4 r1_xyzw_5 = _Line1.Sample(sampler_Line1, (r0_y_28.xxxx).xy);
                 float r0_y_29 = (r1_xyzw_5.x + -cb0_values[11].x);
                 float r0_y_30 = (r0_y_29 * cb0_values[11].y);
                 float4 r1_xyzw_6 = (r0_y_30.xxxx * _MainColor.xyzx);
@@ -2103,7 +2103,7 @@ Shader "Knife/Hologram Shader Unlit"
                 float r2_x_9 = (r0_y_30 * cb0_values[11].z);
                 float r0_y_31 = mad(cb1_values[0].y, cb0_values[12].x, cb0_values[4].z);
                 float r0_y_32 = mad(i.texcoord1.w, cb0_values[11].w, r0_y_31);
-                float4 r3_xyzw_15 = t1.Sample(sampler_linear_clamp1, (r0_y_32.xxxx).xy);
+                float4 r3_xyzw_15 = _Line2.Sample(sampler_Line2, (r0_y_32.xxxx).xy);
                 float r0_y_33 = (r3_xyzw_15.x + -cb0_values[12].y);
                 float r0_y_34 = (r0_y_33 * cb0_values[12].z);
                 float4 r3_xyzw_16 = (r0_y_34.xxxx * _MainColor.xyzx);
@@ -2386,12 +2386,12 @@ Shader "Knife/Hologram Shader Unlit"
                 float4x4 unity_MatrixVP;
                 float4 cb3_values[13];
             };
-            SamplerState sampler_linear_clamp : register(s0);
-            Texture2D t0 : register(t0);
-            SamplerState sampler_linear_clamp1 : register(s1);
-            SamplerState sampler_linear_clamp2 : register(s2);
-            Texture2D t1 : register(t1);
-            Texture2D t2 : register(t2);
+            SamplerState sampler_Line1 : register(s0);
+            Texture2D _Line1 : register(t0);
+            SamplerState sampler_Line2 : register(s1);
+            SamplerState sampler_LineGlitch : register(s2);
+            Texture2D _Line2 : register(t1);
+            Texture2D _LineGlitch : register(t2);
             struct program4Input
             {
                 float4 position0 : POSITION0;
@@ -2819,7 +2819,7 @@ Shader "Knife/Hologram Shader Unlit"
                 float r1_x_14 = r1_xyzw_14.x;
                 float r1_y_14 = r1_xyzw_14.y;
                 float r1_z_13 = r1_xyzw_14.z;
-                float4 r2_xyzw_32 = t0.SampleLevel(sampler_linear_clamp, ((mad(r3_w_2, cb0_values[4].x, mad(cb1_values[0].y, cb0_values[4].y, cb0_values[4].z))).xxxx).xy, 0);
+                float4 r2_xyzw_32 = _Line1.SampleLevel(sampler_Line1, ((mad(r3_w_2, cb0_values[4].x, mad(cb1_values[0].y, cb0_values[4].y, cb0_values[4].z))).xxxx).xy, 0);
                 float4 r0_xyzw_23 = mad(float4(r0_y_40, r0_z_35, r0_w_27, r0_y_40), (((r2_xyzw_32.x + -cb0_values[4].w) * cb0_values[5].x)).xxxx, float4(r1_x_14, r1_y_14, r1_z_13, r1_x_14));
                 float r0_x_23 = r0_xyzw_23.x;
                 float r0_y_41 = r0_xyzw_23.y;
@@ -3131,7 +3131,7 @@ Shader "Knife/Hologram Shader Unlit"
                 float r0_y_20 = mad(r0_y_19, r0_z_17, cb0_values[15].x);
                 float r0_z_18 = mad(cb1_values[0].y, cb0_values[10].w, cb0_values[4].z);
                 float r0_z_19 = mad(i.texcoord1.w, cb0_values[10].z, r0_z_18);
-                float4 r1_xyzw_29 = t0.Sample(sampler_linear_clamp, (r0_z_19.xxxx).xy);
+                float4 r1_xyzw_29 = _Line1.Sample(sampler_Line1, (r0_z_19.xxxx).xy);
                 float r0_z_20 = (r1_xyzw_29.x + -cb0_values[11].x);
                 float r0_z_21 = (r0_z_20 * cb0_values[11].y);
                 float4 r1_xyzw_30 = (r0_z_21.xxxx * _MainColor.xyzx);
@@ -3141,7 +3141,7 @@ Shader "Knife/Hologram Shader Unlit"
                 float r2_w_4 = (r0_z_21 * cb0_values[11].z);
                 float r0_z_22 = mad(cb1_values[0].y, cb0_values[12].x, cb0_values[4].z);
                 float r0_z_23 = mad(i.texcoord1.w, cb0_values[11].w, r0_z_22);
-                float4 r3_xyzw_21 = t1.Sample(sampler_linear_clamp1, (r0_z_23.xxxx).xy);
+                float4 r3_xyzw_21 = _Line2.Sample(sampler_Line2, (r0_z_23.xxxx).xy);
                 float r0_z_24 = (r3_xyzw_21.x + -cb0_values[12].y);
                 float r0_z_25 = (r0_z_24 * cb0_values[12].z);
                 float4 r3_xyzw_22 = (r0_z_25.xxxx * _MainColor.xyzx);
@@ -3193,7 +3193,7 @@ Shader "Knife/Hologram Shader Unlit"
                 float r2_x_26 = r2_xyzw_26.x;
                 float r2_y_27 = r2_xyzw_26.y;
                 float r2_z_24 = r2_xyzw_26.z;
-                float4 r3_xyzw_23 = t2.Sample(sampler_linear_clamp2, (float4(r2_x_26, r2_y_27, r2_x_26, r2_x_26)).xy);
+                float4 r3_xyzw_23 = _LineGlitch.Sample(sampler_LineGlitch, (float4(r2_x_26, r2_y_27, r2_x_26, r2_x_26)).xy);
                 float r0_w_12 = mad(cb1_values[7].z, r2_z_24, cb1_values[7].w);
                 float r0_w_13 = ((float4(1, 1, 1, 1) / r0_w_12)).w;
                 float r1_w_27 = mad(cb1_values[7].z, r3_xyzw_23.x, cb1_values[7].w);
@@ -3228,7 +3228,7 @@ Shader "Knife/Hologram Shader Unlit"
                 float r0_x_19 = r0_xyzw_19.x;
                 float r0_y_21 = r0_xyzw_19.y;
                 float r0_w_19 = r0_xyzw_19.w;
-                float4 r2_xyzw_29 = t2.Sample(sampler_linear_clamp2, (float4(r0_x_19, r0_y_21, r0_x_19, r0_x_19)).xy);
+                float4 r2_xyzw_29 = _LineGlitch.Sample(sampler_LineGlitch, (float4(r0_x_19, r0_y_21, r0_x_19, r0_x_19)).xy);
                 float r0_y_22 = mad(cb1_values[7].z, r2_xyzw_29.x, cb1_values[7].w);
                 float r0_y_23 = ((float4(1, 1, 1, 1) / r0_y_22)).y;
                                 float r0_x_27 = (pow(min((((float4(1, 1, 1, 1) / mad(cb1_values[7].z, r0_w_19, cb1_values[7].w)) + r0_y_23) / cb0_values[17].x), 1), cb0_values[17].y)).x;

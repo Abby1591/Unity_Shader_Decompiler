@@ -24,8 +24,8 @@ Shader "ProFlares/Textured Flare Shader Gamma"
             {
                 float4x4 unity_MatrixVP;
             };
-            SamplerState sampler_linear_clamp : register(s0);
-            Texture2D t0 : register(t0);
+            SamplerState sampler_MainTex : register(s0);
+            Texture2D _MainTex : register(t0);
             struct program1Input
             {
                 float4 position0 : POSITION0;
@@ -64,7 +64,7 @@ Shader "ProFlares/Textured Flare Shader Gamma"
             program3Output frag(program3Input i)
             {
                 program3Output o = (program3Output)0;
-                float4 r0_xyzw_1 = t0.Sample(sampler_linear_clamp, (i.texcoord0.xyxx).xy);
+                float4 r0_xyzw_1 = _MainTex.Sample(sampler_MainTex, (i.texcoord0.xyxx).xy);
                 o.sv_Target0.xyzw = (r0_xyzw_1 * i.color0.xyzw);
                 return o;
             }

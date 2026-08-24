@@ -33,8 +33,8 @@ Shader "Sprites/GrayScale"
             {
                 float4x4 unity_MatrixVP;
             };
-            SamplerState sampler_linear_clamp : register(s0);
-            Texture2D t0 : register(t0);
+            SamplerState sampler_MainTex : register(s0);
+            Texture2D _MainTex : register(t0);
             struct program2Input
             {
                 float4 position0 : POSITION0;
@@ -73,7 +73,7 @@ Shader "Sprites/GrayScale"
             program5Output frag(program5Input i)
             {
                 program5Output o = (program5Output)0;
-                float4 r0_xyzw_1 = t0.Sample(sampler_linear_clamp, (i.texcoord0.xyxx).xy);
+                float4 r0_xyzw_1 = _MainTex.Sample(sampler_MainTex, (i.texcoord0.xyxx).xy);
                 float4 r1_xyzw_2 = (-r0_xyzw_1.xyzx + (dot(r0_xyzw_1.xyzx, float4(0.3, 0.59, 0.11, 0))).xxxx);
                 float r1_x_2 = r1_xyzw_2.x;
                 float r1_y_1 = r1_xyzw_2.y;
@@ -111,8 +111,8 @@ Shader "Sprites/GrayScale"
             {
                 float4 cb3_values[21];
             };
-            SamplerState sampler_linear_clamp : register(s0);
-            Texture2D t0 : register(t0);
+            SamplerState sampler_MainTex : register(s0);
+            Texture2D _MainTex : register(t0);
             struct program3Input
             {
                 float4 position0 : POSITION0;
@@ -158,7 +158,7 @@ Shader "Sprites/GrayScale"
             program6Output frag(program6Input i)
             {
                 program6Output o = (program6Output)0;
-                float4 r0_xyzw_1 = t0.Sample(sampler_linear_clamp, (i.texcoord0.xyxx).xy);
+                float4 r0_xyzw_1 = _MainTex.Sample(sampler_MainTex, (i.texcoord0.xyxx).xy);
                 float4 r1_xyzw_2 = (-r0_xyzw_1.xyzx + (dot(r0_xyzw_1.xyzx, float4(0.3, 0.59, 0.11, 0))).xxxx);
                 float r1_x_2 = r1_xyzw_2.x;
                 float r1_y_1 = r1_xyzw_2.y;

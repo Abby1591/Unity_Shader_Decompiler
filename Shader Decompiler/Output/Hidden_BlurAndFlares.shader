@@ -22,8 +22,8 @@ Shader "Hidden/BlurAndFlares"
             {
                 float4x4 unity_MatrixVP;
             };
-            SamplerState sampler_linear_clamp : register(s0);
-            Texture2D t0 : register(t0);
+            SamplerState sampler_MainTex : register(s0);
+            Texture2D _MainTex : register(t0);
             struct program1Input
             {
                 float4 position0 : POSITION0;
@@ -58,7 +58,7 @@ Shader "Hidden/BlurAndFlares"
             program3Output frag(program3Input i)
             {
                 program3Output o = (program3Output)0;
-                float4 r0_xyzw_1 = t0.Sample(sampler_linear_clamp, (i.texcoord0.xyxx).xy);
+                float4 r0_xyzw_1 = _MainTex.Sample(sampler_MainTex, (i.texcoord0.xyxx).xy);
                 o.sv_Target0.xyzw = (r0_xyzw_1 / ((dot(r0_xyzw_1.xyzx, float4(0.22, 0.707, 0.071, 0)) + 1.5)).xxxx);
                 return o;
             }
@@ -83,8 +83,8 @@ Shader "Hidden/BlurAndFlares"
             {
                 float4x4 unity_MatrixVP;
             };
-            SamplerState sampler_linear_clamp : register(s0);
-            Texture2D t0 : register(t0);
+            SamplerState sampler_MainTex : register(s0);
+            Texture2D _MainTex : register(t0);
             struct program5Input
             {
                 float4 position0 : POSITION0;
@@ -139,13 +139,13 @@ Shader "Hidden/BlurAndFlares"
             program6Output frag(program6Input i)
             {
                 program6Output o = (program6Output)0;
-                float4 r0_xyzw_1 = t0.Sample(sampler_linear_clamp, (i.texcoord0.xyxx).xy);
-                float4 r1_xyzw_1 = t0.Sample(sampler_linear_clamp, (i.texcoord1.xyxx).xy);
-                float4 r1_xyzw_2 = t0.Sample(sampler_linear_clamp, (i.texcoord2.xyxx).xy);
-                float4 r1_xyzw_3 = t0.Sample(sampler_linear_clamp, (i.texcoord3.xyxx).xy);
-                float4 r1_xyzw_4 = t0.Sample(sampler_linear_clamp, (i.texcoord4.xyxx).xy);
-                float4 r1_xyzw_5 = t0.Sample(sampler_linear_clamp, (i.texcoord5.xyxx).xy);
-                float4 r1_xyzw_6 = t0.Sample(sampler_linear_clamp, (i.texcoord6.xyxx).xy);
+                float4 r0_xyzw_1 = _MainTex.Sample(sampler_MainTex, (i.texcoord0.xyxx).xy);
+                float4 r1_xyzw_1 = _MainTex.Sample(sampler_MainTex, (i.texcoord1.xyxx).xy);
+                float4 r1_xyzw_2 = _MainTex.Sample(sampler_MainTex, (i.texcoord2.xyxx).xy);
+                float4 r1_xyzw_3 = _MainTex.Sample(sampler_MainTex, (i.texcoord3.xyxx).xy);
+                float4 r1_xyzw_4 = _MainTex.Sample(sampler_MainTex, (i.texcoord4.xyxx).xy);
+                float4 r1_xyzw_5 = _MainTex.Sample(sampler_MainTex, (i.texcoord5.xyxx).xy);
+                float4 r1_xyzw_6 = _MainTex.Sample(sampler_MainTex, (i.texcoord6.xyxx).xy);
                 o.sv_Target0.xyzw = max(max(max(max(max(max(r0_xyzw_1, r1_xyzw_1), r1_xyzw_2), r1_xyzw_3), r1_xyzw_4), r1_xyzw_5), r1_xyzw_6);
                 return o;
             }
@@ -173,8 +173,8 @@ Shader "Hidden/BlurAndFlares"
             {
                 float4x4 unity_MatrixVP;
             };
-            SamplerState sampler_linear_clamp : register(s0);
-            Texture2D t0 : register(t0);
+            SamplerState sampler_MainTex : register(s0);
+            Texture2D _MainTex : register(t0);
             struct program7Input
             {
                 float4 position0 : POSITION0;
@@ -228,13 +228,13 @@ Shader "Hidden/BlurAndFlares"
             program9Output frag(program9Input i)
             {
                 program9Output o = (program9Output)0;
-                float4 r0_xyzw_1 = t0.Sample(sampler_linear_clamp, (i.texcoord0.xyxx).xy);
-                float4 r1_xyzw_1 = t0.Sample(sampler_linear_clamp, (i.texcoord1.xyxx).xy);
-                float4 r1_xyzw_2 = t0.Sample(sampler_linear_clamp, (i.texcoord2.xyxx).xy);
-                float4 r1_xyzw_3 = t0.Sample(sampler_linear_clamp, (i.texcoord3.xyxx).xy);
-                float4 r1_xyzw_4 = t0.Sample(sampler_linear_clamp, (i.texcoord4.xyxx).xy);
-                float4 r1_xyzw_5 = t0.Sample(sampler_linear_clamp, (i.texcoord5.xyxx).xy);
-                float4 r1_xyzw_6 = t0.Sample(sampler_linear_clamp, (i.texcoord6.xyxx).xy);
+                float4 r0_xyzw_1 = _MainTex.Sample(sampler_MainTex, (i.texcoord0.xyxx).xy);
+                float4 r1_xyzw_1 = _MainTex.Sample(sampler_MainTex, (i.texcoord1.xyxx).xy);
+                float4 r1_xyzw_2 = _MainTex.Sample(sampler_MainTex, (i.texcoord2.xyxx).xy);
+                float4 r1_xyzw_3 = _MainTex.Sample(sampler_MainTex, (i.texcoord3.xyxx).xy);
+                float4 r1_xyzw_4 = _MainTex.Sample(sampler_MainTex, (i.texcoord4.xyxx).xy);
+                float4 r1_xyzw_5 = _MainTex.Sample(sampler_MainTex, (i.texcoord5.xyxx).xy);
+                float4 r1_xyzw_6 = _MainTex.Sample(sampler_MainTex, (i.texcoord6.xyxx).xy);
                 float4 r0_xyzw_8 = mad(((((((r0_xyzw_1 + r1_xyzw_1) + r1_xyzw_2) + r1_xyzw_3) + r1_xyzw_4) + r1_xyzw_5) + r1_xyzw_6), float4(0.14285715, 0.14285715, 0.14285715, 0.14285715), -_Threshhold.xxxx);
                 float4 r0_xyzw_9 = max(r0_xyzw_8, float4(0, 0, 0, 0));
                 float r1_x_7 = dot(r0_xyzw_9.xyzx, float4(0.22, 0.707, 0.071, 0));
@@ -263,8 +263,8 @@ Shader "Hidden/BlurAndFlares"
             {
                 float4x4 unity_MatrixVP;
             };
-            SamplerState sampler_linear_clamp : register(s0);
-            Texture2D t0 : register(t0);
+            SamplerState sampler_MainTex : register(s0);
+            Texture2D _MainTex : register(t0);
             struct program11Input
             {
                 float4 position0 : POSITION0;
@@ -311,16 +311,16 @@ Shader "Hidden/BlurAndFlares"
             program12Output frag(program12Input i)
             {
                 program12Output o = (program12Output)0;
-                float4 r0_xyzw_1 = t0.Sample(sampler_linear_clamp, (i.texcoord1.xyxx).xy);
-                float4 r1_xyzw_1 = t0.Sample(sampler_linear_clamp, (i.texcoord0.xyxx).xy);
-                float4 r1_xyzw_2 = t0.Sample(sampler_linear_clamp, (i.texcoord1.zwzz).xy);
-                float4 r1_xyzw_3 = t0.Sample(sampler_linear_clamp, (i.texcoord2.xyxx).xy);
-                float4 r1_xyzw_4 = t0.Sample(sampler_linear_clamp, (i.texcoord2.zwzz).xy);
+                float4 r0_xyzw_1 = _MainTex.Sample(sampler_MainTex, (i.texcoord1.xyxx).xy);
+                float4 r1_xyzw_1 = _MainTex.Sample(sampler_MainTex, (i.texcoord0.xyxx).xy);
+                float4 r1_xyzw_2 = _MainTex.Sample(sampler_MainTex, (i.texcoord1.zwzz).xy);
+                float4 r1_xyzw_3 = _MainTex.Sample(sampler_MainTex, (i.texcoord2.xyxx).xy);
+                float4 r1_xyzw_4 = _MainTex.Sample(sampler_MainTex, (i.texcoord2.zwzz).xy);
                 float4 r0_xyzw_6 = mad(r1_xyzw_4, float4(0.11, 0.11, 0.11, 0.11), mad(r1_xyzw_3, float4(0.11, 0.11, 0.11, 0.11), mad(r1_xyzw_2, float4(0.15, 0.15, 0.15, 0.15), mad(r1_xyzw_1, float4(0.225, 0.225, 0.225, 0.225), (r0_xyzw_1 * float4(0.15, 0.15, 0.15, 0.15))))));
-                float4 r1_xyzw_5 = t0.Sample(sampler_linear_clamp, (i.texcoord3.xyxx).xy);
-                float4 r1_xyzw_6 = t0.Sample(sampler_linear_clamp, (i.texcoord3.zwzz).xy);
-                float4 r1_xyzw_7 = t0.Sample(sampler_linear_clamp, (i.texcoord4.xyxx).xy);
-                float4 r1_xyzw_8 = t0.Sample(sampler_linear_clamp, (i.texcoord4.zwzz).xy);
+                float4 r1_xyzw_5 = _MainTex.Sample(sampler_MainTex, (i.texcoord3.xyxx).xy);
+                float4 r1_xyzw_6 = _MainTex.Sample(sampler_MainTex, (i.texcoord3.zwzz).xy);
+                float4 r1_xyzw_7 = _MainTex.Sample(sampler_MainTex, (i.texcoord4.xyxx).xy);
+                float4 r1_xyzw_8 = _MainTex.Sample(sampler_MainTex, (i.texcoord4.zwzz).xy);
                 o.sv_Target0.xyzw = mad(r1_xyzw_8, float4(0.0525, 0.0525, 0.0525, 0.0525), mad(r1_xyzw_7, float4(0.0525, 0.0525, 0.0525, 0.0525), mad(r1_xyzw_6, float4(0.075, 0.075, 0.075, 0.075), mad(r1_xyzw_5, float4(0.075, 0.075, 0.075, 0.075), r0_xyzw_6))));
                 return o;
             }

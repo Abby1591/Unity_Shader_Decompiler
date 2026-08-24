@@ -39,8 +39,8 @@ Shader "ShurikenMagic/Twosided Transparent"
                 float4x4 unity_MatrixVP;
             };
             SamplerState sampler_linear_clamp : register(s0);
-            SamplerState sampler_linear_clamp1 : register(s1);
-            Texture2D t0 : register(t0);
+            SamplerState sampler_MainTex : register(s1);
+            Texture2D _MainTex : register(t0);
             Texture3D t1 : register(t1);
             struct program6Input
             {
@@ -93,7 +93,7 @@ Shader "ShurikenMagic/Twosided Transparent"
             program14Output frag(program14Input i)
             {
                 program14Output o = (program14Output)0;
-                float4 r0_xyzw_1 = t0.Sample(sampler_linear_clamp1, (i.texcoord0.xyxx).xy);
+                float4 r0_xyzw_1 = _MainTex.Sample(sampler_MainTex, (i.texcoord0.xyxx).xy);
                 float4 r0_xyzw_2 = (r0_xyzw_1 * _Color);
                 float r1_x_8;
                 float r1_y_11;
@@ -188,8 +188,8 @@ Shader "ShurikenMagic/Twosided Transparent"
                 float4 cb5_values[2];
             };
             SamplerState sampler_linear_clamp : register(s0);
-            SamplerState sampler_linear_clamp1 : register(s1);
-            Texture2D t0 : register(t0);
+            SamplerState sampler_MainTex : register(s1);
+            Texture2D _MainTex : register(t0);
             Texture3D t1 : register(t1);
             struct program10Input
             {
@@ -292,7 +292,7 @@ Shader "ShurikenMagic/Twosided Transparent"
             program17Output frag(program17Input i)
             {
                 program17Output o = (program17Output)0;
-                float4 r0_xyzw_1 = t0.Sample(sampler_linear_clamp1, (i.texcoord0.xyxx).xy);
+                float4 r0_xyzw_1 = _MainTex.Sample(sampler_MainTex, (i.texcoord0.xyxx).xy);
                 float4 r0_xyzw_2 = (r0_xyzw_1 * _Color);
                 float r1_x_8;
                 float r1_y_11;
@@ -388,8 +388,8 @@ Shader "ShurikenMagic/Twosided Transparent"
                 float4 cb4_values[2];
             };
             SamplerState sampler_linear_clamp : register(s0);
-            SamplerState sampler_linear_clamp1 : register(s1);
-            Texture2D t0 : register(t0);
+            SamplerState sampler_MainTex : register(s1);
+            Texture2D _MainTex : register(t0);
             Texture3D t1 : register(t1);
             struct program9Input
             {
@@ -449,7 +449,7 @@ Shader "ShurikenMagic/Twosided Transparent"
             program16Output frag(program16Input i)
             {
                 program16Output o = (program16Output)0;
-                float4 r0_xyzw_1 = t0.Sample(sampler_linear_clamp1, (i.texcoord0.xyxx).xy);
+                float4 r0_xyzw_1 = _MainTex.Sample(sampler_MainTex, (i.texcoord0.xyxx).xy);
                 float4 r0_xyzw_2 = (r0_xyzw_1 * _Color);
                 float r1_x_8;
                 float r1_y_11;
@@ -538,8 +538,8 @@ Shader "ShurikenMagic/Twosided Transparent"
                 float4 cb3_values[21];
             };
             SamplerState sampler_linear_clamp : register(s0);
-            SamplerState sampler_linear_clamp1 : register(s1);
-            Texture2D t0 : register(t0);
+            SamplerState sampler_MainTex : register(s1);
+            Texture2D _MainTex : register(t0);
             Texture3D t1 : register(t1);
             struct program7Input
             {
@@ -609,7 +609,7 @@ Shader "ShurikenMagic/Twosided Transparent"
             program15Output frag(program15Input i)
             {
                 program15Output o = (program15Output)0;
-                float4 r0_xyzw_1 = t0.Sample(sampler_linear_clamp1, (i.texcoord0.xyxx).xy);
+                float4 r0_xyzw_1 = _MainTex.Sample(sampler_MainTex, (i.texcoord0.xyxx).xy);
                 float4 r0_xyzw_2 = (r0_xyzw_1 * _Color);
                 float r1_x_8;
                 float r1_y_11;
@@ -697,8 +697,8 @@ Shader "ShurikenMagic/Twosided Transparent"
             };
             SamplerState sampler_linear_clamp : register(s0);
             SamplerState sampler_linear_clamp1 : register(s1);
-            SamplerState sampler_linear_clamp2 : register(s2);
-            Texture2D t0 : register(t0);
+            SamplerState sampler_MainTex : register(s2);
+            Texture2D _MainTex : register(t0);
             Texture2D t1 : register(t1);
             Texture3D t2 : register(t2);
             struct program22Input
@@ -763,7 +763,7 @@ Shader "ShurikenMagic/Twosided Transparent"
                 float3 r0_xyz_1 = ((-i.texcoord2.xyzx + _WorldSpaceLightPos0.xyzx)).xyz;
                 float r0_w_1 = dot(r0_xyz_1.xyzx, r0_xyz_1.xyzx);
                 float r0_w_2 = rsqrt(r0_w_1);
-                float4 r1_xyzw_1 = t0.Sample(sampler_linear_clamp2, (i.texcoord0.xyxx).xy);
+                float4 r1_xyzw_1 = _MainTex.Sample(sampler_MainTex, (i.texcoord0.xyxx).xy);
                 float4 r1_xyzw_2 = (r1_xyzw_1 * cb0_values[8].xyzw);
                 float3 r2_xyz_4 = (((mad(cb0_values[6].xyzx, i.texcoord2.zzzz, (mad(cb0_values[4].xyzx, i.texcoord2.xxxx, ((i.texcoord2.yyyy * cb0_values[5].xyzx)).xyzx)).xyzx)).xyzx + cb0_values[7].xyzx)).xyz;
                 float r0_w_3 = (unity_ProbeVolumeParams.x == 1);
@@ -855,8 +855,8 @@ Shader "ShurikenMagic/Twosided Transparent"
             };
             SamplerState sampler_linear_clamp : register(s0);
             SamplerState sampler_linear_clamp1 : register(s1);
-            SamplerState sampler_linear_clamp2 : register(s2);
-            Texture2D t0 : register(t0);
+            SamplerState sampler_MainTex : register(s2);
+            Texture2D _MainTex : register(t0);
             Texture2D t1 : register(t1);
             Texture3D t2 : register(t2);
             struct program29Input
@@ -920,7 +920,7 @@ Shader "ShurikenMagic/Twosided Transparent"
             program42Output frag(program42Input i)
             {
                 program42Output o = (program42Output)0;
-                float4 r0_xyzw_1 = t0.Sample(sampler_linear_clamp2, (i.texcoord0.xyxx).xy);
+                float4 r0_xyzw_1 = _MainTex.Sample(sampler_MainTex, (i.texcoord0.xyxx).xy);
                 float4 r0_xyzw_2 = (r0_xyzw_1 * cb0_values[8].xyzw);
                 float r1_z_1 = (unity_ProbeVolumeParams.x == 1);
                 float r2_x_10;
@@ -1010,8 +1010,8 @@ Shader "ShurikenMagic/Twosided Transparent"
             SamplerState sampler_linear_clamp : register(s0);
             SamplerState sampler_linear_clamp1 : register(s1);
             SamplerState sampler_linear_clamp2 : register(s2);
-            SamplerState sampler_linear_clamp3 : register(s3);
-            Texture2D t0 : register(t0);
+            SamplerState sampler_MainTex : register(s3);
+            Texture2D _MainTex : register(t0);
             Texture2D t1 : register(t1);
             TextureCube t2 : register(t2);
             Texture3D t3 : register(t3);
@@ -1087,7 +1087,7 @@ Shader "ShurikenMagic/Twosided Transparent"
                 float3 r0_xyz_1 = ((-i.texcoord2.xyzx + _WorldSpaceLightPos0.xyzx)).xyz;
                 float r0_w_1 = dot(r0_xyz_1.xyzx, r0_xyz_1.xyzx);
                 float r0_w_2 = rsqrt(r0_w_1);
-                float4 r1_xyzw_1 = t0.Sample(sampler_linear_clamp3, (i.texcoord0.xyxx).xy);
+                float4 r1_xyzw_1 = _MainTex.Sample(sampler_MainTex, (i.texcoord0.xyxx).xy);
                 float4 r1_xyzw_2 = (r1_xyzw_1 * cb0_values[8].xyzw);
                 float3 r2_xyz_4 = (((mad(cb0_values[6].xyzx, i.texcoord2.zzzz, (mad(cb0_values[4].xyzx, i.texcoord2.xxxx, ((i.texcoord2.yyyy * cb0_values[5].xyzx)).xyzx)).xyzx)).xyzx + cb0_values[7].xyzx)).xyz;
                 float r0_w_3 = (unity_ProbeVolumeParams.x == 1);
@@ -1187,8 +1187,8 @@ Shader "ShurikenMagic/Twosided Transparent"
             SamplerState sampler_linear_clamp : register(s0);
             SamplerState sampler_linear_clamp1 : register(s1);
             SamplerState sampler_linear_clamp2 : register(s2);
-            SamplerState sampler_linear_clamp3 : register(s3);
-            Texture2D t0 : register(t0);
+            SamplerState sampler_MainTex : register(s3);
+            Texture2D _MainTex : register(t0);
             Texture2D t1 : register(t1);
             Texture2D t2 : register(t2);
             Texture3D t3 : register(t3);
@@ -1259,7 +1259,7 @@ Shader "ShurikenMagic/Twosided Transparent"
                 float3 r0_xyz_1 = ((-i.texcoord2.xyzx + _WorldSpaceLightPos0.xyzx)).xyz;
                 float r0_w_1 = dot(r0_xyz_1.xyzx, r0_xyz_1.xyzx);
                 float r0_w_2 = rsqrt(r0_w_1);
-                float4 r1_xyzw_1 = t0.Sample(sampler_linear_clamp3, (i.texcoord0.xyxx).xy);
+                float4 r1_xyzw_1 = _MainTex.Sample(sampler_MainTex, (i.texcoord0.xyxx).xy);
                 float4 r1_xyzw_2 = (r1_xyzw_1 * cb0_values[8].xyzw);
                 float4 r2_xyzw_4 = (mad(cb0_values[6].xyzw, i.texcoord2.zzzz, mad(cb0_values[4].xyzw, i.texcoord2.xxxx, (i.texcoord2.yyyy * cb0_values[5].xyzw))) + cb0_values[7].xyzw);
                 float r0_w_3 = (unity_ProbeVolumeParams.x == 1);
@@ -1368,8 +1368,8 @@ Shader "ShurikenMagic/Twosided Transparent"
             };
             SamplerState sampler_linear_clamp : register(s0);
             SamplerState sampler_linear_clamp1 : register(s1);
-            SamplerState sampler_linear_clamp2 : register(s2);
-            Texture2D t0 : register(t0);
+            SamplerState sampler_MainTex : register(s2);
+            Texture2D _MainTex : register(t0);
             Texture2D t1 : register(t1);
             Texture3D t2 : register(t2);
             struct program26Input
@@ -1444,7 +1444,7 @@ Shader "ShurikenMagic/Twosided Transparent"
                 float3 r0_xyz_1 = ((-i.texcoord2.xyzx + _WorldSpaceLightPos0.xyzx)).xyz;
                 float r0_w_1 = dot(r0_xyz_1.xyzx, r0_xyz_1.xyzx);
                 float r0_w_2 = rsqrt(r0_w_1);
-                float4 r1_xyzw_1 = t0.Sample(sampler_linear_clamp2, (i.texcoord0.xyxx).xy);
+                float4 r1_xyzw_1 = _MainTex.Sample(sampler_MainTex, (i.texcoord0.xyxx).xy);
                 float4 r1_xyzw_2 = (r1_xyzw_1 * cb0_values[8].xyzw);
                 float3 r2_xyz_4 = (((mad(cb0_values[6].xyzx, i.texcoord2.zzzz, (mad(cb0_values[4].xyzx, i.texcoord2.xxxx, ((i.texcoord2.yyyy * cb0_values[5].xyzx)).xyzx)).xyzx)).xyzx + cb0_values[7].xyzx)).xyz;
                 float r0_w_3 = (unity_ProbeVolumeParams.x == 1);
@@ -1532,8 +1532,8 @@ Shader "ShurikenMagic/Twosided Transparent"
             };
             SamplerState sampler_linear_clamp : register(s0);
             SamplerState sampler_linear_clamp1 : register(s1);
-            SamplerState sampler_linear_clamp2 : register(s2);
-            Texture2D t0 : register(t0);
+            SamplerState sampler_MainTex : register(s2);
+            Texture2D _MainTex : register(t0);
             Texture2D t1 : register(t1);
             Texture3D t2 : register(t2);
             struct program25Input
@@ -1595,7 +1595,7 @@ Shader "ShurikenMagic/Twosided Transparent"
             program37Output frag(program37Input i)
             {
                 program37Output o = (program37Output)0;
-                float4 r0_xyzw_1 = t0.Sample(sampler_linear_clamp2, (i.texcoord0.xyxx).xy);
+                float4 r0_xyzw_1 = _MainTex.Sample(sampler_MainTex, (i.texcoord0.xyxx).xy);
                 float4 r0_xyzw_2 = (r0_xyzw_1 * cb0_values[8].xyzw);
                 float r1_z_1 = (unity_ProbeVolumeParams.x == 1);
                 float r2_x_10;
@@ -1675,8 +1675,8 @@ Shader "ShurikenMagic/Twosided Transparent"
             SamplerState sampler_linear_clamp : register(s0);
             SamplerState sampler_linear_clamp1 : register(s1);
             SamplerState sampler_linear_clamp2 : register(s2);
-            SamplerState sampler_linear_clamp3 : register(s3);
-            Texture2D t0 : register(t0);
+            SamplerState sampler_MainTex : register(s3);
+            Texture2D _MainTex : register(t0);
             Texture2D t1 : register(t1);
             TextureCube t2 : register(t2);
             Texture3D t3 : register(t3);
@@ -1742,7 +1742,7 @@ Shader "ShurikenMagic/Twosided Transparent"
                 float3 r0_xyz_1 = ((-i.texcoord2.xyzx + _WorldSpaceLightPos0.xyzx)).xyz;
                 float r0_w_1 = dot(r0_xyz_1.xyzx, r0_xyz_1.xyzx);
                 float r0_w_2 = rsqrt(r0_w_1);
-                float4 r1_xyzw_1 = t0.Sample(sampler_linear_clamp3, (i.texcoord0.xyxx).xy);
+                float4 r1_xyzw_1 = _MainTex.Sample(sampler_MainTex, (i.texcoord0.xyxx).xy);
                 float4 r1_xyzw_2 = (r1_xyzw_1 * cb0_values[8].xyzw);
                 float3 r2_xyz_4 = (((mad(cb0_values[6].xyzx, i.texcoord2.zzzz, (mad(cb0_values[4].xyzx, i.texcoord2.xxxx, ((i.texcoord2.yyyy * cb0_values[5].xyzx)).xyzx)).xyzx)).xyzx + cb0_values[7].xyzx)).xyz;
                 float r0_w_3 = (unity_ProbeVolumeParams.x == 1);
@@ -1828,8 +1828,8 @@ Shader "ShurikenMagic/Twosided Transparent"
             SamplerState sampler_linear_clamp : register(s0);
             SamplerState sampler_linear_clamp1 : register(s1);
             SamplerState sampler_linear_clamp2 : register(s2);
-            SamplerState sampler_linear_clamp3 : register(s3);
-            Texture2D t0 : register(t0);
+            SamplerState sampler_MainTex : register(s3);
+            Texture2D _MainTex : register(t0);
             Texture2D t1 : register(t1);
             Texture2D t2 : register(t2);
             Texture3D t3 : register(t3);
@@ -1898,7 +1898,7 @@ Shader "ShurikenMagic/Twosided Transparent"
                 float3 r0_xyz_1 = ((-i.texcoord2.xyzx + _WorldSpaceLightPos0.xyzx)).xyz;
                 float r0_w_1 = dot(r0_xyz_1.xyzx, r0_xyz_1.xyzx);
                 float r0_w_2 = rsqrt(r0_w_1);
-                float4 r1_xyzw_1 = t0.Sample(sampler_linear_clamp3, (i.texcoord0.xyxx).xy);
+                float4 r1_xyzw_1 = _MainTex.Sample(sampler_MainTex, (i.texcoord0.xyxx).xy);
                 float4 r1_xyzw_2 = (r1_xyzw_1 * cb0_values[8].xyzw);
                 float4 r2_xyzw_4 = (mad(cb0_values[6].xyzw, i.texcoord2.zzzz, mad(cb0_values[4].xyzw, i.texcoord2.xxxx, (i.texcoord2.yyyy * cb0_values[5].xyzw))) + cb0_values[7].xyzw);
                 float r0_w_3 = (unity_ProbeVolumeParams.x == 1);

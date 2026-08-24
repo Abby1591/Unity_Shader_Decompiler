@@ -105,14 +105,14 @@ Shader "HOLO/Holo_adv"
                 float4x4 unity_MatrixV;
                 float4x4 unity_MatrixVP;
             };
-            SamplerState sampler_linear_clamp : register(s0);
-            Texture2D t0 : register(t0);
-            SamplerState sampler_linear_clamp1 : register(s1);
-            SamplerState sampler_linear_clamp2 : register(s2);
-            SamplerState sampler_linear_clamp3 : register(s3);
-            Texture2D t1 : register(t1);
-            Texture2D t2 : register(t2);
-            Texture2D t3 : register(t3);
+            SamplerState sampler_MainTex : register(s0);
+            Texture2D _MainTex : register(t0);
+            SamplerState sampler_N_map : register(s1);
+            SamplerState sampler_MainTex2 : register(s2);
+            SamplerState sampler_originalDiffuse : register(s3);
+            Texture2D _originalDiffuse : register(t1);
+            Texture2D _Diffuse : register(t2);
+            Texture2D _N_map : register(t3);
             struct program1Input
             {
                 float4 position0 : POSITION0;
@@ -175,7 +175,7 @@ Shader "HOLO/Holo_adv"
                 float4 uvMMap_xyzw_4 = mad(i.texcoord0.xyxx, r3_w_1.xxxx, r0_w_4.xxxx);
                 float uvMMap_x_4 = uvMMap_xyzw_4.x;
                 float uvMMap_y_3 = uvMMap_xyzw_4.y;
-                float4 sampleMMap_xyzw_5 = t0.SampleLevel(sampler_linear_clamp, (float4(uvMMap_x_4, uvMMap_y_3, uvMMap_x_4, uvMMap_x_4)).xy, 0);
+                float4 sampleMMap_xyzw_5 = _MainTex.SampleLevel(sampler_MainTex, (float4(uvMMap_x_4, uvMMap_y_3, uvMMap_x_4, uvMMap_x_4)).xy, 0);
                 float r0_w_5 = (sampleMMap_xyzw_5.x * _mask_type);
                 float r0_w_6 = mad(r1_w_5, r2_w_2, r0_w_5);
                 float r1_w_6 = (int)(_noise_details);
@@ -319,10 +319,10 @@ Shader "HOLO/Holo_adv"
                 float r2_x_3 = r2_xyzw_3.x;
                 float r2_y_2 = r2_xyzw_3.y;
                 float2 r1_yz_2 = ((r1_yz_1.xxyx + float4(r2_x_3, r2_x_3, r2_y_2, r2_x_3))).yz;
-                float4 r2_xyzw_4 = t0.Sample(sampler_linear_clamp2, (r1_yz_2.xyxx).xy);
+                float4 r2_xyzw_4 = _MainTex.Sample(sampler_MainTex2, (r1_yz_2.xyxx).xy);
                 float r0_w_5 = (-_mask_type + 1);
                 float TEXCOORD0_x_2 = i.texcoord0.x;
-                float4 r1_xyzw_4 = t1.Sample(sampler_linear_clamp3, ((mad(float4(TEXCOORD0_x_2, r3_y_1, TEXCOORD0_x_2, TEXCOORD0_x_2), ((cos(r0_x_3) * _M_map_ST.y)).xxxx, ((r0_xy_4.x * _M_map_ST.w)).xxxx)).xyxx).xy);
+                float4 r1_xyzw_4 = _originalDiffuse.Sample(sampler_originalDiffuse, ((mad(float4(TEXCOORD0_x_2, r3_y_1, TEXCOORD0_x_2, TEXCOORD0_x_2), ((cos(r0_x_3) * _M_map_ST.y)).xxxx, ((r0_xy_4.x * _M_map_ST.w)).xxxx)).xyxx).xy);
                 float2 r0_yw_6 = ((_OriginalUVSwitch.xxxx == float4(0, 0, 0, 1))).yw;
                 float sampleDiffuse_x_8;
                 float sampleDiffuse_y_8;
@@ -331,7 +331,7 @@ Shader "HOLO/Holo_adv"
                 if (r0_yw_6.x)
                 {
                     float2 uvDiffuse_xy_6 = (mad(i.texcoord2.xyxx, _Diffuse_ST.yyyy, _Diffuse_ST.wwww)).xy;
-                    float4 sampleDiffuse_xyzw_7 = t2.Sample(sampler_linear_clamp, (uvDiffuse_xy_6.xyxx).xy);
+                    float4 sampleDiffuse_xyzw_7 = _Diffuse.Sample(sampler_MainTex, (uvDiffuse_xy_6.xyxx).xy);
                     sampleDiffuse_x_8 = sampleDiffuse_xyzw_7.x;
                     sampleDiffuse_y_8 = sampleDiffuse_xyzw_7.y;
                     sampleDiffuse_z_6 = sampleDiffuse_xyzw_7.z;
@@ -351,7 +351,7 @@ Shader "HOLO/Holo_adv"
                 float sampleDiffuse_w_6 = sampleDiffuse_w_4;
                 if (r0_yw_6.y)
                 {
-                    float4 r1_xyzw_9 = t3.Sample(sampler_linear_clamp1, (float4(TEXCOORD0_x_2, r3_y_1, TEXCOORD0_x_2, TEXCOORD0_x_2)).xy);
+                    float4 r1_xyzw_9 = _N_map.Sample(sampler_N_map, (float4(TEXCOORD0_x_2, r3_y_1, TEXCOORD0_x_2, TEXCOORD0_x_2)).xy);
                     sampleDiffuse_x_10 = r1_xyzw_9.x;
                     sampleDiffuse_y_10 = r1_xyzw_9.y;
                     sampleDiffuse_z_8 = r1_xyzw_9.z;
