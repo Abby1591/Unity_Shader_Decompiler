@@ -115,17 +115,17 @@ Shader "Knife/Hologram Shader Unlit"
                 float4 _MainColor;
                 float _Alpha;
             };
-            cbuffer UnityPerCamera : register(b1)
+            cbuffer _UnityPerCameraCB : register(b1)
             {
                 float4 _ProjectionParams;
             };
-            cbuffer UnityPerDraw : register(b2)
+            cbuffer _UnityPerDrawCB : register(b2)
             {
                 float4x4 unity_ObjectToWorld;
                 float4x4 unity_WorldToObject;
                 float4 unity_WorldTransformParams;
             };
-            cbuffer UnityPerFrame : register(b3)
+            cbuffer _UnityPerFrameCB : register(b3)
             {
                 float4x4 unity_MatrixVP;
             };
@@ -139,7 +139,7 @@ Shader "Knife/Hologram Shader Unlit"
             };
             struct program3Output
             {
-                float4 sv_Position0 : SV_POSITION0;
+                float4 sv_Position0 : SV_POSITION;
                 float4 texcoord1 : TEXCOORD1;
                 float4 texcoord2 : TEXCOORD2;
                 float4 texcoord3 : TEXCOORD3;
@@ -152,7 +152,7 @@ Shader "Knife/Hologram Shader Unlit"
             };
             struct program13Input
             {
-                float4 sv_Position0 : SV_POSITION0;
+                float4 sv_Position0 : SV_POSITION;
                 float4 texcoord1 : TEXCOORD1;
                 float4 texcoord2 : TEXCOORD2;
                 float4 texcoord3 : TEXCOORD3;
@@ -165,7 +165,7 @@ Shader "Knife/Hologram Shader Unlit"
             };
             struct program13Output
             {
-                float4 sv_Target0 : SV_Target0;
+                float4 sv_Target0 : SV_Target;
             };
             #pragma vertex vert
             program3Output vert(program3Input i)
@@ -219,7 +219,7 @@ Shader "Knife/Hologram Shader Unlit"
             program13Output frag(program13Input i)
             {
                 program13Output o = (program13Output)0;
-                o.sv_Target0.w = ((_MainColor.w * _Alpha) * i.color0.w);
+                o.sv_Target0.w = ((saturate(_MainColor.w) * _Alpha) * i.color0.w);
                 o.sv_Target0.xyz = ((i.color0.xyzx * _MainColor.xyzx)).xyz;
                 return o;
             }
@@ -240,19 +240,19 @@ Shader "Knife/Hologram Shader Unlit"
                 float _Alpha;
                 float4 cb0_values[22];
             };
-            cbuffer UnityPerCamera : register(b1)
+            cbuffer _UnityPerCameraCB : register(b1)
             {
                 float4 _ProjectionParams;
                 float4 cb1_values[5];
             };
-            cbuffer UnityPerDraw : register(b2)
+            cbuffer _UnityPerDrawCB : register(b2)
             {
                 float4x4 unity_ObjectToWorld;
                 float4x4 unity_WorldToObject;
                 float4 unity_WorldTransformParams;
                 float4 cb2_values[4];
             };
-            cbuffer UnityPerFrame : register(b3)
+            cbuffer _UnityPerFrameCB : register(b3)
             {
                 float4x4 unity_MatrixVP;
                 float4 cb3_values[13];
@@ -273,7 +273,7 @@ Shader "Knife/Hologram Shader Unlit"
             };
             struct program7Output
             {
-                float4 sv_Position0 : SV_POSITION0;
+                float4 sv_Position0 : SV_POSITION;
                 float4 texcoord1 : TEXCOORD1;
                 float4 texcoord2 : TEXCOORD2;
                 float4 texcoord3 : TEXCOORD3;
@@ -286,7 +286,7 @@ Shader "Knife/Hologram Shader Unlit"
             };
             struct program17Input
             {
-                float4 sv_Position0 : SV_POSITION0;
+                float4 sv_Position0 : SV_POSITION;
                 float4 texcoord1 : TEXCOORD1;
                 float4 texcoord2 : TEXCOORD2;
                 float4 texcoord3 : TEXCOORD3;
@@ -299,7 +299,7 @@ Shader "Knife/Hologram Shader Unlit"
             };
             struct program17Output
             {
-                float4 sv_Target0 : SV_Target0;
+                float4 sv_Target0 : SV_Target;
             };
             #pragma vertex vert
             program7Output vert(program7Input i)
@@ -355,7 +355,7 @@ Shader "Knife/Hologram Shader Unlit"
                 float2 r0_yz_13 = ((r0_xyz_12.yyzy * float4(r7_xy_2.y, r7_xy_2.y, r7_xyzw_1.w, r7_xy_2.y))).yz;
                 float2 r5_yz_4 = (mad(r4_xyz_10.yyzy, float4(r7_xy_2.x, r7_xy_2.x, r7_xyzw_1.z, r7_xy_2.x), r0_yz_13.xxyx)).yz;
                 float r5_x_4 = mad(r4_xyz_10.x, r2_xy_3.x, (r2_xy_3.y * r0_xyz_12.x));
-                float r0_x_17 = mad((mad(dot(float4(r3_x_7, r3_y_7, r3_z_6, r3_x_7), float4(r5_x_4, r5_yz_4.x, r5_yz_4.y, r5_x_4)), 65, cb0_values[6].y) + 0.5), 2, -1);
+                float r0_x_17 = saturate(mad((mad(dot(float4(r3_x_7, r3_y_7, r3_z_6, r3_x_7), float4(r5_x_4, r5_yz_4.x, r5_yz_4.y, r5_x_4)), 65, cb0_values[6].y) + 0.5), 2, -1));
                 float2 r2_xz_4 = (float4(0, 0, 1, 0)).xz;
                 float4 worldPos_xyzw_14 = (i.position0.yyyy * unity_ObjectToWorld[1].xxyz);
                 float worldPos_y_14 = worldPos_xyzw_14.y;
@@ -565,7 +565,7 @@ Shader "Knife/Hologram Shader Unlit"
                 float r1_z_8 = r1_xyzw_9.z;
                 float r0_w_12 = dot(float4(r1_x_9, r1_y_9, r1_z_8, r1_x_9), float4(r5_x_8, r5_yz_8.x, r5_yz_8.y, r5_x_8));
                 float r0_w_13 = mad(r0_w_12, 65, 0.5);
-                float r0_w_14 = mad(r0_w_13, 2, -1);
+                float r0_w_14 = saturate(mad(r0_w_13, 2, -1));
                 float r0_z_22 = dot(r0_z_21.xxxx, r0_w_14.xxxx);
                 float r1_x_10 = unity_ObjectToWorld[0].x;
                 float r1_y_10 = unity_ObjectToWorld[1].x;
@@ -796,7 +796,7 @@ Shader "Knife/Hologram Shader Unlit"
                 float2 r0_yz_13 = ((r0_xyz_12.yyzy * float4(r6_xy_2.y, r6_xy_2.y, r6_xyzw_1.w, r6_xy_2.y))).yz;
                 float2 r4_yz_4 = (mad(float4(r2_y_13, r2_y_13, r2_z_10, r2_y_13), float4(r6_xy_2.x, r6_xy_2.x, r6_xyzw_1.z, r6_xy_2.x), r0_yz_13.xxyx)).yz;
                 float r4_x_4 = mad(r2_x_10, r1_x_3, (r1_y_4 * r0_xyz_12.x));
-                float r0_x_18 = mad(cb0_values[7].y, (mad(mad(dot(r3_xyz_6.xyzx, float4(r4_x_4, r4_yz_4.x, r4_yz_4.y, r4_x_4)), 65, 0.5), 2.61, -0.61) + -1), 1);
+                float r0_x_18 = mad(cb0_values[7].y, (saturate(mad(mad(dot(r3_xyz_6.xyzx, float4(r4_x_4, r4_yz_4.x, r4_yz_4.y, r4_x_4)), 65, 0.5), 2.61, -0.61)) + -1), 1);
                 float4 r1_xyzw_4 = float4(0, 0, 0, 1);
                 float r1_x_4 = r1_xyzw_4.x;
                 float r1_w_3 = r1_xyzw_4.w;
@@ -955,7 +955,7 @@ Shader "Knife/Hologram Shader Unlit"
                 float r0_z_19 = mad(i.texcoord1.w, cb0_values[10].z, r0_z_18);
                 float4 r1_xyzw_29 = _Line1.Sample(sampler_Line1, (r0_z_19.xxxx).xy);
                 float r0_z_20 = (r1_xyzw_29.x + -cb0_values[11].x);
-                float r0_z_21 = (r0_z_20 * cb0_values[11].y);
+                float r0_z_21 = saturate((r0_z_20 * cb0_values[11].y));
                 float4 r1_xyzw_30 = (r0_z_21.xxxx * _MainColor.xyzx);
                 float r1_x_30 = r1_xyzw_30.x;
                 float r1_y_31 = r1_xyzw_30.y;
@@ -965,7 +965,7 @@ Shader "Knife/Hologram Shader Unlit"
                 float r0_z_23 = mad(i.texcoord1.w, cb0_values[11].w, r0_z_22);
                 float4 r3_xyzw_21 = _Line2.Sample(sampler_Line2, (r0_z_23.xxxx).xy);
                 float r0_z_24 = (r3_xyzw_21.x + -cb0_values[12].y);
-                float r0_z_25 = (r0_z_24 * cb0_values[12].z);
+                float r0_z_25 = saturate((r0_z_24 * cb0_values[12].z));
                 float4 r3_xyzw_22 = (r0_z_25.xxxx * _MainColor.xyzx);
                 float r3_x_22 = r3_xyzw_22.x;
                 float r3_y_23 = r3_xyzw_22.y;
@@ -994,7 +994,7 @@ Shader "Knife/Hologram Shader Unlit"
                 float r0_w_9 = (r0_z_31 * cb0_values[9].y);
                 float r0_z_32 = (r0_z_31 * cb0_values[10].y);
                 float r0_z_33 = exp2(r0_z_32);
-                float r0_z_34 = (r0_z_33 * cb0_values[10].x);
+                float r0_z_34 = saturate((r0_z_33 * cb0_values[10].x));
                 float r0_w_10 = exp2(r0_w_9);
                 float r0_w_11 = (r0_w_10 * cb0_values[9].x);
                 float4 r2_xyzw_24 = (r0_w_11.xxxx * _MainColor.xyzx);
@@ -1006,7 +1006,7 @@ Shader "Knife/Hologram Shader Unlit"
                 float r2_y_26 = r2_xyzw_25.y;
                 float r2_z_23 = r2_xyzw_25.z;
                 float r0_z_35 = (r0_z_34 + _MainColor.w);
-                float r0_z_36 = (r1_xyzw_31.w + r0_z_35);
+                float r0_z_36 = saturate((r1_xyzw_31.w + r0_z_35));
                 float4 r1_xyzw_32 = (r1_xyzw_31.xyzx + float4(r2_x_25, r2_y_26, r2_z_23, r2_x_25));
                 float r1_x_32 = r1_xyzw_32.x;
                 float r1_y_33 = r1_xyzw_32.y;
@@ -1175,7 +1175,7 @@ Shader "Knife/Hologram Shader Unlit"
                 float4 r2_xyzw_51 = _LineGlitch.Sample(sampler_LineGlitch, (float4(r0_y_25, r0_z_37, r0_y_25, r0_y_25)).xy);
                 float r0_y_26 = (r2_xyzw_51.x + -1);
                 float r0_y_27 = mad(cb0_values[21].y, r0_y_26, 1);
-                float r1_w_27 = ((r0_y_27 * ((mad(dot(r2_xyzw_50, float4(r6_x_10, r6_y_10, r6_z_10, r6_w_6)), 21, 0.5) + -cb0_values[18].w) * r0_z_36)) * _Alpha);
+                float r1_w_27 = ((r0_y_27 * (saturate((mad(dot(r2_xyzw_50, float4(r6_x_10, r6_y_10, r6_z_10, r6_w_6)), 21, 0.5) + -cb0_values[18].w)) * r0_z_36)) * _Alpha);
                 o.sv_Target0.xyzw = (float4(r1_x_34, r1_y_35, r1_z_34, r1_w_27) * i.color0.xyzw);
                 return o;
             }
@@ -1196,19 +1196,19 @@ Shader "Knife/Hologram Shader Unlit"
                 float _Alpha;
                 float4 cb0_values[22];
             };
-            cbuffer UnityPerCamera : register(b1)
+            cbuffer _UnityPerCameraCB : register(b1)
             {
                 float4 _ProjectionParams;
                 float4 cb1_values[8];
             };
-            cbuffer UnityPerDraw : register(b2)
+            cbuffer _UnityPerDrawCB : register(b2)
             {
                 float4x4 unity_ObjectToWorld;
                 float4x4 unity_WorldToObject;
                 float4 unity_WorldTransformParams;
                 float4 cb2_values[4];
             };
-            cbuffer UnityPerFrame : register(b3)
+            cbuffer _UnityPerFrameCB : register(b3)
             {
                 float4x4 unity_MatrixVP;
             };
@@ -1228,7 +1228,7 @@ Shader "Knife/Hologram Shader Unlit"
             };
             struct program6Output
             {
-                float4 sv_Position0 : SV_POSITION0;
+                float4 sv_Position0 : SV_POSITION;
                 float4 texcoord1 : TEXCOORD1;
                 float4 texcoord2 : TEXCOORD2;
                 float4 texcoord3 : TEXCOORD3;
@@ -1241,7 +1241,7 @@ Shader "Knife/Hologram Shader Unlit"
             };
             struct program16Input
             {
-                float4 sv_Position0 : SV_POSITION0;
+                float4 sv_Position0 : SV_POSITION;
                 float4 texcoord1 : TEXCOORD1;
                 float4 texcoord2 : TEXCOORD2;
                 float4 texcoord3 : TEXCOORD3;
@@ -1254,7 +1254,7 @@ Shader "Knife/Hologram Shader Unlit"
             };
             struct program16Output
             {
-                float4 sv_Target0 : SV_Target0;
+                float4 sv_Target0 : SV_Target;
             };
             #pragma vertex vert
             program6Output vert(program6Input i)
@@ -1385,12 +1385,12 @@ Shader "Knife/Hologram Shader Unlit"
                 float2 r0_yz_13 = ((r0_xyz_12.yyzy * float4(r6_xy_2.y, r6_xy_2.y, r6_xyzw_1.w, r6_xy_2.y))).yz;
                 float2 r4_yz_4 = (mad(float4(r2_y_13, r2_y_13, r2_z_10, r2_y_13), float4(r6_xy_2.x, r6_xy_2.x, r6_xyzw_1.z, r6_xy_2.x), r0_yz_13.xxyx)).yz;
                 float r4_x_4 = mad(r2_x_10, r1_x_3, (r1_y_4 * r0_xyz_12.x));
-                float r0_x_18 = mad(cb0_values[7].y, (mad(mad(dot(r3_xyz_6.xyzx, float4(r4_x_4, r4_yz_4.x, r4_yz_4.y, r4_x_4)), 65, 0.5), 2.61, -0.61) + -1), 1);
+                float r0_x_18 = mad(cb0_values[7].y, (saturate(mad(mad(dot(r3_xyz_6.xyzx, float4(r4_x_4, r4_yz_4.x, r4_yz_4.y, r4_x_4)), 65, 0.5), 2.61, -0.61)) + -1), 1);
                 float r0_y_14 = mad(cb1_values[0].y, cb0_values[10].w, cb0_values[4].z);
                 float r0_y_15 = mad(i.texcoord1.w, cb0_values[10].z, r0_y_14);
                 float4 r1_xyzw_4 = _Line1.Sample(sampler_Line1, (r0_y_15.xxxx).xy);
                 float r0_y_16 = (r1_xyzw_4.x + -cb0_values[11].x);
-                float r0_y_17 = (r0_y_16 * cb0_values[11].y);
+                float r0_y_17 = saturate((r0_y_16 * cb0_values[11].y));
                 float4 r1_xyzw_5 = (r0_y_17.xxxx * _MainColor.xyzx);
                 float r1_x_5 = r1_xyzw_5.x;
                 float r1_y_6 = r1_xyzw_5.y;
@@ -1400,7 +1400,7 @@ Shader "Knife/Hologram Shader Unlit"
                 float r0_y_19 = mad(i.texcoord1.w, cb0_values[11].w, r0_y_18);
                 float4 r3_xyzw_7 = _Line2.Sample(sampler_Line2, (r0_y_19.xxxx).xy);
                 float r0_y_20 = (r3_xyzw_7.x + -cb0_values[12].y);
-                float r0_y_21 = (r0_y_20 * cb0_values[12].z);
+                float r0_y_21 = saturate((r0_y_20 * cb0_values[12].z));
                 float r0_y_22 = (r0_y_21 * cb0_values[12].w);
                 float r4_x_5 = (r0_y_22 * r2_x_11);
                 float4 r4_xyzw_5 = (float4(r1_x_5, r1_x_5, r1_y_6, r1_z_4) * ((r0_y_21.xxxx * _MainColor.xyzx)).xxyz);
@@ -1478,10 +1478,10 @@ Shader "Knife/Hologram Shader Unlit"
                 float r0_w_11 = r0_xyzw_35.w;
                 float r0_y_36 = dot(float4(r0_y_35, r0_z_23, r0_w_11, r0_y_35), float4(r0_y_35, r0_z_23, r0_w_11, r0_y_35));
                 float r0_y_37 = sqrt(r0_y_36);
-                float r0_y_38 = (r0_y_37 / cb0_values[20].w);
+                float r0_y_38 = saturate((r0_y_37 / cb0_values[20].w));
                 float r0_z_24 = mad(r0_y_38, -2, 1);
                 float r0_y_39 = mad(cb0_values[21].x, r0_z_24, r0_y_38);
-                float r1_w_6 = ((r0_y_39 * (mad(cb0_values[17].z, (r0_x_27 + -1), 1) * r0_y_31)) * _Alpha);
+                float r1_w_6 = ((r0_y_39 * saturate((mad(cb0_values[17].z, (r0_x_27 + -1), 1) * r0_y_31))) * _Alpha);
                 o.sv_Target0.xyzw = (float4(r1_x_9, r1_y_10, r1_z_8, r1_w_6) * i.color0.xyzw);
                 return o;
             }
@@ -1502,19 +1502,19 @@ Shader "Knife/Hologram Shader Unlit"
                 float _Alpha;
                 float4 cb0_values[19];
             };
-            cbuffer UnityPerCamera : register(b1)
+            cbuffer _UnityPerCameraCB : register(b1)
             {
                 float4 _ProjectionParams;
                 float4 cb1_values[1];
             };
-            cbuffer UnityPerDraw : register(b2)
+            cbuffer _UnityPerDrawCB : register(b2)
             {
                 float4x4 unity_ObjectToWorld;
                 float4x4 unity_WorldToObject;
                 float4 unity_WorldTransformParams;
                 float4 cb2_values[4];
             };
-            cbuffer UnityPerFrame : register(b3)
+            cbuffer _UnityPerFrameCB : register(b3)
             {
                 float4x4 unity_MatrixVP;
                 float4 cb3_values[13];
@@ -1533,7 +1533,7 @@ Shader "Knife/Hologram Shader Unlit"
             };
             struct program5Output
             {
-                float4 sv_Position0 : SV_POSITION0;
+                float4 sv_Position0 : SV_POSITION;
                 float4 texcoord1 : TEXCOORD1;
                 float4 texcoord2 : TEXCOORD2;
                 float4 texcoord3 : TEXCOORD3;
@@ -1546,7 +1546,7 @@ Shader "Knife/Hologram Shader Unlit"
             };
             struct program15Input
             {
-                float4 sv_Position0 : SV_POSITION0;
+                float4 sv_Position0 : SV_POSITION;
                 float4 texcoord1 : TEXCOORD1;
                 float4 texcoord2 : TEXCOORD2;
                 float4 texcoord3 : TEXCOORD3;
@@ -1559,7 +1559,7 @@ Shader "Knife/Hologram Shader Unlit"
             };
             struct program15Output
             {
-                float4 sv_Target0 : SV_Target0;
+                float4 sv_Target0 : SV_Target;
             };
             #pragma vertex vert
             program5Output vert(program5Input i)
@@ -1615,7 +1615,7 @@ Shader "Knife/Hologram Shader Unlit"
                 float2 r0_yz_13 = ((r0_xyz_12.yyzy * float4(r7_xy_2.y, r7_xy_2.y, r7_xyzw_1.w, r7_xy_2.y))).yz;
                 float2 r5_yz_4 = (mad(r4_xyz_10.yyzy, float4(r7_xy_2.x, r7_xy_2.x, r7_xyzw_1.z, r7_xy_2.x), r0_yz_13.xxyx)).yz;
                 float r5_x_4 = mad(r4_xyz_10.x, r2_xy_3.x, (r2_xy_3.y * r0_xyz_12.x));
-                float r0_x_17 = mad((mad(dot(float4(r3_x_7, r3_y_7, r3_z_6, r3_x_7), float4(r5_x_4, r5_yz_4.x, r5_yz_4.y, r5_x_4)), 65, cb0_values[6].y) + 0.5), 2, -1);
+                float r0_x_17 = saturate(mad((mad(dot(float4(r3_x_7, r3_y_7, r3_z_6, r3_x_7), float4(r5_x_4, r5_yz_4.x, r5_yz_4.y, r5_x_4)), 65, cb0_values[6].y) + 0.5), 2, -1));
                 float2 r2_xz_4 = (float4(0, 0, 1, 0)).xz;
                 float4 worldPos_xyzw_14 = (i.position0.yyyy * unity_ObjectToWorld[1].xxyz);
                 float worldPos_y_14 = worldPos_xyzw_14.y;
@@ -1825,7 +1825,7 @@ Shader "Knife/Hologram Shader Unlit"
                 float r1_z_8 = r1_xyzw_9.z;
                 float r0_w_12 = dot(float4(r1_x_9, r1_y_9, r1_z_8, r1_x_9), float4(r5_x_8, r5_yz_8.x, r5_yz_8.y, r5_x_8));
                 float r0_w_13 = mad(r0_w_12, 65, 0.5);
-                float r0_w_14 = mad(r0_w_13, 2, -1);
+                float r0_w_14 = saturate(mad(r0_w_13, 2, -1));
                 float r0_z_22 = dot(r0_z_21.xxxx, r0_w_14.xxxx);
                 float r1_x_10 = unity_ObjectToWorld[0].x;
                 float r1_y_10 = unity_ObjectToWorld[1].x;
@@ -2095,7 +2095,7 @@ Shader "Knife/Hologram Shader Unlit"
                 float r0_y_28 = mad(i.texcoord1.w, cb0_values[10].z, r0_y_27);
                 float4 r1_xyzw_5 = _Line1.Sample(sampler_Line1, (r0_y_28.xxxx).xy);
                 float r0_y_29 = (r1_xyzw_5.x + -cb0_values[11].x);
-                float r0_y_30 = (r0_y_29 * cb0_values[11].y);
+                float r0_y_30 = saturate((r0_y_29 * cb0_values[11].y));
                 float4 r1_xyzw_6 = (r0_y_30.xxxx * _MainColor.xyzx);
                 float r1_x_6 = r1_xyzw_6.x;
                 float r1_y_5 = r1_xyzw_6.y;
@@ -2105,7 +2105,7 @@ Shader "Knife/Hologram Shader Unlit"
                 float r0_y_32 = mad(i.texcoord1.w, cb0_values[11].w, r0_y_31);
                 float4 r3_xyzw_15 = _Line2.Sample(sampler_Line2, (r0_y_32.xxxx).xy);
                 float r0_y_33 = (r3_xyzw_15.x + -cb0_values[12].y);
-                float r0_y_34 = (r0_y_33 * cb0_values[12].z);
+                float r0_y_34 = saturate((r0_y_33 * cb0_values[12].z));
                 float4 r3_xyzw_16 = (r0_y_34.xxxx * _MainColor.xyzx);
                 float r3_x_16 = r3_xyzw_16.x;
                 float r3_y_17 = r3_xyzw_16.y;
@@ -2197,7 +2197,7 @@ Shader "Knife/Hologram Shader Unlit"
                 float r2_x_22 = mad(r3_xyz_28.x, r1_yz_10.x, r0_w_28);
                 float r0_w_29 = dot(((float4(r5_x_8, r5_y_8, r5_z_9, r5_x_8) * ((r4_xyz_16.xyzx * r4_xyz_16.xyzx)).xyzx)).xyzx, float4(r2_x_22, r2_yz_22.x, r2_yz_22.y, r2_x_22));
                 float r0_w_30 = mad(r0_w_29, 65, 0.5);
-                float r0_w_31 = mad(r0_w_30, 2.61, -0.61);
+                float r0_w_31 = saturate(mad(r0_w_30, 2.61, -0.61));
                 float r0_w_32 = (r0_w_31 + -1);
                 float r0_w_33 = mad(cb0_values[7].y, r0_w_32, 1);
                 float4 r0_xyzw_30 = (float4(r0_x_29, r0_y_36, r0_z_27, r0_x_29) * r0_w_33.xxxx);
@@ -2347,8 +2347,8 @@ Shader "Knife/Hologram Shader Unlit"
                 float4 r2_xyzw_47 = (r2_xyzw_46 * r2_xyzw_46);
                 float r1_y_17 = dot(r2_xyzw_47, float4(r6_x_9, r6_y_9, r6_z_10, r6_w_5));
                 float r1_y_18 = mad(r1_y_17, 21, 0.5);
-                float r1_y_19 = (r1_y_18 + -cb0_values[18].w);
-                float r0_w_34 = ((r1_y_19 * r1_xyzw_8.x) * _Alpha);
+                float r1_y_19 = saturate((r1_y_18 + -cb0_values[18].w));
+                float r0_w_34 = ((r1_y_19 * saturate(r1_xyzw_8.x)) * _Alpha);
                 o.sv_Target0.xyzw = (float4(r0_x_30, r0_y_37, r0_z_28, r0_w_34) * i.color0.xyzw);
                 return o;
             }
@@ -2369,19 +2369,19 @@ Shader "Knife/Hologram Shader Unlit"
                 float _Alpha;
                 float4 cb0_values[18];
             };
-            cbuffer UnityPerCamera : register(b1)
+            cbuffer _UnityPerCameraCB : register(b1)
             {
                 float4 _ProjectionParams;
                 float4 cb1_values[8];
             };
-            cbuffer UnityPerDraw : register(b2)
+            cbuffer _UnityPerDrawCB : register(b2)
             {
                 float4x4 unity_ObjectToWorld;
                 float4x4 unity_WorldToObject;
                 float4 unity_WorldTransformParams;
                 float4 cb2_values[4];
             };
-            cbuffer UnityPerFrame : register(b3)
+            cbuffer _UnityPerFrameCB : register(b3)
             {
                 float4x4 unity_MatrixVP;
                 float4 cb3_values[13];
@@ -2402,7 +2402,7 @@ Shader "Knife/Hologram Shader Unlit"
             };
             struct program4Output
             {
-                float4 sv_Position0 : SV_POSITION0;
+                float4 sv_Position0 : SV_POSITION;
                 float4 texcoord1 : TEXCOORD1;
                 float4 texcoord2 : TEXCOORD2;
                 float4 texcoord3 : TEXCOORD3;
@@ -2415,7 +2415,7 @@ Shader "Knife/Hologram Shader Unlit"
             };
             struct program14Input
             {
-                float4 sv_Position0 : SV_POSITION0;
+                float4 sv_Position0 : SV_POSITION;
                 float4 texcoord1 : TEXCOORD1;
                 float4 texcoord2 : TEXCOORD2;
                 float4 texcoord3 : TEXCOORD3;
@@ -2428,7 +2428,7 @@ Shader "Knife/Hologram Shader Unlit"
             };
             struct program14Output
             {
-                float4 sv_Target0 : SV_Target0;
+                float4 sv_Target0 : SV_Target;
             };
             #pragma vertex vert
             program4Output vert(program4Input i)
@@ -2484,7 +2484,7 @@ Shader "Knife/Hologram Shader Unlit"
                 float2 r0_yz_13 = ((r0_xyz_12.yyzy * float4(r7_xy_2.y, r7_xy_2.y, r7_xyzw_1.w, r7_xy_2.y))).yz;
                 float2 r5_yz_4 = (mad(r4_xyz_10.yyzy, float4(r7_xy_2.x, r7_xy_2.x, r7_xyzw_1.z, r7_xy_2.x), r0_yz_13.xxyx)).yz;
                 float r5_x_4 = mad(r4_xyz_10.x, r2_xy_3.x, (r2_xy_3.y * r0_xyz_12.x));
-                float r0_x_17 = mad((mad(dot(float4(r3_x_7, r3_y_7, r3_z_6, r3_x_7), float4(r5_x_4, r5_yz_4.x, r5_yz_4.y, r5_x_4)), 65, cb0_values[6].y) + 0.5), 2, -1);
+                float r0_x_17 = saturate(mad((mad(dot(float4(r3_x_7, r3_y_7, r3_z_6, r3_x_7), float4(r5_x_4, r5_yz_4.x, r5_yz_4.y, r5_x_4)), 65, cb0_values[6].y) + 0.5), 2, -1));
                 float2 r2_xz_4 = (float4(0, 0, 1, 0)).xz;
                 float4 worldPos_xyzw_14 = (i.position0.yyyy * unity_ObjectToWorld[1].xxyz);
                 float worldPos_y_14 = worldPos_xyzw_14.y;
@@ -2732,7 +2732,7 @@ Shader "Knife/Hologram Shader Unlit"
                 float r1_z_8 = r1_xyzw_9.z;
                 float r0_w_12 = dot(float4(r1_x_9, r1_y_9, r1_z_8, r1_x_9), float4(r5_x_11, r5_yz_11.x, r5_yz_11.y, r5_x_11));
                 float r0_w_13 = mad(r0_w_12, 65, 0.5);
-                float r0_w_14 = mad(r0_w_13, 2, -1);
+                float r0_w_14 = saturate(mad(r0_w_13, 2, -1));
                 float r0_z_22 = dot(r0_z_21.xxxx, r0_w_14.xxxx);
                 float r1_x_10 = unity_ObjectToWorld[0].x;
                 float r1_y_10 = unity_ObjectToWorld[1].x;
@@ -2820,7 +2820,7 @@ Shader "Knife/Hologram Shader Unlit"
                 float r1_y_14 = r1_xyzw_14.y;
                 float r1_z_13 = r1_xyzw_14.z;
                 float4 r2_xyzw_32 = _Line1.SampleLevel(sampler_Line1, ((mad(r3_w_2, cb0_values[4].x, mad(cb1_values[0].y, cb0_values[4].y, cb0_values[4].z))).xxxx).xy, 0);
-                float4 r0_xyzw_23 = mad(float4(r0_y_40, r0_z_35, r0_w_27, r0_y_40), (((r2_xyzw_32.x + -cb0_values[4].w) * cb0_values[5].x)).xxxx, float4(r1_x_14, r1_y_14, r1_z_13, r1_x_14));
+                float4 r0_xyzw_23 = mad(float4(r0_y_40, r0_z_35, r0_w_27, r0_y_40), (saturate(((r2_xyzw_32.x + -cb0_values[4].w) * cb0_values[5].x))).xxxx, float4(r1_x_14, r1_y_14, r1_z_13, r1_x_14));
                 float r0_x_23 = r0_xyzw_23.x;
                 float r0_y_41 = r0_xyzw_23.y;
                 float r0_z_36 = r0_xyzw_23.z;
@@ -2974,7 +2974,7 @@ Shader "Knife/Hologram Shader Unlit"
                 float2 r0_yz_13 = ((r0_xyz_12.yyzy * float4(r6_xy_2.y, r6_xy_2.y, r6_xyzw_1.w, r6_xy_2.y))).yz;
                 float2 r4_yz_4 = (mad(float4(r2_y_13, r2_y_13, r2_z_10, r2_y_13), float4(r6_xy_2.x, r6_xy_2.x, r6_xyzw_1.z, r6_xy_2.x), r0_yz_13.xxyx)).yz;
                 float r4_x_4 = mad(r2_x_10, r1_x_3, (r1_y_4 * r0_xyz_12.x));
-                float r0_x_18 = mad(cb0_values[7].y, (mad(mad(dot(r3_xyz_6.xyzx, float4(r4_x_4, r4_yz_4.x, r4_yz_4.y, r4_x_4)), 65, 0.5), 2.61, -0.61) + -1), 1);
+                float r0_x_18 = mad(cb0_values[7].y, (saturate(mad(mad(dot(r3_xyz_6.xyzx, float4(r4_x_4, r4_yz_4.x, r4_yz_4.y, r4_x_4)), 65, 0.5), 2.61, -0.61)) + -1), 1);
                 float4 r1_xyzw_4 = float4(0, 0, 0, 1);
                 float r1_x_4 = r1_xyzw_4.x;
                 float r1_w_3 = r1_xyzw_4.w;
@@ -3133,7 +3133,7 @@ Shader "Knife/Hologram Shader Unlit"
                 float r0_z_19 = mad(i.texcoord1.w, cb0_values[10].z, r0_z_18);
                 float4 r1_xyzw_29 = _Line1.Sample(sampler_Line1, (r0_z_19.xxxx).xy);
                 float r0_z_20 = (r1_xyzw_29.x + -cb0_values[11].x);
-                float r0_z_21 = (r0_z_20 * cb0_values[11].y);
+                float r0_z_21 = saturate((r0_z_20 * cb0_values[11].y));
                 float4 r1_xyzw_30 = (r0_z_21.xxxx * _MainColor.xyzx);
                 float r1_x_30 = r1_xyzw_30.x;
                 float r1_y_31 = r1_xyzw_30.y;
@@ -3143,7 +3143,7 @@ Shader "Knife/Hologram Shader Unlit"
                 float r0_z_23 = mad(i.texcoord1.w, cb0_values[11].w, r0_z_22);
                 float4 r3_xyzw_21 = _Line2.Sample(sampler_Line2, (r0_z_23.xxxx).xy);
                 float r0_z_24 = (r3_xyzw_21.x + -cb0_values[12].y);
-                float r0_z_25 = (r0_z_24 * cb0_values[12].z);
+                float r0_z_25 = saturate((r0_z_24 * cb0_values[12].z));
                 float4 r3_xyzw_22 = (r0_z_25.xxxx * _MainColor.xyzx);
                 float r3_x_22 = r3_xyzw_22.x;
                 float r3_y_23 = r3_xyzw_22.y;
@@ -3172,7 +3172,7 @@ Shader "Knife/Hologram Shader Unlit"
                 float r0_w_9 = (r0_z_31 * cb0_values[9].y);
                 float r0_z_32 = (r0_z_31 * cb0_values[10].y);
                 float r0_z_33 = exp2(r0_z_32);
-                float r0_z_34 = (r0_z_33 * cb0_values[10].x);
+                float r0_z_34 = saturate((r0_z_33 * cb0_values[10].x));
                 float r0_w_10 = exp2(r0_w_9);
                 float r0_w_11 = (r0_w_10 * cb0_values[9].x);
                 float4 r2_xyzw_24 = (r0_w_11.xxxx * _MainColor.xyzx);
@@ -3232,7 +3232,7 @@ Shader "Knife/Hologram Shader Unlit"
                 float r0_y_22 = mad(cb1_values[7].z, r2_xyzw_29.x, cb1_values[7].w);
                 float r0_y_23 = ((float4(1, 1, 1, 1) / r0_y_22)).y;
                                 float r0_x_27 = (pow(min((((float4(1, 1, 1, 1) / mad(cb1_values[7].z, r0_w_19, cb1_values[7].w)) + r0_y_23) / cb0_values[17].x), 1), cb0_values[17].y)).x;
-                float r1_w_29 = ((mad(cb0_values[17].z, (r0_x_27 + -1), 1) * r0_z_37) * _Alpha);
+                float r1_w_29 = (saturate((mad(cb0_values[17].z, (r0_x_27 + -1), 1) * r0_z_37)) * _Alpha);
                 o.sv_Target0.xyzw = (float4(r1_x_35, r1_y_36, r1_z_35, r1_w_29) * i.color0.xyzw);
                 return o;
             }

@@ -14,11 +14,11 @@ Shader "Hidden/BlurAndFlares"
             ZTest Always
             ZWrite Off
             HLSLPROGRAM
-            cbuffer UnityPerDraw : register(b0)
+            cbuffer _UnityPerDrawCB : register(b0)
             {
                 float4x4 unity_ObjectToWorld;
             };
-            cbuffer UnityPerFrame : register(b1)
+            cbuffer _UnityPerFrameCB : register(b1)
             {
                 float4x4 unity_MatrixVP;
             };
@@ -31,17 +31,17 @@ Shader "Hidden/BlurAndFlares"
             };
             struct program1Output
             {
-                float4 sv_Position0 : SV_POSITION0;
+                float4 sv_Position0 : SV_POSITION;
                 float2 texcoord0 : TEXCOORD0;
             };
             struct program3Input
             {
-                float4 sv_Position0 : SV_POSITION0;
+                float4 sv_Position0 : SV_POSITION;
                 float2 texcoord0 : TEXCOORD0;
             };
             struct program3Output
             {
-                float4 sv_Target0 : SV_Target0;
+                float4 sv_Target0 : SV_Target;
             };
             #pragma vertex vert
             program1Output vert(program1Input i)
@@ -75,11 +75,11 @@ Shader "Hidden/BlurAndFlares"
                 float4 _Offsets;
                 float _StretchWidth;
             };
-            cbuffer UnityPerDraw : register(b1)
+            cbuffer _UnityPerDrawCB : register(b1)
             {
                 float4x4 unity_ObjectToWorld;
             };
-            cbuffer UnityPerFrame : register(b2)
+            cbuffer _UnityPerFrameCB : register(b2)
             {
                 float4x4 unity_MatrixVP;
             };
@@ -92,7 +92,7 @@ Shader "Hidden/BlurAndFlares"
             };
             struct program5Output
             {
-                float4 sv_Position0 : SV_POSITION0;
+                float4 sv_Position0 : SV_POSITION;
                 float2 texcoord0 : TEXCOORD0;
                 float2 texcoord1 : TEXCOORD1;
                 float2 texcoord2 : TEXCOORD2;
@@ -103,7 +103,7 @@ Shader "Hidden/BlurAndFlares"
             };
             struct program6Input
             {
-                float4 sv_Position0 : SV_POSITION0;
+                float4 sv_Position0 : SV_POSITION;
                 float2 texcoord0 : TEXCOORD0;
                 float2 texcoord1 : TEXCOORD1;
                 float2 texcoord2 : TEXCOORD2;
@@ -114,7 +114,7 @@ Shader "Hidden/BlurAndFlares"
             };
             struct program6Output
             {
-                float4 sv_Target0 : SV_Target0;
+                float4 sv_Target0 : SV_Target;
             };
             #pragma vertex vert
             program5Output vert(program5Input i)
@@ -165,11 +165,11 @@ Shader "Hidden/BlurAndFlares"
                 float _Saturation;
                 float4 _MainTex_TexelSize;
             };
-            cbuffer UnityPerDraw : register(b1)
+            cbuffer _UnityPerDrawCB : register(b1)
             {
                 float4x4 unity_ObjectToWorld;
             };
-            cbuffer UnityPerFrame : register(b2)
+            cbuffer _UnityPerFrameCB : register(b2)
             {
                 float4x4 unity_MatrixVP;
             };
@@ -182,7 +182,7 @@ Shader "Hidden/BlurAndFlares"
             };
             struct program7Output
             {
-                float4 sv_Position0 : SV_POSITION0;
+                float4 sv_Position0 : SV_POSITION;
                 float2 texcoord0 : TEXCOORD0;
                 float2 texcoord1 : TEXCOORD1;
                 float2 texcoord2 : TEXCOORD2;
@@ -193,7 +193,7 @@ Shader "Hidden/BlurAndFlares"
             };
             struct program9Input
             {
-                float4 sv_Position0 : SV_POSITION0;
+                float4 sv_Position0 : SV_POSITION;
                 float2 texcoord0 : TEXCOORD0;
                 float2 texcoord1 : TEXCOORD1;
                 float2 texcoord2 : TEXCOORD2;
@@ -204,7 +204,7 @@ Shader "Hidden/BlurAndFlares"
             };
             struct program9Output
             {
-                float4 sv_Target0 : SV_Target0;
+                float4 sv_Target0 : SV_Target;
             };
             #pragma vertex vert
             program7Output vert(program7Input i)
@@ -255,11 +255,11 @@ Shader "Hidden/BlurAndFlares"
                 float4 _Offsets;
                 float4 _MainTex_TexelSize;
             };
-            cbuffer UnityPerDraw : register(b1)
+            cbuffer _UnityPerDrawCB : register(b1)
             {
                 float4x4 unity_ObjectToWorld;
             };
-            cbuffer UnityPerFrame : register(b2)
+            cbuffer _UnityPerFrameCB : register(b2)
             {
                 float4x4 unity_MatrixVP;
             };
@@ -272,7 +272,7 @@ Shader "Hidden/BlurAndFlares"
             };
             struct program11Output
             {
-                float4 sv_Position0 : SV_POSITION0;
+                float4 sv_Position0 : SV_POSITION;
                 float2 texcoord0 : TEXCOORD0;
                 float4 texcoord1 : TEXCOORD1;
                 float4 texcoord2 : TEXCOORD2;
@@ -281,7 +281,7 @@ Shader "Hidden/BlurAndFlares"
             };
             struct program12Input
             {
-                float4 sv_Position0 : SV_POSITION0;
+                float4 sv_Position0 : SV_POSITION;
                 float2 texcoord0 : TEXCOORD0;
                 float4 texcoord1 : TEXCOORD1;
                 float4 texcoord2 : TEXCOORD2;
@@ -290,7 +290,7 @@ Shader "Hidden/BlurAndFlares"
             };
             struct program12Output
             {
-                float4 sv_Target0 : SV_Target0;
+                float4 sv_Target0 : SV_Target;
             };
             #pragma vertex vert
             program11Output vert(program11Input i)

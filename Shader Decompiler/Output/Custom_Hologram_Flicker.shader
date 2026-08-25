@@ -29,12 +29,12 @@ Shader "Custom/Hologram_Flicker"
                 float _GlitchAmount;
                 float _FlickerAmount;
             };
-            cbuffer UnityPerDraw : register(b1)
+            cbuffer _UnityPerDrawCB : register(b1)
             {
                 float4x4 unity_ObjectToWorld;
                 float4 _Time;
             };
-            cbuffer UnityPerFrame : register(b2)
+            cbuffer _UnityPerFrameCB : register(b2)
             {
                 float4x4 unity_MatrixVP;
             };
@@ -50,19 +50,19 @@ Shader "Custom/Hologram_Flicker"
             };
             struct program1Output
             {
-                float4 sv_Position0 : SV_Position0;
+                float4 sv_Position0 : SV_Position;
                 float4 color0 : COLOR0;
                 float2 texcoord0 : TEXCOORD0;
             };
             struct program3Input
             {
-                float4 sv_Position0 : SV_Position0;
+                float4 sv_Position0 : SV_Position;
                 float4 color0 : COLOR0;
                 float2 texcoord0 : TEXCOORD0;
             };
             struct program3Output
             {
-                float4 sv_Target0 : SV_Target0;
+                float4 sv_Target0 : SV_Target;
             };
             #pragma vertex vert
             program1Output vert(program1Input i)
@@ -88,8 +88,8 @@ Shader "Custom/Hologram_Flicker"
                 float4 r0_xyzw_10 = _MainTex.Sample(sampler_MainTex, (float4(r1_xz_1.x, TEXCOORD0_yw_1.x, r1_xz_1.x, r1_xz_1.x)).xy);
                 float4 r1_xyzw_2 = _SecondTex.Sample(sampler_SecondTex, (float4(r1_xz_1.y, TEXCOORD0_yw_1.y, r1_xz_1.y, r1_xz_1.y)).xy);
                 float4 r0_xyzw_11 = (r0_xyzw_10 + r1_xyzw_2);
-                o.sv_Target0.w = (r0_xyzw_11.w + min(frac((sin(_Time.x) * 43758.547)), _FlickerAmount));
-                o.sv_Target0.xyz = r0_xyzw_11.xyz;
+                o.sv_Target0.w = saturate((r0_xyzw_11.w + min(frac((sin(_Time.x) * 43758.547)), _FlickerAmount)));
+                o.sv_Target0.xyz = (saturate(r0_xyzw_11.xyzx)).xyz;
                 return o;
             }
             ENDHLSL

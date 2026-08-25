@@ -657,7 +657,7 @@ private static string InterfaceInterpKey(List<Parser.DXBC.Chunks.SignatureElemen
         foreach (HlslResourceNode res in resources)
         {
             HlslResourceNode? existing = pass.Resources.FirstOrDefault(r =>
-                r.Kind == res.Kind && r.Slot == res.Slot);
+                r.Kind == res.Kind && (r.Slot == res.Slot || r.Name == res.Name));
 
             if (existing is null)
             {

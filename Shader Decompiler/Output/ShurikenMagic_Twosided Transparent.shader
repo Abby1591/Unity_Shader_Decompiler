@@ -23,14 +23,14 @@ Shader "ShurikenMagic/Twosided Transparent"
                 float4 _Color;
                 float4 _MainTex_ST;
             };
-            cbuffer UnityPerDraw : register(b1)
+            cbuffer _UnityPerDrawCB : register(b1)
             {
                 float4x4 unity_ObjectToWorld;
                 float4 _WorldSpaceLightPos0;
                 float4x4 unity_WorldToObject;
                 float4 unity_OcclusionMaskSelector;
             };
-            cbuffer UnityPerFrame : register(b2)
+            cbuffer _UnityPerFrameCB : register(b2)
             {
                 float4 unity_ProbeVolumeParams;
                 float4x4 unity_ProbeVolumeWorldToObject;
@@ -55,21 +55,21 @@ Shader "ShurikenMagic/Twosided Transparent"
             };
             struct program6Output
             {
-                float4 sv_Position0 : SV_POSITION0;
+                float4 sv_Position0 : SV_POSITION;
                 float2 texcoord0 : TEXCOORD0;
                 float3 texcoord1 : TEXCOORD1;
                 float3 texcoord2 : TEXCOORD2;
             };
             struct program14Input
             {
-                float4 sv_Position0 : SV_POSITION0;
+                float4 sv_Position0 : SV_POSITION;
                 float2 texcoord0 : TEXCOORD0;
                 float3 texcoord1 : TEXCOORD1;
                 float3 texcoord2 : TEXCOORD2;
             };
             struct program14Output
             {
-                float4 sv_Target0 : SV_Target0;
+                float4 sv_Target0 : SV_Target;
             };
             #pragma vertex vert
             program6Output vert(program6Input i)
@@ -133,7 +133,7 @@ Shader "ShurikenMagic/Twosided Transparent"
                     r1_z_10 = r1_xyzw_2.z;
                     r1_w_8 = r1_xyzw_2.w;
                 }
-                float4 r1_xyzw_10 = ((dot(float4(r1_x_8, r1_y_11, r1_z_10, r1_w_8), unity_OcclusionMaskSelector)).xxxx * _LightColor0.xyzx);
+                float4 r1_xyzw_10 = ((saturate(dot(float4(r1_x_8, r1_y_11, r1_z_10, r1_w_8), unity_OcclusionMaskSelector))).xxxx * _LightColor0.xyzx);
                 float r1_x_10 = r1_xyzw_10.x;
                 float r1_y_12 = r1_xyzw_10.y;
                 float r1_z_11 = r1_xyzw_10.z;
@@ -159,14 +159,14 @@ Shader "ShurikenMagic/Twosided Transparent"
                 float4 _Color;
                 float4 _MainTex_ST;
             };
-            cbuffer UnityPerDraw : register(b1)
+            cbuffer _UnityPerDrawCB : register(b1)
             {
                 float4x4 unity_ObjectToWorld;
                 float4 _WorldSpaceLightPos0;
                 float4x4 unity_WorldToObject;
                 float4 unity_OcclusionMaskSelector;
             };
-            cbuffer UnityPerFrame : register(b2)
+            cbuffer _UnityPerFrameCB : register(b2)
             {
                 float4 unity_ProbeVolumeParams;
                 float4x4 unity_ProbeVolumeWorldToObject;
@@ -204,7 +204,7 @@ Shader "ShurikenMagic/Twosided Transparent"
             };
             struct program10Output
             {
-                float4 sv_Position0 : SV_POSITION0;
+                float4 sv_Position0 : SV_POSITION;
                 float2 texcoord0 : TEXCOORD0;
                 float texcoord4 : TEXCOORD4;
                 float3 texcoord1 : TEXCOORD1;
@@ -213,7 +213,7 @@ Shader "ShurikenMagic/Twosided Transparent"
             };
             struct program17Input
             {
-                float4 sv_Position0 : SV_POSITION0;
+                float4 sv_Position0 : SV_POSITION;
                 float2 texcoord0 : TEXCOORD0;
                 float texcoord4 : TEXCOORD4;
                 float3 texcoord1 : TEXCOORD1;
@@ -222,7 +222,7 @@ Shader "ShurikenMagic/Twosided Transparent"
             };
             struct program17Output
             {
-                float4 sv_Target0 : SV_Target0;
+                float4 sv_Target0 : SV_Target;
             };
             #pragma vertex vert
             program10Output vert(program10Input i)
@@ -332,7 +332,7 @@ Shader "ShurikenMagic/Twosided Transparent"
                     r1_z_10 = r1_xyzw_2.z;
                     r1_w_8 = r1_xyzw_2.w;
                 }
-                float4 r1_xyzw_10 = ((dot(float4(r1_x_8, r1_y_11, r1_z_10, r1_w_8), unity_OcclusionMaskSelector)).xxxx * _LightColor0.xyzx);
+                float4 r1_xyzw_10 = ((saturate(dot(float4(r1_x_8, r1_y_11, r1_z_10, r1_w_8), unity_OcclusionMaskSelector))).xxxx * _LightColor0.xyzx);
                 float r1_x_10 = r1_xyzw_10.x;
                 float r1_y_12 = r1_xyzw_10.y;
                 float r1_z_11 = r1_xyzw_10.z;
@@ -342,8 +342,7 @@ Shader "ShurikenMagic/Twosided Transparent"
                 float r1_x_11 = r1_xyzw_11.x;
                 float r1_y_13 = r1_xyzw_11.y;
                 float r1_z_12 = r1_xyzw_11.z;
-                float TEXCOORD0_x_12 = i.texcoord4.x;
-                o.sv_Target0.xyz = (mad(TEXCOORD0_x_12.xxxx, (((mad(float4(r1_x_11, r1_y_13, r1_z_12, r1_x_11), r1_w_10.xxxx, ((r0_xyzw_2.xyzx * i.texcoord3.xyzx)).xyzx)).xyzx + -unity_ProbeVolumeParams.xyzx)).xyzx, unity_ProbeVolumeParams.xyzx)).xyz;
+                o.sv_Target0.xyz = (mad((saturate(i.texcoord4.x)).xxxx, (((mad(float4(r1_x_11, r1_y_13, r1_z_12, r1_x_11), r1_w_10.xxxx, ((r0_xyzw_2.xyzx * i.texcoord3.xyzx)).xyzx)).xyzx + -unity_ProbeVolumeParams.xyzx)).xyzx, unity_ProbeVolumeParams.xyzx)).xyz;
                 o.sv_Target0.w = r0_xyzw_2.w;
                 return o;
             }
@@ -363,14 +362,14 @@ Shader "ShurikenMagic/Twosided Transparent"
                 float4 _Color;
                 float4 _MainTex_ST;
             };
-            cbuffer UnityPerDraw : register(b1)
+            cbuffer _UnityPerDrawCB : register(b1)
             {
                 float4x4 unity_ObjectToWorld;
                 float4 _WorldSpaceLightPos0;
                 float4x4 unity_WorldToObject;
                 float4 unity_OcclusionMaskSelector;
             };
-            cbuffer UnityPerFrame : register(b2)
+            cbuffer _UnityPerFrameCB : register(b2)
             {
                 float4 unity_ProbeVolumeParams;
                 float4x4 unity_ProbeVolumeWorldToObject;
@@ -404,7 +403,7 @@ Shader "ShurikenMagic/Twosided Transparent"
             };
             struct program9Output
             {
-                float4 sv_Position0 : SV_POSITION0;
+                float4 sv_Position0 : SV_POSITION;
                 float2 texcoord0 : TEXCOORD0;
                 float texcoord4 : TEXCOORD4;
                 float3 texcoord1 : TEXCOORD1;
@@ -412,7 +411,7 @@ Shader "ShurikenMagic/Twosided Transparent"
             };
             struct program16Input
             {
-                float4 sv_Position0 : SV_POSITION0;
+                float4 sv_Position0 : SV_POSITION;
                 float2 texcoord0 : TEXCOORD0;
                 float texcoord4 : TEXCOORD4;
                 float3 texcoord1 : TEXCOORD1;
@@ -420,7 +419,7 @@ Shader "ShurikenMagic/Twosided Transparent"
             };
             struct program16Output
             {
-                float4 sv_Target0 : SV_Target0;
+                float4 sv_Target0 : SV_Target;
             };
             #pragma vertex vert
             program9Output vert(program9Input i)
@@ -489,14 +488,13 @@ Shader "ShurikenMagic/Twosided Transparent"
                     r1_z_10 = r1_xyzw_2.z;
                     r1_w_8 = r1_xyzw_2.w;
                 }
-                float4 r1_xyzw_10 = ((dot(float4(r1_x_8, r1_y_11, r1_z_10, r1_w_8), unity_OcclusionMaskSelector)).xxxx * _LightColor0.xyzx);
+                float4 r1_xyzw_10 = ((saturate(dot(float4(r1_x_8, r1_y_11, r1_z_10, r1_w_8), unity_OcclusionMaskSelector))).xxxx * _LightColor0.xyzx);
                 float r1_x_10 = r1_xyzw_10.x;
                 float r1_y_12 = r1_xyzw_10.y;
                 float r1_z_11 = r1_xyzw_10.z;
                 float r1_w_9 = dot(i.texcoord1.xyzx, _WorldSpaceLightPos0.xyzx);
                 float r1_w_10 = max(r1_w_9, 0);
-                float TEXCOORD0_x_11 = i.texcoord4.x;
-                o.sv_Target0.xyz = (mad(TEXCOORD0_x_11.xxxx, (mad(((r0_xyzw_2.xyzx * float4(r1_x_10, r1_y_12, r1_z_11, r1_x_10))).xyzx, r1_w_10.xxxx, -unity_ProbeVolumeParams.xyzx)).xyzx, unity_ProbeVolumeParams.xyzx)).xyz;
+                o.sv_Target0.xyz = (mad((saturate(i.texcoord4.x)).xxxx, (mad(((r0_xyzw_2.xyzx * float4(r1_x_10, r1_y_12, r1_z_11, r1_x_10))).xyzx, r1_w_10.xxxx, -unity_ProbeVolumeParams.xyzx)).xyzx, unity_ProbeVolumeParams.xyzx)).xyz;
                 o.sv_Target0.w = r0_xyzw_2.w;
                 return o;
             }
@@ -516,7 +514,7 @@ Shader "ShurikenMagic/Twosided Transparent"
                 float4 _Color;
                 float4 _MainTex_ST;
             };
-            cbuffer UnityPerDraw : register(b1)
+            cbuffer _UnityPerDrawCB : register(b1)
             {
                 float4x4 unity_ObjectToWorld;
                 float4 _WorldSpaceLightPos0;
@@ -524,7 +522,7 @@ Shader "ShurikenMagic/Twosided Transparent"
                 float4 unity_OcclusionMaskSelector;
                 float4 cb1_values[46];
             };
-            cbuffer UnityPerFrame : register(b2)
+            cbuffer _UnityPerFrameCB : register(b2)
             {
                 float4 unity_ProbeVolumeParams;
                 float4x4 unity_ProbeVolumeWorldToObject;
@@ -554,7 +552,7 @@ Shader "ShurikenMagic/Twosided Transparent"
             };
             struct program7Output
             {
-                float4 sv_Position0 : SV_POSITION0;
+                float4 sv_Position0 : SV_POSITION;
                 float2 texcoord0 : TEXCOORD0;
                 float3 texcoord1 : TEXCOORD1;
                 float3 texcoord2 : TEXCOORD2;
@@ -562,7 +560,7 @@ Shader "ShurikenMagic/Twosided Transparent"
             };
             struct program15Input
             {
-                float4 sv_Position0 : SV_POSITION0;
+                float4 sv_Position0 : SV_POSITION;
                 float2 texcoord0 : TEXCOORD0;
                 float3 texcoord1 : TEXCOORD1;
                 float3 texcoord2 : TEXCOORD2;
@@ -570,7 +568,7 @@ Shader "ShurikenMagic/Twosided Transparent"
             };
             struct program15Output
             {
-                float4 sv_Target0 : SV_Target0;
+                float4 sv_Target0 : SV_Target;
             };
             #pragma vertex vert
             program7Output vert(program7Input i)
@@ -649,7 +647,7 @@ Shader "ShurikenMagic/Twosided Transparent"
                     r1_z_10 = r1_xyzw_2.z;
                     r1_w_8 = r1_xyzw_2.w;
                 }
-                float4 r1_xyzw_10 = ((dot(float4(r1_x_8, r1_y_11, r1_z_10, r1_w_8), unity_OcclusionMaskSelector)).xxxx * _LightColor0.xyzx);
+                float4 r1_xyzw_10 = ((saturate(dot(float4(r1_x_8, r1_y_11, r1_z_10, r1_w_8), unity_OcclusionMaskSelector))).xxxx * _LightColor0.xyzx);
                 float r1_x_10 = r1_xyzw_10.x;
                 float r1_y_12 = r1_xyzw_10.y;
                 float r1_z_11 = r1_xyzw_10.z;
@@ -680,14 +678,14 @@ Shader "ShurikenMagic/Twosided Transparent"
                 float4 _MainTex_ST;
                 float4 cb0_values[10];
             };
-            cbuffer UnityPerDraw : register(b1)
+            cbuffer _UnityPerDrawCB : register(b1)
             {
                 float4x4 unity_ObjectToWorld;
                 float4 _WorldSpaceLightPos0;
                 float4x4 unity_WorldToObject;
                 float4 unity_OcclusionMaskSelector;
             };
-            cbuffer UnityPerFrame : register(b2)
+            cbuffer _UnityPerFrameCB : register(b2)
             {
                 float4 unity_ProbeVolumeParams;
                 float4x4 unity_ProbeVolumeWorldToObject;
@@ -714,7 +712,7 @@ Shader "ShurikenMagic/Twosided Transparent"
             };
             struct program22Output
             {
-                float4 sv_Position0 : SV_POSITION0;
+                float4 sv_Position0 : SV_POSITION;
                 float2 texcoord0 : TEXCOORD0;
                 float3 texcoord1 : TEXCOORD1;
                 float3 texcoord2 : TEXCOORD2;
@@ -722,7 +720,7 @@ Shader "ShurikenMagic/Twosided Transparent"
             };
             struct program34Input
             {
-                float4 sv_Position0 : SV_POSITION0;
+                float4 sv_Position0 : SV_POSITION;
                 float2 texcoord0 : TEXCOORD0;
                 float3 texcoord1 : TEXCOORD1;
                 float3 texcoord2 : TEXCOORD2;
@@ -730,7 +728,7 @@ Shader "ShurikenMagic/Twosided Transparent"
             };
             struct program34Output
             {
-                float4 sv_Target0 : SV_Target0;
+                float4 sv_Target0 : SV_Target;
             };
             #pragma vertex vert
             program22Output vert(program22Input i)
@@ -797,7 +795,7 @@ Shader "ShurikenMagic/Twosided Transparent"
                     r3_z_10 = r3_xyzw_10.z;
                     r3_w_4 = r3_xyzw_10.w;
                 }
-                float r0_w_7 = dot(float4(r3_x_10, r3_y_10, r3_z_10, r3_w_4), unity_OcclusionMaskSelector);
+                float r0_w_7 = saturate(dot(float4(r3_x_10, r3_y_10, r3_z_10, r3_w_4), unity_OcclusionMaskSelector));
                 float4 r2_xyzw_6 = t1.Sample(sampler_linear_clamp1, ((dot(r2_xyz_4.xyzx, r2_xyz_4.xyzx)).xxxx).xy);
                 float r0_w_8 = (r0_w_7 * r2_xyzw_6.x);
                 float4 r2_xyzw_7 = (r0_w_8.xxxx * _LightColor0.xyzx);
@@ -829,14 +827,14 @@ Shader "ShurikenMagic/Twosided Transparent"
                 float4 _MainTex_ST;
                 float4 cb0_values[10];
             };
-            cbuffer UnityPerDraw : register(b1)
+            cbuffer _UnityPerDrawCB : register(b1)
             {
                 float4x4 unity_ObjectToWorld;
                 float4 _WorldSpaceLightPos0;
                 float4x4 unity_WorldToObject;
                 float4 unity_OcclusionMaskSelector;
             };
-            cbuffer UnityPerFrame : register(b2)
+            cbuffer _UnityPerFrameCB : register(b2)
             {
                 float4 unity_ProbeVolumeParams;
                 float4x4 unity_ProbeVolumeWorldToObject;
@@ -872,7 +870,7 @@ Shader "ShurikenMagic/Twosided Transparent"
             };
             struct program29Output
             {
-                float4 sv_Position0 : SV_POSITION0;
+                float4 sv_Position0 : SV_POSITION;
                 float2 texcoord0 : TEXCOORD0;
                 float2 texcoord3 : TEXCOORD3;
                 float3 texcoord1 : TEXCOORD1;
@@ -881,7 +879,7 @@ Shader "ShurikenMagic/Twosided Transparent"
             };
             struct program42Input
             {
-                float4 sv_Position0 : SV_POSITION0;
+                float4 sv_Position0 : SV_POSITION;
                 float2 texcoord0 : TEXCOORD0;
                 float2 texcoord3 : TEXCOORD3;
                 float3 texcoord1 : TEXCOORD1;
@@ -890,7 +888,7 @@ Shader "ShurikenMagic/Twosided Transparent"
             };
             struct program42Output
             {
-                float4 sv_Target0 : SV_Target0;
+                float4 sv_Target0 : SV_Target;
             };
             #pragma vertex vert
             program29Output vert(program29Input i)
@@ -953,7 +951,7 @@ Shader "ShurikenMagic/Twosided Transparent"
                     r2_z_10 = r2_xyzw_10.z;
                     r2_w_4 = r2_xyzw_10.w;
                 }
-                float r1_z_5 = dot(float4(r2_x_10, r2_y_10, r2_z_10, r2_w_4), unity_OcclusionMaskSelector);
+                float r1_z_5 = saturate(dot(float4(r2_x_10, r2_y_10, r2_z_10, r2_w_4), unity_OcclusionMaskSelector));
                 float4 r2_xyzw_11 = t1.Sample(sampler_linear_clamp1, ((((mad(cb0_values[6].xyxx, i.texcoord2.zzzz, (mad(cb0_values[4].xyxx, i.texcoord2.xxxx, ((i.texcoord2.yyyy * cb0_values[5].xyxx)).xyxx)).xyxx)).xyxx + cb0_values[7].xyxx)).xyxx).xy);
                 float4 r1_xyzw_6 = (((r1_z_5 * r2_xyzw_11.w)).xxxx * _LightColor0.xyzx);
                 float r1_x_6 = r1_xyzw_6.x;
@@ -961,8 +959,7 @@ Shader "ShurikenMagic/Twosided Transparent"
                 float r1_z_6 = r1_xyzw_6.z;
                 float r1_w_3 = dot(i.texcoord1.xyzx, _WorldSpaceLightPos0.xyzx);
                 float r1_w_4 = max(r1_w_3, 0);
-                float TEXCOORD1_x_7 = i.texcoord4.x;
-                o.sv_Target0.xyz = ((((r1_w_4.xxxx * ((r0_xyzw_2.xyzx * float4(r1_x_6, r1_y_5, r1_z_6, r1_x_6))).xyzx)).xyzx * TEXCOORD1_x_7.xxxx)).xyz;
+                o.sv_Target0.xyz = ((((r1_w_4.xxxx * ((r0_xyzw_2.xyzx * float4(r1_x_6, r1_y_5, r1_z_6, r1_x_6))).xyzx)).xyzx * (saturate(i.texcoord4.x)).xxxx)).xyz;
                 o.sv_Target0.w = r0_xyzw_2.w;
                 return o;
             }
@@ -983,14 +980,14 @@ Shader "ShurikenMagic/Twosided Transparent"
                 float4 _MainTex_ST;
                 float4 cb0_values[10];
             };
-            cbuffer UnityPerDraw : register(b1)
+            cbuffer _UnityPerDrawCB : register(b1)
             {
                 float4x4 unity_ObjectToWorld;
                 float4 _WorldSpaceLightPos0;
                 float4x4 unity_WorldToObject;
                 float4 unity_OcclusionMaskSelector;
             };
-            cbuffer UnityPerFrame : register(b2)
+            cbuffer _UnityPerFrameCB : register(b2)
             {
                 float4 unity_ProbeVolumeParams;
                 float4x4 unity_ProbeVolumeWorldToObject;
@@ -1028,7 +1025,7 @@ Shader "ShurikenMagic/Twosided Transparent"
             };
             struct program28Output
             {
-                float4 sv_Position0 : SV_POSITION0;
+                float4 sv_Position0 : SV_POSITION;
                 float2 texcoord0 : TEXCOORD0;
                 float texcoord4 : TEXCOORD4;
                 float3 texcoord1 : TEXCOORD1;
@@ -1037,7 +1034,7 @@ Shader "ShurikenMagic/Twosided Transparent"
             };
             struct program41Input
             {
-                float4 sv_Position0 : SV_POSITION0;
+                float4 sv_Position0 : SV_POSITION;
                 float2 texcoord0 : TEXCOORD0;
                 float texcoord4 : TEXCOORD4;
                 float3 texcoord1 : TEXCOORD1;
@@ -1046,7 +1043,7 @@ Shader "ShurikenMagic/Twosided Transparent"
             };
             struct program41Output
             {
-                float4 sv_Target0 : SV_Target0;
+                float4 sv_Target0 : SV_Target;
             };
             #pragma vertex vert
             program28Output vert(program28Input i)
@@ -1121,7 +1118,7 @@ Shader "ShurikenMagic/Twosided Transparent"
                     r3_z_10 = r3_xyzw_10.z;
                     r3_w_4 = r3_xyzw_10.w;
                 }
-                float r0_w_7 = dot(float4(r3_x_10, r3_y_10, r3_z_10, r3_w_4), unity_OcclusionMaskSelector);
+                float r0_w_7 = saturate(dot(float4(r3_x_10, r3_y_10, r3_z_10, r3_w_4), unity_OcclusionMaskSelector));
                 float r2_w_3 = dot(r2_xyz_4.xyzx, r2_xyz_4.xyzx);
                 float4 r3_xyzw_11 = t1.Sample(sampler_linear_clamp2, (r2_w_3.xxxx).xy);
                 float4 r2_xyzw_5 = t2.Sample(sampler_linear_clamp1, r2_xyz_4.xyz);
@@ -1138,8 +1135,8 @@ Shader "ShurikenMagic/Twosided Transparent"
                 float r0_x_5 = r0_xyzw_5.x;
                 float r0_y_4 = r0_xyzw_5.y;
                 float r0_z_4 = r0_xyzw_5.z;
-                float TEXCOORD0_w_10 = i.texcoord4.x;
-                o.sv_Target0.xyz = ((float4(r0_x_5, r0_y_4, r0_z_4, r0_x_5) * TEXCOORD0_w_10.xxxx)).xyz;
+                float r0_w_10 = saturate(i.texcoord4.x);
+                o.sv_Target0.xyz = ((float4(r0_x_5, r0_y_4, r0_z_4, r0_x_5) * r0_w_10.xxxx)).xyz;
                 o.sv_Target0.w = r1_xyzw_2.w;
                 return o;
             }
@@ -1160,14 +1157,14 @@ Shader "ShurikenMagic/Twosided Transparent"
                 float4 _MainTex_ST;
                 float4 cb0_values[10];
             };
-            cbuffer UnityPerDraw : register(b1)
+            cbuffer _UnityPerDrawCB : register(b1)
             {
                 float4x4 unity_ObjectToWorld;
                 float4 _WorldSpaceLightPos0;
                 float4x4 unity_WorldToObject;
                 float4 unity_OcclusionMaskSelector;
             };
-            cbuffer UnityPerFrame : register(b2)
+            cbuffer _UnityPerFrameCB : register(b2)
             {
                 float4 unity_ProbeVolumeParams;
                 float4x4 unity_ProbeVolumeWorldToObject;
@@ -1205,7 +1202,7 @@ Shader "ShurikenMagic/Twosided Transparent"
             };
             struct program27Output
             {
-                float4 sv_Position0 : SV_POSITION0;
+                float4 sv_Position0 : SV_POSITION;
                 float2 texcoord0 : TEXCOORD0;
                 float texcoord4 : TEXCOORD4;
                 float3 texcoord1 : TEXCOORD1;
@@ -1214,7 +1211,7 @@ Shader "ShurikenMagic/Twosided Transparent"
             };
             struct program40Input
             {
-                float4 sv_Position0 : SV_POSITION0;
+                float4 sv_Position0 : SV_POSITION;
                 float2 texcoord0 : TEXCOORD0;
                 float texcoord4 : TEXCOORD4;
                 float3 texcoord1 : TEXCOORD1;
@@ -1223,7 +1220,7 @@ Shader "ShurikenMagic/Twosided Transparent"
             };
             struct program40Output
             {
-                float4 sv_Target0 : SV_Target0;
+                float4 sv_Target0 : SV_Target;
             };
             #pragma vertex vert
             program27Output vert(program27Input i)
@@ -1293,7 +1290,7 @@ Shader "ShurikenMagic/Twosided Transparent"
                     r3_z_10 = r3_xyzw_10.z;
                     r3_w_4 = r3_xyzw_10.w;
                 }
-                float r0_w_7 = dot(float4(r3_x_10, r3_y_11, r3_z_10, r3_w_4), unity_OcclusionMaskSelector);
+                float r0_w_7 = saturate(dot(float4(r3_x_10, r3_y_11, r3_z_10, r3_w_4), unity_OcclusionMaskSelector));
                 float4 r3_xyzw_12 = (r2_xyzw_4.xxyx / r2_xyzw_4.wwww);
                 float r3_y_12 = r3_xyzw_12.y;
                 float r3_z_11 = r3_xyzw_12.z;
@@ -1320,8 +1317,8 @@ Shader "ShurikenMagic/Twosided Transparent"
                 float r0_x_5 = r0_xyzw_5.x;
                 float r0_y_4 = r0_xyzw_5.y;
                 float r0_z_4 = r0_xyzw_5.z;
-                float TEXCOORD0_w_10 = i.texcoord4.x;
-                o.sv_Target0.xyz = ((float4(r0_x_5, r0_y_4, r0_z_4, r0_x_5) * TEXCOORD0_w_10.xxxx)).xyz;
+                float r0_w_10 = saturate(i.texcoord4.x);
+                o.sv_Target0.xyz = ((float4(r0_x_5, r0_y_4, r0_z_4, r0_x_5) * r0_w_10.xxxx)).xyz;
                 o.sv_Target0.w = r1_xyzw_2.w;
                 return o;
             }
@@ -1342,14 +1339,14 @@ Shader "ShurikenMagic/Twosided Transparent"
                 float4 _MainTex_ST;
                 float4 cb0_values[10];
             };
-            cbuffer UnityPerDraw : register(b1)
+            cbuffer _UnityPerDrawCB : register(b1)
             {
                 float4x4 unity_ObjectToWorld;
                 float4 _WorldSpaceLightPos0;
                 float4x4 unity_WorldToObject;
                 float4 unity_OcclusionMaskSelector;
             };
-            cbuffer UnityPerFrame : register(b2)
+            cbuffer _UnityPerFrameCB : register(b2)
             {
                 float4 unity_ProbeVolumeParams;
                 float4x4 unity_ProbeVolumeWorldToObject;
@@ -1385,7 +1382,7 @@ Shader "ShurikenMagic/Twosided Transparent"
             };
             struct program26Output
             {
-                float4 sv_Position0 : SV_POSITION0;
+                float4 sv_Position0 : SV_POSITION;
                 float2 texcoord0 : TEXCOORD0;
                 float texcoord4 : TEXCOORD4;
                 float3 texcoord1 : TEXCOORD1;
@@ -1394,7 +1391,7 @@ Shader "ShurikenMagic/Twosided Transparent"
             };
             struct program38Input
             {
-                float4 sv_Position0 : SV_POSITION0;
+                float4 sv_Position0 : SV_POSITION;
                 float2 texcoord0 : TEXCOORD0;
                 float texcoord4 : TEXCOORD4;
                 float3 texcoord1 : TEXCOORD1;
@@ -1403,7 +1400,7 @@ Shader "ShurikenMagic/Twosided Transparent"
             };
             struct program38Output
             {
-                float4 sv_Target0 : SV_Target0;
+                float4 sv_Target0 : SV_Target;
             };
             #pragma vertex vert
             program26Output vert(program26Input i)
@@ -1478,7 +1475,7 @@ Shader "ShurikenMagic/Twosided Transparent"
                     r3_z_10 = r3_xyzw_10.z;
                     r3_w_4 = r3_xyzw_10.w;
                 }
-                float r0_w_7 = dot(float4(r3_x_10, r3_y_10, r3_z_10, r3_w_4), unity_OcclusionMaskSelector);
+                float r0_w_7 = saturate(dot(float4(r3_x_10, r3_y_10, r3_z_10, r3_w_4), unity_OcclusionMaskSelector));
                 float4 r2_xyzw_6 = t1.Sample(sampler_linear_clamp1, ((dot(r2_xyz_4.xyzx, r2_xyz_4.xyzx)).xxxx).xy);
                 float r0_w_8 = (r0_w_7 * r2_xyzw_6.x);
                 float4 r2_xyzw_7 = (r0_w_8.xxxx * _LightColor0.xyzx);
@@ -1493,8 +1490,8 @@ Shader "ShurikenMagic/Twosided Transparent"
                 float r0_x_5 = r0_xyzw_5.x;
                 float r0_y_4 = r0_xyzw_5.y;
                 float r0_z_4 = r0_xyzw_5.z;
-                float TEXCOORD0_w_10 = i.texcoord4.x;
-                o.sv_Target0.xyz = ((float4(r0_x_5, r0_y_4, r0_z_4, r0_x_5) * TEXCOORD0_w_10.xxxx)).xyz;
+                float r0_w_10 = saturate(i.texcoord4.x);
+                o.sv_Target0.xyz = ((float4(r0_x_5, r0_y_4, r0_z_4, r0_x_5) * r0_w_10.xxxx)).xyz;
                 o.sv_Target0.w = r1_xyzw_2.w;
                 return o;
             }
@@ -1515,14 +1512,14 @@ Shader "ShurikenMagic/Twosided Transparent"
                 float4 _MainTex_ST;
                 float4 cb0_values[10];
             };
-            cbuffer UnityPerDraw : register(b1)
+            cbuffer _UnityPerDrawCB : register(b1)
             {
                 float4x4 unity_ObjectToWorld;
                 float4 _WorldSpaceLightPos0;
                 float4x4 unity_WorldToObject;
                 float4 unity_OcclusionMaskSelector;
             };
-            cbuffer UnityPerFrame : register(b2)
+            cbuffer _UnityPerFrameCB : register(b2)
             {
                 float4 unity_ProbeVolumeParams;
                 float4x4 unity_ProbeVolumeWorldToObject;
@@ -1549,7 +1546,7 @@ Shader "ShurikenMagic/Twosided Transparent"
             };
             struct program25Output
             {
-                float4 sv_Position0 : SV_POSITION0;
+                float4 sv_Position0 : SV_POSITION;
                 float2 texcoord0 : TEXCOORD0;
                 float2 texcoord3 : TEXCOORD3;
                 float3 texcoord1 : TEXCOORD1;
@@ -1557,7 +1554,7 @@ Shader "ShurikenMagic/Twosided Transparent"
             };
             struct program37Input
             {
-                float4 sv_Position0 : SV_POSITION0;
+                float4 sv_Position0 : SV_POSITION;
                 float2 texcoord0 : TEXCOORD0;
                 float2 texcoord3 : TEXCOORD3;
                 float3 texcoord1 : TEXCOORD1;
@@ -1565,7 +1562,7 @@ Shader "ShurikenMagic/Twosided Transparent"
             };
             struct program37Output
             {
-                float4 sv_Target0 : SV_Target0;
+                float4 sv_Target0 : SV_Target;
             };
             #pragma vertex vert
             program25Output vert(program25Input i)
@@ -1628,7 +1625,7 @@ Shader "ShurikenMagic/Twosided Transparent"
                     r2_z_10 = r2_xyzw_10.z;
                     r2_w_4 = r2_xyzw_10.w;
                 }
-                float r1_z_5 = dot(float4(r2_x_10, r2_y_10, r2_z_10, r2_w_4), unity_OcclusionMaskSelector);
+                float r1_z_5 = saturate(dot(float4(r2_x_10, r2_y_10, r2_z_10, r2_w_4), unity_OcclusionMaskSelector));
                 float4 r2_xyzw_11 = t1.Sample(sampler_linear_clamp1, ((((mad(cb0_values[6].xyxx, i.texcoord2.zzzz, (mad(cb0_values[4].xyxx, i.texcoord2.xxxx, ((i.texcoord2.yyyy * cb0_values[5].xyxx)).xyxx)).xyxx)).xyxx + cb0_values[7].xyxx)).xyxx).xy);
                 float4 r1_xyzw_6 = (((r1_z_5 * r2_xyzw_11.w)).xxxx * _LightColor0.xyzx);
                 float r1_x_6 = r1_xyzw_6.x;
@@ -1657,14 +1654,14 @@ Shader "ShurikenMagic/Twosided Transparent"
                 float4 _MainTex_ST;
                 float4 cb0_values[10];
             };
-            cbuffer UnityPerDraw : register(b1)
+            cbuffer _UnityPerDrawCB : register(b1)
             {
                 float4x4 unity_ObjectToWorld;
                 float4 _WorldSpaceLightPos0;
                 float4x4 unity_WorldToObject;
                 float4 unity_OcclusionMaskSelector;
             };
-            cbuffer UnityPerFrame : register(b2)
+            cbuffer _UnityPerFrameCB : register(b2)
             {
                 float4 unity_ProbeVolumeParams;
                 float4x4 unity_ProbeVolumeWorldToObject;
@@ -1693,7 +1690,7 @@ Shader "ShurikenMagic/Twosided Transparent"
             };
             struct program24Output
             {
-                float4 sv_Position0 : SV_POSITION0;
+                float4 sv_Position0 : SV_POSITION;
                 float2 texcoord0 : TEXCOORD0;
                 float3 texcoord1 : TEXCOORD1;
                 float3 texcoord2 : TEXCOORD2;
@@ -1701,7 +1698,7 @@ Shader "ShurikenMagic/Twosided Transparent"
             };
             struct program36Input
             {
-                float4 sv_Position0 : SV_POSITION0;
+                float4 sv_Position0 : SV_POSITION;
                 float2 texcoord0 : TEXCOORD0;
                 float3 texcoord1 : TEXCOORD1;
                 float3 texcoord2 : TEXCOORD2;
@@ -1709,7 +1706,7 @@ Shader "ShurikenMagic/Twosided Transparent"
             };
             struct program36Output
             {
-                float4 sv_Target0 : SV_Target0;
+                float4 sv_Target0 : SV_Target;
             };
             #pragma vertex vert
             program24Output vert(program24Input i)
@@ -1776,7 +1773,7 @@ Shader "ShurikenMagic/Twosided Transparent"
                     r3_z_10 = r3_xyzw_10.z;
                     r3_w_4 = r3_xyzw_10.w;
                 }
-                float r0_w_7 = dot(float4(r3_x_10, r3_y_10, r3_z_10, r3_w_4), unity_OcclusionMaskSelector);
+                float r0_w_7 = saturate(dot(float4(r3_x_10, r3_y_10, r3_z_10, r3_w_4), unity_OcclusionMaskSelector));
                 float r2_w_3 = dot(r2_xyz_4.xyzx, r2_xyz_4.xyzx);
                 float4 r3_xyzw_11 = t1.Sample(sampler_linear_clamp2, (r2_w_3.xxxx).xy);
                 float4 r2_xyzw_5 = t2.Sample(sampler_linear_clamp1, r2_xyz_4.xyz);
@@ -1810,14 +1807,14 @@ Shader "ShurikenMagic/Twosided Transparent"
                 float4 _MainTex_ST;
                 float4 cb0_values[10];
             };
-            cbuffer UnityPerDraw : register(b1)
+            cbuffer _UnityPerDrawCB : register(b1)
             {
                 float4x4 unity_ObjectToWorld;
                 float4 _WorldSpaceLightPos0;
                 float4x4 unity_WorldToObject;
                 float4 unity_OcclusionMaskSelector;
             };
-            cbuffer UnityPerFrame : register(b2)
+            cbuffer _UnityPerFrameCB : register(b2)
             {
                 float4 unity_ProbeVolumeParams;
                 float4x4 unity_ProbeVolumeWorldToObject;
@@ -1846,7 +1843,7 @@ Shader "ShurikenMagic/Twosided Transparent"
             };
             struct program23Output
             {
-                float4 sv_Position0 : SV_POSITION0;
+                float4 sv_Position0 : SV_POSITION;
                 float2 texcoord0 : TEXCOORD0;
                 float3 texcoord1 : TEXCOORD1;
                 float3 texcoord2 : TEXCOORD2;
@@ -1854,7 +1851,7 @@ Shader "ShurikenMagic/Twosided Transparent"
             };
             struct program35Input
             {
-                float4 sv_Position0 : SV_POSITION0;
+                float4 sv_Position0 : SV_POSITION;
                 float2 texcoord0 : TEXCOORD0;
                 float3 texcoord1 : TEXCOORD1;
                 float3 texcoord2 : TEXCOORD2;
@@ -1862,7 +1859,7 @@ Shader "ShurikenMagic/Twosided Transparent"
             };
             struct program35Output
             {
-                float4 sv_Target0 : SV_Target0;
+                float4 sv_Target0 : SV_Target;
             };
             #pragma vertex vert
             program23Output vert(program23Input i)
@@ -1932,7 +1929,7 @@ Shader "ShurikenMagic/Twosided Transparent"
                     r3_z_10 = r3_xyzw_10.z;
                     r3_w_4 = r3_xyzw_10.w;
                 }
-                float r0_w_7 = dot(float4(r3_x_10, r3_y_11, r3_z_10, r3_w_4), unity_OcclusionMaskSelector);
+                float r0_w_7 = saturate(dot(float4(r3_x_10, r3_y_11, r3_z_10, r3_w_4), unity_OcclusionMaskSelector));
                 float4 r3_xyzw_12 = (r2_xyzw_4.xxyx / r2_xyzw_4.wwww);
                 float r3_y_12 = r3_xyzw_12.y;
                 float r3_z_11 = r3_xyzw_12.z;

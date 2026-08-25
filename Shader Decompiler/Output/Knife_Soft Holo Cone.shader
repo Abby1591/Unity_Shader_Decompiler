@@ -39,19 +39,19 @@ Shader "Knife/Soft Holo Cone"
                 float _Alpha;
                 float4 _texcoord_ST;
             };
-            cbuffer UnityPerCamera : register(b1)
+            cbuffer _UnityPerCameraCB : register(b1)
             {
                 float4 _Time;
                 float3 _WorldSpaceCameraPos;
                 float4 _ProjectionParams;
                 float4 _ZBufferParams;
             };
-            cbuffer UnityPerDraw : register(b2)
+            cbuffer _UnityPerDrawCB : register(b2)
             {
                 float4x4 unity_ObjectToWorld;
                 float4x4 unity_WorldToObject;
             };
-            cbuffer UnityPerFrame : register(b3)
+            cbuffer _UnityPerFrameCB : register(b3)
             {
                 float4x4 unity_MatrixVP;
             };
@@ -74,7 +74,7 @@ Shader "Knife/Soft Holo Cone"
             };
             struct program3Output
             {
-                float4 sv_Position0 : SV_POSITION0;
+                float4 sv_Position0 : SV_POSITION;
                 float2 texcoord0 : TEXCOORD0;
                 float3 texcoord1 : TEXCOORD1;
                 float3 texcoord2 : TEXCOORD2;
@@ -84,7 +84,7 @@ Shader "Knife/Soft Holo Cone"
             };
             struct program11Input
             {
-                float4 sv_Position0 : SV_POSITION0;
+                float4 sv_Position0 : SV_POSITION;
                 float2 texcoord0 : TEXCOORD0;
                 float3 texcoord1 : TEXCOORD1;
                 float3 texcoord2 : TEXCOORD2;
@@ -94,7 +94,7 @@ Shader "Knife/Soft Holo Cone"
             };
             struct program11Output
             {
-                float4 sv_Target0 : SV_Target0;
+                float4 sv_Target0 : SV_Target;
             };
             #pragma vertex vert
             program3Output vert(program3Input i)
@@ -135,14 +135,14 @@ Shader "Knife/Soft Holo Cone"
                 float2 uvMask2_xy_1 = (mad(i.texcoord0.xyxx, _Mask2_ST.xyxx, _Mask2_ST.zwzz)).xy;
                 float4 r0_xyzw_3 = _Mask.Sample(sampler_Mask, ((mad(_Time.yyyy, _Mask2Speed.xyxx, uvMask2_xy_1.xyxx)).xyxx).xy);
                 float r0_y_4 = ((float4(1, 1, 1, 1) / _MaskSoftness2)).y;
-                float r0_x_4 = (r0_y_4 * r0_xyzw_3.x);
+                float r0_x_4 = saturate((r0_y_4 * r0_xyzw_3.x));
                 float r0_y_5 = mad(r0_x_4, -2, 3);
                 float4 uvMask_xyzw_6 = mad(i.texcoord0.xxyx, _Mask_ST.xxyx, _Mask_ST.zzwz);
                 float uvMask_y_6 = uvMask_xyzw_6.y;
                 float uvMask_z_2 = uvMask_xyzw_6.z;
                 float4 sampleMask_xyzw_1 = _Mask2.Sample(sampler_Mask2, (float4(uvMask_y_6, uvMask_z_2, uvMask_y_6, uvMask_y_6)).xy);
                 float r0_y_7 = ((float4(1, 1, 1, 1) / _MaskSoftness)).y;
-                float r0_y_8 = (r0_y_7 * sampleMask_xyzw_1.x);
+                float r0_y_8 = saturate((r0_y_7 * sampleMask_xyzw_1.x));
                 float r0_z_3 = mad(r0_y_8, -2, 3);
                 float r0_y_9 = (r0_y_8 * r0_y_8);
                 float r0_y_10 = (r0_y_9 * r0_z_3);
@@ -156,7 +156,7 @@ Shader "Knife/Soft Holo Cone"
                 float unitViewDir_w_3 = unitViewDir_xyzw_12.w;
                 float r0_y_13 = dot(i.texcoord1.xyzx, float4(unitViewDir_y_12, unitViewDir_z_5, unitViewDir_w_3, unitViewDir_y_12));
                 float r0_z_6 = ((float4(1, 1, 1, 1) / _Softness)).z;
-                float r0_y_14 = (r0_z_6 * abs(r0_y_13));
+                float r0_y_14 = saturate((r0_z_6 * abs(r0_y_13)));
                 float r0_z_7 = mad(r0_y_14, -2, 3);
                 float r0_y_15 = (r0_y_14 * r0_y_14);
                 float r0_y_16 = (r0_y_15 * r0_z_7);
@@ -198,7 +198,7 @@ Shader "Knife/Soft Holo Cone"
                 float _Alpha;
                 float4 _texcoord_ST;
             };
-            cbuffer UnityPerCamera : register(b1)
+            cbuffer _UnityPerCameraCB : register(b1)
             {
                 float4 _Time;
                 float3 _WorldSpaceCameraPos;
@@ -206,13 +206,13 @@ Shader "Knife/Soft Holo Cone"
                 float4 _ZBufferParams;
                 float4 cb1_values[6];
             };
-            cbuffer UnityPerDraw : register(b2)
+            cbuffer _UnityPerDrawCB : register(b2)
             {
                 float4x4 unity_ObjectToWorld;
                 float4x4 unity_WorldToObject;
                 float4 cb2_values[46];
             };
-            cbuffer UnityPerFrame : register(b3)
+            cbuffer _UnityPerFrameCB : register(b3)
             {
                 float4x4 unity_MatrixVP;
                 float4 cb3_values[7];
@@ -240,7 +240,7 @@ Shader "Knife/Soft Holo Cone"
             };
             struct program7Output
             {
-                float4 sv_Position0 : SV_POSITION0;
+                float4 sv_Position0 : SV_POSITION;
                 float2 texcoord0 : TEXCOORD0;
                 float texcoord5 : TEXCOORD5;
                 float3 texcoord1 : TEXCOORD1;
@@ -251,7 +251,7 @@ Shader "Knife/Soft Holo Cone"
             };
             struct program14Input
             {
-                float4 sv_Position0 : SV_POSITION0;
+                float4 sv_Position0 : SV_POSITION;
                 float2 texcoord0 : TEXCOORD0;
                 float texcoord5 : TEXCOORD5;
                 float3 texcoord1 : TEXCOORD1;
@@ -262,7 +262,7 @@ Shader "Knife/Soft Holo Cone"
             };
             struct program14Output
             {
-                float4 sv_Target0 : SV_Target0;
+                float4 sv_Target0 : SV_Target;
             };
             #pragma vertex vert
             program7Output vert(program7Input i)
@@ -341,14 +341,14 @@ Shader "Knife/Soft Holo Cone"
                 float2 uvMask2_xy_1 = (mad(i.texcoord0.xyxx, _Mask2_ST.xyxx, _Mask2_ST.zwzz)).xy;
                 float4 r0_xyzw_3 = _Mask.Sample(sampler_Mask, ((mad(_Time.yyyy, _Mask2Speed.xyxx, uvMask2_xy_1.xyxx)).xyxx).xy);
                 float r0_y_4 = ((float4(1, 1, 1, 1) / _MaskSoftness2)).y;
-                float r0_x_4 = (r0_y_4 * r0_xyzw_3.x);
+                float r0_x_4 = saturate((r0_y_4 * r0_xyzw_3.x));
                 float r0_y_5 = mad(r0_x_4, -2, 3);
                 float4 uvMask_xyzw_6 = mad(i.texcoord0.xxyx, _Mask_ST.xxyx, _Mask_ST.zzwz);
                 float uvMask_y_6 = uvMask_xyzw_6.y;
                 float uvMask_z_2 = uvMask_xyzw_6.z;
                 float4 sampleMask_xyzw_1 = _Mask2.Sample(sampler_Mask2, (float4(uvMask_y_6, uvMask_z_2, uvMask_y_6, uvMask_y_6)).xy);
                 float r0_y_7 = ((float4(1, 1, 1, 1) / _MaskSoftness)).y;
-                float r0_y_8 = (r0_y_7 * sampleMask_xyzw_1.x);
+                float r0_y_8 = saturate((r0_y_7 * sampleMask_xyzw_1.x));
                 float r0_z_3 = mad(r0_y_8, -2, 3);
                 float r0_y_9 = (r0_y_8 * r0_y_8);
                 float r0_y_10 = (r0_y_9 * r0_z_3);
@@ -362,7 +362,7 @@ Shader "Knife/Soft Holo Cone"
                 float unitViewDir_w_3 = unitViewDir_xyzw_12.w;
                 float r0_y_13 = dot(i.texcoord1.xyzx, float4(unitViewDir_y_12, unitViewDir_z_5, unitViewDir_w_3, unitViewDir_y_12));
                 float r0_z_6 = ((float4(1, 1, 1, 1) / _Softness)).z;
-                float r0_y_14 = (r0_z_6 * abs(r0_y_13));
+                float r0_y_14 = saturate((r0_z_6 * abs(r0_y_13)));
                 float r0_z_7 = mad(r0_y_14, -2, 3);
                 float r0_y_15 = (r0_y_14 * r0_y_14);
                 float r0_y_16 = (r0_y_15 * r0_z_7);
@@ -378,11 +378,12 @@ Shader "Knife/Soft Holo Cone"
                 float r0_y_22 = (r0_y_21 / _DepthFadeDistance);
                 float r0_y_23 = min(abs(r0_y_22), 1);
                 o.sv_Target0.w = ((r0_y_23 * (r0_y_16 * ((r0_y_10 * ((r0_x_4 * r0_x_4) * r0_y_5)) * _Color.w))) * _Alpha);
+                float r0_x_15 = saturate(mad(max((((i.texcoord5.x / cb1_values[5].y) + 1) * cb1_values[5].z), 0), cb2_values[1].z, cb2_values[1].w));
                 float4 r0_xyzw_24 = (_Color.xxyz + -cb2_values[0].xxyz);
                 float r0_y_24 = r0_xyzw_24.y;
                 float r0_z_11 = r0_xyzw_24.z;
                 float r0_w_5 = r0_xyzw_24.w;
-                o.sv_Target0.xyz = (mad((mad(max((((i.texcoord5.x / cb1_values[5].y) + 1) * cb1_values[5].z), 0), cb2_values[1].z, cb2_values[1].w)).xxxx, float4(r0_y_24, r0_z_11, r0_w_5, r0_y_24), cb2_values[0].xyzx)).xyz;
+                o.sv_Target0.xyz = (mad(r0_x_15.xxxx, float4(r0_y_24, r0_z_11, r0_w_5, r0_y_24), cb2_values[0].xyzx)).xyz;
                 return o;
             }
             ENDHLSL
@@ -408,7 +409,7 @@ Shader "Knife/Soft Holo Cone"
                 float _Alpha;
                 float4 _texcoord_ST;
             };
-            cbuffer UnityPerCamera : register(b1)
+            cbuffer _UnityPerCameraCB : register(b1)
             {
                 float4 _Time;
                 float3 _WorldSpaceCameraPos;
@@ -416,13 +417,13 @@ Shader "Knife/Soft Holo Cone"
                 float4 _ZBufferParams;
                 float4 cb1_values[6];
             };
-            cbuffer UnityPerDraw : register(b2)
+            cbuffer _UnityPerDrawCB : register(b2)
             {
                 float4x4 unity_ObjectToWorld;
                 float4x4 unity_WorldToObject;
                 float4 cb2_values[2];
             };
-            cbuffer UnityPerFrame : register(b3)
+            cbuffer _UnityPerFrameCB : register(b3)
             {
                 float4x4 unity_MatrixVP;
             };
@@ -445,7 +446,7 @@ Shader "Knife/Soft Holo Cone"
             };
             struct program6Output
             {
-                float4 sv_Position0 : SV_POSITION0;
+                float4 sv_Position0 : SV_POSITION;
                 float2 texcoord0 : TEXCOORD0;
                 float texcoord5 : TEXCOORD5;
                 float3 texcoord1 : TEXCOORD1;
@@ -456,7 +457,7 @@ Shader "Knife/Soft Holo Cone"
             };
             struct program13Input
             {
-                float4 sv_Position0 : SV_POSITION0;
+                float4 sv_Position0 : SV_POSITION;
                 float2 texcoord0 : TEXCOORD0;
                 float texcoord5 : TEXCOORD5;
                 float3 texcoord1 : TEXCOORD1;
@@ -467,7 +468,7 @@ Shader "Knife/Soft Holo Cone"
             };
             struct program13Output
             {
-                float4 sv_Target0 : SV_Target0;
+                float4 sv_Target0 : SV_Target;
             };
             #pragma vertex vert
             program6Output vert(program6Input i)
@@ -509,14 +510,14 @@ Shader "Knife/Soft Holo Cone"
                 float2 uvMask2_xy_1 = (mad(i.texcoord0.xyxx, _Mask2_ST.xyxx, _Mask2_ST.zwzz)).xy;
                 float4 r0_xyzw_3 = _Mask.Sample(sampler_Mask, ((mad(_Time.yyyy, _Mask2Speed.xyxx, uvMask2_xy_1.xyxx)).xyxx).xy);
                 float r0_y_4 = ((float4(1, 1, 1, 1) / _MaskSoftness2)).y;
-                float r0_x_4 = (r0_y_4 * r0_xyzw_3.x);
+                float r0_x_4 = saturate((r0_y_4 * r0_xyzw_3.x));
                 float r0_y_5 = mad(r0_x_4, -2, 3);
                 float4 uvMask_xyzw_6 = mad(i.texcoord0.xxyx, _Mask_ST.xxyx, _Mask_ST.zzwz);
                 float uvMask_y_6 = uvMask_xyzw_6.y;
                 float uvMask_z_2 = uvMask_xyzw_6.z;
                 float4 sampleMask_xyzw_1 = _Mask2.Sample(sampler_Mask2, (float4(uvMask_y_6, uvMask_z_2, uvMask_y_6, uvMask_y_6)).xy);
                 float r0_y_7 = ((float4(1, 1, 1, 1) / _MaskSoftness)).y;
-                float r0_y_8 = (r0_y_7 * sampleMask_xyzw_1.x);
+                float r0_y_8 = saturate((r0_y_7 * sampleMask_xyzw_1.x));
                 float r0_z_3 = mad(r0_y_8, -2, 3);
                 float r0_y_9 = (r0_y_8 * r0_y_8);
                 float r0_y_10 = (r0_y_9 * r0_z_3);
@@ -530,7 +531,7 @@ Shader "Knife/Soft Holo Cone"
                 float unitViewDir_w_3 = unitViewDir_xyzw_12.w;
                 float r0_y_13 = dot(i.texcoord1.xyzx, float4(unitViewDir_y_12, unitViewDir_z_5, unitViewDir_w_3, unitViewDir_y_12));
                 float r0_z_6 = ((float4(1, 1, 1, 1) / _Softness)).z;
-                float r0_y_14 = (r0_z_6 * abs(r0_y_13));
+                float r0_y_14 = saturate((r0_z_6 * abs(r0_y_13)));
                 float r0_z_7 = mad(r0_y_14, -2, 3);
                 float r0_y_15 = (r0_y_14 * r0_y_14);
                 float r0_y_16 = (r0_y_15 * r0_z_7);
@@ -546,11 +547,12 @@ Shader "Knife/Soft Holo Cone"
                 float r0_y_22 = (r0_y_21 / _DepthFadeDistance);
                 float r0_y_23 = min(abs(r0_y_22), 1);
                 o.sv_Target0.w = ((r0_y_23 * (r0_y_16 * ((r0_y_10 * ((r0_x_4 * r0_x_4) * r0_y_5)) * _Color.w))) * _Alpha);
+                float r0_x_15 = saturate(mad(max((((i.texcoord5.x / cb1_values[5].y) + 1) * cb1_values[5].z), 0), cb2_values[1].z, cb2_values[1].w));
                 float4 r0_xyzw_24 = (_Color.xxyz + -cb2_values[0].xxyz);
                 float r0_y_24 = r0_xyzw_24.y;
                 float r0_z_11 = r0_xyzw_24.z;
                 float r0_w_5 = r0_xyzw_24.w;
-                o.sv_Target0.xyz = (mad((mad(max((((i.texcoord5.x / cb1_values[5].y) + 1) * cb1_values[5].z), 0), cb2_values[1].z, cb2_values[1].w)).xxxx, float4(r0_y_24, r0_z_11, r0_w_5, r0_y_24), cb2_values[0].xyzx)).xyz;
+                o.sv_Target0.xyz = (mad(r0_x_15.xxxx, float4(r0_y_24, r0_z_11, r0_w_5, r0_y_24), cb2_values[0].xyzx)).xyz;
                 return o;
             }
             ENDHLSL
@@ -576,20 +578,20 @@ Shader "Knife/Soft Holo Cone"
                 float _Alpha;
                 float4 _texcoord_ST;
             };
-            cbuffer UnityPerCamera : register(b1)
+            cbuffer _UnityPerCameraCB : register(b1)
             {
                 float4 _Time;
                 float3 _WorldSpaceCameraPos;
                 float4 _ProjectionParams;
                 float4 _ZBufferParams;
             };
-            cbuffer UnityPerDraw : register(b2)
+            cbuffer _UnityPerDrawCB : register(b2)
             {
                 float4x4 unity_ObjectToWorld;
                 float4x4 unity_WorldToObject;
                 float4 cb2_values[46];
             };
-            cbuffer UnityPerFrame : register(b3)
+            cbuffer _UnityPerFrameCB : register(b3)
             {
                 float4x4 unity_MatrixVP;
                 float4 cb3_values[7];
@@ -617,7 +619,7 @@ Shader "Knife/Soft Holo Cone"
             };
             struct program4Output
             {
-                float4 sv_Position0 : SV_POSITION0;
+                float4 sv_Position0 : SV_POSITION;
                 float2 texcoord0 : TEXCOORD0;
                 float3 texcoord1 : TEXCOORD1;
                 float3 texcoord2 : TEXCOORD2;
@@ -627,7 +629,7 @@ Shader "Knife/Soft Holo Cone"
             };
             struct program12Input
             {
-                float4 sv_Position0 : SV_POSITION0;
+                float4 sv_Position0 : SV_POSITION;
                 float2 texcoord0 : TEXCOORD0;
                 float3 texcoord1 : TEXCOORD1;
                 float3 texcoord2 : TEXCOORD2;
@@ -637,7 +639,7 @@ Shader "Knife/Soft Holo Cone"
             };
             struct program12Output
             {
-                float4 sv_Target0 : SV_Target0;
+                float4 sv_Target0 : SV_Target;
             };
             #pragma vertex vert
             program4Output vert(program4Input i)
@@ -712,14 +714,14 @@ Shader "Knife/Soft Holo Cone"
                 float2 uvMask2_xy_1 = (mad(i.texcoord0.xyxx, _Mask2_ST.xyxx, _Mask2_ST.zwzz)).xy;
                 float4 r0_xyzw_3 = _Mask.Sample(sampler_Mask, ((mad(_Time.yyyy, _Mask2Speed.xyxx, uvMask2_xy_1.xyxx)).xyxx).xy);
                 float r0_y_4 = ((float4(1, 1, 1, 1) / _MaskSoftness2)).y;
-                float r0_x_4 = (r0_y_4 * r0_xyzw_3.x);
+                float r0_x_4 = saturate((r0_y_4 * r0_xyzw_3.x));
                 float r0_y_5 = mad(r0_x_4, -2, 3);
                 float4 uvMask_xyzw_6 = mad(i.texcoord0.xxyx, _Mask_ST.xxyx, _Mask_ST.zzwz);
                 float uvMask_y_6 = uvMask_xyzw_6.y;
                 float uvMask_z_2 = uvMask_xyzw_6.z;
                 float4 sampleMask_xyzw_1 = _Mask2.Sample(sampler_Mask2, (float4(uvMask_y_6, uvMask_z_2, uvMask_y_6, uvMask_y_6)).xy);
                 float r0_y_7 = ((float4(1, 1, 1, 1) / _MaskSoftness)).y;
-                float r0_y_8 = (r0_y_7 * sampleMask_xyzw_1.x);
+                float r0_y_8 = saturate((r0_y_7 * sampleMask_xyzw_1.x));
                 float r0_z_3 = mad(r0_y_8, -2, 3);
                 float r0_y_9 = (r0_y_8 * r0_y_8);
                 float r0_y_10 = (r0_y_9 * r0_z_3);
@@ -733,7 +735,7 @@ Shader "Knife/Soft Holo Cone"
                 float unitViewDir_w_3 = unitViewDir_xyzw_12.w;
                 float r0_y_13 = dot(i.texcoord1.xyzx, float4(unitViewDir_y_12, unitViewDir_z_5, unitViewDir_w_3, unitViewDir_y_12));
                 float r0_z_6 = ((float4(1, 1, 1, 1) / _Softness)).z;
-                float r0_y_14 = (r0_z_6 * abs(r0_y_13));
+                float r0_y_14 = saturate((r0_z_6 * abs(r0_y_13)));
                 float r0_z_7 = mad(r0_y_14, -2, 3);
                 float r0_y_15 = (r0_y_14 * r0_y_14);
                 float r0_y_16 = (r0_y_15 * r0_z_7);
@@ -776,19 +778,19 @@ Shader "Knife/Soft Holo Cone"
                 float4 _texcoord_ST;
                 float4 cb0_values[17];
             };
-            cbuffer UnityPerCamera : register(b1)
+            cbuffer _UnityPerCameraCB : register(b1)
             {
                 float4 _Time;
                 float3 _WorldSpaceCameraPos;
                 float4 _ProjectionParams;
                 float4 _ZBufferParams;
             };
-            cbuffer UnityPerDraw : register(b2)
+            cbuffer _UnityPerDrawCB : register(b2)
             {
                 float4x4 unity_ObjectToWorld;
                 float4x4 unity_WorldToObject;
             };
-            cbuffer UnityPerFrame : register(b3)
+            cbuffer _UnityPerFrameCB : register(b3)
             {
                 float4x4 unity_MatrixVP;
             };
@@ -811,7 +813,7 @@ Shader "Knife/Soft Holo Cone"
             };
             struct program17Output
             {
-                float4 sv_Position0 : SV_POSITION0;
+                float4 sv_Position0 : SV_POSITION;
                 float2 texcoord0 : TEXCOORD0;
                 float3 texcoord1 : TEXCOORD1;
                 float3 texcoord2 : TEXCOORD2;
@@ -820,7 +822,7 @@ Shader "Knife/Soft Holo Cone"
             };
             struct program29Input
             {
-                float4 sv_Position0 : SV_POSITION0;
+                float4 sv_Position0 : SV_POSITION;
                 float2 texcoord0 : TEXCOORD0;
                 float3 texcoord1 : TEXCOORD1;
                 float3 texcoord2 : TEXCOORD2;
@@ -829,7 +831,7 @@ Shader "Knife/Soft Holo Cone"
             };
             struct program29Output
             {
-                float4 sv_Target0 : SV_Target0;
+                float4 sv_Target0 : SV_Target;
             };
             #pragma vertex vert
             program17Output vert(program17Input i)
@@ -878,14 +880,14 @@ Shader "Knife/Soft Holo Cone"
                 #define LinearEyeDepth(d) (1.0 / (_ZBufferParams.z * (d) + _ZBufferParams.w))
                 float4 r0_xyzw_3 = _Mask.Sample(sampler_Mask, ((mad(_Time.yyyy, cb0_values[9].yzyy, (mad(i.texcoord0.xyxx, cb0_values[10].xyxx, cb0_values[10].zwzz)).xyxx)).xyxx).xy);
                 float r0_y_4 = ((float4(1, 1, 1, 1) / _Softness)).y;
-                float r0_x_4 = (r0_y_4 * r0_xyzw_3.x);
+                float r0_x_4 = saturate((r0_y_4 * r0_xyzw_3.x));
                 float r0_y_5 = mad(r0_x_4, -2, 3);
                 float4 uvTexcoord_xyzw_6 = mad(i.texcoord0.xxyx, _texcoord_ST.xxyx, _texcoord_ST.zzwz);
                 float uvTexcoord_y_6 = uvTexcoord_xyzw_6.y;
                 float uvTexcoord_z_2 = uvTexcoord_xyzw_6.z;
                 float4 sampleTexcoord_xyzw_1 = _Mask2.Sample(sampler_Mask2, (float4(uvTexcoord_y_6, uvTexcoord_z_2, uvTexcoord_y_6, uvTexcoord_y_6)).xy);
                 float r0_y_7 = ((float4(1, 1, 1, 1) / _DepthFadeDistance)).y;
-                float r0_y_8 = (r0_y_7 * sampleTexcoord_xyzw_1.x);
+                float r0_y_8 = saturate((r0_y_7 * sampleTexcoord_xyzw_1.x));
                 float r0_z_3 = mad(r0_y_8, -2, 3);
                 float r0_y_9 = (r0_y_8 * r0_y_8);
                 float r0_y_10 = (r0_y_9 * r0_z_3);
@@ -899,7 +901,7 @@ Shader "Knife/Soft Holo Cone"
                 float unitViewDir_w_3 = unitViewDir_xyzw_12.w;
                 float r0_y_13 = dot(i.texcoord1.xyzx, float4(unitViewDir_y_12, unitViewDir_z_5, unitViewDir_w_3, unitViewDir_y_12));
                 float r0_z_6 = ((float4(1, 1, 1, 1) / cb0_values[13].x)).z;
-                float r0_y_14 = (r0_z_6 * abs(r0_y_13));
+                float r0_y_14 = saturate((r0_z_6 * abs(r0_y_13)));
                 float r0_z_7 = mad(r0_y_14, -2, 3);
                 float r0_y_15 = (r0_y_14 * r0_y_14);
                 float r0_y_16 = (r0_y_15 * r0_z_7);
@@ -942,19 +944,19 @@ Shader "Knife/Soft Holo Cone"
                 float4 _texcoord_ST;
                 float4 cb0_values[17];
             };
-            cbuffer UnityPerCamera : register(b1)
+            cbuffer _UnityPerCameraCB : register(b1)
             {
                 float4 _Time;
                 float3 _WorldSpaceCameraPos;
                 float4 _ProjectionParams;
                 float4 _ZBufferParams;
             };
-            cbuffer UnityPerDraw : register(b2)
+            cbuffer _UnityPerDrawCB : register(b2)
             {
                 float4x4 unity_ObjectToWorld;
                 float4x4 unity_WorldToObject;
             };
-            cbuffer UnityPerFrame : register(b3)
+            cbuffer _UnityPerFrameCB : register(b3)
             {
                 float4x4 unity_MatrixVP;
             };
@@ -977,7 +979,7 @@ Shader "Knife/Soft Holo Cone"
             };
             struct program26Output
             {
-                float4 sv_Position0 : SV_POSITION0;
+                float4 sv_Position0 : SV_POSITION;
                 float2 texcoord0 : TEXCOORD0;
                 float2 texcoord4 : TEXCOORD4;
                 float3 texcoord1 : TEXCOORD1;
@@ -987,7 +989,7 @@ Shader "Knife/Soft Holo Cone"
             };
             struct program38Input
             {
-                float4 sv_Position0 : SV_POSITION0;
+                float4 sv_Position0 : SV_POSITION;
                 float2 texcoord0 : TEXCOORD0;
                 float2 texcoord4 : TEXCOORD4;
                 float3 texcoord1 : TEXCOORD1;
@@ -997,7 +999,7 @@ Shader "Knife/Soft Holo Cone"
             };
             struct program38Output
             {
-                float4 sv_Target0 : SV_Target0;
+                float4 sv_Target0 : SV_Target;
             };
             #pragma vertex vert
             program26Output vert(program26Input i)
@@ -1040,14 +1042,14 @@ Shader "Knife/Soft Holo Cone"
                 #define LinearEyeDepth(d) (1.0 / (_ZBufferParams.z * (d) + _ZBufferParams.w))
                 float4 r0_xyzw_3 = _Mask.Sample(sampler_Mask, ((mad(_Time.yyyy, cb0_values[9].yzyy, (mad(i.texcoord0.xyxx, cb0_values[10].xyxx, cb0_values[10].zwzz)).xyxx)).xyxx).xy);
                 float r0_y_4 = ((float4(1, 1, 1, 1) / _Softness)).y;
-                float r0_x_4 = (r0_y_4 * r0_xyzw_3.x);
+                float r0_x_4 = saturate((r0_y_4 * r0_xyzw_3.x));
                 float r0_y_5 = mad(r0_x_4, -2, 3);
                 float4 uvTexcoord_xyzw_6 = mad(i.texcoord0.xxyx, _texcoord_ST.xxyx, _texcoord_ST.zzwz);
                 float uvTexcoord_y_6 = uvTexcoord_xyzw_6.y;
                 float uvTexcoord_z_2 = uvTexcoord_xyzw_6.z;
                 float4 sampleTexcoord_xyzw_1 = _Mask2.Sample(sampler_Mask2, (float4(uvTexcoord_y_6, uvTexcoord_z_2, uvTexcoord_y_6, uvTexcoord_y_6)).xy);
                 float r0_y_7 = ((float4(1, 1, 1, 1) / _DepthFadeDistance)).y;
-                float r0_y_8 = (r0_y_7 * sampleTexcoord_xyzw_1.x);
+                float r0_y_8 = saturate((r0_y_7 * sampleTexcoord_xyzw_1.x));
                 float r0_z_3 = mad(r0_y_8, -2, 3);
                 float r0_y_9 = (r0_y_8 * r0_y_8);
                 float r0_y_10 = (r0_y_9 * r0_z_3);
@@ -1061,7 +1063,7 @@ Shader "Knife/Soft Holo Cone"
                 float unitViewDir_w_3 = unitViewDir_xyzw_12.w;
                 float r0_y_13 = dot(i.texcoord1.xyzx, float4(unitViewDir_y_12, unitViewDir_z_5, unitViewDir_w_3, unitViewDir_y_12));
                 float r0_z_6 = ((float4(1, 1, 1, 1) / cb0_values[13].x)).z;
-                float r0_y_14 = (r0_z_6 * abs(r0_y_13));
+                float r0_y_14 = saturate((r0_z_6 * abs(r0_y_13)));
                 float r0_z_7 = mad(r0_y_14, -2, 3);
                 float r0_y_15 = (r0_y_14 * r0_y_14);
                 float r0_y_16 = (r0_y_15 * r0_z_7);
@@ -1104,19 +1106,19 @@ Shader "Knife/Soft Holo Cone"
                 float4 _texcoord_ST;
                 float4 cb0_values[17];
             };
-            cbuffer UnityPerCamera : register(b1)
+            cbuffer _UnityPerCameraCB : register(b1)
             {
                 float4 _Time;
                 float3 _WorldSpaceCameraPos;
                 float4 _ProjectionParams;
                 float4 _ZBufferParams;
             };
-            cbuffer UnityPerDraw : register(b2)
+            cbuffer _UnityPerDrawCB : register(b2)
             {
                 float4x4 unity_ObjectToWorld;
                 float4x4 unity_WorldToObject;
             };
-            cbuffer UnityPerFrame : register(b3)
+            cbuffer _UnityPerFrameCB : register(b3)
             {
                 float4x4 unity_MatrixVP;
             };
@@ -1139,7 +1141,7 @@ Shader "Knife/Soft Holo Cone"
             };
             struct program24Output
             {
-                float4 sv_Position0 : SV_POSITION0;
+                float4 sv_Position0 : SV_POSITION;
                 float2 texcoord0 : TEXCOORD0;
                 float texcoord5 : TEXCOORD5;
                 float3 texcoord1 : TEXCOORD1;
@@ -1149,7 +1151,7 @@ Shader "Knife/Soft Holo Cone"
             };
             struct program36Input
             {
-                float4 sv_Position0 : SV_POSITION0;
+                float4 sv_Position0 : SV_POSITION;
                 float2 texcoord0 : TEXCOORD0;
                 float texcoord5 : TEXCOORD5;
                 float3 texcoord1 : TEXCOORD1;
@@ -1159,7 +1161,7 @@ Shader "Knife/Soft Holo Cone"
             };
             struct program36Output
             {
-                float4 sv_Target0 : SV_Target0;
+                float4 sv_Target0 : SV_Target;
             };
             #pragma vertex vert
             program24Output vert(program24Input i)
@@ -1202,14 +1204,14 @@ Shader "Knife/Soft Holo Cone"
                 #define LinearEyeDepth(d) (1.0 / (_ZBufferParams.z * (d) + _ZBufferParams.w))
                 float4 r0_xyzw_3 = _Mask.Sample(sampler_Mask, ((mad(_Time.yyyy, cb0_values[9].yzyy, (mad(i.texcoord0.xyxx, cb0_values[10].xyxx, cb0_values[10].zwzz)).xyxx)).xyxx).xy);
                 float r0_y_4 = ((float4(1, 1, 1, 1) / _Softness)).y;
-                float r0_x_4 = (r0_y_4 * r0_xyzw_3.x);
+                float r0_x_4 = saturate((r0_y_4 * r0_xyzw_3.x));
                 float r0_y_5 = mad(r0_x_4, -2, 3);
                 float4 uvTexcoord_xyzw_6 = mad(i.texcoord0.xxyx, _texcoord_ST.xxyx, _texcoord_ST.zzwz);
                 float uvTexcoord_y_6 = uvTexcoord_xyzw_6.y;
                 float uvTexcoord_z_2 = uvTexcoord_xyzw_6.z;
                 float4 sampleTexcoord_xyzw_1 = _Mask2.Sample(sampler_Mask2, (float4(uvTexcoord_y_6, uvTexcoord_z_2, uvTexcoord_y_6, uvTexcoord_y_6)).xy);
                 float r0_y_7 = ((float4(1, 1, 1, 1) / _DepthFadeDistance)).y;
-                float r0_y_8 = (r0_y_7 * sampleTexcoord_xyzw_1.x);
+                float r0_y_8 = saturate((r0_y_7 * sampleTexcoord_xyzw_1.x));
                 float r0_z_3 = mad(r0_y_8, -2, 3);
                 float r0_y_9 = (r0_y_8 * r0_y_8);
                 float r0_y_10 = (r0_y_9 * r0_z_3);
@@ -1223,7 +1225,7 @@ Shader "Knife/Soft Holo Cone"
                 float unitViewDir_w_3 = unitViewDir_xyzw_12.w;
                 float r0_y_13 = dot(i.texcoord1.xyzx, float4(unitViewDir_y_12, unitViewDir_z_5, unitViewDir_w_3, unitViewDir_y_12));
                 float r0_z_6 = ((float4(1, 1, 1, 1) / cb0_values[13].x)).z;
-                float r0_y_14 = (r0_z_6 * abs(r0_y_13));
+                float r0_y_14 = saturate((r0_z_6 * abs(r0_y_13)));
                 float r0_z_7 = mad(r0_y_14, -2, 3);
                 float r0_y_15 = (r0_y_14 * r0_y_14);
                 float r0_y_16 = (r0_y_15 * r0_z_7);
@@ -1265,19 +1267,19 @@ Shader "Knife/Soft Holo Cone"
                 float _Alpha;
                 float4 _texcoord_ST;
             };
-            cbuffer UnityPerCamera : register(b1)
+            cbuffer _UnityPerCameraCB : register(b1)
             {
                 float4 _Time;
                 float3 _WorldSpaceCameraPos;
                 float4 _ProjectionParams;
                 float4 _ZBufferParams;
             };
-            cbuffer UnityPerDraw : register(b2)
+            cbuffer _UnityPerDrawCB : register(b2)
             {
                 float4x4 unity_ObjectToWorld;
                 float4x4 unity_WorldToObject;
             };
-            cbuffer UnityPerFrame : register(b3)
+            cbuffer _UnityPerFrameCB : register(b3)
             {
                 float4x4 unity_MatrixVP;
             };
@@ -1300,7 +1302,7 @@ Shader "Knife/Soft Holo Cone"
             };
             struct program23Output
             {
-                float4 sv_Position0 : SV_POSITION0;
+                float4 sv_Position0 : SV_POSITION;
                 float2 texcoord0 : TEXCOORD0;
                 float texcoord5 : TEXCOORD5;
                 float3 texcoord1 : TEXCOORD1;
@@ -1309,7 +1311,7 @@ Shader "Knife/Soft Holo Cone"
             };
             struct program35Input
             {
-                float4 sv_Position0 : SV_POSITION0;
+                float4 sv_Position0 : SV_POSITION;
                 float2 texcoord0 : TEXCOORD0;
                 float texcoord5 : TEXCOORD5;
                 float3 texcoord1 : TEXCOORD1;
@@ -1318,7 +1320,7 @@ Shader "Knife/Soft Holo Cone"
             };
             struct program35Output
             {
-                float4 sv_Target0 : SV_Target0;
+                float4 sv_Target0 : SV_Target;
             };
             #pragma vertex vert
             program23Output vert(program23Input i)
@@ -1358,14 +1360,14 @@ Shader "Knife/Soft Holo Cone"
                 float2 uvMask2_xy_1 = (mad(i.texcoord0.xyxx, _Mask2_ST.xyxx, _Mask2_ST.zwzz)).xy;
                 float4 r0_xyzw_3 = _Mask.Sample(sampler_Mask, ((mad(_Time.yyyy, _Mask2Speed.xyxx, uvMask2_xy_1.xyxx)).xyxx).xy);
                 float r0_y_4 = ((float4(1, 1, 1, 1) / _MaskSoftness2)).y;
-                float r0_x_4 = (r0_y_4 * r0_xyzw_3.x);
+                float r0_x_4 = saturate((r0_y_4 * r0_xyzw_3.x));
                 float r0_y_5 = mad(r0_x_4, -2, 3);
                 float4 uvMask_xyzw_6 = mad(i.texcoord0.xxyx, _Mask_ST.xxyx, _Mask_ST.zzwz);
                 float uvMask_y_6 = uvMask_xyzw_6.y;
                 float uvMask_z_2 = uvMask_xyzw_6.z;
                 float4 sampleMask_xyzw_1 = _Mask2.Sample(sampler_Mask2, (float4(uvMask_y_6, uvMask_z_2, uvMask_y_6, uvMask_y_6)).xy);
                 float r0_y_7 = ((float4(1, 1, 1, 1) / _MaskSoftness)).y;
-                float r0_y_8 = (r0_y_7 * sampleMask_xyzw_1.x);
+                float r0_y_8 = saturate((r0_y_7 * sampleMask_xyzw_1.x));
                 float r0_z_3 = mad(r0_y_8, -2, 3);
                 float r0_y_9 = (r0_y_8 * r0_y_8);
                 float r0_y_10 = (r0_y_9 * r0_z_3);
@@ -1379,7 +1381,7 @@ Shader "Knife/Soft Holo Cone"
                 float unitViewDir_w_3 = unitViewDir_xyzw_12.w;
                 float r0_y_13 = dot(i.texcoord1.xyzx, float4(unitViewDir_y_12, unitViewDir_z_5, unitViewDir_w_3, unitViewDir_y_12));
                 float r0_z_6 = ((float4(1, 1, 1, 1) / _Softness)).z;
-                float r0_y_14 = (r0_z_6 * abs(r0_y_13));
+                float r0_y_14 = saturate((r0_z_6 * abs(r0_y_13)));
                 float r0_z_7 = mad(r0_y_14, -2, 3);
                 float r0_y_15 = (r0_y_14 * r0_y_14);
                 float r0_y_16 = (r0_y_15 * r0_z_7);
@@ -1422,19 +1424,19 @@ Shader "Knife/Soft Holo Cone"
                 float4 _texcoord_ST;
                 float4 cb0_values[17];
             };
-            cbuffer UnityPerCamera : register(b1)
+            cbuffer _UnityPerCameraCB : register(b1)
             {
                 float4 _Time;
                 float3 _WorldSpaceCameraPos;
                 float4 _ProjectionParams;
                 float4 _ZBufferParams;
             };
-            cbuffer UnityPerDraw : register(b2)
+            cbuffer _UnityPerDrawCB : register(b2)
             {
                 float4x4 unity_ObjectToWorld;
                 float4x4 unity_WorldToObject;
             };
-            cbuffer UnityPerFrame : register(b3)
+            cbuffer _UnityPerFrameCB : register(b3)
             {
                 float4x4 unity_MatrixVP;
             };
@@ -1457,7 +1459,7 @@ Shader "Knife/Soft Holo Cone"
             };
             struct program22Output
             {
-                float4 sv_Position0 : SV_POSITION0;
+                float4 sv_Position0 : SV_POSITION;
                 float2 texcoord0 : TEXCOORD0;
                 float texcoord5 : TEXCOORD5;
                 float3 texcoord1 : TEXCOORD1;
@@ -1467,7 +1469,7 @@ Shader "Knife/Soft Holo Cone"
             };
             struct program34Input
             {
-                float4 sv_Position0 : SV_POSITION0;
+                float4 sv_Position0 : SV_POSITION;
                 float2 texcoord0 : TEXCOORD0;
                 float texcoord5 : TEXCOORD5;
                 float3 texcoord1 : TEXCOORD1;
@@ -1477,7 +1479,7 @@ Shader "Knife/Soft Holo Cone"
             };
             struct program34Output
             {
-                float4 sv_Target0 : SV_Target0;
+                float4 sv_Target0 : SV_Target;
             };
             #pragma vertex vert
             program22Output vert(program22Input i)
@@ -1527,14 +1529,14 @@ Shader "Knife/Soft Holo Cone"
                 #define LinearEyeDepth(d) (1.0 / (_ZBufferParams.z * (d) + _ZBufferParams.w))
                 float4 r0_xyzw_3 = _Mask.Sample(sampler_Mask, ((mad(_Time.yyyy, cb0_values[9].yzyy, (mad(i.texcoord0.xyxx, cb0_values[10].xyxx, cb0_values[10].zwzz)).xyxx)).xyxx).xy);
                 float r0_y_4 = ((float4(1, 1, 1, 1) / _Softness)).y;
-                float r0_x_4 = (r0_y_4 * r0_xyzw_3.x);
+                float r0_x_4 = saturate((r0_y_4 * r0_xyzw_3.x));
                 float r0_y_5 = mad(r0_x_4, -2, 3);
                 float4 uvTexcoord_xyzw_6 = mad(i.texcoord0.xxyx, _texcoord_ST.xxyx, _texcoord_ST.zzwz);
                 float uvTexcoord_y_6 = uvTexcoord_xyzw_6.y;
                 float uvTexcoord_z_2 = uvTexcoord_xyzw_6.z;
                 float4 sampleTexcoord_xyzw_1 = _Mask2.Sample(sampler_Mask2, (float4(uvTexcoord_y_6, uvTexcoord_z_2, uvTexcoord_y_6, uvTexcoord_y_6)).xy);
                 float r0_y_7 = ((float4(1, 1, 1, 1) / _DepthFadeDistance)).y;
-                float r0_y_8 = (r0_y_7 * sampleTexcoord_xyzw_1.x);
+                float r0_y_8 = saturate((r0_y_7 * sampleTexcoord_xyzw_1.x));
                 float r0_z_3 = mad(r0_y_8, -2, 3);
                 float r0_y_9 = (r0_y_8 * r0_y_8);
                 float r0_y_10 = (r0_y_9 * r0_z_3);
@@ -1548,7 +1550,7 @@ Shader "Knife/Soft Holo Cone"
                 float unitViewDir_w_3 = unitViewDir_xyzw_12.w;
                 float r0_y_13 = dot(i.texcoord1.xyzx, float4(unitViewDir_y_12, unitViewDir_z_5, unitViewDir_w_3, unitViewDir_y_12));
                 float r0_z_6 = ((float4(1, 1, 1, 1) / cb0_values[13].x)).z;
-                float r0_y_14 = (r0_z_6 * abs(r0_y_13));
+                float r0_y_14 = saturate((r0_z_6 * abs(r0_y_13)));
                 float r0_z_7 = mad(r0_y_14, -2, 3);
                 float r0_y_15 = (r0_y_14 * r0_y_14);
                 float r0_y_16 = (r0_y_15 * r0_z_7);
@@ -1591,19 +1593,19 @@ Shader "Knife/Soft Holo Cone"
                 float4 _texcoord_ST;
                 float4 cb0_values[17];
             };
-            cbuffer UnityPerCamera : register(b1)
+            cbuffer _UnityPerCameraCB : register(b1)
             {
                 float4 _Time;
                 float3 _WorldSpaceCameraPos;
                 float4 _ProjectionParams;
                 float4 _ZBufferParams;
             };
-            cbuffer UnityPerDraw : register(b2)
+            cbuffer _UnityPerDrawCB : register(b2)
             {
                 float4x4 unity_ObjectToWorld;
                 float4x4 unity_WorldToObject;
             };
-            cbuffer UnityPerFrame : register(b3)
+            cbuffer _UnityPerFrameCB : register(b3)
             {
                 float4x4 unity_MatrixVP;
             };
@@ -1626,7 +1628,7 @@ Shader "Knife/Soft Holo Cone"
             };
             struct program21Output
             {
-                float4 sv_Position0 : SV_POSITION0;
+                float4 sv_Position0 : SV_POSITION;
                 float2 texcoord0 : TEXCOORD0;
                 float2 texcoord4 : TEXCOORD4;
                 float3 texcoord1 : TEXCOORD1;
@@ -1635,7 +1637,7 @@ Shader "Knife/Soft Holo Cone"
             };
             struct program33Input
             {
-                float4 sv_Position0 : SV_POSITION0;
+                float4 sv_Position0 : SV_POSITION;
                 float2 texcoord0 : TEXCOORD0;
                 float2 texcoord4 : TEXCOORD4;
                 float3 texcoord1 : TEXCOORD1;
@@ -1644,7 +1646,7 @@ Shader "Knife/Soft Holo Cone"
             };
             struct program33Output
             {
-                float4 sv_Target0 : SV_Target0;
+                float4 sv_Target0 : SV_Target;
             };
             #pragma vertex vert
             program21Output vert(program21Input i)
@@ -1686,14 +1688,14 @@ Shader "Knife/Soft Holo Cone"
                 #define LinearEyeDepth(d) (1.0 / (_ZBufferParams.z * (d) + _ZBufferParams.w))
                 float4 r0_xyzw_3 = _Mask.Sample(sampler_Mask, ((mad(_Time.yyyy, cb0_values[9].yzyy, (mad(i.texcoord0.xyxx, cb0_values[10].xyxx, cb0_values[10].zwzz)).xyxx)).xyxx).xy);
                 float r0_y_4 = ((float4(1, 1, 1, 1) / _Softness)).y;
-                float r0_x_4 = (r0_y_4 * r0_xyzw_3.x);
+                float r0_x_4 = saturate((r0_y_4 * r0_xyzw_3.x));
                 float r0_y_5 = mad(r0_x_4, -2, 3);
                 float4 uvTexcoord_xyzw_6 = mad(i.texcoord0.xxyx, _texcoord_ST.xxyx, _texcoord_ST.zzwz);
                 float uvTexcoord_y_6 = uvTexcoord_xyzw_6.y;
                 float uvTexcoord_z_2 = uvTexcoord_xyzw_6.z;
                 float4 sampleTexcoord_xyzw_1 = _Mask2.Sample(sampler_Mask2, (float4(uvTexcoord_y_6, uvTexcoord_z_2, uvTexcoord_y_6, uvTexcoord_y_6)).xy);
                 float r0_y_7 = ((float4(1, 1, 1, 1) / _DepthFadeDistance)).y;
-                float r0_y_8 = (r0_y_7 * sampleTexcoord_xyzw_1.x);
+                float r0_y_8 = saturate((r0_y_7 * sampleTexcoord_xyzw_1.x));
                 float r0_z_3 = mad(r0_y_8, -2, 3);
                 float r0_y_9 = (r0_y_8 * r0_y_8);
                 float r0_y_10 = (r0_y_9 * r0_z_3);
@@ -1707,7 +1709,7 @@ Shader "Knife/Soft Holo Cone"
                 float unitViewDir_w_3 = unitViewDir_xyzw_12.w;
                 float r0_y_13 = dot(i.texcoord1.xyzx, float4(unitViewDir_y_12, unitViewDir_z_5, unitViewDir_w_3, unitViewDir_y_12));
                 float r0_z_6 = ((float4(1, 1, 1, 1) / cb0_values[13].x)).z;
-                float r0_y_14 = (r0_z_6 * abs(r0_y_13));
+                float r0_y_14 = saturate((r0_z_6 * abs(r0_y_13)));
                 float r0_z_7 = mad(r0_y_14, -2, 3);
                 float r0_y_15 = (r0_y_14 * r0_y_14);
                 float r0_y_16 = (r0_y_15 * r0_z_7);
@@ -1750,19 +1752,19 @@ Shader "Knife/Soft Holo Cone"
                 float4 _texcoord_ST;
                 float4 cb0_values[17];
             };
-            cbuffer UnityPerCamera : register(b1)
+            cbuffer _UnityPerCameraCB : register(b1)
             {
                 float4 _Time;
                 float3 _WorldSpaceCameraPos;
                 float4 _ProjectionParams;
                 float4 _ZBufferParams;
             };
-            cbuffer UnityPerDraw : register(b2)
+            cbuffer _UnityPerDrawCB : register(b2)
             {
                 float4x4 unity_ObjectToWorld;
                 float4x4 unity_WorldToObject;
             };
-            cbuffer UnityPerFrame : register(b3)
+            cbuffer _UnityPerFrameCB : register(b3)
             {
                 float4x4 unity_MatrixVP;
             };
@@ -1785,7 +1787,7 @@ Shader "Knife/Soft Holo Cone"
             };
             struct program19Output
             {
-                float4 sv_Position0 : SV_POSITION0;
+                float4 sv_Position0 : SV_POSITION;
                 float2 texcoord0 : TEXCOORD0;
                 float3 texcoord1 : TEXCOORD1;
                 float3 texcoord2 : TEXCOORD2;
@@ -1794,7 +1796,7 @@ Shader "Knife/Soft Holo Cone"
             };
             struct program31Input
             {
-                float4 sv_Position0 : SV_POSITION0;
+                float4 sv_Position0 : SV_POSITION;
                 float2 texcoord0 : TEXCOORD0;
                 float3 texcoord1 : TEXCOORD1;
                 float3 texcoord2 : TEXCOORD2;
@@ -1803,7 +1805,7 @@ Shader "Knife/Soft Holo Cone"
             };
             struct program31Output
             {
-                float4 sv_Target0 : SV_Target0;
+                float4 sv_Target0 : SV_Target;
             };
             #pragma vertex vert
             program19Output vert(program19Input i)
@@ -1857,14 +1859,14 @@ Shader "Knife/Soft Holo Cone"
                 #define LinearEyeDepth(d) (1.0 / (_ZBufferParams.z * (d) + _ZBufferParams.w))
                 float4 r0_xyzw_3 = _Mask.Sample(sampler_Mask, ((mad(_Time.yyyy, cb0_values[9].yzyy, (mad(i.texcoord0.xyxx, cb0_values[10].xyxx, cb0_values[10].zwzz)).xyxx)).xyxx).xy);
                 float r0_y_4 = ((float4(1, 1, 1, 1) / _Softness)).y;
-                float r0_x_4 = (r0_y_4 * r0_xyzw_3.x);
+                float r0_x_4 = saturate((r0_y_4 * r0_xyzw_3.x));
                 float r0_y_5 = mad(r0_x_4, -2, 3);
                 float4 uvTexcoord_xyzw_6 = mad(i.texcoord0.xxyx, _texcoord_ST.xxyx, _texcoord_ST.zzwz);
                 float uvTexcoord_y_6 = uvTexcoord_xyzw_6.y;
                 float uvTexcoord_z_2 = uvTexcoord_xyzw_6.z;
                 float4 sampleTexcoord_xyzw_1 = _Mask2.Sample(sampler_Mask2, (float4(uvTexcoord_y_6, uvTexcoord_z_2, uvTexcoord_y_6, uvTexcoord_y_6)).xy);
                 float r0_y_7 = ((float4(1, 1, 1, 1) / _DepthFadeDistance)).y;
-                float r0_y_8 = (r0_y_7 * sampleTexcoord_xyzw_1.x);
+                float r0_y_8 = saturate((r0_y_7 * sampleTexcoord_xyzw_1.x));
                 float r0_z_3 = mad(r0_y_8, -2, 3);
                 float r0_y_9 = (r0_y_8 * r0_y_8);
                 float r0_y_10 = (r0_y_9 * r0_z_3);
@@ -1878,7 +1880,7 @@ Shader "Knife/Soft Holo Cone"
                 float unitViewDir_w_3 = unitViewDir_xyzw_12.w;
                 float r0_y_13 = dot(i.texcoord1.xyzx, float4(unitViewDir_y_12, unitViewDir_z_5, unitViewDir_w_3, unitViewDir_y_12));
                 float r0_z_6 = ((float4(1, 1, 1, 1) / cb0_values[13].x)).z;
-                float r0_y_14 = (r0_z_6 * abs(r0_y_13));
+                float r0_y_14 = saturate((r0_z_6 * abs(r0_y_13)));
                 float r0_z_7 = mad(r0_y_14, -2, 3);
                 float r0_y_15 = (r0_y_14 * r0_y_14);
                 float r0_y_16 = (r0_y_15 * r0_z_7);
@@ -1920,19 +1922,19 @@ Shader "Knife/Soft Holo Cone"
                 float _Alpha;
                 float4 _texcoord_ST;
             };
-            cbuffer UnityPerCamera : register(b1)
+            cbuffer _UnityPerCameraCB : register(b1)
             {
                 float4 _Time;
                 float3 _WorldSpaceCameraPos;
                 float4 _ProjectionParams;
                 float4 _ZBufferParams;
             };
-            cbuffer UnityPerDraw : register(b2)
+            cbuffer _UnityPerDrawCB : register(b2)
             {
                 float4x4 unity_ObjectToWorld;
                 float4x4 unity_WorldToObject;
             };
-            cbuffer UnityPerFrame : register(b3)
+            cbuffer _UnityPerFrameCB : register(b3)
             {
                 float4x4 unity_MatrixVP;
             };
@@ -1955,7 +1957,7 @@ Shader "Knife/Soft Holo Cone"
             };
             struct program18Output
             {
-                float4 sv_Position0 : SV_POSITION0;
+                float4 sv_Position0 : SV_POSITION;
                 float2 texcoord0 : TEXCOORD0;
                 float3 texcoord1 : TEXCOORD1;
                 float3 texcoord2 : TEXCOORD2;
@@ -1963,7 +1965,7 @@ Shader "Knife/Soft Holo Cone"
             };
             struct program30Input
             {
-                float4 sv_Position0 : SV_POSITION0;
+                float4 sv_Position0 : SV_POSITION;
                 float2 texcoord0 : TEXCOORD0;
                 float3 texcoord1 : TEXCOORD1;
                 float3 texcoord2 : TEXCOORD2;
@@ -1971,7 +1973,7 @@ Shader "Knife/Soft Holo Cone"
             };
             struct program30Output
             {
-                float4 sv_Target0 : SV_Target0;
+                float4 sv_Target0 : SV_Target;
             };
             #pragma vertex vert
             program18Output vert(program18Input i)
@@ -2010,14 +2012,14 @@ Shader "Knife/Soft Holo Cone"
                 float2 uvMask2_xy_1 = (mad(i.texcoord0.xyxx, _Mask2_ST.xyxx, _Mask2_ST.zwzz)).xy;
                 float4 r0_xyzw_3 = _Mask.Sample(sampler_Mask, ((mad(_Time.yyyy, _Mask2Speed.xyxx, uvMask2_xy_1.xyxx)).xyxx).xy);
                 float r0_y_4 = ((float4(1, 1, 1, 1) / _MaskSoftness2)).y;
-                float r0_x_4 = (r0_y_4 * r0_xyzw_3.x);
+                float r0_x_4 = saturate((r0_y_4 * r0_xyzw_3.x));
                 float r0_y_5 = mad(r0_x_4, -2, 3);
                 float4 uvMask_xyzw_6 = mad(i.texcoord0.xxyx, _Mask_ST.xxyx, _Mask_ST.zzwz);
                 float uvMask_y_6 = uvMask_xyzw_6.y;
                 float uvMask_z_2 = uvMask_xyzw_6.z;
                 float4 sampleMask_xyzw_1 = _Mask2.Sample(sampler_Mask2, (float4(uvMask_y_6, uvMask_z_2, uvMask_y_6, uvMask_y_6)).xy);
                 float r0_y_7 = ((float4(1, 1, 1, 1) / _MaskSoftness)).y;
-                float r0_y_8 = (r0_y_7 * sampleMask_xyzw_1.x);
+                float r0_y_8 = saturate((r0_y_7 * sampleMask_xyzw_1.x));
                 float r0_z_3 = mad(r0_y_8, -2, 3);
                 float r0_y_9 = (r0_y_8 * r0_y_8);
                 float r0_y_10 = (r0_y_9 * r0_z_3);
@@ -2031,7 +2033,7 @@ Shader "Knife/Soft Holo Cone"
                 float unitViewDir_w_3 = unitViewDir_xyzw_12.w;
                 float r0_y_13 = dot(i.texcoord1.xyzx, float4(unitViewDir_y_12, unitViewDir_z_5, unitViewDir_w_3, unitViewDir_y_12));
                 float r0_z_6 = ((float4(1, 1, 1, 1) / _Softness)).z;
-                float r0_y_14 = (r0_z_6 * abs(r0_y_13));
+                float r0_y_14 = saturate((r0_z_6 * abs(r0_y_13)));
                 float r0_z_7 = mad(r0_y_14, -2, 3);
                 float r0_y_15 = (r0_y_14 * r0_y_14);
                 float r0_y_16 = (r0_y_15 * r0_z_7);
@@ -2059,36 +2061,36 @@ Shader "Knife/Soft Holo Cone"
             ZTest LEqual
             ZWrite On
             HLSLPROGRAM
-            cbuffer UnityPerCamera : register(b0)
+            cbuffer _UnityPerCameraCB : register(b0)
             {
+                float4 _Time;
                 float4 _Color;
+                float3 _WorldSpaceCameraPos;
                 float4 _ProjectionParams;
                 float _MaskSoftness2;
                 float2 _Mask2Speed;
                 float4 _Mask2_ST;
                 float _MaskSoftness;
+                float4 _ZBufferParams;
                 float4 _Mask_ST;
                 float _Softness;
                 float _DepthFadeDistance;
                 float _Alpha;
             };
-            cbuffer UnityLighting : register(b1)
+            cbuffer _UnityLightingCB : register(b1)
             {
                 float4 _WorldSpaceLightPos0;
-                float4 _Time;
-                float3 _WorldSpaceCameraPos;
-                float4 _ZBufferParams;
             };
-            cbuffer UnityShadows : register(b2)
+            cbuffer _UnityShadowsCB : register(b2)
             {
                 float4 unity_LightShadowBias;
             };
-            cbuffer UnityPerDraw : register(b3)
+            cbuffer _UnityPerDrawCB : register(b3)
             {
                 float4x4 unity_ObjectToWorld;
                 float4x4 unity_WorldToObject;
             };
-            cbuffer UnityPerFrame : register(b4)
+            cbuffer _UnityPerFrameCB : register(b4)
             {
                 float4x4 unity_MatrixVP;
             };
@@ -2113,7 +2115,7 @@ Shader "Knife/Soft Holo Cone"
             };
             struct program40Output
             {
-                float4 sv_Position0 : SV_POSITION0;
+                float4 sv_Position0 : SV_POSITION;
                 float2 texcoord1 : TEXCOORD1;
                 float3 texcoord2 : TEXCOORD2;
                 float4 texcoord3 : TEXCOORD3;
@@ -2121,7 +2123,7 @@ Shader "Knife/Soft Holo Cone"
             };
             struct program43Input
             {
-                float4 sv_Position0 : SV_POSITION0;
+                float4 sv_Position0 : SV_POSITION;
                 float2 texcoord1 : TEXCOORD1;
                 float3 texcoord2 : TEXCOORD2;
                 float4 texcoord3 : TEXCOORD3;
@@ -2129,7 +2131,7 @@ Shader "Knife/Soft Holo Cone"
             };
             struct program43Output
             {
-                float4 sv_Target0 : SV_Target0;
+                float4 sv_Target0 : SV_Target;
             };
             #pragma vertex vert
             program40Output vert(program40Input i)
@@ -2195,14 +2197,14 @@ Shader "Knife/Soft Holo Cone"
                 float2 uvMask2_xy_1 = (mad(i.texcoord1.xyxx, _Mask2_ST.xyxx, _Mask2_ST.zwzz)).xy;
                 float4 r0_xyzw_3 = _Mask.Sample(sampler_Mask, ((mad(_Time.yyyy, _Mask2Speed.xyxx, uvMask2_xy_1.xyxx)).xyxx).xy);
                 float r0_y_4 = ((float4(1, 1, 1, 1) / _MaskSoftness2)).y;
-                float r0_x_4 = (r0_y_4 * r0_xyzw_3.x);
+                float r0_x_4 = saturate((r0_y_4 * r0_xyzw_3.x));
                 float r0_y_5 = mad(r0_x_4, -2, 3);
                 float4 uvMask_xyzw_6 = mad(i.texcoord1.xxyx, _Mask_ST.xxyx, _Mask_ST.zzwz);
                 float uvMask_y_6 = uvMask_xyzw_6.y;
                 float uvMask_z_2 = uvMask_xyzw_6.z;
                 float4 sampleMask_xyzw_1 = _Mask2.Sample(sampler_Mask2, (float4(uvMask_y_6, uvMask_z_2, uvMask_y_6, uvMask_y_6)).xy);
                 float r0_y_7 = ((float4(1, 1, 1, 1) / _MaskSoftness)).y;
-                float r0_y_8 = (r0_y_7 * sampleMask_xyzw_1.x);
+                float r0_y_8 = saturate((r0_y_7 * sampleMask_xyzw_1.x));
                 float r0_z_3 = mad(r0_y_8, -2, 3);
                 float r0_y_9 = (r0_y_8 * r0_y_8);
                 float r0_y_10 = (r0_y_9 * r0_z_3);
@@ -2216,7 +2218,7 @@ Shader "Knife/Soft Holo Cone"
                 float unitViewDir_w_3 = unitViewDir_xyzw_12.w;
                 float r0_y_13 = dot(i.texcoord4.xyzx, float4(unitViewDir_y_12, unitViewDir_z_5, unitViewDir_w_3, unitViewDir_y_12));
                 float r0_z_6 = ((float4(1, 1, 1, 1) / _Softness)).z;
-                float r0_y_14 = (r0_z_6 * abs(r0_y_13));
+                float r0_y_14 = saturate((r0_z_6 * abs(r0_y_13)));
                 float r0_z_7 = mad(r0_y_14, -2, 3);
                 float r0_y_15 = (r0_y_14 * r0_y_14);
                 float r0_y_16 = (r0_y_15 * r0_z_7);
@@ -2250,36 +2252,36 @@ Shader "Knife/Soft Holo Cone"
             ZTest LEqual
             ZWrite On
             HLSLPROGRAM
-            cbuffer UnityPerCamera : register(b0)
+            cbuffer _UnityPerCameraCB : register(b0)
             {
+                float4 _Time;
                 float4 _Color;
+                float3 _WorldSpaceCameraPos;
                 float4 _ProjectionParams;
                 float _MaskSoftness2;
                 float2 _Mask2Speed;
                 float4 _Mask2_ST;
                 float _MaskSoftness;
+                float4 _ZBufferParams;
                 float4 _Mask_ST;
                 float _Softness;
                 float _DepthFadeDistance;
                 float _Alpha;
             };
-            cbuffer UnityLighting : register(b1)
+            cbuffer _UnityLightingCB : register(b1)
             {
                 float4 _WorldSpaceLightPos0;
-                float4 _Time;
-                float3 _WorldSpaceCameraPos;
-                float4 _ZBufferParams;
             };
-            cbuffer UnityShadows : register(b2)
+            cbuffer _UnityShadowsCB : register(b2)
             {
                 float4 unity_LightShadowBias;
             };
-            cbuffer UnityPerDraw : register(b3)
+            cbuffer _UnityPerDrawCB : register(b3)
             {
                 float4x4 unity_ObjectToWorld;
                 float4x4 unity_WorldToObject;
             };
-            cbuffer UnityPerFrame : register(b4)
+            cbuffer _UnityPerFrameCB : register(b4)
             {
                 float4x4 unity_MatrixVP;
             };
@@ -2304,7 +2306,7 @@ Shader "Knife/Soft Holo Cone"
             };
             struct program41Output
             {
-                float4 sv_Position0 : SV_POSITION0;
+                float4 sv_Position0 : SV_POSITION;
                 float2 texcoord1 : TEXCOORD1;
                 float3 texcoord2 : TEXCOORD2;
                 float4 texcoord3 : TEXCOORD3;
@@ -2312,7 +2314,7 @@ Shader "Knife/Soft Holo Cone"
             };
             struct program44Input
             {
-                float4 sv_Position0 : SV_POSITION0;
+                float4 sv_Position0 : SV_POSITION;
                 float2 texcoord1 : TEXCOORD1;
                 float3 texcoord2 : TEXCOORD2;
                 float4 texcoord3 : TEXCOORD3;
@@ -2320,7 +2322,7 @@ Shader "Knife/Soft Holo Cone"
             };
             struct program44Output
             {
-                float4 sv_Target0 : SV_Target0;
+                float4 sv_Target0 : SV_Target;
             };
             #pragma vertex vert
             program41Output vert(program41Input i)
@@ -2383,14 +2385,14 @@ Shader "Knife/Soft Holo Cone"
                 float2 uvMask2_xy_1 = (mad(i.texcoord1.xyxx, _Mask2_ST.xyxx, _Mask2_ST.zwzz)).xy;
                 float4 r0_xyzw_3 = _Mask.Sample(sampler_Mask, ((mad(_Time.yyyy, _Mask2Speed.xyxx, uvMask2_xy_1.xyxx)).xyxx).xy);
                 float r0_y_4 = ((float4(1, 1, 1, 1) / _MaskSoftness2)).y;
-                float r0_x_4 = (r0_y_4 * r0_xyzw_3.x);
+                float r0_x_4 = saturate((r0_y_4 * r0_xyzw_3.x));
                 float r0_y_5 = mad(r0_x_4, -2, 3);
                 float4 uvMask_xyzw_6 = mad(i.texcoord1.xxyx, _Mask_ST.xxyx, _Mask_ST.zzwz);
                 float uvMask_y_6 = uvMask_xyzw_6.y;
                 float uvMask_z_2 = uvMask_xyzw_6.z;
                 float4 sampleMask_xyzw_1 = _Mask2.Sample(sampler_Mask2, (float4(uvMask_y_6, uvMask_z_2, uvMask_y_6, uvMask_y_6)).xy);
                 float r0_y_7 = ((float4(1, 1, 1, 1) / _MaskSoftness)).y;
-                float r0_y_8 = (r0_y_7 * sampleMask_xyzw_1.x);
+                float r0_y_8 = saturate((r0_y_7 * sampleMask_xyzw_1.x));
                 float r0_z_3 = mad(r0_y_8, -2, 3);
                 float r0_y_9 = (r0_y_8 * r0_y_8);
                 float r0_y_10 = (r0_y_9 * r0_z_3);
@@ -2404,7 +2406,7 @@ Shader "Knife/Soft Holo Cone"
                 float unitViewDir_w_3 = unitViewDir_xyzw_12.w;
                 float r0_y_13 = dot(i.texcoord4.xyzx, float4(unitViewDir_y_12, unitViewDir_z_5, unitViewDir_w_3, unitViewDir_y_12));
                 float r0_z_6 = ((float4(1, 1, 1, 1) / _Softness)).z;
-                float r0_y_14 = (r0_z_6 * abs(r0_y_13));
+                float r0_y_14 = saturate((r0_z_6 * abs(r0_y_13)));
                 float r0_z_7 = mad(r0_y_14, -2, 3);
                 float r0_y_15 = (r0_y_14 * r0_y_14);
                 float r0_y_16 = (r0_y_15 * r0_z_7);

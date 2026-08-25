@@ -22,11 +22,11 @@ Shader "Toon/Basic"
                 float4 _MainTex_ST;
                 float4 _Color;
             };
-            cbuffer UnityPerDraw : register(b1)
+            cbuffer _UnityPerDrawCB : register(b1)
             {
                 float4x4 unity_ObjectToWorld;
             };
-            cbuffer UnityPerFrame : register(b2)
+            cbuffer _UnityPerFrameCB : register(b2)
             {
                 float4x4 unity_MatrixV;
                 float4x4 unity_MatrixVP;
@@ -43,19 +43,19 @@ Shader "Toon/Basic"
             };
             struct program2Output
             {
-                float4 sv_Position0 : SV_POSITION0;
+                float4 sv_Position0 : SV_POSITION;
                 float2 texcoord0 : TEXCOORD0;
                 float3 texcoord1 : TEXCOORD1;
             };
             struct program6Input
             {
-                float4 sv_Position0 : SV_POSITION0;
+                float4 sv_Position0 : SV_POSITION;
                 float2 texcoord0 : TEXCOORD0;
                 float3 texcoord1 : TEXCOORD1;
             };
             struct program6Output
             {
-                float4 sv_Target0 : SV_Target0;
+                float4 sv_Target0 : SV_Target;
             };
             #pragma vertex vert
             program2Output vert(program2Input i)
@@ -99,12 +99,12 @@ Shader "Toon/Basic"
                 float4 _MainTex_ST;
                 float4 _Color;
             };
-            cbuffer UnityPerDraw : register(b1)
+            cbuffer _UnityPerDrawCB : register(b1)
             {
                 float4x4 unity_ObjectToWorld;
                 float4 cb1_values[6];
             };
-            cbuffer UnityPerFrame : register(b2)
+            cbuffer _UnityPerFrameCB : register(b2)
             {
                 float4x4 unity_MatrixV;
                 float4x4 unity_MatrixVP;
@@ -130,21 +130,21 @@ Shader "Toon/Basic"
             };
             struct program3Output
             {
-                float4 sv_Position0 : SV_POSITION0;
+                float4 sv_Position0 : SV_POSITION;
                 float2 texcoord0 : TEXCOORD0;
                 float texcoord2 : TEXCOORD2;
                 float3 texcoord1 : TEXCOORD1;
             };
             struct program7Input
             {
-                float4 sv_Position0 : SV_POSITION0;
+                float4 sv_Position0 : SV_POSITION;
                 float2 texcoord0 : TEXCOORD0;
                 float texcoord2 : TEXCOORD2;
                 float3 texcoord1 : TEXCOORD1;
             };
             struct program7Output
             {
-                float4 sv_Target0 : SV_Target0;
+                float4 sv_Target0 : SV_Target;
             };
             #pragma vertex vert
             program3Output vert(program3Input i)
@@ -198,8 +198,8 @@ Shader "Toon/Basic"
                 float4 r1_xyzw_1 = _MainTex.Sample(sampler_MainTex, (i.texcoord0.xyxx).xy);
                 float4 r1_xyzw_2 = (r1_xyzw_1 * _Color);
                 o.sv_Target0.w = r1_xyzw_2.w;
-                float TEXCOORD0_w_2 = i.texcoord2.x;
-                o.sv_Target0.xyz = (mad(TEXCOORD0_w_2.xxxx, (mad(((r0_xyzw_1.xyzx + r0_xyzw_1.xyzx)).xyzx, r1_xyzw_2.xyzx, -cb1_values[0].xyzx)).xyzx, cb1_values[0].xyzx)).xyz;
+                float r0_w_2 = saturate(i.texcoord2.x);
+                o.sv_Target0.xyz = (mad(r0_w_2.xxxx, (mad(((r0_xyzw_1.xyzx + r0_xyzw_1.xyzx)).xyzx, r1_xyzw_2.xyzx, -cb1_values[0].xyzx)).xyzx, cb1_values[0].xyzx)).xyz;
                 return o;
             }
             ENDHLSL

@@ -35,12 +35,12 @@ Shader "Custom/Hyperdrive"
                 float _XYScale;
                 float _StarCount;
             };
-            cbuffer UnityPerDraw : register(b1)
+            cbuffer _UnityPerDrawCB : register(b1)
             {
                 float4x4 unity_ObjectToWorld;
                 float4 _Time;
             };
-            cbuffer UnityPerFrame : register(b2)
+            cbuffer _UnityPerFrameCB : register(b2)
             {
                 float4x4 unity_MatrixVP;
             };
@@ -52,19 +52,19 @@ Shader "Custom/Hyperdrive"
             };
             struct program1Output
             {
-                float4 sv_Position0 : SV_Position0;
+                float4 sv_Position0 : SV_Position;
                 float4 color0 : COLOR0;
                 float2 texcoord0 : TEXCOORD0;
             };
             struct program3Input
             {
-                float4 sv_Position0 : SV_Position0;
+                float4 sv_Position0 : SV_Position;
                 float4 color0 : COLOR0;
                 float2 texcoord0 : TEXCOORD0;
             };
             struct program3Output
             {
-                float4 sv_Target0 : SV_Target0;
+                float4 sv_Target0 : SV_Target;
             };
             #pragma vertex vert
             program1Output vert(program1Input i)
@@ -102,7 +102,7 @@ Shader "Custom/Hyperdrive"
                 float r0_z_8 = (-r0_z_7 + _BrightnessFade);
                 float r0_x_10 = dot(r0_z_8.xxxx, (asfloat(asint((float)((_StarCount >= frac((sin(mad(r0_xy_3.y, 100, r0_xy_3.x)) * 1000))))) & asint(1065353216))).xxxx);
                 float r0_y_4 = (i.texcoord0.y + -0.4);
-                float r0_y_5 = (r0_y_4 * 1.6666666);
+                float r0_y_5 = saturate((r0_y_4 * 1.6666666));
                 float r0_z_9 = mad(r0_y_5, -2, 3);
                 float r0_y_6 = (r0_y_5 * r0_y_5);
                 float r0_y_7 = (r0_y_6 * r0_z_9);

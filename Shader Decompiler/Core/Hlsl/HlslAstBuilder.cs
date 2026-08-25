@@ -174,10 +174,16 @@ public static class HlslAstBuilder
 
         foreach (SignatureElement el in elements)
         {
-            string semantic = $"{el.SemanticName}{el.SemanticIndex}";
+            // SV_ system-value semantics (SV_Position, SV_Target, etc.) do not
+            // take an index in HLSL — "SV_Position0" is invalid.  Regular
+            // semantics (POSITION, TEXCOORD, COLOR) use the index to
+            // distinguish multiple channels: POSITION0, TEXCOORD1, etc.
+            string semantic = el.SemanticIndex == 0 && el.SemanticName.StartsWith("SV_", StringComparison.Ordinal)
+                ? el.SemanticName
+                : $"{el.SemanticName}{el.SemanticIndex}";
             s.Fields.Add(new HlslFieldNode
             {
-                Name = ToFieldName(semantic),
+                Name = ToFieldName($"{el.SemanticName}{el.SemanticIndex}"),
                 Semantic = semantic,
                 TypeHint = TypeFromSignatureElement(el),
             });

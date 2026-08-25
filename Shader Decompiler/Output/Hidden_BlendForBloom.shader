@@ -19,18 +19,18 @@ Shader "Hidden/BlendForBloom"
                 float _Intensity;
                 float4 _ColorBuffer_TexelSize;
             };
-            cbuffer UnityPerDraw : register(b1)
+            cbuffer _UnityPerDrawCB : register(b1)
             {
                 float4x4 unity_ObjectToWorld;
             };
-            cbuffer UnityPerFrame : register(b2)
+            cbuffer _UnityPerFrameCB : register(b2)
             {
                 float4x4 unity_MatrixVP;
             };
-            SamplerState sampler_ColorBuffer : register(s0);
-            SamplerState sampler_MainTex : register(s1);
-            Texture2D _MainTex : register(t0);
-            Texture2D _ColorBuffer : register(t1);
+            SamplerState sampler_ColorBuffer;
+            SamplerState sampler_MainTex;
+            Texture2D _MainTex;
+            Texture2D _ColorBuffer;
             struct program1Input
             {
                 float4 position0 : POSITION0;
@@ -38,19 +38,19 @@ Shader "Hidden/BlendForBloom"
             };
             struct program1Output
             {
-                float4 sv_Position0 : SV_POSITION0;
+                float4 sv_Position0 : SV_POSITION;
                 float2 texcoord0 : TEXCOORD0;
                 float2 texcoord1 : TEXCOORD1;
             };
             struct program3Input
             {
-                float4 sv_Position0 : SV_POSITION0;
+                float4 sv_Position0 : SV_POSITION;
                 float2 texcoord0 : TEXCOORD0;
                 float2 texcoord1 : TEXCOORD1;
             };
             struct program3Output
             {
-                float4 sv_Target0 : SV_Target0;
+                float4 sv_Target0 : SV_Target;
             };
             #pragma vertex vert
             program1Output vert(program1Input i)
@@ -88,16 +88,16 @@ Shader "Hidden/BlendForBloom"
                 float4 _ColorBuffer_TexelSize;
                 float4 cb0_values[5];
             };
-            cbuffer UnityPerDraw : register(b1)
+            cbuffer _UnityPerDrawCB : register(b1)
             {
                 float4x4 unity_ObjectToWorld;
             };
-            cbuffer UnityPerFrame : register(b2)
+            cbuffer _UnityPerFrameCB : register(b2)
             {
                 float4x4 unity_MatrixVP;
             };
-            SamplerState sampler_MainTex : register(s0);
-            Texture2D _MainTex : register(t0);
+            SamplerState sampler_MainTex;
+            Texture2D _MainTex;
             struct program5Input
             {
                 float4 position0 : POSITION0;
@@ -105,7 +105,7 @@ Shader "Hidden/BlendForBloom"
             };
             struct program5Output
             {
-                float4 sv_Position0 : SV_POSITION0;
+                float4 sv_Position0 : SV_POSITION;
                 float2 texcoord0 : TEXCOORD0;
                 float2 texcoord1 : TEXCOORD1;
                 float2 texcoord2 : TEXCOORD2;
@@ -114,7 +114,7 @@ Shader "Hidden/BlendForBloom"
             };
             struct program7Input
             {
-                float4 sv_Position0 : SV_POSITION0;
+                float4 sv_Position0 : SV_POSITION;
                 float2 texcoord0 : TEXCOORD0;
                 float2 texcoord1 : TEXCOORD1;
                 float2 texcoord2 : TEXCOORD2;
@@ -123,7 +123,7 @@ Shader "Hidden/BlendForBloom"
             };
             struct program7Output
             {
-                float4 sv_Target0 : SV_Target0;
+                float4 sv_Target0 : SV_Target;
             };
             #pragma vertex vert
             program5Output vert(program5Input i)

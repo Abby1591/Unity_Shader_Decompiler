@@ -47,17 +47,17 @@ Shader "Toon/Basic Outline"
             };
             struct program2Output
             {
-                float4 sv_Position0 : SV_POSITION0;
+                float4 sv_Position0 : SV_POSITION;
                 float4 color0 : COLOR0;
             };
             struct program6Input
             {
-                float4 sv_Position0 : SV_POSITION0;
+                float4 sv_Position0 : SV_POSITION;
                 float4 color0 : COLOR0;
             };
             struct program6Output
             {
-                float4 sv_Target0 : SV_Target0;
+                float4 sv_Target0 : SV_Target;
             };
             #pragma vertex vert
             program2Output vert(program2Input i)
@@ -145,19 +145,19 @@ Shader "Toon/Basic Outline"
             };
             struct program3Output
             {
-                float4 sv_Position0 : SV_POSITION0;
+                float4 sv_Position0 : SV_POSITION;
                 float texcoord0 : TEXCOORD0;
                 float4 color0 : COLOR0;
             };
             struct program7Input
             {
-                float4 sv_Position0 : SV_POSITION0;
+                float4 sv_Position0 : SV_POSITION;
                 float texcoord0 : TEXCOORD0;
                 float4 color0 : COLOR0;
             };
             struct program7Output
             {
-                float4 sv_Target0 : SV_Target0;
+                float4 sv_Target0 : SV_Target;
             };
             #pragma vertex vert
             program3Output vert(program3Input i)
@@ -198,9 +198,8 @@ Shader "Toon/Basic Outline"
             program7Output frag(program7Input i)
             {
                 program7Output o = (program7Output)0;
-                float TEXCOORD0_x_1 = i.texcoord0.x;
                 float3 r0_yzw_1 = ((i.color0.xxyz + -cb0_values[0].xxyz)).yzw;
-                o.sv_Target0.xyz = (mad(TEXCOORD0_x_1.xxxx, r0_yzw_1.xyzx, cb0_values[0].xyzx)).xyz;
+                o.sv_Target0.xyz = (mad((saturate(i.texcoord0.x)).xxxx, r0_yzw_1.xyzx, cb0_values[0].xyzx)).xyz;
                 o.sv_Target0.w = i.color0.w;
                 return o;
             }

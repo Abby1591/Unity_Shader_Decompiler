@@ -25,11 +25,11 @@ Shader "Sprites/GrayScale"
                 float4 _Color;
                 float _EffectAmount;
             };
-            cbuffer UnityPerDraw : register(b1)
+            cbuffer _UnityPerDrawCB : register(b1)
             {
                 float4x4 unity_ObjectToWorld;
             };
-            cbuffer UnityPerFrame : register(b2)
+            cbuffer _UnityPerFrameCB : register(b2)
             {
                 float4x4 unity_MatrixVP;
             };
@@ -43,19 +43,19 @@ Shader "Sprites/GrayScale"
             };
             struct program2Output
             {
-                float4 sv_Position0 : SV_POSITION0;
+                float4 sv_Position0 : SV_POSITION;
                 float4 color0 : COLOR0;
                 float2 texcoord0 : TEXCOORD0;
             };
             struct program5Input
             {
-                float4 sv_Position0 : SV_POSITION0;
+                float4 sv_Position0 : SV_POSITION;
                 float4 color0 : COLOR0;
                 float2 texcoord0 : TEXCOORD0;
             };
             struct program5Output
             {
-                float4 sv_Target0 : SV_Target0;
+                float4 sv_Target0 : SV_Target;
             };
             #pragma vertex vert
             program2Output vert(program2Input i)
@@ -97,12 +97,12 @@ Shader "Sprites/GrayScale"
                 float4 _Color;
                 float _EffectAmount;
             };
-            cbuffer UnityPerDraw : register(b1)
+            cbuffer _UnityPerDrawCB : register(b1)
             {
                 float4x4 unity_ObjectToWorld;
                 float4 cb1_values[7];
             };
-            cbuffer UnityPerFrame : register(b2)
+            cbuffer _UnityPerFrameCB : register(b2)
             {
                 float4x4 unity_MatrixVP;
                 float4 cb2_values[4];
@@ -121,19 +121,19 @@ Shader "Sprites/GrayScale"
             };
             struct program3Output
             {
-                float4 sv_Position0 : SV_POSITION0;
+                float4 sv_Position0 : SV_POSITION;
                 float4 color0 : COLOR0;
                 float2 texcoord0 : TEXCOORD0;
             };
             struct program6Input
             {
-                float4 sv_Position0 : SV_POSITION0;
+                float4 sv_Position0 : SV_POSITION;
                 float4 color0 : COLOR0;
                 float2 texcoord0 : TEXCOORD0;
             };
             struct program6Output
             {
-                float4 sv_Target0 : SV_Target0;
+                float4 sv_Target0 : SV_Target;
             };
             #pragma vertex vert
             program3Output vert(program3Input i)

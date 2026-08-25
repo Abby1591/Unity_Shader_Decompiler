@@ -21,7 +21,7 @@ Shader "Custom/Horizontal Skybox"
             ZTest LEqual
             ZWrite Off
             HLSLPROGRAM
-            cbuffer UnityPerDraw : register(b0)
+            cbuffer _UnityPerDrawCB : register(b0)
             {
                 float4x4 unity_ObjectToWorld;
                 float4 _Color1;
@@ -31,7 +31,7 @@ Shader "Custom/Horizontal Skybox"
                 float _Exponent1;
                 float _Exponent2;
             };
-            cbuffer UnityPerFrame : register(b1)
+            cbuffer _UnityPerFrameCB : register(b1)
             {
                 float4x4 unity_MatrixVP;
             };
@@ -42,17 +42,17 @@ Shader "Custom/Horizontal Skybox"
             };
             struct program1Output
             {
-                float4 sv_Position0 : SV_POSITION0;
+                float4 sv_Position0 : SV_POSITION;
                 float3 texcoord0 : TEXCOORD0;
             };
             struct program3Input
             {
-                float4 sv_Position0 : SV_POSITION0;
+                float4 sv_Position0 : SV_POSITION;
                 float3 texcoord0 : TEXCOORD0;
             };
             struct program3Output
             {
-                float4 sv_Target0 : SV_Target0;
+                float4 sv_Target0 : SV_Target;
             };
             #pragma vertex vert
             program1Output vert(program1Input i)

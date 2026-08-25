@@ -21,7 +21,7 @@ Shader "ShurikenMagic/TransparentRim"
             ZWrite Off
             Blend SrcAlpha OneMinusSrcColor
             HLSLPROGRAM
-            cbuffer UnityPerDraw : register(b0)
+            cbuffer _UnityPerDrawCB : register(b0)
             {
                 float4x4 unity_ObjectToWorld;
                 float4x4 unity_WorldToObject;
@@ -33,7 +33,7 @@ Shader "ShurikenMagic/TransparentRim"
                 float4 _InnerColor;
                 float4 cb0_values[6];
             };
-            cbuffer UnityPerFrame : register(b1)
+            cbuffer _UnityPerFrameCB : register(b1)
             {
                 float3 _WorldSpaceCameraPos;
                 float4x4 unity_MatrixVP;
@@ -51,19 +51,19 @@ Shader "ShurikenMagic/TransparentRim"
             };
             struct program6Output
             {
-                float4 sv_Position0 : SV_POSITION0;
+                float4 sv_Position0 : SV_POSITION;
                 float3 texcoord0 : TEXCOORD0;
                 float3 texcoord1 : TEXCOORD1;
             };
             struct program14Input
             {
-                float4 sv_Position0 : SV_POSITION0;
+                float4 sv_Position0 : SV_POSITION;
                 float3 texcoord0 : TEXCOORD0;
                 float3 texcoord1 : TEXCOORD1;
             };
             struct program14Output
             {
-                float4 sv_Target0 : SV_Target0;
+                float4 sv_Target0 : SV_Target;
             };
             #pragma vertex vert
             program6Output vert(program6Input i)
@@ -88,7 +88,7 @@ Shader "ShurikenMagic/TransparentRim"
                 program14Output o = (program14Output)0;
                 float3 viewDir_xyz_1 = ((-i.texcoord1.xyzx + _WorldSpaceCameraPos.xyzx)).xyz;
                 float3 unitViewDir_xyz_2 = normalize(viewDir_xyz_1);
-                float4 r0_xyzw_6 = ((log2((dot(unitViewDir_xyz_2.xyzx, i.texcoord0.xyzx) + 1))).xxxx * cb0_values[5].xyxx);
+                float4 r0_xyzw_6 = ((log2((saturate(dot(unitViewDir_xyz_2.xyzx, i.texcoord0.xyzx)) + 1))).xxxx * cb0_values[5].xyxx);
                 float r0_x_6 = r0_xyzw_6.x;
                 float r0_y_3 = r0_xyzw_6.y;
                 float4 r0_xyzw_7 = exp2(float4(r0_x_6, r0_y_3, r0_x_6, r0_x_6));
@@ -113,7 +113,7 @@ Shader "ShurikenMagic/TransparentRim"
             ZWrite Off
             Blend SrcAlpha OneMinusSrcColor
             HLSLPROGRAM
-            cbuffer UnityPerDraw : register(b0)
+            cbuffer _UnityPerDrawCB : register(b0)
             {
                 float4x4 unity_ObjectToWorld;
                 float4x4 unity_WorldToObject;
@@ -125,7 +125,7 @@ Shader "ShurikenMagic/TransparentRim"
                 float4 _InnerColor;
                 float4 cb0_values[6];
             };
-            cbuffer UnityPerFrame : register(b1)
+            cbuffer _UnityPerFrameCB : register(b1)
             {
                 float3 _WorldSpaceCameraPos;
                 float4x4 unity_MatrixVP;
@@ -156,7 +156,7 @@ Shader "ShurikenMagic/TransparentRim"
             };
             struct program10Output
             {
-                float4 sv_Position0 : SV_POSITION0;
+                float4 sv_Position0 : SV_POSITION;
                 float3 texcoord0 : TEXCOORD0;
                 float texcoord3 : TEXCOORD3;
                 float3 texcoord1 : TEXCOORD1;
@@ -164,7 +164,7 @@ Shader "ShurikenMagic/TransparentRim"
             };
             struct program17Input
             {
-                float4 sv_Position0 : SV_POSITION0;
+                float4 sv_Position0 : SV_POSITION;
                 float3 texcoord0 : TEXCOORD0;
                 float texcoord3 : TEXCOORD3;
                 float3 texcoord1 : TEXCOORD1;
@@ -172,7 +172,7 @@ Shader "ShurikenMagic/TransparentRim"
             };
             struct program17Output
             {
-                float4 sv_Target0 : SV_Target0;
+                float4 sv_Target0 : SV_Target;
             };
             #pragma vertex vert
             program10Output vert(program10Input i)
@@ -243,7 +243,7 @@ Shader "ShurikenMagic/TransparentRim"
                 program17Output o = (program17Output)0;
                 float3 viewDir_xyz_1 = ((-i.texcoord1.xyzx + _WorldSpaceCameraPos.xyzx)).xyz;
                 float3 unitViewDir_xyz_2 = normalize(viewDir_xyz_1);
-                float4 r0_xyzw_6 = ((log2((dot(unitViewDir_xyz_2.xyzx, i.texcoord0.xyzx) + 1))).xxxx * cb0_values[5].xyxx);
+                float4 r0_xyzw_6 = ((log2((saturate(dot(unitViewDir_xyz_2.xyzx, i.texcoord0.xyzx)) + 1))).xxxx * cb0_values[5].xyxx);
                 float r0_x_6 = r0_xyzw_6.x;
                 float r0_y_3 = r0_xyzw_6.y;
                 float4 r0_xyzw_7 = exp2(float4(r0_x_6, r0_y_3, r0_x_6, r0_x_6));
@@ -263,8 +263,8 @@ Shader "ShurikenMagic/TransparentRim"
                 float r0_x_10 = r0_xyzw_10.x;
                 float r0_y_6 = r0_xyzw_10.y;
                 float r0_z_5 = r0_xyzw_10.z;
-                float TEXCOORD0_w_4 = i.texcoord3.x;
-                o.sv_Target0.xyz = (mad(TEXCOORD0_w_4.xxxx, float4(r0_x_10, r0_y_6, r0_z_5, r0_x_10), cb2_values[0].xyzx)).xyz;
+                float r0_w_4 = saturate(i.texcoord3.x);
+                o.sv_Target0.xyz = (mad(r0_w_4.xxxx, float4(r0_x_10, r0_y_6, r0_z_5, r0_x_10), cb2_values[0].xyzx)).xyz;
                 return o;
             }
             ENDHLSL
@@ -277,7 +277,7 @@ Shader "ShurikenMagic/TransparentRim"
             ZWrite Off
             Blend SrcAlpha OneMinusSrcColor
             HLSLPROGRAM
-            cbuffer UnityPerDraw : register(b0)
+            cbuffer _UnityPerDrawCB : register(b0)
             {
                 float4x4 unity_ObjectToWorld;
                 float4x4 unity_WorldToObject;
@@ -289,7 +289,7 @@ Shader "ShurikenMagic/TransparentRim"
                 float4 _InnerColor;
                 float4 cb0_values[6];
             };
-            cbuffer UnityPerFrame : register(b1)
+            cbuffer _UnityPerFrameCB : register(b1)
             {
                 float3 _WorldSpaceCameraPos;
                 float4x4 unity_MatrixVP;
@@ -316,21 +316,21 @@ Shader "ShurikenMagic/TransparentRim"
             };
             struct program9Output
             {
-                float4 sv_Position0 : SV_POSITION0;
+                float4 sv_Position0 : SV_POSITION;
                 float3 texcoord0 : TEXCOORD0;
                 float texcoord3 : TEXCOORD3;
                 float3 texcoord1 : TEXCOORD1;
             };
             struct program16Input
             {
-                float4 sv_Position0 : SV_POSITION0;
+                float4 sv_Position0 : SV_POSITION;
                 float3 texcoord0 : TEXCOORD0;
                 float texcoord3 : TEXCOORD3;
                 float3 texcoord1 : TEXCOORD1;
             };
             struct program16Output
             {
-                float4 sv_Target0 : SV_Target0;
+                float4 sv_Target0 : SV_Target;
             };
             #pragma vertex vert
             program9Output vert(program9Input i)
@@ -360,7 +360,7 @@ Shader "ShurikenMagic/TransparentRim"
                 program16Output o = (program16Output)0;
                 float3 viewDir_xyz_1 = ((-i.texcoord1.xyzx + _WorldSpaceCameraPos.xyzx)).xyz;
                 float3 unitViewDir_xyz_2 = normalize(viewDir_xyz_1);
-                float4 r0_xyzw_6 = ((log2((dot(unitViewDir_xyz_2.xyzx, i.texcoord0.xyzx) + 1))).xxxx * cb0_values[5].xyxx);
+                float4 r0_xyzw_6 = ((log2((saturate(dot(unitViewDir_xyz_2.xyzx, i.texcoord0.xyzx)) + 1))).xxxx * cb0_values[5].xyxx);
                 float r0_x_6 = r0_xyzw_6.x;
                 float r0_y_3 = r0_xyzw_6.y;
                 float4 r0_xyzw_7 = exp2(float4(r0_x_6, r0_y_3, r0_x_6, r0_x_6));
@@ -380,8 +380,8 @@ Shader "ShurikenMagic/TransparentRim"
                 float r0_x_10 = r0_xyzw_10.x;
                 float r0_y_6 = r0_xyzw_10.y;
                 float r0_z_5 = r0_xyzw_10.z;
-                float TEXCOORD0_w_4 = i.texcoord3.x;
-                o.sv_Target0.xyz = (mad(TEXCOORD0_w_4.xxxx, float4(r0_x_10, r0_y_6, r0_z_5, r0_x_10), cb2_values[0].xyzx)).xyz;
+                float r0_w_4 = saturate(i.texcoord3.x);
+                o.sv_Target0.xyz = (mad(r0_w_4.xxxx, float4(r0_x_10, r0_y_6, r0_z_5, r0_x_10), cb2_values[0].xyzx)).xyz;
                 return o;
             }
             ENDHLSL
@@ -394,7 +394,7 @@ Shader "ShurikenMagic/TransparentRim"
             ZWrite Off
             Blend SrcAlpha OneMinusSrcColor
             HLSLPROGRAM
-            cbuffer UnityPerDraw : register(b0)
+            cbuffer _UnityPerDrawCB : register(b0)
             {
                 float4x4 unity_ObjectToWorld;
                 float4x4 unity_WorldToObject;
@@ -406,7 +406,7 @@ Shader "ShurikenMagic/TransparentRim"
                 float4 _InnerColor;
                 float4 cb0_values[46];
             };
-            cbuffer UnityPerFrame : register(b1)
+            cbuffer _UnityPerFrameCB : register(b1)
             {
                 float3 _WorldSpaceCameraPos;
                 float4x4 unity_MatrixVP;
@@ -429,21 +429,21 @@ Shader "ShurikenMagic/TransparentRim"
             };
             struct program7Output
             {
-                float4 sv_Position0 : SV_POSITION0;
+                float4 sv_Position0 : SV_POSITION;
                 float3 texcoord0 : TEXCOORD0;
                 float3 texcoord1 : TEXCOORD1;
                 float3 texcoord2 : TEXCOORD2;
             };
             struct program15Input
             {
-                float4 sv_Position0 : SV_POSITION0;
+                float4 sv_Position0 : SV_POSITION;
                 float3 texcoord0 : TEXCOORD0;
                 float3 texcoord1 : TEXCOORD1;
                 float3 texcoord2 : TEXCOORD2;
             };
             struct program15Output
             {
-                float4 sv_Target0 : SV_Target0;
+                float4 sv_Target0 : SV_Target;
             };
             #pragma vertex vert
             program7Output vert(program7Input i)
@@ -483,7 +483,7 @@ Shader "ShurikenMagic/TransparentRim"
                 program15Output o = (program15Output)0;
                 float3 viewDir_xyz_1 = ((-i.texcoord1.xyzx + _WorldSpaceCameraPos.xyzx)).xyz;
                 float3 unitViewDir_xyz_2 = normalize(viewDir_xyz_1);
-                float4 r0_xyzw_6 = ((log2((dot(unitViewDir_xyz_2.xyzx, i.texcoord0.xyzx) + 1))).xxxx * cb0_values[5].xyxx);
+                float4 r0_xyzw_6 = ((log2((saturate(dot(unitViewDir_xyz_2.xyzx, i.texcoord0.xyzx)) + 1))).xxxx * cb0_values[5].xyxx);
                 float r0_x_6 = r0_xyzw_6.x;
                 float r0_y_3 = r0_xyzw_6.y;
                 float4 r0_xyzw_7 = exp2(float4(r0_x_6, r0_y_3, r0_x_6, r0_x_6));
@@ -508,7 +508,7 @@ Shader "ShurikenMagic/TransparentRim"
             ZWrite Off
             Blend SrcAlpha One
             HLSLPROGRAM
-            cbuffer UnityPerDraw : register(b0)
+            cbuffer _UnityPerDrawCB : register(b0)
             {
                 float4x4 unity_ObjectToWorld;
                 float4x4 unity_WorldToObject;
@@ -520,7 +520,7 @@ Shader "ShurikenMagic/TransparentRim"
                 float4 _InnerColor;
                 float4 cb0_values[11];
             };
-            cbuffer UnityPerFrame : register(b1)
+            cbuffer _UnityPerFrameCB : register(b1)
             {
                 float3 _WorldSpaceCameraPos;
                 float4x4 unity_MatrixVP;
@@ -543,21 +543,21 @@ Shader "ShurikenMagic/TransparentRim"
             };
             struct program20Output
             {
-                float4 sv_Position0 : SV_POSITION0;
+                float4 sv_Position0 : SV_POSITION;
                 float3 texcoord0 : TEXCOORD0;
                 float3 texcoord1 : TEXCOORD1;
                 float3 texcoord2 : TEXCOORD2;
             };
             struct program30Input
             {
-                float4 sv_Position0 : SV_POSITION0;
+                float4 sv_Position0 : SV_POSITION;
                 float3 texcoord0 : TEXCOORD0;
                 float3 texcoord1 : TEXCOORD1;
                 float3 texcoord2 : TEXCOORD2;
             };
             struct program30Output
             {
-                float4 sv_Target0 : SV_Target0;
+                float4 sv_Target0 : SV_Target;
             };
             #pragma vertex vert
             program20Output vert(program20Input i)
@@ -584,7 +584,7 @@ Shader "ShurikenMagic/TransparentRim"
                 program30Output o = (program30Output)0;
                 float3 viewDir_xyz_1 = ((-i.texcoord1.xyzx + _WorldSpaceCameraPos.xyzx)).xyz;
                 float3 unitViewDir_xyz_2 = normalize(viewDir_xyz_1);
-                                o.sv_Target0.w = (pow((dot(unitViewDir_xyz_2.xyzx, i.texcoord0.xyzx) + 1), cb0_values[9].y) * cb0_values[10].x);
+                                o.sv_Target0.w = (pow((saturate(dot(unitViewDir_xyz_2.xyzx, i.texcoord0.xyzx)) + 1), cb0_values[9].y) * cb0_values[10].x);
                 o.sv_Target0.xyz = (float4(0, 0, 0, 0)).xyz;
                 return o;
             }
@@ -598,7 +598,7 @@ Shader "ShurikenMagic/TransparentRim"
             ZWrite Off
             Blend SrcAlpha One
             HLSLPROGRAM
-            cbuffer UnityPerDraw : register(b0)
+            cbuffer _UnityPerDrawCB : register(b0)
             {
                 float4x4 unity_ObjectToWorld;
                 float4x4 unity_WorldToObject;
@@ -610,7 +610,7 @@ Shader "ShurikenMagic/TransparentRim"
                 float4 _InnerColor;
                 float4 cb0_values[11];
             };
-            cbuffer UnityPerFrame : register(b1)
+            cbuffer _UnityPerFrameCB : register(b1)
             {
                 float3 _WorldSpaceCameraPos;
                 float4x4 unity_MatrixVP;
@@ -641,7 +641,7 @@ Shader "ShurikenMagic/TransparentRim"
             };
             struct program27Output
             {
-                float4 sv_Position0 : SV_POSITION0;
+                float4 sv_Position0 : SV_POSITION;
                 float3 texcoord0 : TEXCOORD0;
                 float3 texcoord1 : TEXCOORD1;
                 float2 texcoord2 : TEXCOORD2;
@@ -649,7 +649,7 @@ Shader "ShurikenMagic/TransparentRim"
             };
             struct program39Input
             {
-                float4 sv_Position0 : SV_POSITION0;
+                float4 sv_Position0 : SV_POSITION;
                 float3 texcoord0 : TEXCOORD0;
                 float3 texcoord1 : TEXCOORD1;
                 float2 texcoord2 : TEXCOORD2;
@@ -657,7 +657,7 @@ Shader "ShurikenMagic/TransparentRim"
             };
             struct program39Output
             {
-                float4 sv_Target0 : SV_Target0;
+                float4 sv_Target0 : SV_Target;
             };
             #pragma vertex vert
             program27Output vert(program27Input i)
@@ -691,7 +691,7 @@ Shader "ShurikenMagic/TransparentRim"
                 program39Output o = (program39Output)0;
                 float3 viewDir_xyz_1 = ((-i.texcoord1.xyzx + _WorldSpaceCameraPos.xyzx)).xyz;
                 float3 unitViewDir_xyz_2 = normalize(viewDir_xyz_1);
-                                o.sv_Target0.w = (pow((dot(unitViewDir_xyz_2.xyzx, i.texcoord0.xyzx) + 1), cb0_values[9].y) * cb0_values[10].x);
+                                o.sv_Target0.w = (pow((saturate(dot(unitViewDir_xyz_2.xyzx, i.texcoord0.xyzx)) + 1), cb0_values[9].y) * cb0_values[10].x);
                 o.sv_Target0.xyz = (float4(0, 0, 0, 0)).xyz;
                 return o;
             }
@@ -705,7 +705,7 @@ Shader "ShurikenMagic/TransparentRim"
             ZWrite Off
             Blend SrcAlpha One
             HLSLPROGRAM
-            cbuffer UnityPerDraw : register(b0)
+            cbuffer _UnityPerDrawCB : register(b0)
             {
                 float4x4 unity_ObjectToWorld;
                 float4x4 unity_WorldToObject;
@@ -717,7 +717,7 @@ Shader "ShurikenMagic/TransparentRim"
                 float4 _InnerColor;
                 float4 cb0_values[11];
             };
-            cbuffer UnityPerFrame : register(b1)
+            cbuffer _UnityPerFrameCB : register(b1)
             {
                 float3 _WorldSpaceCameraPos;
                 float4x4 unity_MatrixVP;
@@ -748,7 +748,7 @@ Shader "ShurikenMagic/TransparentRim"
             };
             struct program25Output
             {
-                float4 sv_Position0 : SV_POSITION0;
+                float4 sv_Position0 : SV_POSITION;
                 float3 texcoord0 : TEXCOORD0;
                 float texcoord3 : TEXCOORD3;
                 float3 texcoord1 : TEXCOORD1;
@@ -756,7 +756,7 @@ Shader "ShurikenMagic/TransparentRim"
             };
             struct program37Input
             {
-                float4 sv_Position0 : SV_POSITION0;
+                float4 sv_Position0 : SV_POSITION;
                 float3 texcoord0 : TEXCOORD0;
                 float texcoord3 : TEXCOORD3;
                 float3 texcoord1 : TEXCOORD1;
@@ -764,7 +764,7 @@ Shader "ShurikenMagic/TransparentRim"
             };
             struct program37Output
             {
-                float4 sv_Target0 : SV_Target0;
+                float4 sv_Target0 : SV_Target;
             };
             #pragma vertex vert
             program25Output vert(program25Input i)
@@ -798,7 +798,7 @@ Shader "ShurikenMagic/TransparentRim"
                 program37Output o = (program37Output)0;
                 float3 viewDir_xyz_1 = ((-i.texcoord1.xyzx + _WorldSpaceCameraPos.xyzx)).xyz;
                 float3 unitViewDir_xyz_2 = normalize(viewDir_xyz_1);
-                                o.sv_Target0.w = (pow((dot(unitViewDir_xyz_2.xyzx, i.texcoord0.xyzx) + 1), cb0_values[9].y) * cb0_values[10].x);
+                                o.sv_Target0.w = (pow((saturate(dot(unitViewDir_xyz_2.xyzx, i.texcoord0.xyzx)) + 1), cb0_values[9].y) * cb0_values[10].x);
                 o.sv_Target0.xyz = (float4(0, 0, 0, 0)).xyz;
                 return o;
             }
@@ -812,7 +812,7 @@ Shader "ShurikenMagic/TransparentRim"
             ZWrite Off
             Blend SrcAlpha One
             HLSLPROGRAM
-            cbuffer UnityPerDraw : register(b0)
+            cbuffer _UnityPerDrawCB : register(b0)
             {
                 float4x4 unity_ObjectToWorld;
                 float4x4 unity_WorldToObject;
@@ -824,7 +824,7 @@ Shader "ShurikenMagic/TransparentRim"
                 float4 _InnerColor;
                 float4 cb0_values[11];
             };
-            cbuffer UnityPerFrame : register(b1)
+            cbuffer _UnityPerFrameCB : register(b1)
             {
                 float3 _WorldSpaceCameraPos;
                 float4x4 unity_MatrixVP;
@@ -855,7 +855,7 @@ Shader "ShurikenMagic/TransparentRim"
             };
             struct program24Output
             {
-                float4 sv_Position0 : SV_POSITION0;
+                float4 sv_Position0 : SV_POSITION;
                 float3 texcoord0 : TEXCOORD0;
                 float texcoord3 : TEXCOORD3;
                 float3 texcoord1 : TEXCOORD1;
@@ -863,7 +863,7 @@ Shader "ShurikenMagic/TransparentRim"
             };
             struct program35Input
             {
-                float4 sv_Position0 : SV_POSITION0;
+                float4 sv_Position0 : SV_POSITION;
                 float3 texcoord0 : TEXCOORD0;
                 float texcoord3 : TEXCOORD3;
                 float3 texcoord1 : TEXCOORD1;
@@ -871,7 +871,7 @@ Shader "ShurikenMagic/TransparentRim"
             };
             struct program35Output
             {
-                float4 sv_Target0 : SV_Target0;
+                float4 sv_Target0 : SV_Target;
             };
             #pragma vertex vert
             program24Output vert(program24Input i)
@@ -910,7 +910,7 @@ Shader "ShurikenMagic/TransparentRim"
                 program35Output o = (program35Output)0;
                 float3 viewDir_xyz_1 = ((-i.texcoord1.xyzx + _WorldSpaceCameraPos.xyzx)).xyz;
                 float3 unitViewDir_xyz_2 = normalize(viewDir_xyz_1);
-                                o.sv_Target0.w = (pow((dot(unitViewDir_xyz_2.xyzx, i.texcoord0.xyzx) + 1), cb0_values[9].y) * cb0_values[10].x);
+                                o.sv_Target0.w = (pow((saturate(dot(unitViewDir_xyz_2.xyzx, i.texcoord0.xyzx)) + 1), cb0_values[9].y) * cb0_values[10].x);
                 o.sv_Target0.xyz = (float4(0, 0, 0, 0)).xyz;
                 return o;
             }
@@ -924,7 +924,7 @@ Shader "ShurikenMagic/TransparentRim"
             ZWrite Off
             Blend SrcAlpha One
             HLSLPROGRAM
-            cbuffer UnityPerDraw : register(b0)
+            cbuffer _UnityPerDrawCB : register(b0)
             {
                 float4x4 unity_ObjectToWorld;
                 float4x4 unity_WorldToObject;
@@ -936,7 +936,7 @@ Shader "ShurikenMagic/TransparentRim"
                 float4 _InnerColor;
                 float4 cb0_values[11];
             };
-            cbuffer UnityPerFrame : register(b1)
+            cbuffer _UnityPerFrameCB : register(b1)
             {
                 float3 _WorldSpaceCameraPos;
                 float4x4 unity_MatrixVP;
@@ -959,21 +959,21 @@ Shader "ShurikenMagic/TransparentRim"
             };
             struct program23Output
             {
-                float4 sv_Position0 : SV_POSITION0;
+                float4 sv_Position0 : SV_POSITION;
                 float3 texcoord0 : TEXCOORD0;
                 float3 texcoord1 : TEXCOORD1;
                 float2 texcoord2 : TEXCOORD2;
             };
             struct program33Input
             {
-                float4 sv_Position0 : SV_POSITION0;
+                float4 sv_Position0 : SV_POSITION;
                 float3 texcoord0 : TEXCOORD0;
                 float3 texcoord1 : TEXCOORD1;
                 float3 texcoord2 : TEXCOORD2;
             };
             struct program33Output
             {
-                float4 sv_Target0 : SV_Target0;
+                float4 sv_Target0 : SV_Target;
             };
             #pragma vertex vert
             program23Output vert(program23Input i)
@@ -1000,7 +1000,7 @@ Shader "ShurikenMagic/TransparentRim"
                 program33Output o = (program33Output)0;
                 float3 viewDir_xyz_1 = ((-i.texcoord1.xyzx + _WorldSpaceCameraPos.xyzx)).xyz;
                 float3 unitViewDir_xyz_2 = normalize(viewDir_xyz_1);
-                                o.sv_Target0.w = (pow((dot(unitViewDir_xyz_2.xyzx, i.texcoord0.xyzx) + 1), cb0_values[9].y) * cb0_values[10].x);
+                                o.sv_Target0.w = (pow((saturate(dot(unitViewDir_xyz_2.xyzx, i.texcoord0.xyzx)) + 1), cb0_values[9].y) * cb0_values[10].x);
                 o.sv_Target0.xyz = (float4(0, 0, 0, 0)).xyz;
                 return o;
             }
@@ -1014,7 +1014,7 @@ Shader "ShurikenMagic/TransparentRim"
             ZWrite Off
             Blend SrcAlpha One
             HLSLPROGRAM
-            cbuffer UnityPerDraw : register(b0)
+            cbuffer _UnityPerDrawCB : register(b0)
             {
                 float4x4 unity_ObjectToWorld;
                 float4x4 unity_WorldToObject;
@@ -1026,7 +1026,7 @@ Shader "ShurikenMagic/TransparentRim"
                 float4 _InnerColor;
                 float4 cb0_values[11];
             };
-            cbuffer UnityPerFrame : register(b1)
+            cbuffer _UnityPerFrameCB : register(b1)
             {
                 float3 _WorldSpaceCameraPos;
                 float4x4 unity_MatrixVP;
@@ -1049,21 +1049,21 @@ Shader "ShurikenMagic/TransparentRim"
             };
             struct program22Output
             {
-                float4 sv_Position0 : SV_POSITION0;
+                float4 sv_Position0 : SV_POSITION;
                 float3 texcoord0 : TEXCOORD0;
                 float3 texcoord1 : TEXCOORD1;
                 float3 texcoord2 : TEXCOORD2;
             };
             struct program34Input
             {
-                float4 sv_Position0 : SV_POSITION0;
+                float4 sv_Position0 : SV_POSITION;
                 float3 texcoord0 : TEXCOORD0;
                 float3 texcoord1 : TEXCOORD1;
                 float2 texcoord2 : TEXCOORD2;
             };
             struct program34Output
             {
-                float4 sv_Target0 : SV_Target0;
+                float4 sv_Target0 : SV_Target;
             };
             #pragma vertex vert
             program22Output vert(program22Input i)
@@ -1090,7 +1090,7 @@ Shader "ShurikenMagic/TransparentRim"
                 program34Output o = (program34Output)0;
                 float3 viewDir_xyz_1 = ((-i.texcoord1.xyzx + _WorldSpaceCameraPos.xyzx)).xyz;
                 float3 unitViewDir_xyz_2 = normalize(viewDir_xyz_1);
-                                o.sv_Target0.w = (pow((dot(unitViewDir_xyz_2.xyzx, i.texcoord0.xyzx) + 1), cb0_values[9].y) * cb0_values[10].x);
+                                o.sv_Target0.w = (pow((saturate(dot(unitViewDir_xyz_2.xyzx, i.texcoord0.xyzx)) + 1), cb0_values[9].y) * cb0_values[10].x);
                 o.sv_Target0.xyz = (float4(0, 0, 0, 0)).xyz;
                 return o;
             }
@@ -1104,7 +1104,7 @@ Shader "ShurikenMagic/TransparentRim"
             ZWrite Off
             Blend SrcAlpha One
             HLSLPROGRAM
-            cbuffer UnityPerDraw : register(b0)
+            cbuffer _UnityPerDrawCB : register(b0)
             {
                 float4x4 unity_ObjectToWorld;
                 float4x4 unity_WorldToObject;
@@ -1116,7 +1116,7 @@ Shader "ShurikenMagic/TransparentRim"
                 float4 _InnerColor;
                 float4 cb0_values[11];
             };
-            cbuffer UnityPerFrame : register(b1)
+            cbuffer _UnityPerFrameCB : register(b1)
             {
                 float3 _WorldSpaceCameraPos;
                 float4x4 unity_MatrixVP;
@@ -1139,21 +1139,21 @@ Shader "ShurikenMagic/TransparentRim"
             };
             struct program21Output
             {
-                float4 sv_Position0 : SV_POSITION0;
+                float4 sv_Position0 : SV_POSITION;
                 float3 texcoord0 : TEXCOORD0;
                 float3 texcoord1 : TEXCOORD1;
                 float4 texcoord2 : TEXCOORD2;
             };
             struct program32Input
             {
-                float4 sv_Position0 : SV_POSITION0;
+                float4 sv_Position0 : SV_POSITION;
                 float3 texcoord0 : TEXCOORD0;
                 float3 texcoord1 : TEXCOORD1;
                 float4 texcoord2 : TEXCOORD2;
             };
             struct program32Output
             {
-                float4 sv_Target0 : SV_Target0;
+                float4 sv_Target0 : SV_Target;
             };
             #pragma vertex vert
             program21Output vert(program21Input i)
@@ -1183,7 +1183,7 @@ Shader "ShurikenMagic/TransparentRim"
                 program32Output o = (program32Output)0;
                 float3 viewDir_xyz_1 = ((-i.texcoord1.xyzx + _WorldSpaceCameraPos.xyzx)).xyz;
                 float3 unitViewDir_xyz_2 = normalize(viewDir_xyz_1);
-                                o.sv_Target0.w = (pow((dot(unitViewDir_xyz_2.xyzx, i.texcoord0.xyzx) + 1), cb0_values[9].y) * cb0_values[10].x);
+                                o.sv_Target0.w = (pow((saturate(dot(unitViewDir_xyz_2.xyzx, i.texcoord0.xyzx)) + 1), cb0_values[9].y) * cb0_values[10].x);
                 o.sv_Target0.xyz = (float4(0, 0, 0, 0)).xyz;
                 return o;
             }

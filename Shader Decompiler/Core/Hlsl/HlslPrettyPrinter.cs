@@ -277,11 +277,17 @@ public static class HlslPrettyPrinter
         switch (res.Kind)
         {
             case HlslResourceKind.ConstantBuffer:
-                // Raw `cbuffer` (not Unity's CBUFFER_START/END macros) so the
-                // output compiles standalone — ShaderLab accepts it too. The
-                // register binding pins it to the slot the bytecode actually
-                // reads (dcl_constantbuffer cbN), not declaration order.
-                sb.Append("            cbuffer ").Append(res.Name).Append(" : ").Append(reg).Append("\n            {\n");
+                // Unity's shader compilation pipeline auto-injects standard
+                // cbuffers (UnityPerDraw, UnityPerFrame, UnityPerCamera, etc.)
+                // before our HLSLPROGRAM code runs. Re-declaring them with the
+                // same name causes "Duplicate constant buffer declaration".
+                // Rename them while keeping ALL variables and the register
+                // binding so the bytecode still reads from the correct slot.
+                string cbufferName = IsUnityCbuffer(res.Name)
+                    ? $"_{res.Name}CB"
+                    : res.Name;
+
+                sb.Append("            cbuffer ").Append(cbufferName).Append(" : ").Append(reg).Append("\n            {\n");
                 // HLSL infers each member's byte offset from its textual
                 // declaration order when there's no : packoffset(...), so the
                 // order must match the reflected layout. Sort by real offset;
@@ -289,11 +295,11 @@ public static class HlslPrettyPrinter
                 // (0) and is pure filler for reads that didn't resolve to a
                 // named member, so pin it to the end where it can't shift a
                 // real member's inferred offset.
-                var ordered = res.Variables
+                var orderedAll = res.Variables
                     .OrderBy(v => v.Name == $"cb{res.Slot}_values" ? 1 : 0)
                     .ThenBy(v => v.Offset)
                     .ToList();
-                foreach (HlslCBufferVariable v in ordered)
+                foreach (HlslCBufferVariable v in orderedAll)
                     sb.Append("                ").Append(v.TypeName).Append(' ').Append(v.Name)
                       .Append(v.ArraySize is { } n ? $"[{n}]" : "").Append(";\n");
                 sb.Append("            };\n");
@@ -326,6 +332,11 @@ public static class HlslPrettyPrinter
         HlslResourceKind.Uav => $"register(u{res.Slot})",
         _ => "",
     };
+
+    // Unity auto-injects these standard cbuffers into HLSLPROGRAM blocks.
+    // Re-declaring them causes "Duplicate constant buffer declaration".
+    private static bool IsUnityCbuffer(string name) =>
+        name.StartsWith("Unity", StringComparison.Ordinal);
 
     // ---------- Stage 8: Structs ----------
 

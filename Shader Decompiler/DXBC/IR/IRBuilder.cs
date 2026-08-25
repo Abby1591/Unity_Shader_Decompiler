@@ -623,6 +623,18 @@ public partial class IRBuilder
         // repeating that pair of lines around whatever expression it built.
         private void Emit(IRProgram program, Instruction instruction, IRExpression expression)
         {
+            // DXBC encodes saturate as bit 13 on the opcode token, not as a
+            // separate opcode.  add_sat, mul_sat, mad_sat etc. arrive here as
+            // regular Add/Mul/Mad with Saturate=true.  Wrap in Clamp01 so the
+            // pretty-printer emits saturate(...).
+            if (instruction.Saturate)
+            {
+                expression = new IRExpression.IntrinsicExpression
+                {
+                    Intrinsic = IRExpression.IRIntrinsic.Clamp01,
+                    Arguments = { expression }
+                };
+            }
             AddAssignment(program, BuildRegister(instruction.Operands[0]), expression);
         }
 

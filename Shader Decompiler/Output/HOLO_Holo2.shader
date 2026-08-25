@@ -75,17 +75,17 @@ Shader "HOLO/Holo2"
                 float _OriginalUVSwitch;
                 float4 cb0_values[8];
             };
-            cbuffer UnityPerCamera : register(b1)
+            cbuffer _UnityPerCameraCB : register(b1)
             {
                 float4 _Time;
                 float3 _WorldSpaceCameraPos;
             };
-            cbuffer UnityPerDraw : register(b2)
+            cbuffer _UnityPerDrawCB : register(b2)
             {
                 float4x4 unity_ObjectToWorld;
                 float4x4 unity_WorldToObject;
             };
-            cbuffer UnityPerFrame : register(b3)
+            cbuffer _UnityPerFrameCB : register(b3)
             {
                 float4x4 unity_MatrixV;
                 float4x4 unity_MatrixVP;
@@ -93,7 +93,6 @@ Shader "HOLO/Holo2"
             SamplerState sampler_MainTex;
             Texture2D _MainTex;
             SamplerState sampler_Diffuse;
-            SamplerState sampler_MainTex2;
             SamplerState sampler_originalDiffuse;
             Texture2D _originalDiffuse;
             Texture2D _Diffuse;
@@ -107,7 +106,7 @@ Shader "HOLO/Holo2"
             };
             struct program1Output
             {
-                float4 sv_Position0 : SV_POSITION0;
+                float4 sv_Position0 : SV_POSITION;
                 float4 texcoord0 : TEXCOORD0;
                 float4 texcoord1 : TEXCOORD1;
                 float3 texcoord2 : TEXCOORD2;
@@ -118,7 +117,7 @@ Shader "HOLO/Holo2"
             };
             struct program3Input
             {
-                float4 sv_Position0 : SV_POSITION0;
+                float4 sv_Position0 : SV_POSITION;
                 float4 texcoord0 : TEXCOORD0;
                 float4 texcoord1 : TEXCOORD1;
                 float3 texcoord2 : TEXCOORD2;
@@ -126,11 +125,11 @@ Shader "HOLO/Holo2"
                 float4 texcoord4 : TEXCOORD4;
                 float4 normal0 : NORMAL0;
                 float4 texcoord6 : TEXCOORD6;
-                uint sv_Isfrontface0 : SV_IsFrontFace0;
+                uint sv_Isfrontface0 : SV_IsFrontFace;
             };
             struct program3Output
             {
-                float4 sv_Target0 : SV_Target0;
+                float4 sv_Target0 : SV_Target;
             };
             #pragma vertex vert
             program1Output vert(program1Input i)
@@ -270,7 +269,7 @@ Shader "HOLO/Holo2"
                 float4 uvNMap_xyzw_3 = mad(i.texcoord0.xxxy, _N_map_ST.xxxy, float4(r0_y_2, r0_y_2, r0_y_2, r0_w_1));
                 float uvNMap_y_3 = uvNMap_xyzw_3.y;
                 float uvNMap_w_2 = uvNMap_xyzw_3.w;
-                float4 sampleNMap_xyzw_1 = _MainTex.Sample(sampler_MainTex2, (float4(uvNMap_y_3, uvNMap_w_2, uvNMap_y_3, uvNMap_y_3)).xy);
+                float4 sampleNMap_xyzw_1 = _MainTex.Sample(s2, (float4(uvNMap_y_3, uvNMap_w_2, uvNMap_y_3, uvNMap_y_3)).xy);
                 float r0_y_4 = (r1_x_1 * _M_map_ST.y);
                 float r0_w_3 = (cos(r0_y_1) * _M_map_ST.w);
                 float4 uvMMap_xyzw_5 = mad(i.texcoord0.xxxy, r0_y_4.xxxx, r0_w_3.xxxx);

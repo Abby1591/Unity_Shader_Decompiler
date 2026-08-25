@@ -21,9 +21,11 @@ Shader "Custom/Armor_Shader_UNLIT"
             ZWrite Off
             Blend SrcAlpha OneMinusSrcColor
             HLSLPROGRAM
-            cbuffer UnityPerCamera : register(b0)
+            cbuffer _UnityPerCameraCB : register(b0)
             {
+                float4 _Time;
                 float4 _ArmorColor;
+                float3 _WorldSpaceCameraPos;
                 float4 _ProjectionParams;
                 float4 _EmissionColor;
                 float _EmissionScale;
@@ -31,14 +33,12 @@ Shader "Custom/Armor_Shader_UNLIT"
                 float _AnimationAmount;
                 float _RippleSize;
             };
-            cbuffer UnityPerDraw : register(b1)
+            cbuffer _UnityPerDrawCB : register(b1)
             {
                 float4x4 unity_ObjectToWorld;
-                float4 _Time;
                 float4x4 unity_WorldToObject;
-                float3 _WorldSpaceCameraPos;
             };
-            cbuffer UnityPerFrame : register(b2)
+            cbuffer _UnityPerFrameCB : register(b2)
             {
                 float4 glstate_lightmodel_ambient;
                 float4x4 unity_MatrixVP;
@@ -50,21 +50,21 @@ Shader "Custom/Armor_Shader_UNLIT"
             };
             struct program1Output
             {
-                float4 sv_Position0 : SV_POSITION0;
+                float4 sv_Position0 : SV_POSITION;
                 float4 texcoord0 : TEXCOORD0;
                 float3 texcoord1 : TEXCOORD1;
                 float4 texcoord2 : TEXCOORD2;
             };
             struct program3Input
             {
-                float4 sv_Position0 : SV_POSITION0;
+                float4 sv_Position0 : SV_POSITION;
                 float4 texcoord0 : TEXCOORD0;
                 float3 texcoord1 : TEXCOORD1;
                 float4 texcoord2 : TEXCOORD2;
             };
             struct program3Output
             {
-                float4 sv_Target0 : SV_Target0;
+                float4 sv_Target0 : SV_Target;
             };
             #pragma vertex vert
             program1Output vert(program1Input i)
@@ -131,7 +131,7 @@ Shader "Custom/Armor_Shader_UNLIT"
                 float r0_y_7 = mad(r0_y_6, 0.4, r0_z_8);
                 float r0_y_8 = mad(r0_w_11, 0.5, r0_y_7);
                 float r0_z_9 = (_RippleSize + 83);
-                float r0_x_6 = (mad(sin(mad(sin(r0_xy_1.y), r0_z_9, r2_xyz_1.z)), 0.9, r0_y_8) * 10);
+                float r0_x_6 = saturate((mad(sin(mad(sin(r0_xy_1.y), r0_z_9, r2_xyz_1.z)), 0.9, r0_y_8) * 10));
                 float r0_y_9 = mad(r0_x_6, -2, 3);
                 float4 viewDir_xyzw_10 = (-i.texcoord0.xxyz + _WorldSpaceCameraPos.xxyz);
                 float viewDir_y_10 = viewDir_xyzw_10.y;
@@ -141,7 +141,7 @@ Shader "Custom/Armor_Shader_UNLIT"
                 float unitViewDir_y_11 = unitViewDir_xyzw_11.y;
                 float unitViewDir_z_11 = unitViewDir_xyzw_11.z;
                 float unitViewDir_w_13 = unitViewDir_xyzw_11.w;
-                float r0_y_12 = dot(float4(unitViewDir_y_11, unitViewDir_z_11, unitViewDir_w_13, unitViewDir_y_11), i.texcoord1.xyzx);
+                float r0_y_12 = saturate(dot(float4(unitViewDir_y_11, unitViewDir_z_11, unitViewDir_w_13, unitViewDir_y_11), i.texcoord1.xyzx));
                 float r0_y_13 = (-r0_y_12 + 1);
                 float r0_y_14 = log2(r0_y_13);
                 float r0_z_12 = mad(-_EmissionScale, 0.3, 3);
@@ -164,7 +164,7 @@ Shader "Custom/Armor_Shader_UNLIT"
                 float r0_y_20 = (r0_y_19 * _Time.x);
                 float r0_y_21 = sin(r0_y_20);
                 float r0_y_22 = (r0_y_21 * _AnimationAmount);
-                float r0_y_23 = (-abs(r0_y_22) + _ArmorColor.w);
+                float r0_y_23 = saturate((-abs(r0_y_22) + _ArmorColor.w));
                 o.sv_Target0.w = (((((((r0_x_6 * r0_x_6) * r0_y_9) * 0.0003) / r0_y_17) / r0_z_13) / r0_w_14) + r0_y_23);
                 return o;
             }
@@ -183,7 +183,7 @@ Shader "Custom/Armor_Shader_UNLIT"
             ZWrite Off
             Blend SrcAlpha OneMinusSrcColor
             HLSLPROGRAM
-            cbuffer UnityPerDraw : register(b0)
+            cbuffer _UnityPerDrawCB : register(b0)
             {
                 float4x4 unity_ObjectToWorld;
                 float4 _ArmorColor;
@@ -193,15 +193,12 @@ Shader "Custom/Armor_Shader_UNLIT"
                 float _AnimationSpeed;
                 float _AnimationAmount;
             };
-            cbuffer UnityPerFrame : register(b1)
+            cbuffer _UnityPerFrameCB : register(b1)
             {
                 float4 _Time;
+                float4 glstate_lightmodel_ambient;
                 float3 _WorldSpaceCameraPos;
                 float4x4 unity_MatrixVP;
-            };
-            cbuffer UnityPerFrame : register(b2)
-            {
-                float4 glstate_lightmodel_ambient;
             };
             struct program5Input
             {
@@ -210,19 +207,19 @@ Shader "Custom/Armor_Shader_UNLIT"
             };
             struct program5Output
             {
-                float4 sv_Position0 : SV_POSITION0;
+                float4 sv_Position0 : SV_POSITION;
                 float4 texcoord0 : TEXCOORD0;
                 float3 texcoord1 : TEXCOORD1;
             };
             struct program6Input
             {
-                float4 sv_Position0 : SV_POSITION0;
+                float4 sv_Position0 : SV_POSITION;
                 float4 texcoord0 : TEXCOORD0;
                 float3 texcoord1 : TEXCOORD1;
             };
             struct program6Output
             {
-                float4 sv_Target0 : SV_Target0;
+                float4 sv_Target0 : SV_Target;
             };
             #pragma vertex vert
             program5Output vert(program5Input i)
@@ -253,7 +250,7 @@ Shader "Custom/Armor_Shader_UNLIT"
                 float r0_y_4 = r0_xyzw_4.y;
                 float r0_z_3 = r0_xyzw_4.z;
                 float r0_w_3 = r0_xyzw_4.w;
-                                float4 r0_xyzw_8 = mad((pow((dot(unitViewDir_xyz_2.xyzx, i.texcoord1.xyzx) + 1), r0_y_3)).xxxx, _EmissionColor.xyzx, float4(r0_y_4, r0_z_3, r0_w_3, r0_y_4));
+                                float4 r0_xyzw_8 = mad((pow((saturate(dot(unitViewDir_xyz_2.xyzx, i.texcoord1.xyzx)) + 1), r0_y_3)).xxxx, _EmissionColor.xyzx, float4(r0_y_4, r0_z_3, r0_w_3, r0_y_4));
                 float r0_x_8 = r0_xyzw_8.x;
                 float r0_y_5 = r0_xyzw_8.y;
                 float r0_z_4 = r0_xyzw_8.z;
@@ -262,7 +259,7 @@ Shader "Custom/Armor_Shader_UNLIT"
                 float r0_y_6 = r0_xyzw_9.y;
                 float r0_z_5 = r0_xyzw_9.z;
                 o.sv_Target0.xyz = ((float4(r0_x_9, r0_y_6, r0_z_5, r0_x_9) * _EmissionScale.xxxx)).xyz;
-                o.sv_Target0.w = ((sin(((float)(_AnimationSpeed) * _Time.x)) * _AnimationAmount) + _ArmorColor.w);
+                o.sv_Target0.w = saturate(((sin(((float)(_AnimationSpeed) * _Time.x)) * _AnimationAmount) + _ArmorColor.w));
                 return o;
             }
             ENDHLSL
@@ -280,7 +277,7 @@ Shader "Custom/Armor_Shader_UNLIT"
             ZWrite Off
             Blend SrcAlpha OneMinusSrcColor
             HLSLPROGRAM
-            cbuffer UnityPerDraw : register(b0)
+            cbuffer _UnityPerDrawCB : register(b0)
             {
                 float4x4 unity_ObjectToWorld;
                 float4 _ArmorColor;
@@ -288,7 +285,7 @@ Shader "Custom/Armor_Shader_UNLIT"
                 float4 _EmissionColor;
                 float _EmissionScale;
             };
-            cbuffer UnityPerFrame : register(b1)
+            cbuffer _UnityPerFrameCB : register(b1)
             {
                 float4 glstate_lightmodel_ambient;
                 float4x4 unity_MatrixVP;
@@ -300,19 +297,19 @@ Shader "Custom/Armor_Shader_UNLIT"
             };
             struct program7Output
             {
-                float4 sv_Position0 : SV_POSITION0;
+                float4 sv_Position0 : SV_POSITION;
                 float4 texcoord0 : TEXCOORD0;
                 float3 texcoord1 : TEXCOORD1;
             };
             struct program9Input
             {
-                float4 sv_Position0 : SV_POSITION0;
+                float4 sv_Position0 : SV_POSITION;
                 float4 texcoord0 : TEXCOORD0;
                 float3 texcoord1 : TEXCOORD1;
             };
             struct program9Output
             {
-                float4 sv_Target0 : SV_Target0;
+                float4 sv_Target0 : SV_Target;
             };
             #pragma vertex vert
             program7Output vert(program7Input i)

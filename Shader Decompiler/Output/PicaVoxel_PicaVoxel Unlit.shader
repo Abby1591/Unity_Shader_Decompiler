@@ -15,12 +15,12 @@ Shader "PicaVoxel/PicaVoxel Unlit"
             ZTest LEqual
             ZWrite On
             HLSLPROGRAM
-            cbuffer UnityPerDraw : register(b0)
+            cbuffer _UnityPerDrawCB : register(b0)
             {
                 float4x4 unity_ObjectToWorld;
                 float4 _Tint;
             };
-            cbuffer UnityPerFrame : register(b1)
+            cbuffer _UnityPerFrameCB : register(b1)
             {
                 float4x4 unity_MatrixVP;
             };
@@ -31,17 +31,17 @@ Shader "PicaVoxel/PicaVoxel Unlit"
             };
             struct program1Output
             {
-                float4 sv_Position0 : SV_Position0;
+                float4 sv_Position0 : SV_Position;
                 float4 color0 : COLOR0;
             };
             struct program3Input
             {
-                float4 sv_Position0 : SV_Position0;
+                float4 sv_Position0 : SV_Position;
                 float4 color0 : COLOR0;
             };
             struct program3Output
             {
-                float4 sv_Target0 : SV_Target0;
+                float4 sv_Target0 : SV_Target;
             };
             #pragma vertex vert
             program1Output vert(program1Input i)

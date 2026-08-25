@@ -37,13 +37,13 @@ Shader "Custom/Planets_Atmosphere"
                 float4 _Inneratmosphere;
                 float _DisplacementAtmosphere;
             };
-            cbuffer UnityPerDraw : register(b1)
+            cbuffer _UnityPerDrawCB : register(b1)
             {
                 float4x4 unity_ObjectToWorld;
                 float4x4 unity_WorldToObject;
                 float3 _WorldSpaceCameraPos;
             };
-            cbuffer UnityPerFrame : register(b2)
+            cbuffer _UnityPerFrameCB : register(b2)
             {
                 float4 _WorldSpaceLightPos0;
                 float4x4 unity_MatrixVP;
@@ -55,19 +55,19 @@ Shader "Custom/Planets_Atmosphere"
             };
             struct program1Output
             {
-                float4 sv_Position0 : SV_POSITION0;
+                float4 sv_Position0 : SV_POSITION;
                 float4 texcoord0 : TEXCOORD0;
                 float3 texcoord1 : TEXCOORD1;
             };
             struct program10Input
             {
-                float4 sv_Position0 : SV_POSITION0;
+                float4 sv_Position0 : SV_POSITION;
                 float4 texcoord0 : TEXCOORD0;
                 float3 texcoord1 : TEXCOORD1;
             };
             struct program10Output
             {
-                float4 sv_Target0 : SV_Target0;
+                float4 sv_Target0 : SV_Target;
             };
             #pragma vertex vert
             program1Output vert(program1Input i)
@@ -111,12 +111,12 @@ Shader "Custom/Planets_Atmosphere"
                 float r0_w_6 = min(r0_w_5, 1);
                 float r0_y_5 = (-r0_y_4 + r0_w_6);
                 float r0_y_6 = ((float4(1, 1, 1, 1) / r0_y_5)).y;
-                float r0_y_7 = (r0_y_6 * r0_z_3);
+                float r0_y_7 = saturate((r0_y_6 * r0_z_3));
                 float r0_z_4 = mad(r0_y_7, -2, 3);
                 float r0_y_8 = (r0_y_7 * r0_y_7);
                 float r0_y_9 = (r0_y_8 * r0_z_4);
                 float r0_z_5 = ((float4(1, 1, 1, 1) / _Outeratmospherelimit)).z;
-                                float r0_x_9 = (r0_z_5 * pow(r0_x_5, 7));
+                                float r0_x_9 = saturate((r0_z_5 * pow(r0_x_5, 7)));
                 float r0_z_6 = mad(r0_x_9, -2, 3);
                 float r0_x_10 = (r0_x_9 * r0_x_9);
                 float r0_w_7 = (r0_x_10 * r0_z_6);
@@ -127,7 +127,7 @@ Shader "Custom/Planets_Atmosphere"
                 float3 lightDir_xyz_4 = normalize(_WorldSpaceLightPos0);
                 float nDotL_x_2 = dot(unitWorldNormal_xyz_1.xyzx, lightDir_xyz_4.xyzx);
                 float r1_y_2 = mad(nDotL_x_2, 0.875, 0.125);
-                o.sv_Target0.w = (mad(r0_y_9, mad(mad(-r0_z_6, r0_x_10, 1), _Outeratmopsheredensity, -_Inneratmopsheredensity), _Inneratmopsheredensity) * (nDotL_x_2 + nDotL_x_2));
+                o.sv_Target0.w = (mad(r0_y_9, mad(mad(-r0_z_6, r0_x_10, 1), _Outeratmopsheredensity, -_Inneratmopsheredensity), _Inneratmopsheredensity) * saturate((nDotL_x_2 + nDotL_x_2)));
                 float4 r1_xyzw_4 = ((max(r1_y_2, 0)).xxxx * _LightColor0.xyzx);
                 float r1_x_4 = r1_xyzw_4.x;
                 float r1_y_3 = r1_xyzw_4.y;
@@ -146,7 +146,7 @@ Shader "Custom/Planets_Atmosphere"
             Offset -1, -1
             Blend One One
             HLSLPROGRAM
-            cbuffer UnityPerDraw : register(b0)
+            cbuffer _UnityPerDrawCB : register(b0)
             {
                 float4x4 unity_ObjectToWorld;
                 float4 _LightColor0;
@@ -162,7 +162,7 @@ Shader "Custom/Planets_Atmosphere"
                 float _DisplacementAtmosphere;
                 float4 cb0_values[12];
             };
-            cbuffer UnityPerFrame : register(b1)
+            cbuffer _UnityPerFrameCB : register(b1)
             {
                 float3 _WorldSpaceCameraPos;
                 float4x4 unity_MatrixVP;
@@ -182,21 +182,21 @@ Shader "Custom/Planets_Atmosphere"
             };
             struct program16Output
             {
-                float4 sv_Position0 : SV_POSITION0;
+                float4 sv_Position0 : SV_POSITION;
                 float4 texcoord0 : TEXCOORD0;
                 float3 texcoord1 : TEXCOORD1;
                 float3 texcoord2 : TEXCOORD2;
             };
             struct program25Input
             {
-                float4 sv_Position0 : SV_POSITION0;
+                float4 sv_Position0 : SV_POSITION;
                 float4 texcoord0 : TEXCOORD0;
                 float3 texcoord1 : TEXCOORD1;
                 float3 texcoord2 : TEXCOORD2;
             };
             struct program25Output
             {
-                float4 sv_Target0 : SV_Target0;
+                float4 sv_Target0 : SV_Target;
             };
             #pragma vertex vert
             program16Output vert(program16Input i)
@@ -233,12 +233,12 @@ Shader "Custom/Planets_Atmosphere"
                 float r0_w_6 = min(r0_w_5, 1);
                 float r0_y_5 = (-r0_y_4 + r0_w_6);
                 float r0_y_6 = ((float4(1, 1, 1, 1) / r0_y_5)).y;
-                float r0_y_7 = (r0_y_6 * r0_z_3);
+                float r0_y_7 = saturate((r0_y_6 * r0_z_3));
                 float r0_z_4 = mad(r0_y_7, -2, 3);
                 float r0_y_8 = (r0_y_7 * r0_y_7);
                 float r0_y_9 = (r0_y_8 * r0_z_4);
                 float r0_z_5 = ((float4(1, 1, 1, 1) / cb0_values[10].x)).z;
-                                float r0_x_9 = (r0_z_5 * pow(r0_x_5, 7));
+                                float r0_x_9 = saturate((r0_z_5 * pow(r0_x_5, 7)));
                 float r0_z_6 = mad(r0_x_9, -2, 3);
                 float r0_x_10 = (r0_x_9 * r0_x_9);
                 float r0_w_7 = (r0_x_10 * r0_z_6);
@@ -251,7 +251,7 @@ Shader "Custom/Planets_Atmosphere"
                 float r1_w_2 = rsqrt(r1_w_1);
                 float r1_x_2 = dot(unitWorldNormal_xyz_1.xyzx, ((r1_w_2.xxxx * r2_xyz_4.xyzx)).xyzx);
                 float r1_y_2 = mad(r1_x_2, 0.875, 0.125);
-                float r0_x_14 = (mad(r0_y_9, mad(mad(-r0_z_6, r0_x_10, 1), cb0_values[9].x, -cb0_values[9].y), cb0_values[9].y) * (r1_x_2 + r1_x_2));
+                float r0_x_14 = (mad(r0_y_9, mad(mad(-r0_z_6, r0_x_10, 1), cb0_values[9].x, -cb0_values[9].y), cb0_values[9].y) * saturate((r1_x_2 + r1_x_2)));
                 float r1_y_3 = dot(i.texcoord2.xyzx, i.texcoord2.xyzx);
                 float4 r2_xyzw_6 = t0.Sample(sampler_linear_clamp, (r1_y_3.xxxx).xy);
                 float4 r1_xyzw_4 = (r2_xyzw_6.xxxx * cb0_values[6].xxyz);
@@ -281,7 +281,7 @@ Shader "Custom/Planets_Atmosphere"
             Offset -1, -1
             Blend One One
             HLSLPROGRAM
-            cbuffer UnityPerDraw : register(b0)
+            cbuffer _UnityPerDrawCB : register(b0)
             {
                 float4x4 unity_ObjectToWorld;
                 float4 _LightColor0;
@@ -297,7 +297,7 @@ Shader "Custom/Planets_Atmosphere"
                 float _DisplacementAtmosphere;
                 float4 cb0_values[12];
             };
-            cbuffer UnityPerFrame : register(b1)
+            cbuffer _UnityPerFrameCB : register(b1)
             {
                 float3 _WorldSpaceCameraPos;
                 float4x4 unity_MatrixVP;
@@ -317,21 +317,21 @@ Shader "Custom/Planets_Atmosphere"
             };
             struct program20Output
             {
-                float4 sv_Position0 : SV_POSITION0;
+                float4 sv_Position0 : SV_POSITION;
                 float4 texcoord0 : TEXCOORD0;
                 float3 texcoord1 : TEXCOORD1;
                 float2 texcoord2 : TEXCOORD2;
             };
             struct program29Input
             {
-                float4 sv_Position0 : SV_POSITION0;
+                float4 sv_Position0 : SV_POSITION;
                 float4 texcoord0 : TEXCOORD0;
                 float3 texcoord1 : TEXCOORD1;
                 float2 texcoord2 : TEXCOORD2;
             };
             struct program29Output
             {
-                float4 sv_Target0 : SV_Target0;
+                float4 sv_Target0 : SV_Target;
             };
             #pragma vertex vert
             program20Output vert(program20Input i)
@@ -368,12 +368,12 @@ Shader "Custom/Planets_Atmosphere"
                 float r0_w_6 = min(r0_w_5, 1);
                 float r0_y_5 = (-r0_y_4 + r0_w_6);
                 float r0_y_6 = ((float4(1, 1, 1, 1) / r0_y_5)).y;
-                float r0_y_7 = (r0_y_6 * r0_z_3);
+                float r0_y_7 = saturate((r0_y_6 * r0_z_3));
                 float r0_z_4 = mad(r0_y_7, -2, 3);
                 float r0_y_8 = (r0_y_7 * r0_y_7);
                 float r0_y_9 = (r0_y_8 * r0_z_4);
                 float r0_z_5 = ((float4(1, 1, 1, 1) / cb0_values[10].x)).z;
-                                float r0_x_9 = (r0_z_5 * pow(r0_x_5, 7));
+                                float r0_x_9 = saturate((r0_z_5 * pow(r0_x_5, 7)));
                 float r0_z_6 = mad(r0_x_9, -2, 3);
                 float r0_x_10 = (r0_x_9 * r0_x_9);
                 float r0_w_7 = (r0_x_10 * r0_z_6);
@@ -386,7 +386,7 @@ Shader "Custom/Planets_Atmosphere"
                 float r1_w_2 = rsqrt(r1_w_1);
                 float r1_x_2 = dot(unitWorldNormal_xyz_1.xyzx, ((r1_w_2.xxxx * r2_xyz_4.xyzx)).xyzx);
                 float r1_y_2 = mad(r1_x_2, 0.875, 0.125);
-                float r0_x_14 = (mad(r0_y_9, mad(mad(-r0_z_6, r0_x_10, 1), cb0_values[9].x, -cb0_values[9].y), cb0_values[9].y) * (r1_x_2 + r1_x_2));
+                float r0_x_14 = (mad(r0_y_9, mad(mad(-r0_z_6, r0_x_10, 1), cb0_values[9].x, -cb0_values[9].y), cb0_values[9].y) * saturate((r1_x_2 + r1_x_2)));
                 float4 r2_xyzw_6 = t0.Sample(sampler_linear_clamp, (i.texcoord2.xyxx).xy);
                 float4 r1_xyzw_3 = (r2_xyzw_6.wwww * cb0_values[6].xxyz);
                 float r1_y_3 = r1_xyzw_3.y;
@@ -415,7 +415,7 @@ Shader "Custom/Planets_Atmosphere"
             Offset -1, -1
             Blend One One
             HLSLPROGRAM
-            cbuffer UnityPerDraw : register(b0)
+            cbuffer _UnityPerDrawCB : register(b0)
             {
                 float4x4 unity_ObjectToWorld;
                 float4 _LightColor0;
@@ -431,7 +431,7 @@ Shader "Custom/Planets_Atmosphere"
                 float _DisplacementAtmosphere;
                 float4 cb0_values[12];
             };
-            cbuffer UnityPerFrame : register(b1)
+            cbuffer _UnityPerFrameCB : register(b1)
             {
                 float3 _WorldSpaceCameraPos;
                 float4x4 unity_MatrixVP;
@@ -453,21 +453,21 @@ Shader "Custom/Planets_Atmosphere"
             };
             struct program19Output
             {
-                float4 sv_Position0 : SV_POSITION0;
+                float4 sv_Position0 : SV_POSITION;
                 float4 texcoord0 : TEXCOORD0;
                 float3 texcoord1 : TEXCOORD1;
                 float3 texcoord2 : TEXCOORD2;
             };
             struct program28Input
             {
-                float4 sv_Position0 : SV_POSITION0;
+                float4 sv_Position0 : SV_POSITION;
                 float4 texcoord0 : TEXCOORD0;
                 float3 texcoord1 : TEXCOORD1;
                 float3 texcoord2 : TEXCOORD2;
             };
             struct program28Output
             {
-                float4 sv_Target0 : SV_Target0;
+                float4 sv_Target0 : SV_Target;
             };
             #pragma vertex vert
             program19Output vert(program19Input i)
@@ -504,12 +504,12 @@ Shader "Custom/Planets_Atmosphere"
                 float r0_w_6 = min(r0_w_5, 1);
                 float r0_y_5 = (-r0_y_4 + r0_w_6);
                 float r0_y_6 = ((float4(1, 1, 1, 1) / r0_y_5)).y;
-                float r0_y_7 = (r0_y_6 * r0_z_3);
+                float r0_y_7 = saturate((r0_y_6 * r0_z_3));
                 float r0_z_4 = mad(r0_y_7, -2, 3);
                 float r0_y_8 = (r0_y_7 * r0_y_7);
                 float r0_y_9 = (r0_y_8 * r0_z_4);
                 float r0_z_5 = ((float4(1, 1, 1, 1) / cb0_values[10].x)).z;
-                                float r0_x_9 = (r0_z_5 * pow(r0_x_5, 7));
+                                float r0_x_9 = saturate((r0_z_5 * pow(r0_x_5, 7)));
                 float r0_z_6 = mad(r0_x_9, -2, 3);
                 float r0_x_10 = (r0_x_9 * r0_x_9);
                 float r0_w_7 = (r0_x_10 * r0_z_6);
@@ -522,7 +522,7 @@ Shader "Custom/Planets_Atmosphere"
                 float r1_w_2 = rsqrt(r1_w_1);
                 float r1_x_2 = dot(unitWorldNormal_xyz_1.xyzx, ((r1_w_2.xxxx * r2_xyz_4.xyzx)).xyzx);
                 float r1_y_2 = mad(r1_x_2, 0.875, 0.125);
-                float r0_x_14 = (mad(r0_y_9, mad(mad(-r0_z_6, r0_x_10, 1), cb0_values[9].x, -cb0_values[9].y), cb0_values[9].y) * (r1_x_2 + r1_x_2));
+                float r0_x_14 = (mad(r0_y_9, mad(mad(-r0_z_6, r0_x_10, 1), cb0_values[9].x, -cb0_values[9].y), cb0_values[9].y) * saturate((r1_x_2 + r1_x_2)));
                 float r1_y_3 = dot(i.texcoord2.xyzx, i.texcoord2.xyzx);
                 float4 r2_xyzw_6 = t0.Sample(sampler_linear_clamp1, (r1_y_3.xxxx).xy);
                 float4 r3_xyzw_1 = t1.Sample(sampler_linear_clamp, i.texcoord2.xyz);
@@ -554,7 +554,7 @@ Shader "Custom/Planets_Atmosphere"
             Offset -1, -1
             Blend One One
             HLSLPROGRAM
-            cbuffer UnityPerDraw : register(b0)
+            cbuffer _UnityPerDrawCB : register(b0)
             {
                 float4x4 unity_ObjectToWorld;
                 float4 _LightColor0;
@@ -570,7 +570,7 @@ Shader "Custom/Planets_Atmosphere"
                 float _DisplacementAtmosphere;
                 float4 cb0_values[12];
             };
-            cbuffer UnityPerFrame : register(b1)
+            cbuffer _UnityPerFrameCB : register(b1)
             {
                 float3 _WorldSpaceCameraPos;
                 float4x4 unity_MatrixVP;
@@ -592,21 +592,21 @@ Shader "Custom/Planets_Atmosphere"
             };
             struct program18Output
             {
-                float4 sv_Position0 : SV_POSITION0;
+                float4 sv_Position0 : SV_POSITION;
                 float4 texcoord0 : TEXCOORD0;
                 float3 texcoord1 : TEXCOORD1;
                 float4 texcoord2 : TEXCOORD2;
             };
             struct program27Input
             {
-                float4 sv_Position0 : SV_POSITION0;
+                float4 sv_Position0 : SV_POSITION;
                 float4 texcoord0 : TEXCOORD0;
                 float3 texcoord1 : TEXCOORD1;
                 float4 texcoord2 : TEXCOORD2;
             };
             struct program27Output
             {
-                float4 sv_Target0 : SV_Target0;
+                float4 sv_Target0 : SV_Target;
             };
             #pragma vertex vert
             program18Output vert(program18Input i)
@@ -646,7 +646,7 @@ Shader "Custom/Planets_Atmosphere"
                 float r0_w_3 = rsqrt(r0_w_2);
                 float3 unitWorldNormal_xyz_1 = normalize(i.texcoord1);
                 float r0_w_6 = dot(unitWorldNormal_xyz_1.xyzx, ((r0_w_3.xxxx * r1_xyz_2.xyzx)).xyzx);
-                float r0_w_7 = (r0_w_6 + r0_w_6);
+                float r0_w_7 = saturate((r0_w_6 + r0_w_6));
                 float4 r0_xyzw_9 = (float4(r0_x_8, r0_y_5, r0_z_2, r0_x_8) * (max(mad(r0_w_6, 0.875, 0.125), 0)).xxxx);
                 float r0_x_9 = r0_xyzw_9.x;
                 float r0_y_6 = r0_xyzw_9.y;
@@ -669,12 +669,12 @@ Shader "Custom/Planets_Atmosphere"
                 float r1_w_5 = min(r1_w_4, 1);
                 float r1_y_8 = (-r1_y_7 + r1_w_5);
                 float r1_y_9 = ((float4(1, 1, 1, 1) / r1_y_8)).y;
-                float r1_y_10 = (r1_y_9 * r1_z_6);
+                float r1_y_10 = saturate((r1_y_9 * r1_z_6));
                 float r1_z_7 = mad(r1_y_10, -2, 3);
                 float r1_y_11 = (r1_y_10 * r1_y_10);
                 float r1_y_12 = (r1_y_11 * r1_z_7);
                 float r1_z_8 = ((float4(1, 1, 1, 1) / cb0_values[10].x)).z;
-                                float r1_x_14 = (r1_z_8 * pow(r1_x_10, 7));
+                                float r1_x_14 = saturate((r1_z_8 * pow(r1_x_10, 7)));
                 float r1_z_9 = mad(r1_x_14, -2, 3);
                 float r1_x_15 = (r1_x_14 * r1_x_14);
                 float r1_w_6 = (r1_x_15 * r1_z_9);
@@ -710,7 +710,7 @@ Shader "Custom/Planets_Atmosphere"
             Offset -1, -1
             Blend One One
             HLSLPROGRAM
-            cbuffer UnityPerDraw : register(b0)
+            cbuffer _UnityPerDrawCB : register(b0)
             {
                 float4x4 unity_ObjectToWorld;
                 float4 _LightColor0;
@@ -725,12 +725,12 @@ Shader "Custom/Planets_Atmosphere"
                 float4 _Inneratmosphere;
                 float _DisplacementAtmosphere;
             };
-            cbuffer UnityPerFrame : register(b1)
+            cbuffer _UnityPerFrameCB : register(b1)
             {
                 float3 _WorldSpaceCameraPos;
                 float4x4 unity_MatrixVP;
             };
-            cbuffer UnityLighting : register(b2)
+            cbuffer _UnityLightingCB : register(b2)
             {
                 float4 _WorldSpaceLightPos0;
             };
@@ -741,19 +741,19 @@ Shader "Custom/Planets_Atmosphere"
             };
             struct program17Output
             {
-                float4 sv_Position0 : SV_POSITION0;
+                float4 sv_Position0 : SV_POSITION;
                 float4 texcoord0 : TEXCOORD0;
                 float3 texcoord1 : TEXCOORD1;
             };
             struct program26Input
             {
-                float4 sv_Position0 : SV_POSITION0;
+                float4 sv_Position0 : SV_POSITION;
                 float4 texcoord0 : TEXCOORD0;
                 float3 texcoord1 : TEXCOORD1;
             };
             struct program26Output
             {
-                float4 sv_Target0 : SV_Target0;
+                float4 sv_Target0 : SV_Target;
             };
             #pragma vertex vert
             program17Output vert(program17Input i)
@@ -789,12 +789,12 @@ Shader "Custom/Planets_Atmosphere"
                 float r0_w_6 = min(r0_w_5, 1);
                 float r0_y_5 = (-r0_y_4 + r0_w_6);
                 float r0_y_6 = ((float4(1, 1, 1, 1) / r0_y_5)).y;
-                float r0_y_7 = (r0_y_6 * r0_z_3);
+                float r0_y_7 = saturate((r0_y_6 * r0_z_3));
                 float r0_z_4 = mad(r0_y_7, -2, 3);
                 float r0_y_8 = (r0_y_7 * r0_y_7);
                 float r0_y_9 = (r0_y_8 * r0_z_4);
                 float r0_z_5 = ((float4(1, 1, 1, 1) / _Outeratmospherelimit)).z;
-                                float r0_x_9 = (r0_z_5 * pow(r0_x_5, 7));
+                                float r0_x_9 = saturate((r0_z_5 * pow(r0_x_5, 7)));
                 float r0_z_6 = mad(r0_x_9, -2, 3);
                 float r0_x_10 = (r0_x_9 * r0_x_9);
                 float r0_w_7 = (r0_x_10 * r0_z_6);
@@ -807,7 +807,7 @@ Shader "Custom/Planets_Atmosphere"
                 float r1_w_2 = rsqrt(r1_w_1);
                 float r1_x_2 = dot(unitWorldNormal_xyz_1.xyzx, ((r1_w_2.xxxx * r2_xyz_4.xyzx)).xyzx);
                 float r1_y_2 = mad(r1_x_2, 0.875, 0.125);
-                float r0_x_14 = (mad(r0_y_9, mad(mad(-r0_z_6, r0_x_10, 1), _Outeratmopsheredensity, -_Inneratmopsheredensity), _Inneratmopsheredensity) * (r1_x_2 + r1_x_2));
+                float r0_x_14 = (mad(r0_y_9, mad(mad(-r0_z_6, r0_x_10, 1), _Outeratmopsheredensity, -_Inneratmopsheredensity), _Inneratmopsheredensity) * saturate((r1_x_2 + r1_x_2)));
                 float4 r1_xyzw_5 = ((max(r1_y_2, 0)).xxxx * _LightColor0.xyzx);
                 float r1_x_5 = r1_xyzw_5.x;
                 float r1_y_3 = r1_xyzw_5.y;

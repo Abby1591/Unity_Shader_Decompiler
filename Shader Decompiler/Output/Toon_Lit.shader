@@ -23,14 +23,14 @@ Shader "Toon/Lit"
                 float4 _Color;
                 float4 _MainTex_ST;
             };
-            cbuffer UnityPerDraw : register(b1)
+            cbuffer _UnityPerDrawCB : register(b1)
             {
                 float4x4 unity_ObjectToWorld;
                 float4 _WorldSpaceLightPos0;
                 float4x4 unity_WorldToObject;
                 float4 unity_OcclusionMaskSelector;
             };
-            cbuffer UnityPerFrame : register(b2)
+            cbuffer _UnityPerFrameCB : register(b2)
             {
                 float4 unity_ProbeVolumeParams;
                 float4x4 unity_ProbeVolumeWorldToObject;
@@ -57,7 +57,7 @@ Shader "Toon/Lit"
             };
             struct program12Output
             {
-                float4 sv_Position0 : SV_POSITION0;
+                float4 sv_Position0 : SV_POSITION;
                 float2 texcoord0 : TEXCOORD0;
                 float3 texcoord1 : TEXCOORD1;
                 float3 texcoord2 : TEXCOORD2;
@@ -66,7 +66,7 @@ Shader "Toon/Lit"
             };
             struct program32Input
             {
-                float4 sv_Position0 : SV_POSITION0;
+                float4 sv_Position0 : SV_POSITION;
                 float2 texcoord0 : TEXCOORD0;
                 float3 texcoord1 : TEXCOORD1;
                 float3 texcoord2 : TEXCOORD2;
@@ -75,7 +75,7 @@ Shader "Toon/Lit"
             };
             struct program32Output
             {
-                float4 sv_Target0 : SV_Target0;
+                float4 sv_Target0 : SV_Target;
             };
             #pragma vertex vert
             program12Output vert(program12Input i)
@@ -134,7 +134,7 @@ Shader "Toon/Lit"
                     r1_z_10 = r1_xyzw_10.z;
                     r1_w_4 = r1_xyzw_10.w;
                 }
-                float r0_w_6 = dot(float4(r1_x_10, r1_y_11, r1_z_10, r1_w_4), unity_OcclusionMaskSelector);
+                float r0_w_6 = saturate(dot(float4(r1_x_10, r1_y_11, r1_z_10, r1_w_4), unity_OcclusionMaskSelector));
                 float4 r1_xyzw_13 = _Ramp.Sample(sampler_Ramp, ((mad(dot(i.texcoord1.xyzx, _WorldSpaceLightPos0.xyzx), 0.5, 0.5)).xxxx).xy);
                 float4 r1_xyzw_14 = (r1_xyzw_13.xyzx * ((r0_xyz_2.xyzx * _LightColor0.xyzx)).xyzx);
                 float r1_x_14 = r1_xyzw_14.x;
@@ -164,7 +164,7 @@ Shader "Toon/Lit"
                 float4 _Color;
                 float4 _MainTex_ST;
             };
-            cbuffer UnityPerDraw : register(b1)
+            cbuffer _UnityPerDrawCB : register(b1)
             {
                 float4x4 unity_ObjectToWorld;
                 float4 _WorldSpaceLightPos0;
@@ -172,7 +172,7 @@ Shader "Toon/Lit"
                 float4 unity_OcclusionMaskSelector;
                 float4 cb1_values[6];
             };
-            cbuffer UnityPerFrame : register(b2)
+            cbuffer _UnityPerFrameCB : register(b2)
             {
                 float4 unity_ProbeVolumeParams;
                 float4x4 unity_ProbeVolumeWorldToObject;
@@ -218,7 +218,7 @@ Shader "Toon/Lit"
             };
             struct program23Output
             {
-                float4 sv_Position0 : SV_POSITION0;
+                float4 sv_Position0 : SV_POSITION;
                 float2 texcoord0 : TEXCOORD0;
                 float texcoord4 : TEXCOORD4;
                 float3 texcoord1 : TEXCOORD1;
@@ -229,7 +229,7 @@ Shader "Toon/Lit"
             };
             struct program39Input
             {
-                float4 sv_Position0 : SV_POSITION0;
+                float4 sv_Position0 : SV_POSITION;
                 float2 texcoord0 : TEXCOORD0;
                 float texcoord4 : TEXCOORD4;
                 float3 texcoord1 : TEXCOORD1;
@@ -240,7 +240,7 @@ Shader "Toon/Lit"
             };
             struct program39Output
             {
-                float4 sv_Target0 : SV_Target0;
+                float4 sv_Target0 : SV_Target;
             };
             #pragma vertex vert
             program23Output vert(program23Input i)
@@ -298,7 +298,7 @@ Shader "Toon/Lit"
                 float r0_w_2 = dot(((-i.texcoord2.xyzx + cb1_values[4].xyzx)).xyzx, float4(r2_x_1, r2_y_1, r2_z_1, r2_x_1));
                 float3 r1_xyz_2 = ((i.texcoord2.xyzx + -cb3_values[25].xyzx)).xyz;
                 float r0_w_3 = mad(cb3_values[25].w, (-r0_w_2 + sqrt(dot(r1_xyz_2.xyzx, r1_xyz_2.xyzx))), r0_w_2);
-                float r0_w_4 = mad(r0_w_3, cb3_values[24].z, cb3_values[24].w);
+                float r0_w_4 = saturate(mad(r0_w_3, cb3_values[24].z, cb3_values[24].w));
                 float r1_x_13;
                 float r1_y_13;
                 float r1_z_12;
@@ -356,7 +356,7 @@ Shader "Toon/Lit"
                 float r1_y_14 = r1_xyzw_14.y;
                 float r1_z_13 = r1_xyzw_14.z;
                 float4 r2_xyzw_4 = _Ramp.Sample(sampler_Ramp, (float4(r1_y_14, r1_z_13, r1_y_14, r1_y_14)).xy);
-                float r0_w_5 = mad(r0_w_4, (dot(float4(r1_x_13, r1_y_13, r1_z_12, r1_w_8), cb2_values[46].xyzw) + -r2_xyzw_4.x), r2_xyzw_4.x);
+                float r0_w_5 = mad(r0_w_4, (saturate(dot(float4(r1_x_13, r1_y_13, r1_z_12, r1_w_8), cb2_values[46].xyzw)) + -r2_xyzw_4.x), r2_xyzw_4.x);
                 float4 r1_xyzw_18 = t2.Sample(sampler_linear_clamp2, ((mad(dot(i.texcoord1.xyzx, unity_ProbeVolumeParams.xyzx), 0.5, 0.5)).xxxx).xy);
                 float4 r2_xyzw_5 = (r0_xyz_2.xyzx * _LightColor0.xyzx);
                 float r2_x_5 = r2_xyzw_5.x;
@@ -375,7 +375,7 @@ Shader "Toon/Lit"
                 float r0_w_8 = (-r0_w_7 + 1);
                 float r0_w_9 = (r0_w_8 * cb1_values[5].z);
                 float r0_w_10 = max(r0_w_9, 0);
-                float r0_w_11 = mad(r0_w_10, cb5_values[1].z, cb5_values[1].w);
+                float r0_w_11 = saturate(mad(r0_w_10, cb5_values[1].z, cb5_values[1].w));
                 o.sv_Target0.xyz = (mad(r0_w_11.xxxx, (((mad(r0_xyz_2.xyzx, i.texcoord3.xyzx, float4(r1_x_20, r1_y_17, r1_z_16, r1_x_20))).xyzx + -cb5_values[0].xyzx)).xyzx, cb5_values[0].xyzx)).xyz;
                 o.sv_Target0.w = 1;
                 return o;
@@ -395,7 +395,7 @@ Shader "Toon/Lit"
                 float4 _Color;
                 float4 _MainTex_ST;
             };
-            cbuffer UnityPerDraw : register(b1)
+            cbuffer _UnityPerDrawCB : register(b1)
             {
                 float4x4 unity_ObjectToWorld;
                 float4 _WorldSpaceLightPos0;
@@ -403,7 +403,7 @@ Shader "Toon/Lit"
                 float4 unity_OcclusionMaskSelector;
                 float4 cb1_values[6];
             };
-            cbuffer UnityPerFrame : register(b2)
+            cbuffer _UnityPerFrameCB : register(b2)
             {
                 float4 unity_ProbeVolumeParams;
                 float4x4 unity_ProbeVolumeWorldToObject;
@@ -449,7 +449,7 @@ Shader "Toon/Lit"
             };
             struct program22Output
             {
-                float4 sv_Position0 : SV_POSITION0;
+                float4 sv_Position0 : SV_POSITION;
                 float2 texcoord0 : TEXCOORD0;
                 float texcoord4 : TEXCOORD4;
                 float3 texcoord1 : TEXCOORD1;
@@ -460,7 +460,7 @@ Shader "Toon/Lit"
             };
             struct program38Input
             {
-                float4 sv_Position0 : SV_POSITION0;
+                float4 sv_Position0 : SV_POSITION;
                 float2 texcoord0 : TEXCOORD0;
                 float texcoord4 : TEXCOORD4;
                 float3 texcoord1 : TEXCOORD1;
@@ -471,7 +471,7 @@ Shader "Toon/Lit"
             };
             struct program38Output
             {
-                float4 sv_Target0 : SV_Target0;
+                float4 sv_Target0 : SV_Target;
             };
             #pragma vertex vert
             program22Output vert(program22Input i)
@@ -517,7 +517,7 @@ Shader "Toon/Lit"
                 float r0_w_2 = dot(((-i.texcoord2.xyzx + cb1_values[4].xyzx)).xyzx, float4(r2_x_1, r2_y_1, r2_z_1, r2_x_1));
                 float3 r1_xyz_2 = ((i.texcoord2.xyzx + -cb3_values[25].xyzx)).xyz;
                 float r0_w_3 = mad(cb3_values[25].w, (-r0_w_2 + sqrt(dot(r1_xyz_2.xyzx, r1_xyz_2.xyzx))), r0_w_2);
-                float r0_w_4 = mad(r0_w_3, cb3_values[24].z, cb3_values[24].w);
+                float r0_w_4 = saturate(mad(r0_w_3, cb3_values[24].z, cb3_values[24].w));
                 float r1_x_13;
                 float r1_y_13;
                 float r1_z_12;
@@ -575,7 +575,7 @@ Shader "Toon/Lit"
                 float r1_y_14 = r1_xyzw_14.y;
                 float r1_z_13 = r1_xyzw_14.z;
                 float4 r2_xyzw_4 = _Ramp.Sample(sampler_Ramp, (float4(r1_y_14, r1_z_13, r1_y_14, r1_y_14)).xy);
-                float r0_w_5 = mad(r0_w_4, (dot(float4(r1_x_13, r1_y_13, r1_z_12, r1_w_8), cb2_values[46].xyzw) + -r2_xyzw_4.x), r2_xyzw_4.x);
+                float r0_w_5 = mad(r0_w_4, (saturate(dot(float4(r1_x_13, r1_y_13, r1_z_12, r1_w_8), cb2_values[46].xyzw)) + -r2_xyzw_4.x), r2_xyzw_4.x);
                 float4 r1_xyzw_18 = t2.Sample(sampler_linear_clamp2, ((mad(dot(i.texcoord1.xyzx, unity_ProbeVolumeParams.xyzx), 0.5, 0.5)).xxxx).xy);
                 float4 r2_xyzw_5 = (r0_xyz_2.xyzx * _LightColor0.xyzx);
                 float r2_x_5 = r2_xyzw_5.x;
@@ -594,7 +594,7 @@ Shader "Toon/Lit"
                 float r0_w_8 = (-r0_w_7 + 1);
                 float r0_w_9 = (r0_w_8 * cb1_values[5].z);
                 float r0_w_10 = max(r0_w_9, 0);
-                float r0_w_11 = mad(r0_w_10, cb5_values[1].z, cb5_values[1].w);
+                float r0_w_11 = saturate(mad(r0_w_10, cb5_values[1].z, cb5_values[1].w));
                 o.sv_Target0.xyz = (mad(r0_w_11.xxxx, (((mad(r0_xyz_2.xyzx, i.texcoord3.xyzx, float4(r1_x_20, r1_y_17, r1_z_16, r1_x_20))).xyzx + -cb5_values[0].xyzx)).xyzx, cb5_values[0].xyzx)).xyz;
                 o.sv_Target0.w = 1;
                 return o;
@@ -614,14 +614,14 @@ Shader "Toon/Lit"
                 float4 _Color;
                 float4 _MainTex_ST;
             };
-            cbuffer UnityPerDraw : register(b1)
+            cbuffer _UnityPerDrawCB : register(b1)
             {
                 float4x4 unity_ObjectToWorld;
                 float4 _WorldSpaceLightPos0;
                 float4x4 unity_WorldToObject;
                 float4 unity_OcclusionMaskSelector;
             };
-            cbuffer UnityPerFrame : register(b2)
+            cbuffer _UnityPerFrameCB : register(b2)
             {
                 float4 unity_ProbeVolumeParams;
                 float4x4 unity_ProbeVolumeWorldToObject;
@@ -661,7 +661,7 @@ Shader "Toon/Lit"
             };
             struct program21Output
             {
-                float4 sv_Position0 : SV_POSITION0;
+                float4 sv_Position0 : SV_POSITION;
                 float2 texcoord0 : TEXCOORD0;
                 float texcoord4 : TEXCOORD4;
                 float3 texcoord1 : TEXCOORD1;
@@ -671,7 +671,7 @@ Shader "Toon/Lit"
             };
             struct program37Input
             {
-                float4 sv_Position0 : SV_POSITION0;
+                float4 sv_Position0 : SV_POSITION;
                 float2 texcoord0 : TEXCOORD0;
                 float texcoord4 : TEXCOORD4;
                 float3 texcoord1 : TEXCOORD1;
@@ -681,7 +681,7 @@ Shader "Toon/Lit"
             };
             struct program37Output
             {
-                float4 sv_Target0 : SV_Target0;
+                float4 sv_Target0 : SV_Target;
             };
             #pragma vertex vert
             program21Output vert(program21Input i)
@@ -784,7 +784,7 @@ Shader "Toon/Lit"
                     r1_z_10 = r1_xyzw_10.z;
                     r1_w_4 = r1_xyzw_10.w;
                 }
-                float r0_w_6 = dot(float4(r1_x_10, r1_y_11, r1_z_10, r1_w_4), unity_OcclusionMaskSelector);
+                float r0_w_6 = saturate(dot(float4(r1_x_10, r1_y_11, r1_z_10, r1_w_4), unity_OcclusionMaskSelector));
                 float4 r1_xyzw_13 = _Ramp.Sample(sampler_Ramp, ((mad(dot(i.texcoord1.xyzx, _WorldSpaceLightPos0.xyzx), 0.5, 0.5)).xxxx).xy);
                 float4 r1_xyzw_14 = (r1_xyzw_13.xyzx * ((r0_xyz_2.xyzx * _LightColor0.xyzx)).xyzx);
                 float r1_x_14 = r1_xyzw_14.x;
@@ -795,8 +795,8 @@ Shader "Toon/Lit"
                 float r1_x_15 = r1_xyzw_15.x;
                 float r1_y_14 = r1_xyzw_15.y;
                 float r1_z_13 = r1_xyzw_15.z;
-                float TEXCOORD0_w_8 = i.texcoord4.x;
-                o.sv_Target0.xyz = (mad(TEXCOORD0_w_8.xxxx, (((mad(r0_xyz_2.xyzx, i.texcoord3.xyzx, float4(r1_x_15, r1_y_14, r1_z_13, r1_x_15))).xyzx + -unity_ProbeVolumeParams.xyzx)).xyzx, unity_ProbeVolumeParams.xyzx)).xyz;
+                float r0_w_8 = saturate(i.texcoord4.x);
+                o.sv_Target0.xyz = (mad(r0_w_8.xxxx, (((mad(r0_xyz_2.xyzx, i.texcoord3.xyzx, float4(r1_x_15, r1_y_14, r1_z_13, r1_x_15))).xyzx + -unity_ProbeVolumeParams.xyzx)).xyzx, unity_ProbeVolumeParams.xyzx)).xyz;
                 o.sv_Target0.w = 1;
                 return o;
             }
@@ -815,14 +815,14 @@ Shader "Toon/Lit"
                 float4 _Color;
                 float4 _MainTex_ST;
             };
-            cbuffer UnityPerDraw : register(b1)
+            cbuffer _UnityPerDrawCB : register(b1)
             {
                 float4x4 unity_ObjectToWorld;
                 float4 _WorldSpaceLightPos0;
                 float4x4 unity_WorldToObject;
                 float4 unity_OcclusionMaskSelector;
             };
-            cbuffer UnityPerFrame : register(b2)
+            cbuffer _UnityPerFrameCB : register(b2)
             {
                 float4 unity_ProbeVolumeParams;
                 float4x4 unity_ProbeVolumeWorldToObject;
@@ -858,7 +858,7 @@ Shader "Toon/Lit"
             };
             struct program20Output
             {
-                float4 sv_Position0 : SV_POSITION0;
+                float4 sv_Position0 : SV_POSITION;
                 float2 texcoord0 : TEXCOORD0;
                 float texcoord4 : TEXCOORD4;
                 float3 texcoord1 : TEXCOORD1;
@@ -868,7 +868,7 @@ Shader "Toon/Lit"
             };
             struct program36Input
             {
-                float4 sv_Position0 : SV_POSITION0;
+                float4 sv_Position0 : SV_POSITION;
                 float2 texcoord0 : TEXCOORD0;
                 float texcoord4 : TEXCOORD4;
                 float3 texcoord1 : TEXCOORD1;
@@ -878,7 +878,7 @@ Shader "Toon/Lit"
             };
             struct program36Output
             {
-                float4 sv_Target0 : SV_Target0;
+                float4 sv_Target0 : SV_Target;
             };
             #pragma vertex vert
             program20Output vert(program20Input i)
@@ -941,7 +941,7 @@ Shader "Toon/Lit"
                     r1_z_10 = r1_xyzw_10.z;
                     r1_w_4 = r1_xyzw_10.w;
                 }
-                float r0_w_6 = dot(float4(r1_x_10, r1_y_11, r1_z_10, r1_w_4), unity_OcclusionMaskSelector);
+                float r0_w_6 = saturate(dot(float4(r1_x_10, r1_y_11, r1_z_10, r1_w_4), unity_OcclusionMaskSelector));
                 float4 r1_xyzw_13 = _Ramp.Sample(sampler_Ramp, ((mad(dot(i.texcoord1.xyzx, _WorldSpaceLightPos0.xyzx), 0.5, 0.5)).xxxx).xy);
                 float4 r1_xyzw_14 = (r1_xyzw_13.xyzx * ((r0_xyz_2.xyzx * _LightColor0.xyzx)).xyzx);
                 float r1_x_14 = r1_xyzw_14.x;
@@ -952,8 +952,8 @@ Shader "Toon/Lit"
                 float r1_x_15 = r1_xyzw_15.x;
                 float r1_y_14 = r1_xyzw_15.y;
                 float r1_z_13 = r1_xyzw_15.z;
-                float TEXCOORD0_w_8 = i.texcoord4.x;
-                o.sv_Target0.xyz = (mad(TEXCOORD0_w_8.xxxx, (((mad(r0_xyz_2.xyzx, i.texcoord3.xyzx, float4(r1_x_15, r1_y_14, r1_z_13, r1_x_15))).xyzx + -unity_ProbeVolumeParams.xyzx)).xyzx, unity_ProbeVolumeParams.xyzx)).xyz;
+                float r0_w_8 = saturate(i.texcoord4.x);
+                o.sv_Target0.xyz = (mad(r0_w_8.xxxx, (((mad(r0_xyz_2.xyzx, i.texcoord3.xyzx, float4(r1_x_15, r1_y_14, r1_z_13, r1_x_15))).xyzx + -unity_ProbeVolumeParams.xyzx)).xyzx, unity_ProbeVolumeParams.xyzx)).xyz;
                 o.sv_Target0.w = 1;
                 return o;
             }
@@ -972,7 +972,7 @@ Shader "Toon/Lit"
                 float4 _Color;
                 float4 _MainTex_ST;
             };
-            cbuffer UnityPerDraw : register(b1)
+            cbuffer _UnityPerDrawCB : register(b1)
             {
                 float4x4 unity_ObjectToWorld;
                 float4 _WorldSpaceLightPos0;
@@ -980,7 +980,7 @@ Shader "Toon/Lit"
                 float4 unity_OcclusionMaskSelector;
                 float4 cb1_values[5];
             };
-            cbuffer UnityPerFrame : register(b2)
+            cbuffer _UnityPerFrameCB : register(b2)
             {
                 float4 unity_ProbeVolumeParams;
                 float4x4 unity_ProbeVolumeWorldToObject;
@@ -1022,7 +1022,7 @@ Shader "Toon/Lit"
             };
             struct program15Output
             {
-                float4 sv_Position0 : SV_POSITION0;
+                float4 sv_Position0 : SV_POSITION;
                 float2 texcoord0 : TEXCOORD0;
                 float3 texcoord1 : TEXCOORD1;
                 float3 texcoord2 : TEXCOORD2;
@@ -1032,7 +1032,7 @@ Shader "Toon/Lit"
             };
             struct program35Input
             {
-                float4 sv_Position0 : SV_POSITION0;
+                float4 sv_Position0 : SV_POSITION;
                 float2 texcoord0 : TEXCOORD0;
                 float3 texcoord1 : TEXCOORD1;
                 float3 texcoord2 : TEXCOORD2;
@@ -1042,7 +1042,7 @@ Shader "Toon/Lit"
             };
             struct program35Output
             {
-                float4 sv_Target0 : SV_Target0;
+                float4 sv_Target0 : SV_Target;
             };
             #pragma vertex vert
             program15Output vert(program15Input i)
@@ -1101,7 +1101,7 @@ Shader "Toon/Lit"
                 float r0_w_2 = dot(((-i.texcoord2.xyzx + cb1_values[4].xyzx)).xyzx, float4(r2_x_1, r2_y_1, r2_z_1, r2_x_1));
                 float3 r1_xyz_2 = ((i.texcoord2.xyzx + -cb3_values[25].xyzx)).xyz;
                 float r0_w_3 = mad(cb3_values[25].w, (-r0_w_2 + sqrt(dot(r1_xyz_2.xyzx, r1_xyz_2.xyzx))), r0_w_2);
-                float r0_w_4 = mad(r0_w_3, cb3_values[24].z, cb3_values[24].w);
+                float r0_w_4 = saturate(mad(r0_w_3, cb3_values[24].z, cb3_values[24].w));
                 float r1_x_13;
                 float r1_y_13;
                 float r1_z_12;
@@ -1159,7 +1159,7 @@ Shader "Toon/Lit"
                 float r1_y_14 = r1_xyzw_14.y;
                 float r1_z_13 = r1_xyzw_14.z;
                 float4 r2_xyzw_4 = _Ramp.Sample(sampler_Ramp, (float4(r1_y_14, r1_z_13, r1_y_14, r1_y_14)).xy);
-                float r0_w_5 = mad(r0_w_4, (dot(float4(r1_x_13, r1_y_13, r1_z_12, r1_w_8), cb2_values[46].xyzw) + -r2_xyzw_4.x), r2_xyzw_4.x);
+                float r0_w_5 = mad(r0_w_4, (saturate(dot(float4(r1_x_13, r1_y_13, r1_z_12, r1_w_8), cb2_values[46].xyzw)) + -r2_xyzw_4.x), r2_xyzw_4.x);
                 float4 r1_xyzw_18 = t2.Sample(sampler_linear_clamp2, ((mad(dot(i.texcoord1.xyzx, unity_ProbeVolumeParams.xyzx), 0.5, 0.5)).xxxx).xy);
                 float4 r2_xyzw_5 = (r0_xyz_2.xyzx * _LightColor0.xyzx);
                 float r2_x_5 = r2_xyzw_5.x;
@@ -1193,7 +1193,7 @@ Shader "Toon/Lit"
                 float4 _Color;
                 float4 _MainTex_ST;
             };
-            cbuffer UnityPerDraw : register(b1)
+            cbuffer _UnityPerDrawCB : register(b1)
             {
                 float4x4 unity_ObjectToWorld;
                 float4 _WorldSpaceLightPos0;
@@ -1201,7 +1201,7 @@ Shader "Toon/Lit"
                 float4 unity_OcclusionMaskSelector;
                 float4 cb1_values[5];
             };
-            cbuffer UnityPerFrame : register(b2)
+            cbuffer _UnityPerFrameCB : register(b2)
             {
                 float4 unity_ProbeVolumeParams;
                 float4x4 unity_ProbeVolumeWorldToObject;
@@ -1243,7 +1243,7 @@ Shader "Toon/Lit"
             };
             struct program14Output
             {
-                float4 sv_Position0 : SV_POSITION0;
+                float4 sv_Position0 : SV_POSITION;
                 float2 texcoord0 : TEXCOORD0;
                 float3 texcoord1 : TEXCOORD1;
                 float3 texcoord2 : TEXCOORD2;
@@ -1253,7 +1253,7 @@ Shader "Toon/Lit"
             };
             struct program34Input
             {
-                float4 sv_Position0 : SV_POSITION0;
+                float4 sv_Position0 : SV_POSITION;
                 float2 texcoord0 : TEXCOORD0;
                 float3 texcoord1 : TEXCOORD1;
                 float3 texcoord2 : TEXCOORD2;
@@ -1263,7 +1263,7 @@ Shader "Toon/Lit"
             };
             struct program34Output
             {
-                float4 sv_Target0 : SV_Target0;
+                float4 sv_Target0 : SV_Target;
             };
             #pragma vertex vert
             program14Output vert(program14Input i)
@@ -1308,7 +1308,7 @@ Shader "Toon/Lit"
                 float r0_w_2 = dot(((-i.texcoord2.xyzx + cb1_values[4].xyzx)).xyzx, float4(r2_x_1, r2_y_1, r2_z_1, r2_x_1));
                 float3 r1_xyz_2 = ((i.texcoord2.xyzx + -cb3_values[25].xyzx)).xyz;
                 float r0_w_3 = mad(cb3_values[25].w, (-r0_w_2 + sqrt(dot(r1_xyz_2.xyzx, r1_xyz_2.xyzx))), r0_w_2);
-                float r0_w_4 = mad(r0_w_3, cb3_values[24].z, cb3_values[24].w);
+                float r0_w_4 = saturate(mad(r0_w_3, cb3_values[24].z, cb3_values[24].w));
                 float r1_x_13;
                 float r1_y_13;
                 float r1_z_12;
@@ -1366,7 +1366,7 @@ Shader "Toon/Lit"
                 float r1_y_14 = r1_xyzw_14.y;
                 float r1_z_13 = r1_xyzw_14.z;
                 float4 r2_xyzw_4 = _Ramp.Sample(sampler_Ramp, (float4(r1_y_14, r1_z_13, r1_y_14, r1_y_14)).xy);
-                float r0_w_5 = mad(r0_w_4, (dot(float4(r1_x_13, r1_y_13, r1_z_12, r1_w_8), cb2_values[46].xyzw) + -r2_xyzw_4.x), r2_xyzw_4.x);
+                float r0_w_5 = mad(r0_w_4, (saturate(dot(float4(r1_x_13, r1_y_13, r1_z_12, r1_w_8), cb2_values[46].xyzw)) + -r2_xyzw_4.x), r2_xyzw_4.x);
                 float4 r1_xyzw_18 = t2.Sample(sampler_linear_clamp2, ((mad(dot(i.texcoord1.xyzx, unity_ProbeVolumeParams.xyzx), 0.5, 0.5)).xxxx).xy);
                 float4 r2_xyzw_5 = (r0_xyz_2.xyzx * _LightColor0.xyzx);
                 float r2_x_5 = r2_xyzw_5.x;
@@ -1400,7 +1400,7 @@ Shader "Toon/Lit"
                 float4 _Color;
                 float4 _MainTex_ST;
             };
-            cbuffer UnityPerDraw : register(b1)
+            cbuffer _UnityPerDrawCB : register(b1)
             {
                 float4x4 unity_ObjectToWorld;
                 float4 _WorldSpaceLightPos0;
@@ -1408,7 +1408,7 @@ Shader "Toon/Lit"
                 float4 unity_OcclusionMaskSelector;
                 float4 cb1_values[46];
             };
-            cbuffer UnityPerFrame : register(b2)
+            cbuffer _UnityPerFrameCB : register(b2)
             {
                 float4 unity_ProbeVolumeParams;
                 float4x4 unity_ProbeVolumeWorldToObject;
@@ -1440,7 +1440,7 @@ Shader "Toon/Lit"
             };
             struct program13Output
             {
-                float4 sv_Position0 : SV_POSITION0;
+                float4 sv_Position0 : SV_POSITION;
                 float2 texcoord0 : TEXCOORD0;
                 float3 texcoord1 : TEXCOORD1;
                 float3 texcoord2 : TEXCOORD2;
@@ -1449,7 +1449,7 @@ Shader "Toon/Lit"
             };
             struct program33Input
             {
-                float4 sv_Position0 : SV_POSITION0;
+                float4 sv_Position0 : SV_POSITION;
                 float2 texcoord0 : TEXCOORD0;
                 float3 texcoord1 : TEXCOORD1;
                 float3 texcoord2 : TEXCOORD2;
@@ -1458,7 +1458,7 @@ Shader "Toon/Lit"
             };
             struct program33Output
             {
-                float4 sv_Target0 : SV_Target0;
+                float4 sv_Target0 : SV_Target;
             };
             #pragma vertex vert
             program13Output vert(program13Input i)
@@ -1531,7 +1531,7 @@ Shader "Toon/Lit"
                     r1_z_10 = r1_xyzw_10.z;
                     r1_w_4 = r1_xyzw_10.w;
                 }
-                float r0_w_6 = dot(float4(r1_x_10, r1_y_11, r1_z_10, r1_w_4), unity_OcclusionMaskSelector);
+                float r0_w_6 = saturate(dot(float4(r1_x_10, r1_y_11, r1_z_10, r1_w_4), unity_OcclusionMaskSelector));
                 float4 r1_xyzw_13 = _Ramp.Sample(sampler_Ramp, ((mad(dot(i.texcoord1.xyzx, _WorldSpaceLightPos0.xyzx), 0.5, 0.5)).xxxx).xy);
                 float4 r1_xyzw_14 = (r1_xyzw_13.xyzx * ((r0_xyz_2.xyzx * _LightColor0.xyzx)).xyzx);
                 float r1_x_14 = r1_xyzw_14.x;
@@ -1563,14 +1563,14 @@ Shader "Toon/Lit"
                 float4 _MainTex_ST;
                 float4 cb0_values[10];
             };
-            cbuffer UnityPerDraw : register(b1)
+            cbuffer _UnityPerDrawCB : register(b1)
             {
                 float4x4 unity_ObjectToWorld;
                 float4 _WorldSpaceLightPos0;
                 float4x4 unity_WorldToObject;
                 float4 unity_OcclusionMaskSelector;
             };
-            cbuffer UnityPerFrame : register(b2)
+            cbuffer _UnityPerFrameCB : register(b2)
             {
                 float4 unity_ProbeVolumeParams;
                 float4x4 unity_ProbeVolumeWorldToObject;
@@ -1599,7 +1599,7 @@ Shader "Toon/Lit"
             };
             struct program44Output
             {
-                float4 sv_Position0 : SV_POSITION0;
+                float4 sv_Position0 : SV_POSITION;
                 float2 texcoord0 : TEXCOORD0;
                 float3 texcoord1 : TEXCOORD1;
                 float3 texcoord2 : TEXCOORD2;
@@ -1608,7 +1608,7 @@ Shader "Toon/Lit"
             };
             struct program58Input
             {
-                float4 sv_Position0 : SV_POSITION0;
+                float4 sv_Position0 : SV_POSITION;
                 float2 texcoord0 : TEXCOORD0;
                 float3 texcoord1 : TEXCOORD1;
                 float3 texcoord2 : TEXCOORD2;
@@ -1617,7 +1617,7 @@ Shader "Toon/Lit"
             };
             struct program58Output
             {
-                float4 sv_Target0 : SV_Target0;
+                float4 sv_Target0 : SV_Target;
             };
             #pragma vertex vert
             program44Output vert(program44Input i)
@@ -1684,7 +1684,7 @@ Shader "Toon/Lit"
                     r3_z_10 = r3_xyzw_10.z;
                     r3_w_4 = r3_xyzw_10.w;
                 }
-                float r0_w_7 = dot(float4(r3_x_10, r3_y_10, r3_z_10, r3_w_4), unity_OcclusionMaskSelector);
+                float r0_w_7 = saturate(dot(float4(r3_x_10, r3_y_10, r3_z_10, r3_w_4), unity_OcclusionMaskSelector));
                 float r1_w_4 = dot(r2_xyz_4.xyzx, r2_xyz_4.xyzx);
                 float4 r2_xyzw_5 = _Ramp.Sample(sampler_Ramp, (r1_w_4.xxxx).xy);
                 float4 r3_xyzw_11 = t2.Sample(sampler_linear_clamp2, ((mad(dot(i.texcoord1.xyzx, ((r0_w_2.xxxx * r0_xyz_1.xyzx)).xyzx), 0.5, 0.5)).xxxx).xy);
@@ -1718,14 +1718,14 @@ Shader "Toon/Lit"
                 float4 _MainTex_ST;
                 float4 cb0_values[10];
             };
-            cbuffer UnityPerDraw : register(b1)
+            cbuffer _UnityPerDrawCB : register(b1)
             {
                 float4x4 unity_ObjectToWorld;
                 float4 _WorldSpaceLightPos0;
                 float4x4 unity_WorldToObject;
                 float4 unity_OcclusionMaskSelector;
             };
-            cbuffer UnityPerFrame : register(b2)
+            cbuffer _UnityPerFrameCB : register(b2)
             {
                 float4 unity_ProbeVolumeParams;
                 float4x4 unity_ProbeVolumeWorldToObject;
@@ -1763,7 +1763,7 @@ Shader "Toon/Lit"
             };
             struct program53Output
             {
-                float4 sv_Position0 : SV_POSITION0;
+                float4 sv_Position0 : SV_POSITION;
                 float2 texcoord0 : TEXCOORD0;
                 float2 texcoord3 : TEXCOORD3;
                 float3 texcoord1 : TEXCOORD1;
@@ -1773,7 +1773,7 @@ Shader "Toon/Lit"
             };
             struct program67Input
             {
-                float4 sv_Position0 : SV_POSITION0;
+                float4 sv_Position0 : SV_POSITION;
                 float2 texcoord0 : TEXCOORD0;
                 float2 texcoord3 : TEXCOORD3;
                 float3 texcoord1 : TEXCOORD1;
@@ -1783,7 +1783,7 @@ Shader "Toon/Lit"
             };
             struct program67Output
             {
-                float4 sv_Target0 : SV_Target0;
+                float4 sv_Target0 : SV_Target;
             };
             #pragma vertex vert
             program53Output vert(program53Input i)
@@ -1846,12 +1846,12 @@ Shader "Toon/Lit"
                     r2_z_10 = r2_xyzw_10.z;
                     r2_w_4 = r2_xyzw_10.w;
                 }
-                float r0_w_6 = dot(float4(r2_x_10, r2_y_10, r2_z_10, r2_w_4), unity_OcclusionMaskSelector);
+                float r0_w_6 = saturate(dot(float4(r2_x_10, r2_y_10, r2_z_10, r2_w_4), unity_OcclusionMaskSelector));
                 float4 r1_xyzw_5 = _Ramp.Sample(sampler_Ramp, ((((mad(cb0_values[6].xyxx, i.texcoord2.zzzz, (mad(cb0_values[4].xyxx, i.texcoord2.xxxx, ((i.texcoord2.yyyy * cb0_values[5].xyxx)).xyxx)).xyxx)).xyxx + cb0_values[7].xyxx)).xyxx).xy);
                 float4 r2_xyzw_11 = t2.Sample(sampler_linear_clamp2, ((mad(dot(i.texcoord1.xyzx, _WorldSpaceLightPos0.xyzx), 0.5, 0.5)).xxxx).xy);
                 float r0_w_7 = dot(r1_xyzw_5.wwww, r0_w_6.xxxx);
-                float TEXCOORD1_w_8 = i.texcoord5.x;
-                o.sv_Target0.xyz = ((((r0_w_7.xxxx * ((r2_xyzw_11.xyzx * ((((r0_xyzw_1.xyzx * cb0_values[8].xyzx)).xyzx * _LightColor0.xyzx)).xyzx)).xyzx)).xyzx * TEXCOORD1_w_8.xxxx)).xyz;
+                float r0_w_8 = saturate(i.texcoord5.x);
+                o.sv_Target0.xyz = ((((r0_w_7.xxxx * ((r2_xyzw_11.xyzx * ((((r0_xyzw_1.xyzx * cb0_values[8].xyzx)).xyzx * _LightColor0.xyzx)).xyzx)).xyzx)).xyzx * r0_w_8.xxxx)).xyz;
                 o.sv_Target0.w = 1;
                 return o;
             }
@@ -1872,14 +1872,14 @@ Shader "Toon/Lit"
                 float4 _MainTex_ST;
                 float4 cb0_values[10];
             };
-            cbuffer UnityPerDraw : register(b1)
+            cbuffer _UnityPerDrawCB : register(b1)
             {
                 float4x4 unity_ObjectToWorld;
                 float4 _WorldSpaceLightPos0;
                 float4x4 unity_WorldToObject;
                 float4 unity_OcclusionMaskSelector;
             };
-            cbuffer UnityPerFrame : register(b2)
+            cbuffer _UnityPerFrameCB : register(b2)
             {
                 float4 unity_ProbeVolumeParams;
                 float4x4 unity_ProbeVolumeWorldToObject;
@@ -1919,7 +1919,7 @@ Shader "Toon/Lit"
             };
             struct program52Output
             {
-                float4 sv_Position0 : SV_POSITION0;
+                float4 sv_Position0 : SV_POSITION;
                 float2 texcoord0 : TEXCOORD0;
                 float texcoord5 : TEXCOORD5;
                 float3 texcoord1 : TEXCOORD1;
@@ -1929,7 +1929,7 @@ Shader "Toon/Lit"
             };
             struct program66Input
             {
-                float4 sv_Position0 : SV_POSITION0;
+                float4 sv_Position0 : SV_POSITION;
                 float2 texcoord0 : TEXCOORD0;
                 float texcoord5 : TEXCOORD5;
                 float3 texcoord1 : TEXCOORD1;
@@ -1939,7 +1939,7 @@ Shader "Toon/Lit"
             };
             struct program66Output
             {
-                float4 sv_Target0 : SV_Target0;
+                float4 sv_Target0 : SV_Target;
             };
             #pragma vertex vert
             program52Output vert(program52Input i)
@@ -2014,7 +2014,7 @@ Shader "Toon/Lit"
                     r3_z_10 = r3_xyzw_10.z;
                     r3_w_4 = r3_xyzw_10.w;
                 }
-                float r0_w_7 = dot(float4(r3_x_10, r3_y_10, r3_z_10, r3_w_4), unity_OcclusionMaskSelector);
+                float r0_w_7 = saturate(dot(float4(r3_x_10, r3_y_10, r3_z_10, r3_w_4), unity_OcclusionMaskSelector));
                 float r1_w_4 = dot(r2_xyz_4.xyzx, r2_xyz_4.xyzx);
                 float4 r3_xyzw_11 = _Ramp.Sample(sampler_Ramp, (r1_w_4.xxxx).xy);
                 float4 r2_xyzw_5 = t2.Sample(sampler_linear_clamp1, r2_xyz_4.xyz);
@@ -2033,8 +2033,8 @@ Shader "Toon/Lit"
                 float r0_x_7 = r0_xyzw_7.x;
                 float r0_y_5 = r0_xyzw_7.y;
                 float r0_z_5 = r0_xyzw_7.z;
-                float TEXCOORD0_w_9 = i.texcoord5.x;
-                o.sv_Target0.xyz = ((float4(r0_x_7, r0_y_5, r0_z_5, r0_x_7) * TEXCOORD0_w_9.xxxx)).xyz;
+                float r0_w_9 = saturate(i.texcoord5.x);
+                o.sv_Target0.xyz = ((float4(r0_x_7, r0_y_5, r0_z_5, r0_x_7) * r0_w_9.xxxx)).xyz;
                 o.sv_Target0.w = 1;
                 return o;
             }
@@ -2055,14 +2055,14 @@ Shader "Toon/Lit"
                 float4 _MainTex_ST;
                 float4 cb0_values[10];
             };
-            cbuffer UnityPerDraw : register(b1)
+            cbuffer _UnityPerDrawCB : register(b1)
             {
                 float4x4 unity_ObjectToWorld;
                 float4 _WorldSpaceLightPos0;
                 float4x4 unity_WorldToObject;
                 float4 unity_OcclusionMaskSelector;
             };
-            cbuffer UnityPerFrame : register(b2)
+            cbuffer _UnityPerFrameCB : register(b2)
             {
                 float4 unity_ProbeVolumeParams;
                 float4x4 unity_ProbeVolumeWorldToObject;
@@ -2102,7 +2102,7 @@ Shader "Toon/Lit"
             };
             struct program51Output
             {
-                float4 sv_Position0 : SV_POSITION0;
+                float4 sv_Position0 : SV_POSITION;
                 float2 texcoord0 : TEXCOORD0;
                 float texcoord5 : TEXCOORD5;
                 float3 texcoord1 : TEXCOORD1;
@@ -2112,7 +2112,7 @@ Shader "Toon/Lit"
             };
             struct program65Input
             {
-                float4 sv_Position0 : SV_POSITION0;
+                float4 sv_Position0 : SV_POSITION;
                 float2 texcoord0 : TEXCOORD0;
                 float texcoord5 : TEXCOORD5;
                 float3 texcoord1 : TEXCOORD1;
@@ -2122,7 +2122,7 @@ Shader "Toon/Lit"
             };
             struct program65Output
             {
-                float4 sv_Target0 : SV_Target0;
+                float4 sv_Target0 : SV_Target;
             };
             #pragma vertex vert
             program51Output vert(program51Input i)
@@ -2192,7 +2192,7 @@ Shader "Toon/Lit"
                     r3_z_10 = r3_xyzw_10.z;
                     r3_w_4 = r3_xyzw_10.w;
                 }
-                float r0_w_7 = dot(float4(r3_x_10, r3_y_10, r3_z_10, r3_w_4), unity_OcclusionMaskSelector);
+                float r0_w_7 = saturate(dot(float4(r3_x_10, r3_y_10, r3_z_10, r3_w_4), unity_OcclusionMaskSelector));
                 float r1_w_4 = (0 < r2_xyzw_4.z);
                 float r1_w_5 = asfloat(asint(r1_w_4) & asint(1065353216));
                 float4 r3_xyzw_13 = _Ramp.Sample(sampler_Ramp, (((((r2_xyzw_4.xyxx / r2_xyzw_4.wwww)).xyxx + float4(0.5, 0.5, 0, 0))).xyxx).xy);
@@ -2213,8 +2213,8 @@ Shader "Toon/Lit"
                 float r0_x_7 = r0_xyzw_7.x;
                 float r0_y_5 = r0_xyzw_7.y;
                 float r0_z_5 = r0_xyzw_7.z;
-                float TEXCOORD0_w_9 = i.texcoord5.x;
-                o.sv_Target0.xyz = ((float4(r0_x_7, r0_y_5, r0_z_5, r0_x_7) * TEXCOORD0_w_9.xxxx)).xyz;
+                float r0_w_9 = saturate(i.texcoord5.x);
+                o.sv_Target0.xyz = ((float4(r0_x_7, r0_y_5, r0_z_5, r0_x_7) * r0_w_9.xxxx)).xyz;
                 o.sv_Target0.w = 1;
                 return o;
             }
@@ -2235,14 +2235,14 @@ Shader "Toon/Lit"
                 float4 _MainTex_ST;
                 float4 cb0_values[5];
             };
-            cbuffer UnityPerDraw : register(b1)
+            cbuffer _UnityPerDrawCB : register(b1)
             {
                 float4x4 unity_ObjectToWorld;
                 float4 _WorldSpaceLightPos0;
                 float4x4 unity_WorldToObject;
                 float4 unity_OcclusionMaskSelector;
             };
-            cbuffer UnityPerFrame : register(b2)
+            cbuffer _UnityPerFrameCB : register(b2)
             {
                 float4 unity_ProbeVolumeParams;
                 float4x4 unity_ProbeVolumeWorldToObject;
@@ -2278,7 +2278,7 @@ Shader "Toon/Lit"
             };
             struct program50Output
             {
-                float4 sv_Position0 : SV_POSITION0;
+                float4 sv_Position0 : SV_POSITION;
                 float2 texcoord0 : TEXCOORD0;
                 float texcoord5 : TEXCOORD5;
                 float3 texcoord1 : TEXCOORD1;
@@ -2287,7 +2287,7 @@ Shader "Toon/Lit"
             };
             struct program64Input
             {
-                float4 sv_Position0 : SV_POSITION0;
+                float4 sv_Position0 : SV_POSITION;
                 float2 texcoord0 : TEXCOORD0;
                 float texcoord5 : TEXCOORD5;
                 float3 texcoord1 : TEXCOORD1;
@@ -2296,7 +2296,7 @@ Shader "Toon/Lit"
             };
             struct program64Output
             {
-                float4 sv_Target0 : SV_Target0;
+                float4 sv_Target0 : SV_Target;
             };
             #pragma vertex vert
             program50Output vert(program50Input i)
@@ -2358,11 +2358,11 @@ Shader "Toon/Lit"
                     r1_z_10 = r1_xyzw_10.z;
                     r1_w_4 = r1_xyzw_10.w;
                 }
-                float r0_w_6 = dot(float4(r1_x_10, r1_y_11, r1_z_10, r1_w_4), unity_OcclusionMaskSelector);
+                float r0_w_6 = saturate(dot(float4(r1_x_10, r1_y_11, r1_z_10, r1_w_4), unity_OcclusionMaskSelector));
                 float4 r1_xyzw_13 = _Ramp.Sample(sampler_Ramp, ((mad(dot(i.texcoord1.xyzx, _WorldSpaceLightPos0.xyzx), 0.5, 0.5)).xxxx).xy);
                 float r0_w_7 = (r0_w_6 + r0_w_6);
-                float TEXCOORD0_w_8 = i.texcoord5.x;
-                o.sv_Target0.xyz = ((((r0_w_7.xxxx * ((r1_xyzw_13.xyzx * ((((r0_xyzw_1.xyzx * cb0_values[4].xyzx)).xyzx * _LightColor0.xyzx)).xyzx)).xyzx)).xyzx * TEXCOORD0_w_8.xxxx)).xyz;
+                float r0_w_8 = saturate(i.texcoord5.x);
+                o.sv_Target0.xyz = ((((r0_w_7.xxxx * ((r1_xyzw_13.xyzx * ((((r0_xyzw_1.xyzx * cb0_values[4].xyzx)).xyzx * _LightColor0.xyzx)).xyzx)).xyzx)).xyzx * r0_w_8.xxxx)).xyz;
                 o.sv_Target0.w = 1;
                 return o;
             }
@@ -2383,14 +2383,14 @@ Shader "Toon/Lit"
                 float4 _MainTex_ST;
                 float4 cb0_values[10];
             };
-            cbuffer UnityPerDraw : register(b1)
+            cbuffer _UnityPerDrawCB : register(b1)
             {
                 float4x4 unity_ObjectToWorld;
                 float4 _WorldSpaceLightPos0;
                 float4x4 unity_WorldToObject;
                 float4 unity_OcclusionMaskSelector;
             };
-            cbuffer UnityPerFrame : register(b2)
+            cbuffer _UnityPerFrameCB : register(b2)
             {
                 float4 unity_ProbeVolumeParams;
                 float4x4 unity_ProbeVolumeWorldToObject;
@@ -2428,7 +2428,7 @@ Shader "Toon/Lit"
             };
             struct program49Output
             {
-                float4 sv_Position0 : SV_POSITION0;
+                float4 sv_Position0 : SV_POSITION;
                 float2 texcoord0 : TEXCOORD0;
                 float texcoord5 : TEXCOORD5;
                 float3 texcoord1 : TEXCOORD1;
@@ -2438,7 +2438,7 @@ Shader "Toon/Lit"
             };
             struct program63Input
             {
-                float4 sv_Position0 : SV_POSITION0;
+                float4 sv_Position0 : SV_POSITION;
                 float2 texcoord0 : TEXCOORD0;
                 float texcoord5 : TEXCOORD5;
                 float3 texcoord1 : TEXCOORD1;
@@ -2448,7 +2448,7 @@ Shader "Toon/Lit"
             };
             struct program63Output
             {
-                float4 sv_Target0 : SV_Target0;
+                float4 sv_Target0 : SV_Target;
             };
             #pragma vertex vert
             program49Output vert(program49Input i)
@@ -2523,7 +2523,7 @@ Shader "Toon/Lit"
                     r3_z_10 = r3_xyzw_10.z;
                     r3_w_4 = r3_xyzw_10.w;
                 }
-                float r0_w_7 = dot(float4(r3_x_10, r3_y_10, r3_z_10, r3_w_4), unity_OcclusionMaskSelector);
+                float r0_w_7 = saturate(dot(float4(r3_x_10, r3_y_10, r3_z_10, r3_w_4), unity_OcclusionMaskSelector));
                 float r1_w_4 = dot(r2_xyz_4.xyzx, r2_xyz_4.xyzx);
                 float4 r2_xyzw_5 = _Ramp.Sample(sampler_Ramp, (r1_w_4.xxxx).xy);
                 float4 r3_xyzw_11 = t2.Sample(sampler_linear_clamp2, ((mad(dot(i.texcoord1.xyzx, ((r0_w_2.xxxx * r0_xyz_1.xyzx)).xyzx), 0.5, 0.5)).xxxx).xy);
@@ -2540,8 +2540,8 @@ Shader "Toon/Lit"
                 float r0_x_7 = r0_xyzw_7.x;
                 float r0_y_5 = r0_xyzw_7.y;
                 float r0_z_5 = r0_xyzw_7.z;
-                float TEXCOORD0_w_9 = i.texcoord5.x;
-                o.sv_Target0.xyz = ((float4(r0_x_7, r0_y_5, r0_z_5, r0_x_7) * TEXCOORD0_w_9.xxxx)).xyz;
+                float r0_w_9 = saturate(i.texcoord5.x);
+                o.sv_Target0.xyz = ((float4(r0_x_7, r0_y_5, r0_z_5, r0_x_7) * r0_w_9.xxxx)).xyz;
                 o.sv_Target0.w = 1;
                 return o;
             }
@@ -2562,14 +2562,14 @@ Shader "Toon/Lit"
                 float4 _MainTex_ST;
                 float4 cb0_values[10];
             };
-            cbuffer UnityPerDraw : register(b1)
+            cbuffer _UnityPerDrawCB : register(b1)
             {
                 float4x4 unity_ObjectToWorld;
                 float4 _WorldSpaceLightPos0;
                 float4x4 unity_WorldToObject;
                 float4 unity_OcclusionMaskSelector;
             };
-            cbuffer UnityPerFrame : register(b2)
+            cbuffer _UnityPerFrameCB : register(b2)
             {
                 float4 unity_ProbeVolumeParams;
                 float4x4 unity_ProbeVolumeWorldToObject;
@@ -2598,7 +2598,7 @@ Shader "Toon/Lit"
             };
             struct program48Output
             {
-                float4 sv_Position0 : SV_POSITION0;
+                float4 sv_Position0 : SV_POSITION;
                 float2 texcoord0 : TEXCOORD0;
                 float2 texcoord3 : TEXCOORD3;
                 float3 texcoord1 : TEXCOORD1;
@@ -2607,7 +2607,7 @@ Shader "Toon/Lit"
             };
             struct program62Input
             {
-                float4 sv_Position0 : SV_POSITION0;
+                float4 sv_Position0 : SV_POSITION;
                 float2 texcoord0 : TEXCOORD0;
                 float2 texcoord3 : TEXCOORD3;
                 float3 texcoord1 : TEXCOORD1;
@@ -2616,7 +2616,7 @@ Shader "Toon/Lit"
             };
             struct program62Output
             {
-                float4 sv_Target0 : SV_Target0;
+                float4 sv_Target0 : SV_Target;
             };
             #pragma vertex vert
             program48Output vert(program48Input i)
@@ -2679,7 +2679,7 @@ Shader "Toon/Lit"
                     r2_z_10 = r2_xyzw_10.z;
                     r2_w_4 = r2_xyzw_10.w;
                 }
-                float r0_w_6 = dot(float4(r2_x_10, r2_y_10, r2_z_10, r2_w_4), unity_OcclusionMaskSelector);
+                float r0_w_6 = saturate(dot(float4(r2_x_10, r2_y_10, r2_z_10, r2_w_4), unity_OcclusionMaskSelector));
                 float4 r1_xyzw_5 = _Ramp.Sample(sampler_Ramp, ((((mad(cb0_values[6].xyxx, i.texcoord2.zzzz, (mad(cb0_values[4].xyxx, i.texcoord2.xxxx, ((i.texcoord2.yyyy * cb0_values[5].xyxx)).xyxx)).xyxx)).xyxx + cb0_values[7].xyxx)).xyxx).xy);
                 float4 r2_xyzw_11 = t2.Sample(sampler_linear_clamp2, ((mad(dot(i.texcoord1.xyzx, _WorldSpaceLightPos0.xyzx), 0.5, 0.5)).xxxx).xy);
                 float r0_w_7 = dot(r1_xyzw_5.wwww, r0_w_6.xxxx);
@@ -2704,14 +2704,14 @@ Shader "Toon/Lit"
                 float4 _MainTex_ST;
                 float4 cb0_values[10];
             };
-            cbuffer UnityPerDraw : register(b1)
+            cbuffer _UnityPerDrawCB : register(b1)
             {
                 float4x4 unity_ObjectToWorld;
                 float4 _WorldSpaceLightPos0;
                 float4x4 unity_WorldToObject;
                 float4 unity_OcclusionMaskSelector;
             };
-            cbuffer UnityPerFrame : register(b2)
+            cbuffer _UnityPerFrameCB : register(b2)
             {
                 float4 unity_ProbeVolumeParams;
                 float4x4 unity_ProbeVolumeWorldToObject;
@@ -2742,7 +2742,7 @@ Shader "Toon/Lit"
             };
             struct program47Output
             {
-                float4 sv_Position0 : SV_POSITION0;
+                float4 sv_Position0 : SV_POSITION;
                 float2 texcoord0 : TEXCOORD0;
                 float3 texcoord1 : TEXCOORD1;
                 float3 texcoord2 : TEXCOORD2;
@@ -2751,7 +2751,7 @@ Shader "Toon/Lit"
             };
             struct program61Input
             {
-                float4 sv_Position0 : SV_POSITION0;
+                float4 sv_Position0 : SV_POSITION;
                 float2 texcoord0 : TEXCOORD0;
                 float3 texcoord1 : TEXCOORD1;
                 float3 texcoord2 : TEXCOORD2;
@@ -2760,7 +2760,7 @@ Shader "Toon/Lit"
             };
             struct program61Output
             {
-                float4 sv_Target0 : SV_Target0;
+                float4 sv_Target0 : SV_Target;
             };
             #pragma vertex vert
             program47Output vert(program47Input i)
@@ -2827,7 +2827,7 @@ Shader "Toon/Lit"
                     r3_z_10 = r3_xyzw_10.z;
                     r3_w_4 = r3_xyzw_10.w;
                 }
-                float r0_w_7 = dot(float4(r3_x_10, r3_y_10, r3_z_10, r3_w_4), unity_OcclusionMaskSelector);
+                float r0_w_7 = saturate(dot(float4(r3_x_10, r3_y_10, r3_z_10, r3_w_4), unity_OcclusionMaskSelector));
                 float r1_w_4 = dot(r2_xyz_4.xyzx, r2_xyz_4.xyzx);
                 float4 r3_xyzw_11 = _Ramp.Sample(sampler_Ramp, (r1_w_4.xxxx).xy);
                 float4 r2_xyzw_5 = t2.Sample(sampler_linear_clamp1, r2_xyz_4.xyz);
@@ -2863,14 +2863,14 @@ Shader "Toon/Lit"
                 float4 _MainTex_ST;
                 float4 cb0_values[10];
             };
-            cbuffer UnityPerDraw : register(b1)
+            cbuffer _UnityPerDrawCB : register(b1)
             {
                 float4x4 unity_ObjectToWorld;
                 float4 _WorldSpaceLightPos0;
                 float4x4 unity_WorldToObject;
                 float4 unity_OcclusionMaskSelector;
             };
-            cbuffer UnityPerFrame : register(b2)
+            cbuffer _UnityPerFrameCB : register(b2)
             {
                 float4 unity_ProbeVolumeParams;
                 float4x4 unity_ProbeVolumeWorldToObject;
@@ -2901,7 +2901,7 @@ Shader "Toon/Lit"
             };
             struct program46Output
             {
-                float4 sv_Position0 : SV_POSITION0;
+                float4 sv_Position0 : SV_POSITION;
                 float2 texcoord0 : TEXCOORD0;
                 float3 texcoord1 : TEXCOORD1;
                 float3 texcoord2 : TEXCOORD2;
@@ -2910,7 +2910,7 @@ Shader "Toon/Lit"
             };
             struct program60Input
             {
-                float4 sv_Position0 : SV_POSITION0;
+                float4 sv_Position0 : SV_POSITION;
                 float2 texcoord0 : TEXCOORD0;
                 float3 texcoord1 : TEXCOORD1;
                 float3 texcoord2 : TEXCOORD2;
@@ -2919,7 +2919,7 @@ Shader "Toon/Lit"
             };
             struct program60Output
             {
-                float4 sv_Target0 : SV_Target0;
+                float4 sv_Target0 : SV_Target;
             };
             #pragma vertex vert
             program46Output vert(program46Input i)
@@ -2989,7 +2989,7 @@ Shader "Toon/Lit"
                     r3_z_10 = r3_xyzw_10.z;
                     r3_w_4 = r3_xyzw_10.w;
                 }
-                float r0_w_7 = dot(float4(r3_x_10, r3_y_10, r3_z_10, r3_w_4), unity_OcclusionMaskSelector);
+                float r0_w_7 = saturate(dot(float4(r3_x_10, r3_y_10, r3_z_10, r3_w_4), unity_OcclusionMaskSelector));
                 float r1_w_4 = (0 < r2_xyzw_4.z);
                 float r1_w_5 = asfloat(asint(r1_w_4) & asint(1065353216));
                 float4 r3_xyzw_13 = _Ramp.Sample(sampler_Ramp, (((((r2_xyzw_4.xyxx / r2_xyzw_4.wwww)).xyxx + float4(0.5, 0.5, 0, 0))).xyxx).xy);
@@ -3027,14 +3027,14 @@ Shader "Toon/Lit"
                 float4 _MainTex_ST;
                 float4 cb0_values[5];
             };
-            cbuffer UnityPerDraw : register(b1)
+            cbuffer _UnityPerDrawCB : register(b1)
             {
                 float4x4 unity_ObjectToWorld;
                 float4 _WorldSpaceLightPos0;
                 float4x4 unity_WorldToObject;
                 float4 unity_OcclusionMaskSelector;
             };
-            cbuffer UnityPerFrame : register(b2)
+            cbuffer _UnityPerFrameCB : register(b2)
             {
                 float4 unity_ProbeVolumeParams;
                 float4x4 unity_ProbeVolumeWorldToObject;
@@ -3061,7 +3061,7 @@ Shader "Toon/Lit"
             };
             struct program45Output
             {
-                float4 sv_Position0 : SV_POSITION0;
+                float4 sv_Position0 : SV_POSITION;
                 float2 texcoord0 : TEXCOORD0;
                 float3 texcoord1 : TEXCOORD1;
                 float3 texcoord2 : TEXCOORD2;
@@ -3069,7 +3069,7 @@ Shader "Toon/Lit"
             };
             struct program59Input
             {
-                float4 sv_Position0 : SV_POSITION0;
+                float4 sv_Position0 : SV_POSITION;
                 float2 texcoord0 : TEXCOORD0;
                 float3 texcoord1 : TEXCOORD1;
                 float3 texcoord2 : TEXCOORD2;
@@ -3077,7 +3077,7 @@ Shader "Toon/Lit"
             };
             struct program59Output
             {
-                float4 sv_Target0 : SV_Target0;
+                float4 sv_Target0 : SV_Target;
             };
             #pragma vertex vert
             program45Output vert(program45Input i)
@@ -3134,7 +3134,7 @@ Shader "Toon/Lit"
                     r1_z_10 = r1_xyzw_10.z;
                     r1_w_4 = r1_xyzw_10.w;
                 }
-                float r0_w_6 = dot(float4(r1_x_10, r1_y_11, r1_z_10, r1_w_4), unity_OcclusionMaskSelector);
+                float r0_w_6 = saturate(dot(float4(r1_x_10, r1_y_11, r1_z_10, r1_w_4), unity_OcclusionMaskSelector));
                 float4 r1_xyzw_13 = _Ramp.Sample(sampler_Ramp, ((mad(dot(i.texcoord1.xyzx, _WorldSpaceLightPos0.xyzx), 0.5, 0.5)).xxxx).xy);
                 float r0_w_7 = (r0_w_6 + r0_w_6);
                 o.sv_Target0.xyz = ((r0_w_7.xxxx * ((r1_xyzw_13.xyzx * ((((r0_xyzw_1.xyzx * cb0_values[4].xyzx)).xyzx * _LightColor0.xyzx)).xyzx)).xyzx)).xyz;

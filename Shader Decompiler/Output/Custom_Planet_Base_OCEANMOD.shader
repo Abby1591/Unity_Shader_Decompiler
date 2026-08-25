@@ -23,7 +23,7 @@ Shader "Custom/Planet_Base_OCEANMOD"
             ZTest LEqual
             ZWrite On
             HLSLPROGRAM
-            cbuffer UnityPerDraw : register(b0)
+            cbuffer _UnityPerDrawCB : register(b0)
             {
                 float4x4 unity_ObjectToWorld;
                 float4 _LightColor0;
@@ -38,17 +38,17 @@ Shader "Custom/Planet_Base_OCEANMOD"
                 float _EmissionScale;
                 float _AOintensity;
             };
-            cbuffer UnityPerFrame : register(b1)
+            cbuffer _UnityPerFrameCB : register(b1)
             {
                 float3 _WorldSpaceCameraPos;
                 float4x4 unity_MatrixVP;
             };
-            cbuffer UnityLighting : register(b2)
+            cbuffer _UnityLightingCB : register(b2)
             {
                 float4 _WorldSpaceLightPos0;
                 float4 unity_OcclusionMaskSelector;
             };
-            cbuffer UnityReflectionProbes : register(b3)
+            cbuffer _UnityReflectionProbesCB : register(b3)
             {
                 float4 unity_SpecCube0_BoxMax;
                 float4 unity_SpecCube0_BoxMin;
@@ -59,7 +59,7 @@ Shader "Custom/Planet_Base_OCEANMOD"
                 float4 unity_SpecCube1_ProbePosition;
                 float4 unity_SpecCube1_HDR;
             };
-            cbuffer UnityProbeVolume : register(b4)
+            cbuffer _UnityProbeVolumeCB : register(b4)
             {
                 float4 unity_ProbeVolumeParams;
                 float4x4 unity_ProbeVolumeWorldToObject;
@@ -84,7 +84,7 @@ Shader "Custom/Planet_Base_OCEANMOD"
             };
             struct program6Output
             {
-                float4 sv_Position0 : SV_POSITION0;
+                float4 sv_Position0 : SV_POSITION;
                 float3 texcoord0 : TEXCOORD0;
                 float3 texcoord1 : TEXCOORD1;
                 float4 texcoord4 : TEXCOORD4;
@@ -92,7 +92,7 @@ Shader "Custom/Planet_Base_OCEANMOD"
             };
             struct program30Input
             {
-                float4 sv_Position0 : SV_POSITION0;
+                float4 sv_Position0 : SV_POSITION;
                 float3 texcoord0 : TEXCOORD0;
                 float3 texcoord1 : TEXCOORD1;
                 float4 texcoord4 : TEXCOORD4;
@@ -100,7 +100,7 @@ Shader "Custom/Planet_Base_OCEANMOD"
             };
             struct program30Output
             {
-                float4 sv_Target0 : SV_Target0;
+                float4 sv_Target0 : SV_Target;
             };
             #pragma vertex vert
             program6Output vert(program6Input i)
@@ -134,12 +134,12 @@ Shader "Custom/Planet_Base_OCEANMOD"
                 float r1_w_3 = exp2(r1_w_2);
                 float r2_x_1 = (-r1_w_3 + 1);
                 float r2_y_1 = (r2_x_1 * _AOalbedo);
-                float r2_y_2 = r2_y_1;
+                float r2_y_2 = saturate(r2_y_1);
                 float4 r2_xyzw_3 = mad(r2_y_2.xxxx, -_Oceancolor.xxyz, _Oceancolor.xxyz);
                 float r2_y_3 = r2_xyzw_3.y;
                 float r2_z_1 = r2_xyzw_3.z;
                 float r2_w_1 = r2_xyzw_3.w;
-                float r2_x_3 = (mad(r2_x_1, _AOsmoothness, _OceanGlossiness.x) + _SmoothnessShift);
+                float r2_x_3 = saturate((mad(r2_x_1, _AOsmoothness, _OceanGlossiness.x) + _SmoothnessShift));
                 float r3_x_8;
                 float r3_y_11;
                 float r3_z_10;
@@ -185,7 +185,7 @@ Shader "Custom/Planet_Base_OCEANMOD"
                 float r4_x_3 = r4_xyzw_3.x;
                 float r4_y_1 = r4_xyzw_3.y;
                 float r4_z_1 = r4_xyzw_3.z;
-                float4 r3_xyzw_10 = ((dot(float4(r3_x_8, r3_y_11, r3_z_10, r3_w_8), unity_OcclusionMaskSelector)).xxxx * _LightColor0.xxyz);
+                float4 r3_xyzw_10 = ((saturate(dot(float4(r3_x_8, r3_y_11, r3_z_10, r3_w_8), unity_OcclusionMaskSelector))).xxxx * _LightColor0.xxyz);
                 float r3_x_10 = r3_xyzw_10.x;
                 float r3_z_13 = r3_xyzw_10.z;
                 float r3_w_9 = r3_xyzw_10.w;
@@ -263,9 +263,9 @@ Shader "Custom/Planet_Base_OCEANMOD"
                 float r0_w_5 = rsqrt(r0_w_4);
                 float3 r0_xyz_3 = ((r0_w_5.xxxx * r0_xyz_2.xyzx)).xyz;
                 float nDotV_w_6 = dot(unitWorldNormal_xyz_8.xyzx, unitViewDir_xyz_1.xyzx);
-                float r1_x_2 = dot(unitWorldNormal_xyz_8.xyzx, _WorldSpaceLightPos0.xyzx);
-                float r1_y_2 = dot(unitWorldNormal_xyz_8.xyzx, r0_xyz_3.xyzx);
-                float r0_x_4 = dot(_WorldSpaceLightPos0.xyzx, r0_xyz_3.xyzx);
+                float r1_x_2 = saturate(dot(unitWorldNormal_xyz_8.xyzx, _WorldSpaceLightPos0.xyzx));
+                float r1_y_2 = saturate(dot(unitWorldNormal_xyz_8.xyzx, r0_xyz_3.xyzx));
+                float r0_x_4 = saturate(dot(_WorldSpaceLightPos0.xyzx, r0_xyz_3.xyzx));
                 float r0_y_4 = (r0_x_4 * r0_x_4);
                 float r0_y_5 = dot(r0_y_4.xxxx, r3_y_12.xxxx);
                 float r0_y_6 = (r0_y_5 + -0.5);
@@ -342,7 +342,7 @@ Shader "Custom/Planet_Base_OCEANMOD"
             ZTest LEqual
             ZWrite On
             HLSLPROGRAM
-            cbuffer UnityPerDraw : register(b0)
+            cbuffer _UnityPerDrawCB : register(b0)
             {
                 float4x4 unity_ObjectToWorld;
                 float4 _LightColor0;
@@ -357,7 +357,7 @@ Shader "Custom/Planet_Base_OCEANMOD"
                 float _EmissionScale;
                 float _AOintensity;
             };
-            cbuffer UnityPerFrame : register(b1)
+            cbuffer _UnityPerFrameCB : register(b1)
             {
                 float3 _WorldSpaceCameraPos;
                 float4x4 unity_MatrixVP;
@@ -381,7 +381,7 @@ Shader "Custom/Planet_Base_OCEANMOD"
                 float4 unity_SpecCube1_HDR;
                 float4 cb3_values[26];
             };
-            cbuffer UnityProbeVolume : register(b4)
+            cbuffer _UnityProbeVolumeCB : register(b4)
             {
                 float4 unity_ProbeVolumeParams;
                 float4x4 unity_ProbeVolumeWorldToObject;
@@ -421,7 +421,7 @@ Shader "Custom/Planet_Base_OCEANMOD"
             };
             struct program17Output
             {
-                float4 sv_Position0 : SV_POSITION0;
+                float4 sv_Position0 : SV_POSITION;
                 float3 texcoord0 : TEXCOORD0;
                 float texcoord3 : TEXCOORD3;
                 float3 texcoord1 : TEXCOORD1;
@@ -431,7 +431,7 @@ Shader "Custom/Planet_Base_OCEANMOD"
             };
             struct program37Input
             {
-                float4 sv_Position0 : SV_POSITION0;
+                float4 sv_Position0 : SV_POSITION;
                 float3 texcoord0 : TEXCOORD0;
                 float texcoord3 : TEXCOORD3;
                 float3 texcoord1 : TEXCOORD1;
@@ -441,7 +441,7 @@ Shader "Custom/Planet_Base_OCEANMOD"
             };
             struct program37Output
             {
-                float4 sv_Target0 : SV_Target0;
+                float4 sv_Target0 : SV_Target;
             };
             #pragma vertex vert
             program17Output vert(program17Input i)
@@ -494,12 +494,12 @@ Shader "Custom/Planet_Base_OCEANMOD"
                 float r1_w_3 = exp2(r1_w_2);
                 float r2_x_1 = (-r1_w_3 + 1);
                 float r2_y_1 = (r2_x_1 * _AOalbedo);
-                float r2_y_2 = r2_y_1;
+                float r2_y_2 = saturate(r2_y_1);
                 float4 r2_xyzw_3 = mad(r2_y_2.xxxx, -_Oceancolor.xxyz, _Oceancolor.xxyz);
                 float r2_y_3 = r2_xyzw_3.y;
                 float r2_z_1 = r2_xyzw_3.z;
                 float r2_w_1 = r2_xyzw_3.w;
-                float r2_x_3 = (mad(r2_x_1, _AOsmoothness, _OceanGlossiness.x) + _SmoothnessShift);
+                float r2_x_3 = saturate((mad(r2_x_1, _AOsmoothness, _OceanGlossiness.x) + _SmoothnessShift));
                 float r3_x_1 = cb4_values[9].z;
                 float r3_y_1 = cb4_values[10].z;
                 float r3_z_1 = cb4_values[11].z;
@@ -541,7 +541,7 @@ Shader "Custom/Planet_Base_OCEANMOD"
                     r4_z_10 = r4_xyzw_10.z;
                     r4_w_4 = r4_xyzw_10.w;
                 }
-                float r3_z_6 = dot(float4(r4_x_10, r4_y_10, r4_z_10, r4_w_4), unity_OcclusionMaskSelector);
+                float r3_z_6 = saturate(dot(float4(r4_x_10, r4_y_10, r4_z_10, r4_w_4), unity_OcclusionMaskSelector));
                 float4 r4_xyzw_12 = t0.Sample(sampler_linear_clamp2, (((i.texcoord4.xyxx / i.texcoord4.wwww)).xyxx).xy);
                 float r3_z_7 = (r3_z_6 + -r4_xyzw_12.x);
                 float r3_z_8 = (-r2_x_3 + 1);
@@ -551,7 +551,7 @@ Shader "Custom/Planet_Base_OCEANMOD"
                 float r4_x_13 = r4_xyzw_13.x;
                 float r4_y_13 = r4_xyzw_13.y;
                 float r4_z_12 = r4_xyzw_13.z;
-                float3 r5_xyz_1 = (((mad(mad(mad(cb3_values[25].w, r3_y_5, r3_x_2), cb3_values[24].z, cb3_values[24].w), r3_z_7, r4_xyzw_12.x)).xxxx * _LightColor0.xyzx)).xyz;
+                float3 r5_xyz_1 = (((mad(saturate(mad(mad(cb3_values[25].w, r3_y_5, r3_x_2), cb3_values[24].z, cb3_values[24].w)), r3_z_7, r4_xyzw_12.x)).xxxx * _LightColor0.xyzx)).xyz;
                 float3 TEXCOORD0_xyz_1;
                 float3 r7_xyz_4;
                 if ((r3_y_6 != 0))
@@ -701,9 +701,9 @@ Shader "Custom/Planet_Base_OCEANMOD"
                 float r0_w_5 = rsqrt(r0_w_4);
                 float3 r0_xyz_3 = ((r0_w_5.xxxx * r0_xyz_2.xyzx)).xyz;
                 float nDotV_w_6 = dot(unitClipPos_xyz_16.xyzx, unitViewDir_xyz_1.xyzx);
-                float r1_x_2 = dot(unitClipPos_xyz_16.xyzx, _WorldSpaceLightPos0.xyzx);
-                float r1_y_2 = dot(unitClipPos_xyz_16.xyzx, r0_xyz_3.xyzx);
-                float r0_x_4 = dot(_WorldSpaceLightPos0.xyzx, r0_xyz_3.xyzx);
+                float r1_x_2 = saturate(dot(unitClipPos_xyz_16.xyzx, _WorldSpaceLightPos0.xyzx));
+                float r1_y_2 = saturate(dot(unitClipPos_xyz_16.xyzx, r0_xyz_3.xyzx));
+                float r0_x_4 = saturate(dot(_WorldSpaceLightPos0.xyzx, r0_xyz_3.xyzx));
                 float r0_y_4 = (r0_x_4 * r0_x_4);
                 float r0_y_5 = dot(r0_y_4.xxxx, r3_z_8.xxxx);
                 float r0_y_6 = (r0_y_5 + -0.5);
@@ -775,7 +775,7 @@ Shader "Custom/Planet_Base_OCEANMOD"
                 float r0_w_19 = (-r0_w_18 + 1);
                 float r0_w_20 = (r0_w_19 * cb1_values[5].z);
                 float r0_w_21 = max(r0_w_20, 0);
-                float r0_w_22 = mad(r0_w_21, cb5_values[1].z, cb5_values[1].w);
+                float r0_w_22 = saturate(mad(r0_w_21, cb5_values[1].z, cb5_values[1].w));
                 float4 r0_xyzw_12 = (float4(r0_x_11, r0_y_15, r0_z_14, r0_x_11) + -cb5_values[0].xyzx);
                 float r0_x_12 = r0_xyzw_12.x;
                 float r0_y_16 = r0_xyzw_12.y;
@@ -793,7 +793,7 @@ Shader "Custom/Planet_Base_OCEANMOD"
             ZTest LEqual
             ZWrite On
             HLSLPROGRAM
-            cbuffer UnityPerDraw : register(b0)
+            cbuffer _UnityPerDrawCB : register(b0)
             {
                 float4x4 unity_ObjectToWorld;
                 float4 _LightColor0;
@@ -808,7 +808,7 @@ Shader "Custom/Planet_Base_OCEANMOD"
                 float _EmissionScale;
                 float _AOintensity;
             };
-            cbuffer UnityPerFrame : register(b1)
+            cbuffer _UnityPerFrameCB : register(b1)
             {
                 float3 _WorldSpaceCameraPos;
                 float4x4 unity_MatrixVP;
@@ -820,7 +820,7 @@ Shader "Custom/Planet_Base_OCEANMOD"
                 float4 unity_OcclusionMaskSelector;
                 float4 cb2_values[21];
             };
-            cbuffer UnityReflectionProbes : register(b3)
+            cbuffer _UnityReflectionProbesCB : register(b3)
             {
                 float4 unity_SpecCube0_BoxMax;
                 float4 unity_SpecCube0_BoxMin;
@@ -832,7 +832,7 @@ Shader "Custom/Planet_Base_OCEANMOD"
                 float4 unity_SpecCube1_HDR;
                 float4 cb3_values[26];
             };
-            cbuffer UnityProbeVolume : register(b4)
+            cbuffer _UnityProbeVolumeCB : register(b4)
             {
                 float4 unity_ProbeVolumeParams;
                 float4x4 unity_ProbeVolumeWorldToObject;
@@ -872,7 +872,7 @@ Shader "Custom/Planet_Base_OCEANMOD"
             };
             struct program16Output
             {
-                float4 sv_Position0 : SV_POSITION0;
+                float4 sv_Position0 : SV_POSITION;
                 float3 texcoord0 : TEXCOORD0;
                 float texcoord3 : TEXCOORD3;
                 float3 texcoord1 : TEXCOORD1;
@@ -881,7 +881,7 @@ Shader "Custom/Planet_Base_OCEANMOD"
             };
             struct program36Input
             {
-                float4 sv_Position0 : SV_POSITION0;
+                float4 sv_Position0 : SV_POSITION;
                 float3 texcoord0 : TEXCOORD0;
                 float texcoord3 : TEXCOORD3;
                 float3 texcoord1 : TEXCOORD1;
@@ -890,7 +890,7 @@ Shader "Custom/Planet_Base_OCEANMOD"
             };
             struct program36Output
             {
-                float4 sv_Target0 : SV_Target0;
+                float4 sv_Target0 : SV_Target;
             };
             #pragma vertex vert
             program16Output vert(program16Input i)
@@ -935,12 +935,12 @@ Shader "Custom/Planet_Base_OCEANMOD"
                 float r1_w_3 = exp2(r1_w_2);
                 float r2_x_1 = (-r1_w_3 + 1);
                 float r2_y_1 = (r2_x_1 * _AOalbedo);
-                float r2_y_2 = r2_y_1;
+                float r2_y_2 = saturate(r2_y_1);
                 float4 r2_xyzw_3 = mad(r2_y_2.xxxx, -_Oceancolor.xxyz, _Oceancolor.xxyz);
                 float r2_y_3 = r2_xyzw_3.y;
                 float r2_z_1 = r2_xyzw_3.z;
                 float r2_w_1 = r2_xyzw_3.w;
-                float r2_x_3 = (mad(r2_x_1, _AOsmoothness, _OceanGlossiness.x) + _SmoothnessShift);
+                float r2_x_3 = saturate((mad(r2_x_1, _AOsmoothness, _OceanGlossiness.x) + _SmoothnessShift));
                 float r3_x_1 = cb4_values[9].z;
                 float r3_y_1 = cb4_values[10].z;
                 float r3_z_1 = cb4_values[11].z;
@@ -990,7 +990,7 @@ Shader "Custom/Planet_Base_OCEANMOD"
                     r4_z_8 = r4_xyzw_8.z;
                     r4_w_4 = r4_xyzw_8.w;
                 }
-                float r3_y_12 = dot(float4(r4_x_8, r4_y_8, r4_z_8, r4_w_4), unity_OcclusionMaskSelector);
+                float r3_y_12 = saturate(dot(float4(r4_x_8, r4_y_8, r4_z_8, r4_w_4), unity_OcclusionMaskSelector));
                 float4 r3_xyzw_7 = (i.texcoord4.xxxy / i.texcoord4.wwww);
                 float r3_z_7 = r3_xyzw_7.z;
                 float r3_w_5 = r3_xyzw_7.w;
@@ -1000,7 +1000,7 @@ Shader "Custom/Planet_Base_OCEANMOD"
                 float r3_z_8 = dot(-unitViewDir_xyz_1.xyzx, i.texcoord0.xyzx);
                 float r3_z_9 = (r3_z_8 + r3_z_8);
                 float3 r4_xyz_10 = (mad(i.texcoord0.xyzx, -r3_z_9.xxxx, -unitViewDir_xyz_1.xyzx)).xyz;
-                float4 r3_xyzw_6 = ((mad(mad(mad(cb3_values[25].w, r3_y_5, r3_x_2), cb3_values[24].z, cb3_values[24].w), r3_y_13, r4_xyzw_9.x)).xxxx * _LightColor0.xxyz);
+                float4 r3_xyzw_6 = ((mad(saturate(mad(mad(cb3_values[25].w, r3_y_5, r3_x_2), cb3_values[24].z, cb3_values[24].w)), r3_y_13, r4_xyzw_9.x)).xxxx * _LightColor0.xxyz);
                 float r3_x_6 = r3_xyzw_6.x;
                 float r3_z_10 = r3_xyzw_6.z;
                 float r3_w_6 = r3_xyzw_6.w;
@@ -1061,9 +1061,9 @@ Shader "Custom/Planet_Base_OCEANMOD"
                 float r0_w_5 = rsqrt(r0_w_4);
                 float3 r0_xyz_3 = ((r0_w_5.xxxx * r0_xyz_2.xyzx)).xyz;
                 float nDotV_w_6 = dot(unitWorldNormal_xyz_8.xyzx, unitViewDir_xyz_1.xyzx);
-                float r1_x_2 = dot(unitWorldNormal_xyz_8.xyzx, _WorldSpaceLightPos0.xyzx);
-                float r1_y_2 = dot(unitWorldNormal_xyz_8.xyzx, r0_xyz_3.xyzx);
-                float r0_x_4 = dot(_WorldSpaceLightPos0.xyzx, r0_xyz_3.xyzx);
+                float r1_x_2 = saturate(dot(unitWorldNormal_xyz_8.xyzx, _WorldSpaceLightPos0.xyzx));
+                float r1_y_2 = saturate(dot(unitWorldNormal_xyz_8.xyzx, r0_xyz_3.xyzx));
+                float r0_x_4 = saturate(dot(_WorldSpaceLightPos0.xyzx, r0_xyz_3.xyzx));
                 float r0_y_4 = (r0_x_4 * r0_x_4);
                 float r0_y_5 = dot(r0_y_4.xxxx, r3_y_14.xxxx);
                 float r0_y_6 = (r0_y_5 + -0.5);
@@ -1135,7 +1135,7 @@ Shader "Custom/Planet_Base_OCEANMOD"
                 float r0_w_19 = (-r0_w_18 + 1);
                 float r0_w_20 = (r0_w_19 * cb1_values[5].z);
                 float r0_w_21 = max(r0_w_20, 0);
-                float r0_w_22 = mad(r0_w_21, cb5_values[1].z, cb5_values[1].w);
+                float r0_w_22 = saturate(mad(r0_w_21, cb5_values[1].z, cb5_values[1].w));
                 float4 r0_xyzw_12 = (float4(r0_x_11, r0_y_15, r0_z_14, r0_x_11) + -cb5_values[0].xyzx);
                 float r0_x_12 = r0_xyzw_12.x;
                 float r0_y_16 = r0_xyzw_12.y;
@@ -1153,7 +1153,7 @@ Shader "Custom/Planet_Base_OCEANMOD"
             ZTest LEqual
             ZWrite On
             HLSLPROGRAM
-            cbuffer UnityPerDraw : register(b0)
+            cbuffer _UnityPerDrawCB : register(b0)
             {
                 float4x4 unity_ObjectToWorld;
                 float4 _LightColor0;
@@ -1169,7 +1169,7 @@ Shader "Custom/Planet_Base_OCEANMOD"
                 float _AOintensity;
                 float4 cb0_values[46];
             };
-            cbuffer UnityPerFrame : register(b1)
+            cbuffer _UnityPerFrameCB : register(b1)
             {
                 float3 _WorldSpaceCameraPos;
                 float4x4 unity_MatrixVP;
@@ -1181,7 +1181,7 @@ Shader "Custom/Planet_Base_OCEANMOD"
                 float4 unity_OcclusionMaskSelector;
                 float4 cb2_values[42];
             };
-            cbuffer UnityReflectionProbes : register(b3)
+            cbuffer _UnityReflectionProbesCB : register(b3)
             {
                 float4 unity_SpecCube0_BoxMax;
                 float4 unity_SpecCube0_BoxMin;
@@ -1192,7 +1192,7 @@ Shader "Custom/Planet_Base_OCEANMOD"
                 float4 unity_SpecCube1_ProbePosition;
                 float4 unity_SpecCube1_HDR;
             };
-            cbuffer UnityProbeVolume : register(b4)
+            cbuffer _UnityProbeVolumeCB : register(b4)
             {
                 float4 unity_ProbeVolumeParams;
                 float4x4 unity_ProbeVolumeWorldToObject;
@@ -1222,7 +1222,7 @@ Shader "Custom/Planet_Base_OCEANMOD"
             };
             struct program15Output
             {
-                float4 sv_Position0 : SV_POSITION0;
+                float4 sv_Position0 : SV_POSITION;
                 float3 texcoord0 : TEXCOORD0;
                 float texcoord3 : TEXCOORD3;
                 float3 texcoord1 : TEXCOORD1;
@@ -1232,7 +1232,7 @@ Shader "Custom/Planet_Base_OCEANMOD"
             };
             struct program35Input
             {
-                float4 sv_Position0 : SV_POSITION0;
+                float4 sv_Position0 : SV_POSITION;
                 float3 texcoord0 : TEXCOORD0;
                 float texcoord3 : TEXCOORD3;
                 float3 texcoord1 : TEXCOORD1;
@@ -1242,7 +1242,7 @@ Shader "Custom/Planet_Base_OCEANMOD"
             };
             struct program35Output
             {
-                float4 sv_Target0 : SV_Target0;
+                float4 sv_Target0 : SV_Target;
             };
             #pragma vertex vert
             program15Output vert(program15Input i)
@@ -1289,12 +1289,12 @@ Shader "Custom/Planet_Base_OCEANMOD"
                 float r1_w_3 = exp2(r1_w_2);
                 float r2_x_1 = (-r1_w_3 + 1);
                 float r2_y_1 = (r2_x_1 * _AOalbedo);
-                float r2_y_2 = r2_y_1;
+                float r2_y_2 = saturate(r2_y_1);
                 float4 r2_xyzw_3 = mad(r2_y_2.xxxx, -_Oceancolor.xxyz, _Oceancolor.xxyz);
                 float r2_y_3 = r2_xyzw_3.y;
                 float r2_z_1 = r2_xyzw_3.z;
                 float r2_w_1 = r2_xyzw_3.w;
-                float r2_x_3 = (mad(r2_x_1, _AOsmoothness, _OceanGlossiness.x) + _SmoothnessShift);
+                float r2_x_3 = saturate((mad(r2_x_1, _AOsmoothness, _OceanGlossiness.x) + _SmoothnessShift));
                 float r3_x_1 = (cb5_values[0].x == 1);
                 float r4_x_8;
                 float r4_y_8;
@@ -1333,7 +1333,7 @@ Shader "Custom/Planet_Base_OCEANMOD"
                     r4_z_8 = r4_xyzw_8.z;
                     r4_w_4 = r4_xyzw_8.w;
                 }
-                float r3_y_6 = dot(float4(r4_x_8, r4_y_8, r4_z_8, r4_w_4), unity_OcclusionMaskSelector);
+                float r3_y_6 = saturate(dot(float4(r4_x_8, r4_y_8, r4_z_8, r4_w_4), unity_OcclusionMaskSelector));
                 float r3_z_5 = (-r2_x_3 + 1);
                 float r3_w_4 = dot(-unitViewDir_xyz_1.xyzx, i.texcoord0.xyzx);
                 float r3_w_5 = (r3_w_4 + r3_w_4);
@@ -1471,9 +1471,9 @@ Shader "Custom/Planet_Base_OCEANMOD"
                 float r0_w_5 = rsqrt(r0_w_4);
                 float3 r0_xyz_3 = ((r0_w_5.xxxx * r0_xyz_2.xyzx)).xyz;
                 float nDotV_w_6 = dot(unitClipPos_xyz_16.xyzx, unitViewDir_xyz_1.xyzx);
-                float r1_x_2 = dot(unitClipPos_xyz_16.xyzx, _WorldSpaceLightPos0.xyzx);
-                float r1_y_2 = dot(unitClipPos_xyz_16.xyzx, r0_xyz_3.xyzx);
-                float r0_x_4 = dot(_WorldSpaceLightPos0.xyzx, r0_xyz_3.xyzx);
+                float r1_x_2 = saturate(dot(unitClipPos_xyz_16.xyzx, _WorldSpaceLightPos0.xyzx));
+                float r1_y_2 = saturate(dot(unitClipPos_xyz_16.xyzx, r0_xyz_3.xyzx));
+                float r0_x_4 = saturate(dot(_WorldSpaceLightPos0.xyzx, r0_xyz_3.xyzx));
                 float r0_y_4 = (r0_x_4 * r0_x_4);
                 float r0_y_5 = dot(r0_y_4.xxxx, r3_z_5.xxxx);
                 float r0_y_6 = (r0_y_5 + -0.5);
@@ -1545,7 +1545,7 @@ Shader "Custom/Planet_Base_OCEANMOD"
                 float r0_w_19 = (-r0_w_18 + 1);
                 float r0_w_20 = (r0_w_19 * cb1_values[5].z);
                 float r0_w_21 = max(r0_w_20, 0);
-                float r0_w_22 = mad(r0_w_21, unity_SpecCube0_BoxMin.z, unity_SpecCube0_BoxMin.w);
+                float r0_w_22 = saturate(mad(r0_w_21, unity_SpecCube0_BoxMin.z, unity_SpecCube0_BoxMin.w));
                 float4 r0_xyzw_12 = (float4(r0_x_11, r0_y_15, r0_z_14, r0_x_11) + -unity_SpecCube0_BoxMax.xyzx);
                 float r0_x_12 = r0_xyzw_12.x;
                 float r0_y_16 = r0_xyzw_12.y;
@@ -1563,7 +1563,7 @@ Shader "Custom/Planet_Base_OCEANMOD"
             ZTest LEqual
             ZWrite On
             HLSLPROGRAM
-            cbuffer UnityPerDraw : register(b0)
+            cbuffer _UnityPerDrawCB : register(b0)
             {
                 float4x4 unity_ObjectToWorld;
                 float4 _LightColor0;
@@ -1578,18 +1578,18 @@ Shader "Custom/Planet_Base_OCEANMOD"
                 float _EmissionScale;
                 float _AOintensity;
             };
-            cbuffer UnityPerFrame : register(b1)
+            cbuffer _UnityPerFrameCB : register(b1)
             {
                 float3 _WorldSpaceCameraPos;
                 float4x4 unity_MatrixVP;
                 float4 cb1_values[6];
             };
-            cbuffer UnityLighting : register(b2)
+            cbuffer _UnityLightingCB : register(b2)
             {
                 float4 _WorldSpaceLightPos0;
                 float4 unity_OcclusionMaskSelector;
             };
-            cbuffer UnityReflectionProbes : register(b3)
+            cbuffer _UnityReflectionProbesCB : register(b3)
             {
                 float4 unity_SpecCube0_BoxMax;
                 float4 unity_SpecCube0_BoxMin;
@@ -1600,7 +1600,7 @@ Shader "Custom/Planet_Base_OCEANMOD"
                 float4 unity_SpecCube1_ProbePosition;
                 float4 unity_SpecCube1_HDR;
             };
-            cbuffer UnityProbeVolume : register(b4)
+            cbuffer _UnityProbeVolumeCB : register(b4)
             {
                 float4 unity_ProbeVolumeParams;
                 float4x4 unity_ProbeVolumeWorldToObject;
@@ -1630,7 +1630,7 @@ Shader "Custom/Planet_Base_OCEANMOD"
             };
             struct program14Output
             {
-                float4 sv_Position0 : SV_POSITION0;
+                float4 sv_Position0 : SV_POSITION;
                 float3 texcoord0 : TEXCOORD0;
                 float texcoord3 : TEXCOORD3;
                 float3 texcoord1 : TEXCOORD1;
@@ -1639,7 +1639,7 @@ Shader "Custom/Planet_Base_OCEANMOD"
             };
             struct program34Input
             {
-                float4 sv_Position0 : SV_POSITION0;
+                float4 sv_Position0 : SV_POSITION;
                 float3 texcoord0 : TEXCOORD0;
                 float texcoord3 : TEXCOORD3;
                 float3 texcoord1 : TEXCOORD1;
@@ -1648,7 +1648,7 @@ Shader "Custom/Planet_Base_OCEANMOD"
             };
             struct program34Output
             {
-                float4 sv_Target0 : SV_Target0;
+                float4 sv_Target0 : SV_Target;
             };
             #pragma vertex vert
             program14Output vert(program14Input i)
@@ -1687,12 +1687,12 @@ Shader "Custom/Planet_Base_OCEANMOD"
                 float r1_w_3 = exp2(r1_w_2);
                 float r2_x_1 = (-r1_w_3 + 1);
                 float r2_y_1 = (r2_x_1 * _AOalbedo);
-                float r2_y_2 = r2_y_1;
+                float r2_y_2 = saturate(r2_y_1);
                 float4 r2_xyzw_3 = mad(r2_y_2.xxxx, -_Oceancolor.xxyz, _Oceancolor.xxyz);
                 float r2_y_3 = r2_xyzw_3.y;
                 float r2_z_1 = r2_xyzw_3.z;
                 float r2_w_1 = r2_xyzw_3.w;
-                float r2_x_3 = (mad(r2_x_1, _AOsmoothness, _OceanGlossiness.x) + _SmoothnessShift);
+                float r2_x_3 = saturate((mad(r2_x_1, _AOsmoothness, _OceanGlossiness.x) + _SmoothnessShift));
                 float r3_x_8;
                 float r3_y_11;
                 float r3_z_10;
@@ -1738,7 +1738,7 @@ Shader "Custom/Planet_Base_OCEANMOD"
                 float r4_x_3 = r4_xyzw_3.x;
                 float r4_y_1 = r4_xyzw_3.y;
                 float r4_z_1 = r4_xyzw_3.z;
-                float4 r3_xyzw_10 = ((dot(float4(r3_x_8, r3_y_11, r3_z_10, r3_w_8), unity_OcclusionMaskSelector)).xxxx * _LightColor0.xxyz);
+                float4 r3_xyzw_10 = ((saturate(dot(float4(r3_x_8, r3_y_11, r3_z_10, r3_w_8), unity_OcclusionMaskSelector))).xxxx * _LightColor0.xxyz);
                 float r3_x_10 = r3_xyzw_10.x;
                 float r3_z_13 = r3_xyzw_10.z;
                 float r3_w_9 = r3_xyzw_10.w;
@@ -1816,9 +1816,9 @@ Shader "Custom/Planet_Base_OCEANMOD"
                 float r0_w_5 = rsqrt(r0_w_4);
                 float3 r0_xyz_3 = ((r0_w_5.xxxx * r0_xyz_2.xyzx)).xyz;
                 float nDotV_w_6 = dot(unitClipPos_xyz_8.xyzx, unitViewDir_xyz_1.xyzx);
-                float r1_x_2 = dot(unitClipPos_xyz_8.xyzx, _WorldSpaceLightPos0.xyzx);
-                float r1_y_2 = dot(unitClipPos_xyz_8.xyzx, r0_xyz_3.xyzx);
-                float r0_x_4 = dot(_WorldSpaceLightPos0.xyzx, r0_xyz_3.xyzx);
+                float r1_x_2 = saturate(dot(unitClipPos_xyz_8.xyzx, _WorldSpaceLightPos0.xyzx));
+                float r1_y_2 = saturate(dot(unitClipPos_xyz_8.xyzx, r0_xyz_3.xyzx));
+                float r0_x_4 = saturate(dot(_WorldSpaceLightPos0.xyzx, r0_xyz_3.xyzx));
                 float r0_y_4 = (r0_x_4 * r0_x_4);
                 float r0_y_5 = dot(r0_y_4.xxxx, r3_y_12.xxxx);
                 float r0_y_6 = (r0_y_5 + -0.5);
@@ -1890,7 +1890,7 @@ Shader "Custom/Planet_Base_OCEANMOD"
                 float r0_w_19 = (-r0_w_18 + 1);
                 float r0_w_20 = (r0_w_19 * cb1_values[5].z);
                 float r0_w_21 = max(r0_w_20, 0);
-                float r0_w_22 = mad(r0_w_21, unity_SpecCube0_BoxMin.z, unity_SpecCube0_BoxMin.w);
+                float r0_w_22 = saturate(mad(r0_w_21, unity_SpecCube0_BoxMin.z, unity_SpecCube0_BoxMin.w));
                 float4 r0_xyzw_12 = (float4(r0_x_11, r0_y_15, r0_z_14, r0_x_11) + -unity_SpecCube0_BoxMax.xyzx);
                 float r0_x_12 = r0_xyzw_12.x;
                 float r0_y_16 = r0_xyzw_12.y;
@@ -1908,7 +1908,7 @@ Shader "Custom/Planet_Base_OCEANMOD"
             ZTest LEqual
             ZWrite On
             HLSLPROGRAM
-            cbuffer UnityPerDraw : register(b0)
+            cbuffer _UnityPerDrawCB : register(b0)
             {
                 float4x4 unity_ObjectToWorld;
                 float4 _LightColor0;
@@ -1923,7 +1923,7 @@ Shader "Custom/Planet_Base_OCEANMOD"
                 float _EmissionScale;
                 float _AOintensity;
             };
-            cbuffer UnityPerFrame : register(b1)
+            cbuffer _UnityPerFrameCB : register(b1)
             {
                 float3 _WorldSpaceCameraPos;
                 float4x4 unity_MatrixVP;
@@ -1947,7 +1947,7 @@ Shader "Custom/Planet_Base_OCEANMOD"
                 float4 unity_SpecCube1_HDR;
                 float4 cb3_values[26];
             };
-            cbuffer UnityProbeVolume : register(b4)
+            cbuffer _UnityProbeVolumeCB : register(b4)
             {
                 float4 unity_ProbeVolumeParams;
                 float4x4 unity_ProbeVolumeWorldToObject;
@@ -1983,7 +1983,7 @@ Shader "Custom/Planet_Base_OCEANMOD"
             };
             struct program9Output
             {
-                float4 sv_Position0 : SV_POSITION0;
+                float4 sv_Position0 : SV_POSITION;
                 float3 texcoord0 : TEXCOORD0;
                 float3 texcoord1 : TEXCOORD1;
                 float3 texcoord2 : TEXCOORD2;
@@ -1992,7 +1992,7 @@ Shader "Custom/Planet_Base_OCEANMOD"
             };
             struct program33Input
             {
-                float4 sv_Position0 : SV_POSITION0;
+                float4 sv_Position0 : SV_POSITION;
                 float3 texcoord0 : TEXCOORD0;
                 float3 texcoord1 : TEXCOORD1;
                 float3 texcoord2 : TEXCOORD2;
@@ -2001,7 +2001,7 @@ Shader "Custom/Planet_Base_OCEANMOD"
             };
             struct program33Output
             {
-                float4 sv_Target0 : SV_Target0;
+                float4 sv_Target0 : SV_Target;
             };
             #pragma vertex vert
             program9Output vert(program9Input i)
@@ -2053,12 +2053,12 @@ Shader "Custom/Planet_Base_OCEANMOD"
                 float r1_w_3 = exp2(r1_w_2);
                 float r2_x_1 = (-r1_w_3 + 1);
                 float r2_y_1 = (r2_x_1 * _AOalbedo);
-                float r2_y_2 = r2_y_1;
+                float r2_y_2 = saturate(r2_y_1);
                 float4 r2_xyzw_3 = mad(r2_y_2.xxxx, -_Oceancolor.xxyz, _Oceancolor.xxyz);
                 float r2_y_3 = r2_xyzw_3.y;
                 float r2_z_1 = r2_xyzw_3.z;
                 float r2_w_1 = r2_xyzw_3.w;
-                float r2_x_3 = (mad(r2_x_1, _AOsmoothness, _OceanGlossiness.x) + _SmoothnessShift);
+                float r2_x_3 = saturate((mad(r2_x_1, _AOsmoothness, _OceanGlossiness.x) + _SmoothnessShift));
                 float r3_x_1 = cb4_values[9].z;
                 float r3_y_1 = cb4_values[10].z;
                 float r3_z_1 = cb4_values[11].z;
@@ -2100,7 +2100,7 @@ Shader "Custom/Planet_Base_OCEANMOD"
                     r4_z_10 = r4_xyzw_10.z;
                     r4_w_4 = r4_xyzw_10.w;
                 }
-                float r3_z_6 = dot(float4(r4_x_10, r4_y_10, r4_z_10, r4_w_4), unity_OcclusionMaskSelector);
+                float r3_z_6 = saturate(dot(float4(r4_x_10, r4_y_10, r4_z_10, r4_w_4), unity_OcclusionMaskSelector));
                 float4 r4_xyzw_12 = t0.Sample(sampler_linear_clamp2, (((i.texcoord4.xyxx / i.texcoord4.wwww)).xyxx).xy);
                 float r3_z_7 = (r3_z_6 + -r4_xyzw_12.x);
                 float r3_z_8 = (-r2_x_3 + 1);
@@ -2110,7 +2110,7 @@ Shader "Custom/Planet_Base_OCEANMOD"
                 float r4_x_13 = r4_xyzw_13.x;
                 float r4_y_13 = r4_xyzw_13.y;
                 float r4_z_12 = r4_xyzw_13.z;
-                float3 r5_xyz_1 = (((mad(mad(mad(cb3_values[25].w, r3_y_5, r3_x_2), cb3_values[24].z, cb3_values[24].w), r3_z_7, r4_xyzw_12.x)).xxxx * _LightColor0.xyzx)).xyz;
+                float3 r5_xyz_1 = (((mad(saturate(mad(mad(cb3_values[25].w, r3_y_5, r3_x_2), cb3_values[24].z, cb3_values[24].w)), r3_z_7, r4_xyzw_12.x)).xxxx * _LightColor0.xyzx)).xyz;
                 float3 TEXCOORD0_xyz_1;
                 float3 r7_xyz_4;
                 if ((r3_y_6 != 0))
@@ -2260,9 +2260,9 @@ Shader "Custom/Planet_Base_OCEANMOD"
                 float r0_w_5 = rsqrt(r0_w_4);
                 float3 r0_xyz_3 = ((r0_w_5.xxxx * r0_xyz_2.xyzx)).xyz;
                 float nDotV_w_6 = dot(unitWorldNormal_xyz_16.xyzx, unitViewDir_xyz_1.xyzx);
-                float r1_x_2 = dot(unitWorldNormal_xyz_16.xyzx, _WorldSpaceLightPos0.xyzx);
-                float r1_y_2 = dot(unitWorldNormal_xyz_16.xyzx, r0_xyz_3.xyzx);
-                float r0_x_4 = dot(_WorldSpaceLightPos0.xyzx, r0_xyz_3.xyzx);
+                float r1_x_2 = saturate(dot(unitWorldNormal_xyz_16.xyzx, _WorldSpaceLightPos0.xyzx));
+                float r1_y_2 = saturate(dot(unitWorldNormal_xyz_16.xyzx, r0_xyz_3.xyzx));
+                float r0_x_4 = saturate(dot(_WorldSpaceLightPos0.xyzx, r0_xyz_3.xyzx));
                 float r0_y_4 = (r0_x_4 * r0_x_4);
                 float r0_y_5 = dot(r0_y_4.xxxx, r3_z_8.xxxx);
                 float r0_y_6 = (r0_y_5 + -0.5);
@@ -2339,7 +2339,7 @@ Shader "Custom/Planet_Base_OCEANMOD"
             ZTest LEqual
             ZWrite On
             HLSLPROGRAM
-            cbuffer UnityPerDraw : register(b0)
+            cbuffer _UnityPerDrawCB : register(b0)
             {
                 float4x4 unity_ObjectToWorld;
                 float4 _LightColor0;
@@ -2354,7 +2354,7 @@ Shader "Custom/Planet_Base_OCEANMOD"
                 float _EmissionScale;
                 float _AOintensity;
             };
-            cbuffer UnityPerFrame : register(b1)
+            cbuffer _UnityPerFrameCB : register(b1)
             {
                 float3 _WorldSpaceCameraPos;
                 float4x4 unity_MatrixVP;
@@ -2366,7 +2366,7 @@ Shader "Custom/Planet_Base_OCEANMOD"
                 float4 unity_OcclusionMaskSelector;
                 float4 cb2_values[21];
             };
-            cbuffer UnityReflectionProbes : register(b3)
+            cbuffer _UnityReflectionProbesCB : register(b3)
             {
                 float4 unity_SpecCube0_BoxMax;
                 float4 unity_SpecCube0_BoxMin;
@@ -2378,7 +2378,7 @@ Shader "Custom/Planet_Base_OCEANMOD"
                 float4 unity_SpecCube1_HDR;
                 float4 cb3_values[26];
             };
-            cbuffer UnityProbeVolume : register(b4)
+            cbuffer _UnityProbeVolumeCB : register(b4)
             {
                 float4 unity_ProbeVolumeParams;
                 float4x4 unity_ProbeVolumeWorldToObject;
@@ -2414,7 +2414,7 @@ Shader "Custom/Planet_Base_OCEANMOD"
             };
             struct program8Output
             {
-                float4 sv_Position0 : SV_POSITION0;
+                float4 sv_Position0 : SV_POSITION;
                 float3 texcoord0 : TEXCOORD0;
                 float3 texcoord1 : TEXCOORD1;
                 float4 texcoord4 : TEXCOORD4;
@@ -2422,7 +2422,7 @@ Shader "Custom/Planet_Base_OCEANMOD"
             };
             struct program32Input
             {
-                float4 sv_Position0 : SV_POSITION0;
+                float4 sv_Position0 : SV_POSITION;
                 float3 texcoord0 : TEXCOORD0;
                 float3 texcoord1 : TEXCOORD1;
                 float4 texcoord4 : TEXCOORD4;
@@ -2430,7 +2430,7 @@ Shader "Custom/Planet_Base_OCEANMOD"
             };
             struct program32Output
             {
-                float4 sv_Target0 : SV_Target0;
+                float4 sv_Target0 : SV_Target;
             };
             #pragma vertex vert
             program8Output vert(program8Input i)
@@ -2474,12 +2474,12 @@ Shader "Custom/Planet_Base_OCEANMOD"
                 float r1_w_3 = exp2(r1_w_2);
                 float r2_x_1 = (-r1_w_3 + 1);
                 float r2_y_1 = (r2_x_1 * _AOalbedo);
-                float r2_y_2 = r2_y_1;
+                float r2_y_2 = saturate(r2_y_1);
                 float4 r2_xyzw_3 = mad(r2_y_2.xxxx, -_Oceancolor.xxyz, _Oceancolor.xxyz);
                 float r2_y_3 = r2_xyzw_3.y;
                 float r2_z_1 = r2_xyzw_3.z;
                 float r2_w_1 = r2_xyzw_3.w;
-                float r2_x_3 = (mad(r2_x_1, _AOsmoothness, _OceanGlossiness.x) + _SmoothnessShift);
+                float r2_x_3 = saturate((mad(r2_x_1, _AOsmoothness, _OceanGlossiness.x) + _SmoothnessShift));
                 float r3_x_1 = cb4_values[9].z;
                 float r3_y_1 = cb4_values[10].z;
                 float r3_z_1 = cb4_values[11].z;
@@ -2529,7 +2529,7 @@ Shader "Custom/Planet_Base_OCEANMOD"
                     r4_z_8 = r4_xyzw_8.z;
                     r4_w_4 = r4_xyzw_8.w;
                 }
-                float r3_y_12 = dot(float4(r4_x_8, r4_y_8, r4_z_8, r4_w_4), unity_OcclusionMaskSelector);
+                float r3_y_12 = saturate(dot(float4(r4_x_8, r4_y_8, r4_z_8, r4_w_4), unity_OcclusionMaskSelector));
                 float4 r3_xyzw_7 = (i.texcoord4.xxxy / i.texcoord4.wwww);
                 float r3_z_7 = r3_xyzw_7.z;
                 float r3_w_5 = r3_xyzw_7.w;
@@ -2539,7 +2539,7 @@ Shader "Custom/Planet_Base_OCEANMOD"
                 float r3_z_8 = dot(-unitViewDir_xyz_1.xyzx, i.texcoord0.xyzx);
                 float r3_z_9 = (r3_z_8 + r3_z_8);
                 float3 r4_xyz_10 = (mad(i.texcoord0.xyzx, -r3_z_9.xxxx, -unitViewDir_xyz_1.xyzx)).xyz;
-                float4 r3_xyzw_6 = ((mad(mad(mad(cb3_values[25].w, r3_y_5, r3_x_2), cb3_values[24].z, cb3_values[24].w), r3_y_13, r4_xyzw_9.x)).xxxx * _LightColor0.xxyz);
+                float4 r3_xyzw_6 = ((mad(saturate(mad(mad(cb3_values[25].w, r3_y_5, r3_x_2), cb3_values[24].z, cb3_values[24].w)), r3_y_13, r4_xyzw_9.x)).xxxx * _LightColor0.xxyz);
                 float r3_x_6 = r3_xyzw_6.x;
                 float r3_z_10 = r3_xyzw_6.z;
                 float r3_w_6 = r3_xyzw_6.w;
@@ -2600,9 +2600,9 @@ Shader "Custom/Planet_Base_OCEANMOD"
                 float r0_w_5 = rsqrt(r0_w_4);
                 float3 r0_xyz_3 = ((r0_w_5.xxxx * r0_xyz_2.xyzx)).xyz;
                 float nDotV_w_6 = dot(unitWorldNormal_xyz_8.xyzx, unitViewDir_xyz_1.xyzx);
-                float r1_x_2 = dot(unitWorldNormal_xyz_8.xyzx, _WorldSpaceLightPos0.xyzx);
-                float r1_y_2 = dot(unitWorldNormal_xyz_8.xyzx, r0_xyz_3.xyzx);
-                float r0_x_4 = dot(_WorldSpaceLightPos0.xyzx, r0_xyz_3.xyzx);
+                float r1_x_2 = saturate(dot(unitWorldNormal_xyz_8.xyzx, _WorldSpaceLightPos0.xyzx));
+                float r1_y_2 = saturate(dot(unitWorldNormal_xyz_8.xyzx, r0_xyz_3.xyzx));
+                float r0_x_4 = saturate(dot(_WorldSpaceLightPos0.xyzx, r0_xyz_3.xyzx));
                 float r0_y_4 = (r0_x_4 * r0_x_4);
                 float r0_y_5 = dot(r0_y_4.xxxx, r3_y_14.xxxx);
                 float r0_y_6 = (r0_y_5 + -0.5);
@@ -2679,7 +2679,7 @@ Shader "Custom/Planet_Base_OCEANMOD"
             ZTest LEqual
             ZWrite On
             HLSLPROGRAM
-            cbuffer UnityPerDraw : register(b0)
+            cbuffer _UnityPerDrawCB : register(b0)
             {
                 float4x4 unity_ObjectToWorld;
                 float4 _LightColor0;
@@ -2695,7 +2695,7 @@ Shader "Custom/Planet_Base_OCEANMOD"
                 float _AOintensity;
                 float4 cb0_values[46];
             };
-            cbuffer UnityPerFrame : register(b1)
+            cbuffer _UnityPerFrameCB : register(b1)
             {
                 float3 _WorldSpaceCameraPos;
                 float4x4 unity_MatrixVP;
@@ -2707,7 +2707,7 @@ Shader "Custom/Planet_Base_OCEANMOD"
                 float4 unity_OcclusionMaskSelector;
                 float4 cb2_values[42];
             };
-            cbuffer UnityReflectionProbes : register(b3)
+            cbuffer _UnityReflectionProbesCB : register(b3)
             {
                 float4 unity_SpecCube0_BoxMax;
                 float4 unity_SpecCube0_BoxMin;
@@ -2718,7 +2718,7 @@ Shader "Custom/Planet_Base_OCEANMOD"
                 float4 unity_SpecCube1_ProbePosition;
                 float4 unity_SpecCube1_HDR;
             };
-            cbuffer UnityProbeVolume : register(b4)
+            cbuffer _UnityProbeVolumeCB : register(b4)
             {
                 float4 unity_ProbeVolumeParams;
                 float4x4 unity_ProbeVolumeWorldToObject;
@@ -2743,7 +2743,7 @@ Shader "Custom/Planet_Base_OCEANMOD"
             };
             struct program7Output
             {
-                float4 sv_Position0 : SV_POSITION0;
+                float4 sv_Position0 : SV_POSITION;
                 float3 texcoord0 : TEXCOORD0;
                 float3 texcoord1 : TEXCOORD1;
                 float3 texcoord2 : TEXCOORD2;
@@ -2752,7 +2752,7 @@ Shader "Custom/Planet_Base_OCEANMOD"
             };
             struct program31Input
             {
-                float4 sv_Position0 : SV_POSITION0;
+                float4 sv_Position0 : SV_POSITION;
                 float3 texcoord0 : TEXCOORD0;
                 float3 texcoord1 : TEXCOORD1;
                 float3 texcoord2 : TEXCOORD2;
@@ -2761,7 +2761,7 @@ Shader "Custom/Planet_Base_OCEANMOD"
             };
             struct program31Output
             {
-                float4 sv_Target0 : SV_Target0;
+                float4 sv_Target0 : SV_Target;
             };
             #pragma vertex vert
             program7Output vert(program7Input i)
@@ -2803,12 +2803,12 @@ Shader "Custom/Planet_Base_OCEANMOD"
                 float r1_w_3 = exp2(r1_w_2);
                 float r2_x_1 = (-r1_w_3 + 1);
                 float r2_y_1 = (r2_x_1 * _AOalbedo);
-                float r2_y_2 = r2_y_1;
+                float r2_y_2 = saturate(r2_y_1);
                 float4 r2_xyzw_3 = mad(r2_y_2.xxxx, -_Oceancolor.xxyz, _Oceancolor.xxyz);
                 float r2_y_3 = r2_xyzw_3.y;
                 float r2_z_1 = r2_xyzw_3.z;
                 float r2_w_1 = r2_xyzw_3.w;
-                float r2_x_3 = (mad(r2_x_1, _AOsmoothness, _OceanGlossiness.x) + _SmoothnessShift);
+                float r2_x_3 = saturate((mad(r2_x_1, _AOsmoothness, _OceanGlossiness.x) + _SmoothnessShift));
                 float r3_x_1 = (unity_ProbeVolumeParams.x == 1);
                 float r4_x_8;
                 float r4_y_8;
@@ -2847,7 +2847,7 @@ Shader "Custom/Planet_Base_OCEANMOD"
                     r4_z_8 = r4_xyzw_8.z;
                     r4_w_4 = r4_xyzw_8.w;
                 }
-                float r3_y_6 = dot(float4(r4_x_8, r4_y_8, r4_z_8, r4_w_4), unity_OcclusionMaskSelector);
+                float r3_y_6 = saturate(dot(float4(r4_x_8, r4_y_8, r4_z_8, r4_w_4), unity_OcclusionMaskSelector));
                 float r3_z_5 = (-r2_x_3 + 1);
                 float r3_w_4 = dot(-unitViewDir_xyz_1.xyzx, i.texcoord0.xyzx);
                 float r3_w_5 = (r3_w_4 + r3_w_4);
@@ -2985,9 +2985,9 @@ Shader "Custom/Planet_Base_OCEANMOD"
                 float r0_w_5 = rsqrt(r0_w_4);
                 float3 r0_xyz_3 = ((r0_w_5.xxxx * r0_xyz_2.xyzx)).xyz;
                 float nDotV_w_6 = dot(unitWorldNormal_xyz_16.xyzx, unitViewDir_xyz_1.xyzx);
-                float r1_x_2 = dot(unitWorldNormal_xyz_16.xyzx, _WorldSpaceLightPos0.xyzx);
-                float r1_y_2 = dot(unitWorldNormal_xyz_16.xyzx, r0_xyz_3.xyzx);
-                float r0_x_4 = dot(_WorldSpaceLightPos0.xyzx, r0_xyz_3.xyzx);
+                float r1_x_2 = saturate(dot(unitWorldNormal_xyz_16.xyzx, _WorldSpaceLightPos0.xyzx));
+                float r1_y_2 = saturate(dot(unitWorldNormal_xyz_16.xyzx, r0_xyz_3.xyzx));
+                float r0_x_4 = saturate(dot(_WorldSpaceLightPos0.xyzx, r0_xyz_3.xyzx));
                 float r0_y_4 = (r0_x_4 * r0_x_4);
                 float r0_y_5 = dot(r0_y_4.xxxx, r3_z_5.xxxx);
                 float r0_y_6 = (r0_y_5 + -0.5);
@@ -3065,14 +3065,14 @@ Shader "Custom/Planet_Base_OCEANMOD"
             ZWrite Off
             Blend One One
             HLSLPROGRAM
-            cbuffer UnityPerDraw : register(b0)
+            cbuffer _UnityPerDrawCB : register(b0)
             {
                 float4x4 unity_ObjectToWorld;
                 float4 _LightColor0;
                 float4x4 unity_WorldToObject;
                 float4 cb0_values[14];
             };
-            cbuffer UnityPerFrame : register(b1)
+            cbuffer _UnityPerFrameCB : register(b1)
             {
                 float3 _WorldSpaceCameraPos;
                 float4x4 unity_MatrixVP;
@@ -3084,7 +3084,7 @@ Shader "Custom/Planet_Base_OCEANMOD"
                 float4 unity_OcclusionMaskSelector;
                 float4 cb2_values[21];
             };
-            cbuffer UnityProbeVolume : register(b3)
+            cbuffer _UnityProbeVolumeCB : register(b3)
             {
                 float4 unity_ProbeVolumeParams;
                 float4x4 unity_ProbeVolumeWorldToObject;
@@ -3108,7 +3108,7 @@ Shader "Custom/Planet_Base_OCEANMOD"
             };
             struct program41Output
             {
-                float4 sv_Position0 : SV_POSITION0;
+                float4 sv_Position0 : SV_POSITION;
                 float3 texcoord0 : TEXCOORD0;
                 float3 texcoord1 : TEXCOORD1;
                 float3 texcoord2 : TEXCOORD2;
@@ -3116,7 +3116,7 @@ Shader "Custom/Planet_Base_OCEANMOD"
             };
             struct program87Input
             {
-                float4 sv_Position0 : SV_POSITION0;
+                float4 sv_Position0 : SV_POSITION;
                 float3 texcoord0 : TEXCOORD0;
                 float3 texcoord1 : TEXCOORD1;
                 float3 texcoord2 : TEXCOORD2;
@@ -3124,7 +3124,7 @@ Shader "Custom/Planet_Base_OCEANMOD"
             };
             struct program87Output
             {
-                float4 sv_Target0 : SV_Target0;
+                float4 sv_Target0 : SV_Target;
             };
             #pragma vertex vert
             program41Output vert(program41Input i)
@@ -3161,9 +3161,9 @@ Shader "Custom/Planet_Base_OCEANMOD"
                 float r1_w_5 = exp2(r1_w_4);
                 float r1_w_6 = (-r1_w_5 + 1);
                 float r2_w_1 = (r1_w_6 * cb0_values[12].x);
-                float r2_w_2 = r2_w_1;
+                float r2_w_2 = saturate(r2_w_1);
                 float r1_w_7 = mad(r1_w_6, cb0_values[12].y, cb0_values[9].x);
-                float r1_w_8 = (r1_w_7 + cb0_values[12].z);
+                float r1_w_8 = saturate((r1_w_7 + cb0_values[12].z));
                 float3 r4_xyz_4 = (((mad(cb0_values[6].xyzx, i.texcoord1.zzzz, (mad(cb0_values[4].xyzx, i.texcoord1.xxxx, ((i.texcoord1.yyyy * cb0_values[5].xyzx)).xyzx)).xyzx)).xyzx + cb0_values[7].xyzx)).xyz;
                 float r2_w_3 = (unity_ProbeVolumeParams.x == 1);
                 float r5_x_10;
@@ -3196,7 +3196,7 @@ Shader "Custom/Planet_Base_OCEANMOD"
                     r5_z_10 = r5_xyzw_10.z;
                     r5_w_4 = r5_xyzw_10.w;
                 }
-                float r2_w_7 = dot(float4(r5_x_10, r5_y_10, r5_z_10, r5_w_4), unity_OcclusionMaskSelector);
+                float r2_w_7 = saturate(dot(float4(r5_x_10, r5_y_10, r5_z_10, r5_w_4), unity_OcclusionMaskSelector));
                 float r3_w_3 = dot(r4_xyz_4.xyzx, r4_xyz_4.xyzx);
                 float4 r4_xyzw_5 = t0.Sample(sampler_linear_clamp1, (r3_w_3.xxxx).xy);
                 float r2_w_8 = (r2_w_7 * r4_xyzw_5.x);
@@ -3209,9 +3209,9 @@ Shader "Custom/Planet_Base_OCEANMOD"
                 float r0_w_5 = rsqrt(r0_w_4);
                 float3 r0_xyz_3 = ((r0_w_5.xxxx * r0_xyz_2.xyzx)).xyz;
                 float nDotV_w_6 = dot(unitWorldNormal_xyz_11.xyzx, unitViewDir_xyz_2.xyzx);
-                float r2_x_3 = dot(unitWorldNormal_xyz_11.xyzx, r1_xyz_1.xyzx);
-                float r2_y_3 = dot(unitWorldNormal_xyz_11.xyzx, r0_xyz_3.xyzx);
-                float r0_x_4 = dot(r1_xyz_1.xyzx, r0_xyz_3.xyzx);
+                float r2_x_3 = saturate(dot(unitWorldNormal_xyz_11.xyzx, r1_xyz_1.xyzx));
+                float r2_y_3 = saturate(dot(unitWorldNormal_xyz_11.xyzx, r0_xyz_3.xyzx));
+                float r0_x_4 = saturate(dot(r1_xyz_1.xyzx, r0_xyz_3.xyzx));
                 float r0_y_4 = (r0_x_4 * r0_x_4);
                 float r0_y_5 = dot(r0_y_4.xxxx, r1_w_9.xxxx);
                 float r0_y_6 = (r0_y_5 + -0.5);
@@ -3272,14 +3272,14 @@ Shader "Custom/Planet_Base_OCEANMOD"
             ZWrite Off
             Blend One One
             HLSLPROGRAM
-            cbuffer UnityPerDraw : register(b0)
+            cbuffer _UnityPerDrawCB : register(b0)
             {
                 float4x4 unity_ObjectToWorld;
                 float4 _LightColor0;
                 float4x4 unity_WorldToObject;
                 float4 cb0_values[14];
             };
-            cbuffer UnityPerFrame : register(b1)
+            cbuffer _UnityPerFrameCB : register(b1)
             {
                 float3 _WorldSpaceCameraPos;
                 float4x4 unity_MatrixVP;
@@ -3291,7 +3291,7 @@ Shader "Custom/Planet_Base_OCEANMOD"
                 float4 unity_OcclusionMaskSelector;
                 float4 cb2_values[21];
             };
-            cbuffer UnityProbeVolume : register(b3)
+            cbuffer _UnityProbeVolumeCB : register(b3)
             {
                 float4 unity_ProbeVolumeParams;
                 float4x4 unity_ProbeVolumeWorldToObject;
@@ -3332,7 +3332,7 @@ Shader "Custom/Planet_Base_OCEANMOD"
             };
             struct program66Output
             {
-                float4 sv_Position0 : SV_POSITION0;
+                float4 sv_Position0 : SV_POSITION;
                 float3 texcoord0 : TEXCOORD0;
                 float texcoord4 : TEXCOORD4;
                 float3 texcoord1 : TEXCOORD1;
@@ -3341,7 +3341,7 @@ Shader "Custom/Planet_Base_OCEANMOD"
             };
             struct program112Input
             {
-                float4 sv_Position0 : SV_POSITION0;
+                float4 sv_Position0 : SV_POSITION;
                 float3 texcoord0 : TEXCOORD0;
                 float texcoord4 : TEXCOORD4;
                 float3 texcoord1 : TEXCOORD1;
@@ -3350,7 +3350,7 @@ Shader "Custom/Planet_Base_OCEANMOD"
             };
             struct program112Output
             {
-                float4 sv_Target0 : SV_Target0;
+                float4 sv_Target0 : SV_Target;
             };
             #pragma vertex vert
             program66Output vert(program66Input i)
@@ -3391,9 +3391,9 @@ Shader "Custom/Planet_Base_OCEANMOD"
                 float r1_w_5 = exp2(r1_w_4);
                 float r1_w_6 = (-r1_w_5 + 1);
                 float r2_w_1 = (r1_w_6 * cb0_values[12].x);
-                float r2_w_2 = r2_w_1;
+                float r2_w_2 = saturate(r2_w_1);
                 float r1_w_7 = mad(r1_w_6, cb0_values[12].y, cb0_values[9].x);
-                float r1_w_8 = (r1_w_7 + cb0_values[12].z);
+                float r1_w_8 = saturate((r1_w_7 + cb0_values[12].z));
                 float3 r5_xyz_4 = (((mad(cb0_values[6].xyzx, i.texcoord1.zzzz, (mad(cb0_values[4].xyzx, i.texcoord1.xxxx, ((i.texcoord1.yyyy * cb0_values[5].xyzx)).xyzx)).xyzx)).xyzx + cb0_values[7].xyzx)).xyz;
                 float r6_x_1 = cb4_values[9].z;
                 float r6_y_1 = cb4_values[10].z;
@@ -3406,7 +3406,7 @@ Shader "Custom/Planet_Base_OCEANMOD"
                 float r2_y_3 = dot(float4(r2_y_2, r2_z_2, r2_w_3, r2_y_2), float4(r2_y_2, r2_z_2, r2_w_3, r2_y_2));
                 float r2_y_4 = sqrt(r2_y_3);
                 float r2_y_5 = (-r2_x_2 + r2_y_4);
-                float r2_x_4 = mad(mad(cb3_values[25].w, r2_y_5, r2_x_2), cb3_values[24].z, cb3_values[24].w);
+                float r2_x_4 = saturate(mad(mad(cb3_values[25].w, r2_y_5, r2_x_2), cb3_values[24].z, cb3_values[24].w));
                 float r2_y_6 = (cb6_values[0].x == 1);
                 float r6_x_9;
                 float r6_y_9;
@@ -3445,7 +3445,7 @@ Shader "Custom/Planet_Base_OCEANMOD"
                     r6_z_9 = r6_xyzw_2.z;
                     r6_w_4 = r6_xyzw_2.w;
                 }
-                float r2_y_12 = dot(float4(r6_x_9, r6_y_9, r6_z_9, r6_w_4), unity_OcclusionMaskSelector);
+                float r2_y_12 = saturate(dot(float4(r6_x_9, r6_y_9, r6_z_9, r6_w_4), unity_OcclusionMaskSelector));
                 float r2_z_7 = (r2_x_4 < 0.99);
                 float r2_z_19;
                 if (r2_z_7)
@@ -3490,9 +3490,9 @@ Shader "Custom/Planet_Base_OCEANMOD"
                 float r0_w_5 = rsqrt(r0_w_4);
                 float3 r0_xyz_3 = ((r0_w_5.xxxx * r0_xyz_2.xyzx)).xyz;
                 float nDotV_w_6 = dot(unitClipPos_xyz_6.xyzx, unitViewDir_xyz_1.xyzx);
-                float r2_w_11 = dot(unitClipPos_xyz_6.xyzx, r1_xyz_1.xyzx);
-                float r3_x_2 = dot(unitClipPos_xyz_6.xyzx, r0_xyz_3.xyzx);
-                float r0_x_4 = dot(r1_xyz_1.xyzx, r0_xyz_3.xyzx);
+                float r2_w_11 = saturate(dot(unitClipPos_xyz_6.xyzx, r1_xyz_1.xyzx));
+                float r3_x_2 = saturate(dot(unitClipPos_xyz_6.xyzx, r0_xyz_3.xyzx));
+                float r0_x_4 = saturate(dot(r1_xyz_1.xyzx, r0_xyz_3.xyzx));
                 float r0_y_4 = (r0_x_4 * r0_x_4);
                 float r0_y_5 = dot(r0_y_4.xxxx, r1_w_9.xxxx);
                 float r0_y_6 = (r0_y_5 + -0.5);
@@ -3547,7 +3547,7 @@ Shader "Custom/Planet_Base_OCEANMOD"
                 float r0_w_13 = (-r0_w_12 + 1);
                 float r0_w_14 = (r0_w_13 * cb1_values[5].z);
                 float r0_w_15 = max(r0_w_14, 0);
-                float r0_w_16 = mad(r0_w_15, cb5_values[1].z, cb5_values[1].w);
+                float r0_w_16 = saturate(mad(r0_w_15, cb5_values[1].z, cb5_values[1].w));
                 o.sv_Target0.xyz = ((float4(r0_x_9, r0_y_12, r0_z_19, r0_x_9) * r0_w_16.xxxx)).xyz;
                 o.sv_Target0.w = 1;
                 return o;
@@ -3562,14 +3562,14 @@ Shader "Custom/Planet_Base_OCEANMOD"
             ZWrite Off
             Blend One One
             HLSLPROGRAM
-            cbuffer UnityPerDraw : register(b0)
+            cbuffer _UnityPerDrawCB : register(b0)
             {
                 float4x4 unity_ObjectToWorld;
                 float4 _LightColor0;
                 float4x4 unity_WorldToObject;
                 float4 cb0_values[14];
             };
-            cbuffer UnityPerFrame : register(b1)
+            cbuffer _UnityPerFrameCB : register(b1)
             {
                 float3 _WorldSpaceCameraPos;
                 float4x4 unity_MatrixVP;
@@ -3581,7 +3581,7 @@ Shader "Custom/Planet_Base_OCEANMOD"
                 float4 unity_OcclusionMaskSelector;
                 float4 cb2_values[21];
             };
-            cbuffer UnityProbeVolume : register(b3)
+            cbuffer _UnityProbeVolumeCB : register(b3)
             {
                 float4 unity_ProbeVolumeParams;
                 float4x4 unity_ProbeVolumeWorldToObject;
@@ -3622,7 +3622,7 @@ Shader "Custom/Planet_Base_OCEANMOD"
             };
             struct program65Output
             {
-                float4 sv_Position0 : SV_POSITION0;
+                float4 sv_Position0 : SV_POSITION;
                 float3 texcoord0 : TEXCOORD0;
                 float texcoord4 : TEXCOORD4;
                 float3 texcoord1 : TEXCOORD1;
@@ -3631,7 +3631,7 @@ Shader "Custom/Planet_Base_OCEANMOD"
             };
             struct program111Input
             {
-                float4 sv_Position0 : SV_POSITION0;
+                float4 sv_Position0 : SV_POSITION;
                 float3 texcoord0 : TEXCOORD0;
                 float texcoord4 : TEXCOORD4;
                 float3 texcoord1 : TEXCOORD1;
@@ -3640,7 +3640,7 @@ Shader "Custom/Planet_Base_OCEANMOD"
             };
             struct program111Output
             {
-                float4 sv_Target0 : SV_Target0;
+                float4 sv_Target0 : SV_Target;
             };
             #pragma vertex vert
             program65Output vert(program65Input i)
@@ -3681,9 +3681,9 @@ Shader "Custom/Planet_Base_OCEANMOD"
                 float r1_w_5 = exp2(r1_w_4);
                 float r1_w_6 = (-r1_w_5 + 1);
                 float r2_w_1 = (r1_w_6 * cb0_values[12].x);
-                float r2_w_2 = r2_w_1;
+                float r2_w_2 = saturate(r2_w_1);
                 float r1_w_7 = mad(r1_w_6, cb0_values[12].y, cb0_values[9].x);
-                float r1_w_8 = (r1_w_7 + cb0_values[12].z);
+                float r1_w_8 = saturate((r1_w_7 + cb0_values[12].z));
                 float3 r5_xyz_4 = (((mad(cb0_values[6].xyzx, i.texcoord1.zzzz, (mad(cb0_values[4].xyzx, i.texcoord1.xxxx, ((i.texcoord1.yyyy * cb0_values[5].xyzx)).xyzx)).xyzx)).xyzx + cb0_values[7].xyzx)).xyz;
                 float r6_x_1 = cb4_values[9].z;
                 float r6_y_1 = cb4_values[10].z;
@@ -3734,7 +3734,7 @@ Shader "Custom/Planet_Base_OCEANMOD"
                     r6_z_9 = r6_xyzw_2.z;
                     r6_w_4 = r6_xyzw_2.w;
                 }
-                float r2_y_12 = dot(float4(r6_x_9, r6_y_9, r6_z_9, r6_w_4), unity_OcclusionMaskSelector);
+                float r2_y_12 = saturate(dot(float4(r6_x_9, r6_y_9, r6_z_9, r6_w_4), unity_OcclusionMaskSelector));
                 float3 r6_xyz_10 = ((i.texcoord1.xyzx + -cb2_values[1].xyzx)).xyz;
                 float r2_z_7 = max(abs(r6_xyz_10.y), abs(r6_xyz_10.x));
                 float r2_z_8 = max(abs(r6_xyz_10.z), r2_z_7);
@@ -3752,7 +3752,7 @@ Shader "Custom/Planet_Base_OCEANMOD"
                 float4 r6_xyzw_11 = t0.Sample(sampler_linear_clamp3, (r2_y_14.xxxx).xy);
                 float4 r5_xyzw_5 = t1.Sample(sampler_linear_clamp2, r5_xyz_4.xyz);
                 float r2_y_15 = (r5_xyzw_5.w * r6_xyzw_11.x);
-                float4 r2_xyzw_7 = (((mad(mad(mad(cb3_values[25].w, r2_y_5, r2_x_2), cb3_values[24].z, cb3_values[24].w), r2_y_13, r2_z_16) * r2_y_15)).xxxx * _LightColor0.xyzx);
+                float4 r2_xyzw_7 = (((mad(saturate(mad(mad(cb3_values[25].w, r2_y_5, r2_x_2), cb3_values[24].z, cb3_values[24].w)), r2_y_13, r2_z_16) * r2_y_15)).xxxx * _LightColor0.xyzx);
                 float r2_x_7 = r2_xyzw_7.x;
                 float r2_y_16 = r2_xyzw_7.y;
                 float r2_z_17 = r2_xyzw_7.z;
@@ -3764,9 +3764,9 @@ Shader "Custom/Planet_Base_OCEANMOD"
                 float r0_w_5 = rsqrt(r0_w_4);
                 float3 r0_xyz_3 = ((r0_w_5.xxxx * r0_xyz_2.xyzx)).xyz;
                 float nDotV_w_6 = dot(unitClipPos_xyz_6.xyzx, unitViewDir_xyz_1.xyzx);
-                float r2_w_10 = dot(unitClipPos_xyz_6.xyzx, r1_xyz_1.xyzx);
-                float r3_x_2 = dot(unitClipPos_xyz_6.xyzx, r0_xyz_3.xyzx);
-                float r0_x_4 = dot(r1_xyz_1.xyzx, r0_xyz_3.xyzx);
+                float r2_w_10 = saturate(dot(unitClipPos_xyz_6.xyzx, r1_xyz_1.xyzx));
+                float r3_x_2 = saturate(dot(unitClipPos_xyz_6.xyzx, r0_xyz_3.xyzx));
+                float r0_x_4 = saturate(dot(r1_xyz_1.xyzx, r0_xyz_3.xyzx));
                 float r0_y_4 = (r0_x_4 * r0_x_4);
                 float r0_y_5 = dot(r0_y_4.xxxx, r1_w_9.xxxx);
                 float r0_y_6 = (r0_y_5 + -0.5);
@@ -3821,7 +3821,7 @@ Shader "Custom/Planet_Base_OCEANMOD"
                 float r0_w_13 = (-r0_w_12 + 1);
                 float r0_w_14 = (r0_w_13 * cb1_values[5].z);
                 float r0_w_15 = max(r0_w_14, 0);
-                float r0_w_16 = mad(r0_w_15, cb5_values[1].z, cb5_values[1].w);
+                float r0_w_16 = saturate(mad(r0_w_15, cb5_values[1].z, cb5_values[1].w));
                 o.sv_Target0.xyz = ((float4(r0_x_9, r0_y_12, r0_z_19, r0_x_9) * r0_w_16.xxxx)).xyz;
                 o.sv_Target0.w = 1;
                 return o;
@@ -3836,14 +3836,14 @@ Shader "Custom/Planet_Base_OCEANMOD"
             ZWrite Off
             Blend One One
             HLSLPROGRAM
-            cbuffer UnityPerDraw : register(b0)
+            cbuffer _UnityPerDrawCB : register(b0)
             {
                 float4x4 unity_ObjectToWorld;
                 float4 _LightColor0;
                 float4x4 unity_WorldToObject;
                 float4 cb0_values[14];
             };
-            cbuffer UnityPerFrame : register(b1)
+            cbuffer _UnityPerFrameCB : register(b1)
             {
                 float3 _WorldSpaceCameraPos;
                 float4x4 unity_MatrixVP;
@@ -3855,7 +3855,7 @@ Shader "Custom/Planet_Base_OCEANMOD"
                 float4 unity_OcclusionMaskSelector;
                 float4 cb2_values[21];
             };
-            cbuffer UnityProbeVolume : register(b3)
+            cbuffer _UnityProbeVolumeCB : register(b3)
             {
                 float4 unity_ProbeVolumeParams;
                 float4x4 unity_ProbeVolumeWorldToObject;
@@ -3894,7 +3894,7 @@ Shader "Custom/Planet_Base_OCEANMOD"
             };
             struct program64Output
             {
-                float4 sv_Position0 : SV_POSITION0;
+                float4 sv_Position0 : SV_POSITION;
                 float3 texcoord0 : TEXCOORD0;
                 float texcoord4 : TEXCOORD4;
                 float3 texcoord1 : TEXCOORD1;
@@ -3903,7 +3903,7 @@ Shader "Custom/Planet_Base_OCEANMOD"
             };
             struct program110Input
             {
-                float4 sv_Position0 : SV_POSITION0;
+                float4 sv_Position0 : SV_POSITION;
                 float3 texcoord0 : TEXCOORD0;
                 float texcoord4 : TEXCOORD4;
                 float3 texcoord1 : TEXCOORD1;
@@ -3912,7 +3912,7 @@ Shader "Custom/Planet_Base_OCEANMOD"
             };
             struct program110Output
             {
-                float4 sv_Target0 : SV_Target0;
+                float4 sv_Target0 : SV_Target;
             };
             #pragma vertex vert
             program64Output vert(program64Input i)
@@ -3953,9 +3953,9 @@ Shader "Custom/Planet_Base_OCEANMOD"
                 float r1_w_5 = exp2(r1_w_4);
                 float r1_w_6 = (-r1_w_5 + 1);
                 float r2_w_1 = (r1_w_6 * cb0_values[12].x);
-                float r2_w_2 = r2_w_1;
+                float r2_w_2 = saturate(r2_w_1);
                 float r1_w_7 = mad(r1_w_6, cb0_values[12].y, cb0_values[9].x);
-                float r1_w_8 = (r1_w_7 + cb0_values[12].z);
+                float r1_w_8 = saturate((r1_w_7 + cb0_values[12].z));
                 float3 r5_xyz_4 = (((mad(cb0_values[6].xyzx, i.texcoord1.zzzz, (mad(cb0_values[4].xyzx, i.texcoord1.xxxx, ((i.texcoord1.yyyy * cb0_values[5].xyzx)).xyzx)).xyzx)).xyzx + cb0_values[7].xyzx)).xyz;
                 float r6_x_1 = cb4_values[9].z;
                 float r6_y_1 = cb4_values[10].z;
@@ -3968,7 +3968,7 @@ Shader "Custom/Planet_Base_OCEANMOD"
                 float r2_y_3 = dot(float4(r2_y_2, r2_z_2, r2_w_3, r2_y_2), float4(r2_y_2, r2_z_2, r2_w_3, r2_y_2));
                 float r2_y_4 = sqrt(r2_y_3);
                 float r2_y_5 = (-r2_x_2 + r2_y_4);
-                float r2_x_4 = mad(mad(cb3_values[25].w, r2_y_5, r2_x_2), cb3_values[24].z, cb3_values[24].w);
+                float r2_x_4 = saturate(mad(mad(cb3_values[25].w, r2_y_5, r2_x_2), cb3_values[24].z, cb3_values[24].w));
                 float r2_y_6 = (cb6_values[0].x == 1);
                 float r6_x_9;
                 float r6_y_9;
@@ -4007,7 +4007,7 @@ Shader "Custom/Planet_Base_OCEANMOD"
                     r6_z_9 = r6_xyzw_2.z;
                     r6_w_4 = r6_xyzw_2.w;
                 }
-                float r2_y_12 = dot(float4(r6_x_9, r6_y_9, r6_z_9, r6_w_4), unity_OcclusionMaskSelector);
+                float r2_y_12 = saturate(dot(float4(r6_x_9, r6_y_9, r6_z_9, r6_w_4), unity_OcclusionMaskSelector));
                 float r2_z_7 = (r2_x_4 < 0.99);
                 float r2_z_19;
                 if (r2_z_7)
@@ -4050,9 +4050,9 @@ Shader "Custom/Planet_Base_OCEANMOD"
                 float r0_w_5 = rsqrt(r0_w_4);
                 float3 r0_xyz_3 = ((r0_w_5.xxxx * r0_xyz_2.xyzx)).xyz;
                 float nDotV_w_6 = dot(unitClipPos_xyz_6.xyzx, unitViewDir_xyz_1.xyzx);
-                float r2_w_11 = dot(unitClipPos_xyz_6.xyzx, r1_xyz_1.xyzx);
-                float r3_x_2 = dot(unitClipPos_xyz_6.xyzx, r0_xyz_3.xyzx);
-                float r0_x_4 = dot(r1_xyz_1.xyzx, r0_xyz_3.xyzx);
+                float r2_w_11 = saturate(dot(unitClipPos_xyz_6.xyzx, r1_xyz_1.xyzx));
+                float r3_x_2 = saturate(dot(unitClipPos_xyz_6.xyzx, r0_xyz_3.xyzx));
+                float r0_x_4 = saturate(dot(r1_xyz_1.xyzx, r0_xyz_3.xyzx));
                 float r0_y_4 = (r0_x_4 * r0_x_4);
                 float r0_y_5 = dot(r0_y_4.xxxx, r1_w_9.xxxx);
                 float r0_y_6 = (r0_y_5 + -0.5);
@@ -4107,7 +4107,7 @@ Shader "Custom/Planet_Base_OCEANMOD"
                 float r0_w_13 = (-r0_w_12 + 1);
                 float r0_w_14 = (r0_w_13 * cb1_values[5].z);
                 float r0_w_15 = max(r0_w_14, 0);
-                float r0_w_16 = mad(r0_w_15, cb5_values[1].z, cb5_values[1].w);
+                float r0_w_16 = saturate(mad(r0_w_15, cb5_values[1].z, cb5_values[1].w));
                 o.sv_Target0.xyz = ((float4(r0_x_9, r0_y_12, r0_z_19, r0_x_9) * r0_w_16.xxxx)).xyz;
                 o.sv_Target0.w = 1;
                 return o;
@@ -4122,14 +4122,14 @@ Shader "Custom/Planet_Base_OCEANMOD"
             ZWrite Off
             Blend One One
             HLSLPROGRAM
-            cbuffer UnityPerDraw : register(b0)
+            cbuffer _UnityPerDrawCB : register(b0)
             {
                 float4x4 unity_ObjectToWorld;
                 float4 _LightColor0;
                 float4x4 unity_WorldToObject;
                 float4 cb0_values[14];
             };
-            cbuffer UnityPerFrame : register(b1)
+            cbuffer _UnityPerFrameCB : register(b1)
             {
                 float3 _WorldSpaceCameraPos;
                 float4x4 unity_MatrixVP;
@@ -4141,7 +4141,7 @@ Shader "Custom/Planet_Base_OCEANMOD"
                 float4 unity_OcclusionMaskSelector;
                 float4 cb2_values[21];
             };
-            cbuffer UnityProbeVolume : register(b3)
+            cbuffer _UnityProbeVolumeCB : register(b3)
             {
                 float4 unity_ProbeVolumeParams;
                 float4x4 unity_ProbeVolumeWorldToObject;
@@ -4180,7 +4180,7 @@ Shader "Custom/Planet_Base_OCEANMOD"
             };
             struct program63Output
             {
-                float4 sv_Position0 : SV_POSITION0;
+                float4 sv_Position0 : SV_POSITION;
                 float3 texcoord0 : TEXCOORD0;
                 float texcoord4 : TEXCOORD4;
                 float3 texcoord1 : TEXCOORD1;
@@ -4189,7 +4189,7 @@ Shader "Custom/Planet_Base_OCEANMOD"
             };
             struct program109Input
             {
-                float4 sv_Position0 : SV_POSITION0;
+                float4 sv_Position0 : SV_POSITION;
                 float3 texcoord0 : TEXCOORD0;
                 float texcoord4 : TEXCOORD4;
                 float3 texcoord1 : TEXCOORD1;
@@ -4198,7 +4198,7 @@ Shader "Custom/Planet_Base_OCEANMOD"
             };
             struct program109Output
             {
-                float4 sv_Target0 : SV_Target0;
+                float4 sv_Target0 : SV_Target;
             };
             #pragma vertex vert
             program63Output vert(program63Input i)
@@ -4239,9 +4239,9 @@ Shader "Custom/Planet_Base_OCEANMOD"
                 float r1_w_5 = exp2(r1_w_4);
                 float r1_w_6 = (-r1_w_5 + 1);
                 float r2_w_1 = (r1_w_6 * cb0_values[12].x);
-                float r2_w_2 = r2_w_1;
+                float r2_w_2 = saturate(r2_w_1);
                 float r1_w_7 = mad(r1_w_6, cb0_values[12].y, cb0_values[9].x);
-                float r1_w_8 = (r1_w_7 + cb0_values[12].z);
+                float r1_w_8 = saturate((r1_w_7 + cb0_values[12].z));
                 float3 r5_xyz_4 = (((mad(cb0_values[6].xyzx, i.texcoord1.zzzz, (mad(cb0_values[4].xyzx, i.texcoord1.xxxx, ((i.texcoord1.yyyy * cb0_values[5].xyzx)).xyzx)).xyzx)).xyzx + cb0_values[7].xyzx)).xyz;
                 float r6_x_1 = cb4_values[9].z;
                 float r6_y_1 = cb4_values[10].z;
@@ -4292,7 +4292,7 @@ Shader "Custom/Planet_Base_OCEANMOD"
                     r6_z_9 = r6_xyzw_2.z;
                     r6_w_4 = r6_xyzw_2.w;
                 }
-                float r2_y_12 = dot(float4(r6_x_9, r6_y_9, r6_z_9, r6_w_4), unity_OcclusionMaskSelector);
+                float r2_y_12 = saturate(dot(float4(r6_x_9, r6_y_9, r6_z_9, r6_w_4), unity_OcclusionMaskSelector));
                 float3 r6_xyz_10 = ((i.texcoord1.xyzx + -cb2_values[1].xyzx)).xyz;
                 float r2_z_7 = max(abs(r6_xyz_10.y), abs(r6_xyz_10.x));
                 float r2_z_8 = max(abs(r6_xyz_10.z), r2_z_7);
@@ -4308,7 +4308,7 @@ Shader "Custom/Planet_Base_OCEANMOD"
                 float r2_y_13 = (-r2_z_16 + r2_y_12);
                 float r2_y_14 = dot(r5_xyz_4.xyzx, r5_xyz_4.xyzx);
                 float4 r5_xyzw_5 = t0.Sample(sampler_linear_clamp2, (r2_y_14.xxxx).xy);
-                float4 r2_xyzw_7 = (((mad(mad(mad(cb3_values[25].w, r2_y_5, r2_x_2), cb3_values[24].z, cb3_values[24].w), r2_y_13, r2_z_16) * r5_xyzw_5.x)).xxxx * _LightColor0.xyzx);
+                float4 r2_xyzw_7 = (((mad(saturate(mad(mad(cb3_values[25].w, r2_y_5, r2_x_2), cb3_values[24].z, cb3_values[24].w)), r2_y_13, r2_z_16) * r5_xyzw_5.x)).xxxx * _LightColor0.xyzx);
                 float r2_x_7 = r2_xyzw_7.x;
                 float r2_y_15 = r2_xyzw_7.y;
                 float r2_z_17 = r2_xyzw_7.z;
@@ -4320,9 +4320,9 @@ Shader "Custom/Planet_Base_OCEANMOD"
                 float r0_w_5 = rsqrt(r0_w_4);
                 float3 r0_xyz_3 = ((r0_w_5.xxxx * r0_xyz_2.xyzx)).xyz;
                 float nDotV_w_6 = dot(unitClipPos_xyz_6.xyzx, unitViewDir_xyz_1.xyzx);
-                float r2_w_10 = dot(unitClipPos_xyz_6.xyzx, r1_xyz_1.xyzx);
-                float r3_x_2 = dot(unitClipPos_xyz_6.xyzx, r0_xyz_3.xyzx);
-                float r0_x_4 = dot(r1_xyz_1.xyzx, r0_xyz_3.xyzx);
+                float r2_w_10 = saturate(dot(unitClipPos_xyz_6.xyzx, r1_xyz_1.xyzx));
+                float r3_x_2 = saturate(dot(unitClipPos_xyz_6.xyzx, r0_xyz_3.xyzx));
+                float r0_x_4 = saturate(dot(r1_xyz_1.xyzx, r0_xyz_3.xyzx));
                 float r0_y_4 = (r0_x_4 * r0_x_4);
                 float r0_y_5 = dot(r0_y_4.xxxx, r1_w_9.xxxx);
                 float r0_y_6 = (r0_y_5 + -0.5);
@@ -4377,7 +4377,7 @@ Shader "Custom/Planet_Base_OCEANMOD"
                 float r0_w_13 = (-r0_w_12 + 1);
                 float r0_w_14 = (r0_w_13 * cb1_values[5].z);
                 float r0_w_15 = max(r0_w_14, 0);
-                float r0_w_16 = mad(r0_w_15, cb5_values[1].z, cb5_values[1].w);
+                float r0_w_16 = saturate(mad(r0_w_15, cb5_values[1].z, cb5_values[1].w));
                 o.sv_Target0.xyz = ((float4(r0_x_9, r0_y_12, r0_z_19, r0_x_9) * r0_w_16.xxxx)).xyz;
                 o.sv_Target0.w = 1;
                 return o;
@@ -4392,14 +4392,14 @@ Shader "Custom/Planet_Base_OCEANMOD"
             ZWrite Off
             Blend One One
             HLSLPROGRAM
-            cbuffer UnityPerDraw : register(b0)
+            cbuffer _UnityPerDrawCB : register(b0)
             {
                 float4x4 unity_ObjectToWorld;
                 float4 _LightColor0;
                 float4x4 unity_WorldToObject;
                 float4 cb0_values[14];
             };
-            cbuffer UnityPerFrame : register(b1)
+            cbuffer _UnityPerFrameCB : register(b1)
             {
                 float3 _WorldSpaceCameraPos;
                 float4x4 unity_MatrixVP;
@@ -4450,7 +4450,7 @@ Shader "Custom/Planet_Base_OCEANMOD"
             };
             struct program62Output
             {
-                float4 sv_Position0 : SV_POSITION0;
+                float4 sv_Position0 : SV_POSITION;
                 float3 texcoord0 : TEXCOORD0;
                 float3 texcoord1 : TEXCOORD1;
                 float2 texcoord2 : TEXCOORD2;
@@ -4459,7 +4459,7 @@ Shader "Custom/Planet_Base_OCEANMOD"
             };
             struct program108Input
             {
-                float4 sv_Position0 : SV_POSITION0;
+                float4 sv_Position0 : SV_POSITION;
                 float3 texcoord0 : TEXCOORD0;
                 float3 texcoord1 : TEXCOORD1;
                 float2 texcoord2 : TEXCOORD2;
@@ -4468,7 +4468,7 @@ Shader "Custom/Planet_Base_OCEANMOD"
             };
             struct program108Output
             {
-                float4 sv_Target0 : SV_Target0;
+                float4 sv_Target0 : SV_Target;
             };
             #pragma vertex vert
             program62Output vert(program62Input i)
@@ -4509,12 +4509,12 @@ Shader "Custom/Planet_Base_OCEANMOD"
                 float r1_w_2 = (r1_w_1 * cb0_values[13].x);
                 float r1_w_3 = exp2(r1_w_2);
                 float r1_w_4 = (-r1_w_3 + 1);
-                float4 r2_xyzw_3 = mad(((r1_w_4 * cb0_values[12].x)).xxxx, -cb0_values[8].xyzx, cb0_values[8].xyzx);
+                float4 r2_xyzw_3 = mad((saturate((r1_w_4 * cb0_values[12].x))).xxxx, -cb0_values[8].xyzx, cb0_values[8].xyzx);
                 float r2_x_3 = r2_xyzw_3.x;
                 float r2_y_1 = r2_xyzw_3.y;
                 float r2_z_1 = r2_xyzw_3.z;
                 float r1_w_5 = mad(r1_w_4, cb0_values[12].y, cb0_values[9].x);
-                float r1_w_6 = (r1_w_5 + cb0_values[12].z);
+                float r1_w_6 = saturate((r1_w_5 + cb0_values[12].z));
                 float r4_x_1 = cb4_values[9].z;
                 float r4_y_1 = cb4_values[10].z;
                 float r4_z_1 = cb4_values[11].z;
@@ -4524,7 +4524,7 @@ Shader "Custom/Planet_Base_OCEANMOD"
                 float r3_z_2 = sqrt(r3_z_1);
                 float r3_z_3 = (-r2_w_1 + r3_z_2);
                 float r2_w_2 = mad(cb3_values[25].w, r3_z_3, r2_w_1);
-                float r2_w_3 = mad(r2_w_2, cb3_values[24].z, cb3_values[24].w);
+                float r2_w_3 = saturate(mad(r2_w_2, cb3_values[24].z, cb3_values[24].w));
                 float r3_z_4 = (cb6_values[0].x == 1);
                 float r4_x_12;
                 float r4_y_12;
@@ -4555,7 +4555,7 @@ Shader "Custom/Planet_Base_OCEANMOD"
                     r4_z_12 = r4_xyzw_3.z;
                     r4_w_4 = r4_xyzw_3.w;
                 }
-                float r3_z_8 = dot(float4(r4_x_12, r4_y_12, r4_z_12, r4_w_4), unity_OcclusionMaskSelector);
+                float r3_z_8 = saturate(dot(float4(r4_x_12, r4_y_12, r4_z_12, r4_w_4), unity_OcclusionMaskSelector));
                 float4 r4_xyzw_14 = t0.Sample(sampler_linear_clamp1, (((i.texcoord3.xyxx / i.texcoord3.wwww)).xyxx).xy);
                 float r3_z_9 = (r3_z_8 + -r4_xyzw_14.x);
                 float r2_w_4 = mad(r2_w_3, r3_z_9, r4_xyzw_14.x);
@@ -4582,9 +4582,9 @@ Shader "Custom/Planet_Base_OCEANMOD"
                 float r0_w_5 = rsqrt(r0_w_4);
                 float3 r0_xyz_3 = ((r0_w_5.xxxx * r0_xyz_2.xyzx)).xyz;
                 float nDotV_w_6 = dot(float4(unitWorldNormal_x_15, unitWorldNormal_y_15, unitWorldNormal_z_14, unitWorldNormal_x_15), unitViewDir_xyz_1.xyzx);
-                float r1_x_2 = dot(float4(unitWorldNormal_x_15, unitWorldNormal_y_15, unitWorldNormal_z_14, unitWorldNormal_x_15), _WorldSpaceLightPos0.xyzx);
-                float r1_y_2 = dot(float4(unitWorldNormal_x_15, unitWorldNormal_y_15, unitWorldNormal_z_14, unitWorldNormal_x_15), r0_xyz_3.xyzx);
-                float r0_x_4 = dot(_WorldSpaceLightPos0.xyzx, r0_xyz_3.xyzx);
+                float r1_x_2 = saturate(dot(float4(unitWorldNormal_x_15, unitWorldNormal_y_15, unitWorldNormal_z_14, unitWorldNormal_x_15), _WorldSpaceLightPos0.xyzx));
+                float r1_y_2 = saturate(dot(float4(unitWorldNormal_x_15, unitWorldNormal_y_15, unitWorldNormal_z_14, unitWorldNormal_x_15), r0_xyz_3.xyzx));
+                float r0_x_4 = saturate(dot(_WorldSpaceLightPos0.xyzx, r0_xyz_3.xyzx));
                 float r0_y_4 = (r0_x_4 * r0_x_4);
                 float r0_y_5 = dot(r0_y_4.xxxx, r1_w_7.xxxx);
                 float r0_y_6 = (r0_y_5 + -0.5);
@@ -4644,7 +4644,7 @@ Shader "Custom/Planet_Base_OCEANMOD"
                 float r0_w_13 = (-r0_w_12 + 1);
                 float r0_w_14 = (r0_w_13 * cb1_values[5].z);
                 float r0_w_15 = max(r0_w_14, 0);
-                float r0_w_16 = mad(r0_w_15, cb5_values[1].z, cb5_values[1].w);
+                float r0_w_16 = saturate(mad(r0_w_15, cb5_values[1].z, cb5_values[1].w));
                 o.sv_Target0.xyz = ((float4(r0_x_9, r0_y_12, r0_z_19, r0_x_9) * r0_w_16.xxxx)).xyz;
                 o.sv_Target0.w = 1;
                 return o;
@@ -4659,14 +4659,14 @@ Shader "Custom/Planet_Base_OCEANMOD"
             ZWrite Off
             Blend One One
             HLSLPROGRAM
-            cbuffer UnityPerDraw : register(b0)
+            cbuffer _UnityPerDrawCB : register(b0)
             {
                 float4x4 unity_ObjectToWorld;
                 float4 _LightColor0;
                 float4x4 unity_WorldToObject;
                 float4 cb0_values[10];
             };
-            cbuffer UnityPerFrame : register(b1)
+            cbuffer _UnityPerFrameCB : register(b1)
             {
                 float3 _WorldSpaceCameraPos;
                 float4x4 unity_MatrixVP;
@@ -4678,7 +4678,7 @@ Shader "Custom/Planet_Base_OCEANMOD"
                 float4 unity_OcclusionMaskSelector;
                 float4 cb2_values[21];
             };
-            cbuffer UnityProbeVolume : register(b3)
+            cbuffer _UnityProbeVolumeCB : register(b3)
             {
                 float4 unity_ProbeVolumeParams;
                 float4x4 unity_ProbeVolumeWorldToObject;
@@ -4715,7 +4715,7 @@ Shader "Custom/Planet_Base_OCEANMOD"
             };
             struct program61Output
             {
-                float4 sv_Position0 : SV_POSITION0;
+                float4 sv_Position0 : SV_POSITION;
                 float3 texcoord0 : TEXCOORD0;
                 float texcoord4 : TEXCOORD4;
                 float3 texcoord1 : TEXCOORD1;
@@ -4723,7 +4723,7 @@ Shader "Custom/Planet_Base_OCEANMOD"
             };
             struct program107Input
             {
-                float4 sv_Position0 : SV_POSITION0;
+                float4 sv_Position0 : SV_POSITION;
                 float3 texcoord0 : TEXCOORD0;
                 float texcoord4 : TEXCOORD4;
                 float3 texcoord1 : TEXCOORD1;
@@ -4731,7 +4731,7 @@ Shader "Custom/Planet_Base_OCEANMOD"
             };
             struct program107Output
             {
-                float4 sv_Target0 : SV_Target0;
+                float4 sv_Target0 : SV_Target;
             };
             #pragma vertex vert
             program61Output vert(program61Input i)
@@ -4774,19 +4774,19 @@ Shader "Custom/Planet_Base_OCEANMOD"
                 float r1_w_2 = (r1_w_1 * cb0_values[9].x);
                 float r1_w_3 = exp2(r1_w_2);
                 float r1_w_4 = (-r1_w_3 + 1);
-                float4 r2_xyzw_3 = mad(((r1_w_4 * cb0_values[8].x)).xxxx, -cb0_values[4].xyzx, cb0_values[4].xyzx);
+                float4 r2_xyzw_3 = mad((saturate((r1_w_4 * cb0_values[8].x))).xxxx, -cb0_values[4].xyzx, cb0_values[4].xyzx);
                 float r2_x_3 = r2_xyzw_3.x;
                 float r2_y_1 = r2_xyzw_3.y;
                 float r2_z_1 = r2_xyzw_3.z;
                 float r1_w_5 = mad(r1_w_4, cb0_values[8].y, cb0_values[5].x);
-                float r1_w_6 = (r1_w_5 + cb0_values[8].z);
+                float r1_w_6 = saturate((r1_w_5 + cb0_values[8].z));
                 float r3_x_1 = cb4_values[9].z;
                 float r3_y_1 = cb4_values[10].z;
                 float r3_z_1 = cb4_values[11].z;
                 float r2_w_1 = dot(viewDir_xyz_1.xyzx, float4(r3_x_1, r3_y_1, r3_z_1, r3_x_1));
                 float3 r3_xyz_2 = ((i.texcoord1.xyzx + -cb3_values[25].xyzx)).xyz;
                 float r2_w_2 = mad(cb3_values[25].w, (-r2_w_1 + sqrt(dot(r3_xyz_2.xyzx, r3_xyz_2.xyzx))), r2_w_1);
-                float r2_w_3 = mad(r2_w_2, cb3_values[24].z, cb3_values[24].w);
+                float r2_w_3 = saturate(mad(r2_w_2, cb3_values[24].z, cb3_values[24].w));
                 float r3_x_13;
                 float r3_y_13;
                 float r3_z_12;
@@ -4844,7 +4844,7 @@ Shader "Custom/Planet_Base_OCEANMOD"
                 float r3_y_14 = r3_xyzw_14.y;
                 float r3_z_13 = r3_xyzw_14.z;
                 float4 r4_xyzw_3 = t0.Sample(sampler_linear_clamp1, (float4(r3_y_14, r3_z_13, r3_y_14, r3_y_14)).xy);
-                float r2_w_4 = mad(r2_w_3, (dot(float4(r3_x_13, r3_y_13, r3_z_12, r3_w_8), unity_OcclusionMaskSelector) + -r4_xyzw_3.x), r4_xyzw_3.x);
+                float r2_w_4 = mad(r2_w_3, (saturate(dot(float4(r3_x_13, r3_y_13, r3_z_12, r3_w_8), unity_OcclusionMaskSelector)) + -r4_xyzw_3.x), r4_xyzw_3.x);
                 float4 r3_xyzw_16 = (r2_w_4.xxxx * _LightColor0.xyzx);
                 float r3_x_16 = r3_xyzw_16.x;
                 float r3_y_15 = r3_xyzw_16.y;
@@ -4866,9 +4866,9 @@ Shader "Custom/Planet_Base_OCEANMOD"
                 float r0_w_5 = rsqrt(r0_w_4);
                 float3 r0_xyz_3 = ((r0_w_5.xxxx * r0_xyz_2.xyzx)).xyz;
                 float nDotV_w_6 = dot(float4(unitWorldNormal_x_4, unitWorldNormal_y_2, unitWorldNormal_z_2, unitWorldNormal_x_4), unitViewDir_xyz_1.xyzx);
-                float r1_x_2 = dot(float4(unitWorldNormal_x_4, unitWorldNormal_y_2, unitWorldNormal_z_2, unitWorldNormal_x_4), _WorldSpaceLightPos0.xyzx);
-                float r1_y_2 = dot(float4(unitWorldNormal_x_4, unitWorldNormal_y_2, unitWorldNormal_z_2, unitWorldNormal_x_4), r0_xyz_3.xyzx);
-                float r0_x_4 = dot(_WorldSpaceLightPos0.xyzx, r0_xyz_3.xyzx);
+                float r1_x_2 = saturate(dot(float4(unitWorldNormal_x_4, unitWorldNormal_y_2, unitWorldNormal_z_2, unitWorldNormal_x_4), _WorldSpaceLightPos0.xyzx));
+                float r1_y_2 = saturate(dot(float4(unitWorldNormal_x_4, unitWorldNormal_y_2, unitWorldNormal_z_2, unitWorldNormal_x_4), r0_xyz_3.xyzx));
+                float r0_x_4 = saturate(dot(_WorldSpaceLightPos0.xyzx, r0_xyz_3.xyzx));
                 float r0_y_4 = (r0_x_4 * r0_x_4);
                 float r0_y_5 = dot(r0_y_4.xxxx, r1_w_7.xxxx);
                 float r0_y_6 = (r0_y_5 + -0.5);
@@ -4928,7 +4928,7 @@ Shader "Custom/Planet_Base_OCEANMOD"
                 float r0_w_13 = (-r0_w_12 + 1);
                 float r0_w_14 = (r0_w_13 * cb1_values[5].z);
                 float r0_w_15 = max(r0_w_14, 0);
-                float r0_w_16 = mad(r0_w_15, cb5_values[1].z, cb5_values[1].w);
+                float r0_w_16 = saturate(mad(r0_w_15, cb5_values[1].z, cb5_values[1].w));
                 o.sv_Target0.xyz = ((float4(r0_x_9, r0_y_12, r0_z_19, r0_x_9) * r0_w_16.xxxx)).xyz;
                 o.sv_Target0.w = 1;
                 return o;
@@ -4943,14 +4943,14 @@ Shader "Custom/Planet_Base_OCEANMOD"
             ZWrite Off
             Blend One One
             HLSLPROGRAM
-            cbuffer UnityPerDraw : register(b0)
+            cbuffer _UnityPerDrawCB : register(b0)
             {
                 float4x4 unity_ObjectToWorld;
                 float4 _LightColor0;
                 float4x4 unity_WorldToObject;
                 float4 cb0_values[19];
             };
-            cbuffer UnityPerFrame : register(b1)
+            cbuffer _UnityPerFrameCB : register(b1)
             {
                 float3 _WorldSpaceCameraPos;
                 float4x4 unity_MatrixVP;
@@ -4962,7 +4962,7 @@ Shader "Custom/Planet_Base_OCEANMOD"
                 float4 unity_OcclusionMaskSelector;
                 float4 cb2_values[21];
             };
-            cbuffer UnityProbeVolume : register(b3)
+            cbuffer _UnityProbeVolumeCB : register(b3)
             {
                 float4 unity_ProbeVolumeParams;
                 float4x4 unity_ProbeVolumeWorldToObject;
@@ -5003,7 +5003,7 @@ Shader "Custom/Planet_Base_OCEANMOD"
             };
             struct program60Output
             {
-                float4 sv_Position0 : SV_POSITION0;
+                float4 sv_Position0 : SV_POSITION;
                 float3 texcoord0 : TEXCOORD0;
                 float texcoord4 : TEXCOORD4;
                 float3 texcoord1 : TEXCOORD1;
@@ -5012,7 +5012,7 @@ Shader "Custom/Planet_Base_OCEANMOD"
             };
             struct program106Input
             {
-                float4 sv_Position0 : SV_POSITION0;
+                float4 sv_Position0 : SV_POSITION;
                 float3 texcoord0 : TEXCOORD0;
                 float texcoord4 : TEXCOORD4;
                 float3 texcoord1 : TEXCOORD1;
@@ -5021,7 +5021,7 @@ Shader "Custom/Planet_Base_OCEANMOD"
             };
             struct program106Output
             {
-                float4 sv_Target0 : SV_Target0;
+                float4 sv_Target0 : SV_Target;
             };
             #pragma vertex vert
             program60Output vert(program60Input i)
@@ -5065,9 +5065,9 @@ Shader "Custom/Planet_Base_OCEANMOD"
                 float r1_w_5 = exp2(r1_w_4);
                 float r1_w_6 = (-r1_w_5 + 1);
                 float r2_w_1 = (r1_w_6 * cb0_values[17].x);
-                float r2_w_2 = r2_w_1;
+                float r2_w_2 = saturate(r2_w_1);
                 float r1_w_7 = mad(r1_w_6, cb0_values[17].y, cb0_values[14].x);
-                float r1_w_8 = (r1_w_7 + cb0_values[17].z);
+                float r1_w_8 = saturate((r1_w_7 + cb0_values[17].z));
                 float4 r5_xyzw_4 = (mad(cb0_values[11].xyzw, i.texcoord1.zzzz, mad(cb0_values[9].xyzw, i.texcoord1.xxxx, (i.texcoord1.yyyy * cb0_values[10].xyzw))) + cb0_values[12].xyzw);
                 float r6_x_1 = cb4_values[9].z;
                 float r6_y_1 = cb4_values[10].z;
@@ -5080,7 +5080,7 @@ Shader "Custom/Planet_Base_OCEANMOD"
                 float r2_y_3 = dot(float4(r2_y_2, r2_z_2, r2_w_3, r2_y_2), float4(r2_y_2, r2_z_2, r2_w_3, r2_y_2));
                 float r2_y_4 = sqrt(r2_y_3);
                 float r2_y_5 = (-r2_x_2 + r2_y_4);
-                float r2_x_4 = mad(mad(cb3_values[25].w, r2_y_5, r2_x_2), cb3_values[24].z, cb3_values[24].w);
+                float r2_x_4 = saturate(mad(mad(cb3_values[25].w, r2_y_5, r2_x_2), cb3_values[24].z, cb3_values[24].w));
                 float r2_y_6 = (cb6_values[0].x == 1);
                 float r6_x_9;
                 float r6_y_9;
@@ -5119,7 +5119,7 @@ Shader "Custom/Planet_Base_OCEANMOD"
                     r6_z_9 = r6_xyzw_2.z;
                     r6_w_4 = r6_xyzw_2.w;
                 }
-                float r2_y_12 = dot(float4(r6_x_9, r6_y_9, r6_z_9, r6_w_4), unity_OcclusionMaskSelector);
+                float r2_y_12 = saturate(dot(float4(r6_x_9, r6_y_9, r6_z_9, r6_w_4), unity_OcclusionMaskSelector));
                 float r2_z_7 = (r2_x_4 < 0.99);
                 float r2_z_15;
                 if (r2_z_7)
@@ -5207,9 +5207,9 @@ Shader "Custom/Planet_Base_OCEANMOD"
                 float r0_w_5 = rsqrt(r0_w_4);
                 float3 r0_xyz_3 = ((r0_w_5.xxxx * r0_xyz_2.xyzx)).xyz;
                 float nDotV_w_6 = dot(unitClipPos_xyz_6.xyzx, unitViewDir_xyz_1.xyzx);
-                float r2_w_16 = dot(unitClipPos_xyz_6.xyzx, r1_xyz_1.xyzx);
-                float r3_x_2 = dot(unitClipPos_xyz_6.xyzx, r0_xyz_3.xyzx);
-                float r0_x_4 = dot(r1_xyz_1.xyzx, r0_xyz_3.xyzx);
+                float r2_w_16 = saturate(dot(unitClipPos_xyz_6.xyzx, r1_xyz_1.xyzx));
+                float r3_x_2 = saturate(dot(unitClipPos_xyz_6.xyzx, r0_xyz_3.xyzx));
+                float r0_x_4 = saturate(dot(r1_xyz_1.xyzx, r0_xyz_3.xyzx));
                 float r0_y_4 = (r0_x_4 * r0_x_4);
                 float r0_y_5 = dot(r0_y_4.xxxx, r1_w_9.xxxx);
                 float r0_y_6 = (r0_y_5 + -0.5);
@@ -5264,7 +5264,7 @@ Shader "Custom/Planet_Base_OCEANMOD"
                 float r0_w_13 = (-r0_w_12 + 1);
                 float r0_w_14 = (r0_w_13 * cb1_values[5].z);
                 float r0_w_15 = max(r0_w_14, 0);
-                float r0_w_16 = mad(r0_w_15, cb5_values[1].z, cb5_values[1].w);
+                float r0_w_16 = saturate(mad(r0_w_15, cb5_values[1].z, cb5_values[1].w));
                 o.sv_Target0.xyz = ((float4(r0_x_9, r0_y_12, r0_z_19, r0_x_9) * r0_w_16.xxxx)).xyz;
                 o.sv_Target0.w = 1;
                 return o;
@@ -5279,14 +5279,14 @@ Shader "Custom/Planet_Base_OCEANMOD"
             ZWrite Off
             Blend One One
             HLSLPROGRAM
-            cbuffer UnityPerDraw : register(b0)
+            cbuffer _UnityPerDrawCB : register(b0)
             {
                 float4x4 unity_ObjectToWorld;
                 float4 _LightColor0;
                 float4x4 unity_WorldToObject;
                 float4 cb0_values[14];
             };
-            cbuffer UnityPerFrame : register(b1)
+            cbuffer _UnityPerFrameCB : register(b1)
             {
                 float3 _WorldSpaceCameraPos;
                 float4x4 unity_MatrixVP;
@@ -5298,7 +5298,7 @@ Shader "Custom/Planet_Base_OCEANMOD"
                 float4 unity_OcclusionMaskSelector;
                 float4 cb2_values[21];
             };
-            cbuffer UnityProbeVolume : register(b3)
+            cbuffer _UnityProbeVolumeCB : register(b3)
             {
                 float4 unity_ProbeVolumeParams;
                 float4x4 unity_ProbeVolumeWorldToObject;
@@ -5339,7 +5339,7 @@ Shader "Custom/Planet_Base_OCEANMOD"
             };
             struct program59Output
             {
-                float4 sv_Position0 : SV_POSITION0;
+                float4 sv_Position0 : SV_POSITION;
                 float3 texcoord0 : TEXCOORD0;
                 float texcoord4 : TEXCOORD4;
                 float3 texcoord1 : TEXCOORD1;
@@ -5348,7 +5348,7 @@ Shader "Custom/Planet_Base_OCEANMOD"
             };
             struct program105Input
             {
-                float4 sv_Position0 : SV_POSITION0;
+                float4 sv_Position0 : SV_POSITION;
                 float3 texcoord0 : TEXCOORD0;
                 float texcoord4 : TEXCOORD4;
                 float3 texcoord1 : TEXCOORD1;
@@ -5357,7 +5357,7 @@ Shader "Custom/Planet_Base_OCEANMOD"
             };
             struct program105Output
             {
-                float4 sv_Target0 : SV_Target0;
+                float4 sv_Target0 : SV_Target;
             };
             #pragma vertex vert
             program59Output vert(program59Input i)
@@ -5401,9 +5401,9 @@ Shader "Custom/Planet_Base_OCEANMOD"
                 float r1_w_5 = exp2(r1_w_4);
                 float r1_w_6 = (-r1_w_5 + 1);
                 float r2_w_1 = (r1_w_6 * cb0_values[12].x);
-                float r2_w_2 = r2_w_1;
+                float r2_w_2 = saturate(r2_w_1);
                 float r1_w_7 = mad(r1_w_6, cb0_values[12].y, cb0_values[9].x);
-                float r1_w_8 = (r1_w_7 + cb0_values[12].z);
+                float r1_w_8 = saturate((r1_w_7 + cb0_values[12].z));
                 float4 r5_xyzw_4 = (mad(cb0_values[6].xyzw, i.texcoord1.zzzz, mad(cb0_values[4].xyzw, i.texcoord1.xxxx, (i.texcoord1.yyyy * cb0_values[5].xyzw))) + cb0_values[7].xyzw);
                 float r6_x_1 = cb4_values[9].z;
                 float r6_y_1 = cb4_values[10].z;
@@ -5454,7 +5454,7 @@ Shader "Custom/Planet_Base_OCEANMOD"
                     r6_z_9 = r6_xyzw_2.z;
                     r6_w_4 = r6_xyzw_2.w;
                 }
-                float r2_y_12 = dot(float4(r6_x_9, r6_y_9, r6_z_9, r6_w_4), unity_OcclusionMaskSelector);
+                float r2_y_12 = saturate(dot(float4(r6_x_9, r6_y_9, r6_z_9, r6_w_4), unity_OcclusionMaskSelector));
                 float4 r6_xyzw_10 = (i.texcoord1.yyyy * cb3_values[9].xyzw);
                 float4 r6_xyzw_11 = mad(cb3_values[8].xyzw, i.texcoord1.xxxx, r6_xyzw_10);
                 float4 r6_xyzw_12 = mad(cb3_values[10].xyzw, i.texcoord1.zzzz, r6_xyzw_11);
@@ -5476,7 +5476,7 @@ Shader "Custom/Planet_Base_OCEANMOD"
                 float r2_z_11 = dot(r5_xyzw_4.xyzx, r5_xyzw_4.xyzx);
                 float4 r5_xyzw_5 = t1.Sample(sampler_linear_clamp3, (r2_z_11.xxxx).xy);
                 float r2_y_17 = (r2_y_16 * r5_xyzw_5.x);
-                float4 r2_xyzw_7 = (((mad(mad(mad(cb3_values[25].w, r2_y_5, r2_x_2), cb3_values[24].z, cb3_values[24].w), r2_y_13, r2_z_8) * r2_y_17)).xxxx * _LightColor0.xyzx);
+                float4 r2_xyzw_7 = (((mad(saturate(mad(mad(cb3_values[25].w, r2_y_5, r2_x_2), cb3_values[24].z, cb3_values[24].w)), r2_y_13, r2_z_8) * r2_y_17)).xxxx * _LightColor0.xyzx);
                 float r2_x_7 = r2_xyzw_7.x;
                 float r2_y_18 = r2_xyzw_7.y;
                 float r2_z_12 = r2_xyzw_7.z;
@@ -5488,9 +5488,9 @@ Shader "Custom/Planet_Base_OCEANMOD"
                 float r0_w_5 = rsqrt(r0_w_4);
                 float3 r0_xyz_3 = ((r0_w_5.xxxx * r0_xyz_2.xyzx)).xyz;
                 float nDotV_w_6 = dot(unitClipPos_xyz_6.xyzx, unitViewDir_xyz_1.xyzx);
-                float r2_w_12 = dot(unitClipPos_xyz_6.xyzx, r1_xyz_1.xyzx);
-                float r3_x_2 = dot(unitClipPos_xyz_6.xyzx, r0_xyz_3.xyzx);
-                float r0_x_4 = dot(r1_xyz_1.xyzx, r0_xyz_3.xyzx);
+                float r2_w_12 = saturate(dot(unitClipPos_xyz_6.xyzx, r1_xyz_1.xyzx));
+                float r3_x_2 = saturate(dot(unitClipPos_xyz_6.xyzx, r0_xyz_3.xyzx));
+                float r0_x_4 = saturate(dot(r1_xyz_1.xyzx, r0_xyz_3.xyzx));
                 float r0_y_4 = (r0_x_4 * r0_x_4);
                 float r0_y_5 = dot(r0_y_4.xxxx, r1_w_9.xxxx);
                 float r0_y_6 = (r0_y_5 + -0.5);
@@ -5545,7 +5545,7 @@ Shader "Custom/Planet_Base_OCEANMOD"
                 float r0_w_13 = (-r0_w_12 + 1);
                 float r0_w_14 = (r0_w_13 * cb1_values[5].z);
                 float r0_w_15 = max(r0_w_14, 0);
-                float r0_w_16 = mad(r0_w_15, cb5_values[1].z, cb5_values[1].w);
+                float r0_w_16 = saturate(mad(r0_w_15, cb5_values[1].z, cb5_values[1].w));
                 o.sv_Target0.xyz = ((float4(r0_x_9, r0_y_12, r0_z_19, r0_x_9) * r0_w_16.xxxx)).xyz;
                 o.sv_Target0.w = 1;
                 return o;
@@ -5560,14 +5560,14 @@ Shader "Custom/Planet_Base_OCEANMOD"
             ZWrite Off
             Blend One One
             HLSLPROGRAM
-            cbuffer UnityPerDraw : register(b0)
+            cbuffer _UnityPerDrawCB : register(b0)
             {
                 float4x4 unity_ObjectToWorld;
                 float4 _LightColor0;
                 float4x4 unity_WorldToObject;
                 float4 cb0_values[14];
             };
-            cbuffer UnityPerFrame : register(b1)
+            cbuffer _UnityPerFrameCB : register(b1)
             {
                 float3 _WorldSpaceCameraPos;
                 float4x4 unity_MatrixVP;
@@ -5579,7 +5579,7 @@ Shader "Custom/Planet_Base_OCEANMOD"
                 float4 unity_OcclusionMaskSelector;
                 float4 cb2_values[21];
             };
-            cbuffer UnityProbeVolume : register(b3)
+            cbuffer _UnityProbeVolumeCB : register(b3)
             {
                 float4 unity_ProbeVolumeParams;
                 float4x4 unity_ProbeVolumeWorldToObject;
@@ -5607,7 +5607,7 @@ Shader "Custom/Planet_Base_OCEANMOD"
             };
             struct program58Output
             {
-                float4 sv_Position0 : SV_POSITION0;
+                float4 sv_Position0 : SV_POSITION;
                 float3 texcoord0 : TEXCOORD0;
                 float3 texcoord1 : TEXCOORD1;
                 float2 texcoord2 : TEXCOORD2;
@@ -5616,7 +5616,7 @@ Shader "Custom/Planet_Base_OCEANMOD"
             };
             struct program104Input
             {
-                float4 sv_Position0 : SV_POSITION0;
+                float4 sv_Position0 : SV_POSITION;
                 float3 texcoord0 : TEXCOORD0;
                 float3 texcoord1 : TEXCOORD1;
                 float2 texcoord2 : TEXCOORD2;
@@ -5625,7 +5625,7 @@ Shader "Custom/Planet_Base_OCEANMOD"
             };
             struct program104Output
             {
-                float4 sv_Target0 : SV_Target0;
+                float4 sv_Target0 : SV_Target;
             };
             #pragma vertex vert
             program58Output vert(program58Input i)
@@ -5663,12 +5663,12 @@ Shader "Custom/Planet_Base_OCEANMOD"
                 float r1_w_2 = (r1_w_1 * cb0_values[13].x);
                 float r1_w_3 = exp2(r1_w_2);
                 float r1_w_4 = (-r1_w_3 + 1);
-                float4 r2_xyzw_3 = mad(((r1_w_4 * cb0_values[12].x)).xxxx, -cb0_values[8].xyzx, cb0_values[8].xyzx);
+                float4 r2_xyzw_3 = mad((saturate((r1_w_4 * cb0_values[12].x))).xxxx, -cb0_values[8].xyzx, cb0_values[8].xyzx);
                 float r2_x_3 = r2_xyzw_3.x;
                 float r2_y_1 = r2_xyzw_3.y;
                 float r2_z_1 = r2_xyzw_3.z;
                 float r1_w_5 = mad(r1_w_4, cb0_values[12].y, cb0_values[9].x);
-                float r1_w_6 = (r1_w_5 + cb0_values[12].z);
+                float r1_w_6 = saturate((r1_w_5 + cb0_values[12].z));
                 float r2_w_1 = (cb4_values[0].x == 1);
                 float r4_x_10;
                 float r4_y_10;
@@ -5699,7 +5699,7 @@ Shader "Custom/Planet_Base_OCEANMOD"
                     r4_z_10 = r4_xyzw_10.z;
                     r4_w_4 = r4_xyzw_10.w;
                 }
-                float r2_w_5 = dot(float4(r4_x_10, r4_y_10, r4_z_10, r4_w_4), unity_OcclusionMaskSelector);
+                float r2_w_5 = saturate(dot(float4(r4_x_10, r4_y_10, r4_z_10, r4_w_4), unity_OcclusionMaskSelector));
                 float4 r3_xyzw_5 = t0.Sample(sampler_linear_clamp1, ((((mad(cb0_values[6].xyxx, i.texcoord1.zzzz, (mad(cb0_values[4].xyxx, i.texcoord1.xxxx, ((i.texcoord1.yyyy * cb0_values[5].xyxx)).xyxx)).xyxx)).xyxx + cb0_values[7].xyxx)).xyxx).xy);
                 float r2_w_6 = (r2_w_5 * r3_xyzw_5.w);
                 float4 r3_xyzw_6 = (r2_w_6.xxxx * _LightColor0.xyzx);
@@ -5718,9 +5718,9 @@ Shader "Custom/Planet_Base_OCEANMOD"
                 float r0_w_5 = rsqrt(r0_w_4);
                 float3 r0_xyz_3 = ((r0_w_5.xxxx * r0_xyz_2.xyzx)).xyz;
                 float nDotV_w_6 = dot(unitWorldNormal_xyz_11.xyzx, unitViewDir_xyz_1.xyzx);
-                float r1_x_2 = dot(unitWorldNormal_xyz_11.xyzx, _WorldSpaceLightPos0.xyzx);
-                float r1_y_2 = dot(unitWorldNormal_xyz_11.xyzx, r0_xyz_3.xyzx);
-                float r0_x_4 = dot(_WorldSpaceLightPos0.xyzx, r0_xyz_3.xyzx);
+                float r1_x_2 = saturate(dot(unitWorldNormal_xyz_11.xyzx, _WorldSpaceLightPos0.xyzx));
+                float r1_y_2 = saturate(dot(unitWorldNormal_xyz_11.xyzx, r0_xyz_3.xyzx));
+                float r0_x_4 = saturate(dot(_WorldSpaceLightPos0.xyzx, r0_xyz_3.xyzx));
                 float r0_y_4 = (r0_x_4 * r0_x_4);
                 float r0_y_5 = dot(r0_y_4.xxxx, r1_w_7.xxxx);
                 float r0_y_6 = (r0_y_5 + -0.5);
@@ -5780,7 +5780,7 @@ Shader "Custom/Planet_Base_OCEANMOD"
                 float r0_w_13 = (-r0_w_12 + 1);
                 float r0_w_14 = (r0_w_13 * cb1_values[5].z);
                 float r0_w_15 = max(r0_w_14, 0);
-                float r0_w_16 = mad(r0_w_15, unity_ProbeVolumeWorldToObject[0].z, unity_ProbeVolumeWorldToObject[0].w);
+                float r0_w_16 = saturate(mad(r0_w_15, unity_ProbeVolumeWorldToObject[0].z, unity_ProbeVolumeWorldToObject[0].w));
                 o.sv_Target0.xyz = ((float4(r0_x_9, r0_y_12, r0_z_19, r0_x_9) * r0_w_16.xxxx)).xyz;
                 o.sv_Target0.w = 1;
                 return o;
@@ -5795,14 +5795,14 @@ Shader "Custom/Planet_Base_OCEANMOD"
             ZWrite Off
             Blend One One
             HLSLPROGRAM
-            cbuffer UnityPerDraw : register(b0)
+            cbuffer _UnityPerDrawCB : register(b0)
             {
                 float4x4 unity_ObjectToWorld;
                 float4 _LightColor0;
                 float4x4 unity_WorldToObject;
                 float4 cb0_values[14];
             };
-            cbuffer UnityPerFrame : register(b1)
+            cbuffer _UnityPerFrameCB : register(b1)
             {
                 float3 _WorldSpaceCameraPos;
                 float4x4 unity_MatrixVP;
@@ -5814,7 +5814,7 @@ Shader "Custom/Planet_Base_OCEANMOD"
                 float4 unity_OcclusionMaskSelector;
                 float4 cb2_values[21];
             };
-            cbuffer UnityProbeVolume : register(b3)
+            cbuffer _UnityProbeVolumeCB : register(b3)
             {
                 float4 unity_ProbeVolumeParams;
                 float4x4 unity_ProbeVolumeWorldToObject;
@@ -5844,7 +5844,7 @@ Shader "Custom/Planet_Base_OCEANMOD"
             };
             struct program57Output
             {
-                float4 sv_Position0 : SV_POSITION0;
+                float4 sv_Position0 : SV_POSITION;
                 float3 texcoord0 : TEXCOORD0;
                 float texcoord4 : TEXCOORD4;
                 float3 texcoord1 : TEXCOORD1;
@@ -5853,7 +5853,7 @@ Shader "Custom/Planet_Base_OCEANMOD"
             };
             struct program103Input
             {
-                float4 sv_Position0 : SV_POSITION0;
+                float4 sv_Position0 : SV_POSITION;
                 float3 texcoord0 : TEXCOORD0;
                 float texcoord4 : TEXCOORD4;
                 float3 texcoord1 : TEXCOORD1;
@@ -5862,7 +5862,7 @@ Shader "Custom/Planet_Base_OCEANMOD"
             };
             struct program103Output
             {
-                float4 sv_Target0 : SV_Target0;
+                float4 sv_Target0 : SV_Target;
             };
             #pragma vertex vert
             program57Output vert(program57Input i)
@@ -5903,9 +5903,9 @@ Shader "Custom/Planet_Base_OCEANMOD"
                 float r1_w_5 = exp2(r1_w_4);
                 float r1_w_6 = (-r1_w_5 + 1);
                 float r2_w_1 = (r1_w_6 * cb0_values[12].x);
-                float r2_w_2 = r2_w_1;
+                float r2_w_2 = saturate(r2_w_1);
                 float r1_w_7 = mad(r1_w_6, cb0_values[12].y, cb0_values[9].x);
-                float r1_w_8 = (r1_w_7 + cb0_values[12].z);
+                float r1_w_8 = saturate((r1_w_7 + cb0_values[12].z));
                 float3 r4_xyz_4 = (((mad(cb0_values[6].xyzx, i.texcoord1.zzzz, (mad(cb0_values[4].xyzx, i.texcoord1.xxxx, ((i.texcoord1.yyyy * cb0_values[5].xyzx)).xyzx)).xyzx)).xyzx + cb0_values[7].xyzx)).xyz;
                 float r2_w_3 = (cb4_values[0].x == 1);
                 float r5_x_10;
@@ -5937,7 +5937,7 @@ Shader "Custom/Planet_Base_OCEANMOD"
                     r5_z_10 = r5_xyzw_10.z;
                     r5_w_4 = r5_xyzw_10.w;
                 }
-                float r2_w_7 = dot(float4(r5_x_10, r5_y_10, r5_z_10, r5_w_4), unity_OcclusionMaskSelector);
+                float r2_w_7 = saturate(dot(float4(r5_x_10, r5_y_10, r5_z_10, r5_w_4), unity_OcclusionMaskSelector));
                 float r3_w_3 = dot(r4_xyz_4.xyzx, r4_xyz_4.xyzx);
                 float4 r5_xyzw_11 = t0.Sample(sampler_linear_clamp2, (r3_w_3.xxxx).xy);
                 float4 r4_xyzw_5 = t1.Sample(sampler_linear_clamp1, r4_xyz_4.xyz);
@@ -5952,9 +5952,9 @@ Shader "Custom/Planet_Base_OCEANMOD"
                 float r0_w_5 = rsqrt(r0_w_4);
                 float3 r0_xyz_3 = ((r0_w_5.xxxx * r0_xyz_2.xyzx)).xyz;
                 float nDotV_w_6 = dot(unitClipPos_xyz_12.xyzx, unitViewDir_xyz_2.xyzx);
-                float r2_x_3 = dot(unitClipPos_xyz_12.xyzx, r1_xyz_1.xyzx);
-                float r2_y_3 = dot(unitClipPos_xyz_12.xyzx, r0_xyz_3.xyzx);
-                float r0_x_4 = dot(r1_xyz_1.xyzx, r0_xyz_3.xyzx);
+                float r2_x_3 = saturate(dot(unitClipPos_xyz_12.xyzx, r1_xyz_1.xyzx));
+                float r2_y_3 = saturate(dot(unitClipPos_xyz_12.xyzx, r0_xyz_3.xyzx));
+                float r0_x_4 = saturate(dot(r1_xyz_1.xyzx, r0_xyz_3.xyzx));
                 float r0_y_4 = (r0_x_4 * r0_x_4);
                 float r0_y_5 = dot(r0_y_4.xxxx, r1_w_9.xxxx);
                 float r0_y_6 = (r0_y_5 + -0.5);
@@ -6009,7 +6009,7 @@ Shader "Custom/Planet_Base_OCEANMOD"
                 float r0_w_13 = (-r0_w_12 + 1);
                 float r0_w_14 = (r0_w_13 * cb1_values[5].z);
                 float r0_w_15 = max(r0_w_14, 0);
-                float r0_w_16 = mad(r0_w_15, unity_ProbeVolumeWorldToObject[0].z, unity_ProbeVolumeWorldToObject[0].w);
+                float r0_w_16 = saturate(mad(r0_w_15, unity_ProbeVolumeWorldToObject[0].z, unity_ProbeVolumeWorldToObject[0].w));
                 o.sv_Target0.xyz = ((float4(r0_x_9, r0_y_12, r0_z_19, r0_x_9) * r0_w_16.xxxx)).xyz;
                 o.sv_Target0.w = 1;
                 return o;
@@ -6024,14 +6024,14 @@ Shader "Custom/Planet_Base_OCEANMOD"
             ZWrite Off
             Blend One One
             HLSLPROGRAM
-            cbuffer UnityPerDraw : register(b0)
+            cbuffer _UnityPerDrawCB : register(b0)
             {
                 float4x4 unity_ObjectToWorld;
                 float4 _LightColor0;
                 float4x4 unity_WorldToObject;
                 float4 cb0_values[14];
             };
-            cbuffer UnityPerFrame : register(b1)
+            cbuffer _UnityPerFrameCB : register(b1)
             {
                 float3 _WorldSpaceCameraPos;
                 float4x4 unity_MatrixVP;
@@ -6043,7 +6043,7 @@ Shader "Custom/Planet_Base_OCEANMOD"
                 float4 unity_OcclusionMaskSelector;
                 float4 cb2_values[21];
             };
-            cbuffer UnityProbeVolume : register(b3)
+            cbuffer _UnityProbeVolumeCB : register(b3)
             {
                 float4 unity_ProbeVolumeParams;
                 float4x4 unity_ProbeVolumeWorldToObject;
@@ -6073,7 +6073,7 @@ Shader "Custom/Planet_Base_OCEANMOD"
             };
             struct program56Output
             {
-                float4 sv_Position0 : SV_POSITION0;
+                float4 sv_Position0 : SV_POSITION;
                 float3 texcoord0 : TEXCOORD0;
                 float texcoord4 : TEXCOORD4;
                 float3 texcoord1 : TEXCOORD1;
@@ -6082,7 +6082,7 @@ Shader "Custom/Planet_Base_OCEANMOD"
             };
             struct program102Input
             {
-                float4 sv_Position0 : SV_POSITION0;
+                float4 sv_Position0 : SV_POSITION;
                 float3 texcoord0 : TEXCOORD0;
                 float texcoord4 : TEXCOORD4;
                 float3 texcoord1 : TEXCOORD1;
@@ -6091,7 +6091,7 @@ Shader "Custom/Planet_Base_OCEANMOD"
             };
             struct program102Output
             {
-                float4 sv_Target0 : SV_Target0;
+                float4 sv_Target0 : SV_Target;
             };
             #pragma vertex vert
             program56Output vert(program56Input i)
@@ -6135,9 +6135,9 @@ Shader "Custom/Planet_Base_OCEANMOD"
                 float r1_w_5 = exp2(r1_w_4);
                 float r1_w_6 = (-r1_w_5 + 1);
                 float r2_w_1 = (r1_w_6 * cb0_values[12].x);
-                float r2_w_2 = r2_w_1;
+                float r2_w_2 = saturate(r2_w_1);
                 float r1_w_7 = mad(r1_w_6, cb0_values[12].y, cb0_values[9].x);
-                float r1_w_8 = (r1_w_7 + cb0_values[12].z);
+                float r1_w_8 = saturate((r1_w_7 + cb0_values[12].z));
                 float4 r4_xyzw_4 = (mad(cb0_values[6].xyzw, i.texcoord1.zzzz, mad(cb0_values[4].xyzw, i.texcoord1.xxxx, (i.texcoord1.yyyy * cb0_values[5].xyzw))) + cb0_values[7].xyzw);
                 float r2_w_3 = (cb4_values[0].x == 1);
                 float r5_x_10;
@@ -6169,7 +6169,7 @@ Shader "Custom/Planet_Base_OCEANMOD"
                     r5_z_10 = r5_xyzw_10.z;
                     r5_w_4 = r5_xyzw_10.w;
                 }
-                float r2_w_7 = dot(float4(r5_x_10, r5_y_10, r5_z_10, r5_w_4), unity_OcclusionMaskSelector);
+                float r2_w_7 = saturate(dot(float4(r5_x_10, r5_y_10, r5_z_10, r5_w_4), unity_OcclusionMaskSelector));
                 float r3_w_3 = (0 < r4_xyzw_4.z);
                 float r3_w_4 = asfloat(asint(r3_w_3) & asint(1065353216));
                 float4 r5_xyzw_13 = t0.Sample(sampler_linear_clamp1, (((((r4_xyzw_4.xyxx / r4_xyzw_4.wwww)).xyxx + float4(0.5, 0.5, 0, 0))).xyxx).xy);
@@ -6194,9 +6194,9 @@ Shader "Custom/Planet_Base_OCEANMOD"
                 float r0_w_5 = rsqrt(r0_w_4);
                 float3 r0_xyz_3 = ((r0_w_5.xxxx * r0_xyz_2.xyzx)).xyz;
                 float nDotV_w_6 = dot(float4(unitClipPos_x_14, unitClipPos_y_14, unitClipPos_z_12, unitClipPos_x_14), unitViewDir_xyz_2.xyzx);
-                float r2_x_3 = dot(float4(unitClipPos_x_14, unitClipPos_y_14, unitClipPos_z_12, unitClipPos_x_14), r1_xyz_1.xyzx);
-                float r2_y_3 = dot(float4(unitClipPos_x_14, unitClipPos_y_14, unitClipPos_z_12, unitClipPos_x_14), r0_xyz_3.xyzx);
-                float r0_x_4 = dot(r1_xyz_1.xyzx, r0_xyz_3.xyzx);
+                float r2_x_3 = saturate(dot(float4(unitClipPos_x_14, unitClipPos_y_14, unitClipPos_z_12, unitClipPos_x_14), r1_xyz_1.xyzx));
+                float r2_y_3 = saturate(dot(float4(unitClipPos_x_14, unitClipPos_y_14, unitClipPos_z_12, unitClipPos_x_14), r0_xyz_3.xyzx));
+                float r0_x_4 = saturate(dot(r1_xyz_1.xyzx, r0_xyz_3.xyzx));
                 float r0_y_4 = (r0_x_4 * r0_x_4);
                 float r0_y_5 = dot(r0_y_4.xxxx, r1_w_9.xxxx);
                 float r0_y_6 = (r0_y_5 + -0.5);
@@ -6251,7 +6251,7 @@ Shader "Custom/Planet_Base_OCEANMOD"
                 float r0_w_13 = (-r0_w_12 + 1);
                 float r0_w_14 = (r0_w_13 * cb1_values[5].z);
                 float r0_w_15 = max(r0_w_14, 0);
-                float r0_w_16 = mad(r0_w_15, unity_ProbeVolumeWorldToObject[0].z, unity_ProbeVolumeWorldToObject[0].w);
+                float r0_w_16 = saturate(mad(r0_w_15, unity_ProbeVolumeWorldToObject[0].z, unity_ProbeVolumeWorldToObject[0].w));
                 o.sv_Target0.xyz = ((float4(r0_x_9, r0_y_12, r0_z_19, r0_x_9) * r0_w_16.xxxx)).xyz;
                 o.sv_Target0.w = 1;
                 return o;
@@ -6266,25 +6266,25 @@ Shader "Custom/Planet_Base_OCEANMOD"
             ZWrite Off
             Blend One One
             HLSLPROGRAM
-            cbuffer UnityPerDraw : register(b0)
+            cbuffer _UnityPerDrawCB : register(b0)
             {
                 float4x4 unity_ObjectToWorld;
                 float4 _LightColor0;
                 float4x4 unity_WorldToObject;
                 float4 cb0_values[10];
             };
-            cbuffer UnityPerFrame : register(b1)
+            cbuffer _UnityPerFrameCB : register(b1)
             {
                 float3 _WorldSpaceCameraPos;
                 float4x4 unity_MatrixVP;
                 float4 cb1_values[6];
             };
-            cbuffer UnityLighting : register(b2)
+            cbuffer _UnityLightingCB : register(b2)
             {
                 float4 _WorldSpaceLightPos0;
                 float4 unity_OcclusionMaskSelector;
             };
-            cbuffer UnityProbeVolume : register(b3)
+            cbuffer _UnityProbeVolumeCB : register(b3)
             {
                 float4 unity_ProbeVolumeParams;
                 float4x4 unity_ProbeVolumeWorldToObject;
@@ -6310,7 +6310,7 @@ Shader "Custom/Planet_Base_OCEANMOD"
             };
             struct program55Output
             {
-                float4 sv_Position0 : SV_POSITION0;
+                float4 sv_Position0 : SV_POSITION;
                 float3 texcoord0 : TEXCOORD0;
                 float texcoord4 : TEXCOORD4;
                 float3 texcoord1 : TEXCOORD1;
@@ -6318,7 +6318,7 @@ Shader "Custom/Planet_Base_OCEANMOD"
             };
             struct program101Input
             {
-                float4 sv_Position0 : SV_POSITION0;
+                float4 sv_Position0 : SV_POSITION;
                 float3 texcoord0 : TEXCOORD0;
                 float texcoord4 : TEXCOORD4;
                 float3 texcoord1 : TEXCOORD1;
@@ -6326,7 +6326,7 @@ Shader "Custom/Planet_Base_OCEANMOD"
             };
             struct program101Output
             {
-                float4 sv_Target0 : SV_Target0;
+                float4 sv_Target0 : SV_Target;
             };
             #pragma vertex vert
             program55Output vert(program55Input i)
@@ -6363,12 +6363,12 @@ Shader "Custom/Planet_Base_OCEANMOD"
                 float r1_w_2 = (r1_w_1 * cb0_values[9].x);
                 float r1_w_3 = exp2(r1_w_2);
                 float r1_w_4 = (-r1_w_3 + 1);
-                float4 r2_xyzw_3 = mad(((r1_w_4 * cb0_values[8].x)).xxxx, -cb0_values[4].xyzx, cb0_values[4].xyzx);
+                float4 r2_xyzw_3 = mad((saturate((r1_w_4 * cb0_values[8].x))).xxxx, -cb0_values[4].xyzx, cb0_values[4].xyzx);
                 float r2_x_3 = r2_xyzw_3.x;
                 float r2_y_1 = r2_xyzw_3.y;
                 float r2_z_1 = r2_xyzw_3.z;
                 float r1_w_5 = mad(r1_w_4, cb0_values[8].y, cb0_values[5].x);
-                float r1_w_6 = (r1_w_5 + cb0_values[8].z);
+                float r1_w_6 = saturate((r1_w_5 + cb0_values[8].z));
                 float r2_w_1 = (cb4_values[0].x == 1);
                 float r3_x_10;
                 float r3_y_11;
@@ -6399,7 +6399,7 @@ Shader "Custom/Planet_Base_OCEANMOD"
                     r3_z_10 = r3_xyzw_10.z;
                     r3_w_4 = r3_xyzw_10.w;
                 }
-                float r2_w_5 = dot(float4(r3_x_10, r3_y_11, r3_z_10, r3_w_4), unity_OcclusionMaskSelector);
+                float r2_w_5 = saturate(dot(float4(r3_x_10, r3_y_11, r3_z_10, r3_w_4), unity_OcclusionMaskSelector));
                 float4 r3_xyzw_11 = (r2_w_5.xxxx * _LightColor0.xyzx);
                 float r3_x_11 = r3_xyzw_11.x;
                 float r3_y_12 = r3_xyzw_11.y;
@@ -6416,9 +6416,9 @@ Shader "Custom/Planet_Base_OCEANMOD"
                 float r0_w_5 = rsqrt(r0_w_4);
                 float3 r0_xyz_3 = ((r0_w_5.xxxx * r0_xyz_2.xyzx)).xyz;
                 float nDotV_w_6 = dot(unitClipPos_xyz_1.xyzx, unitViewDir_xyz_1.xyzx);
-                float r1_x_2 = dot(unitClipPos_xyz_1.xyzx, _WorldSpaceLightPos0.xyzx);
-                float r1_y_2 = dot(unitClipPos_xyz_1.xyzx, r0_xyz_3.xyzx);
-                float r0_x_4 = dot(_WorldSpaceLightPos0.xyzx, r0_xyz_3.xyzx);
+                float r1_x_2 = saturate(dot(unitClipPos_xyz_1.xyzx, _WorldSpaceLightPos0.xyzx));
+                float r1_y_2 = saturate(dot(unitClipPos_xyz_1.xyzx, r0_xyz_3.xyzx));
+                float r0_x_4 = saturate(dot(_WorldSpaceLightPos0.xyzx, r0_xyz_3.xyzx));
                 float r0_y_4 = (r0_x_4 * r0_x_4);
                 float r0_y_5 = dot(r0_y_4.xxxx, r1_w_7.xxxx);
                 float r0_y_6 = (r0_y_5 + -0.5);
@@ -6478,7 +6478,7 @@ Shader "Custom/Planet_Base_OCEANMOD"
                 float r0_w_13 = (-r0_w_12 + 1);
                 float r0_w_14 = (r0_w_13 * cb1_values[5].z);
                 float r0_w_15 = max(r0_w_14, 0);
-                float r0_w_16 = mad(r0_w_15, unity_ProbeVolumeWorldToObject[0].z, unity_ProbeVolumeWorldToObject[0].w);
+                float r0_w_16 = saturate(mad(r0_w_15, unity_ProbeVolumeWorldToObject[0].z, unity_ProbeVolumeWorldToObject[0].w));
                 o.sv_Target0.xyz = ((float4(r0_x_9, r0_y_12, r0_z_19, r0_x_9) * r0_w_16.xxxx)).xyz;
                 o.sv_Target0.w = 1;
                 return o;
@@ -6493,14 +6493,14 @@ Shader "Custom/Planet_Base_OCEANMOD"
             ZWrite Off
             Blend One One
             HLSLPROGRAM
-            cbuffer UnityPerDraw : register(b0)
+            cbuffer _UnityPerDrawCB : register(b0)
             {
                 float4x4 unity_ObjectToWorld;
                 float4 _LightColor0;
                 float4x4 unity_WorldToObject;
                 float4 cb0_values[14];
             };
-            cbuffer UnityPerFrame : register(b1)
+            cbuffer _UnityPerFrameCB : register(b1)
             {
                 float3 _WorldSpaceCameraPos;
                 float4x4 unity_MatrixVP;
@@ -6512,7 +6512,7 @@ Shader "Custom/Planet_Base_OCEANMOD"
                 float4 unity_OcclusionMaskSelector;
                 float4 cb2_values[21];
             };
-            cbuffer UnityProbeVolume : register(b3)
+            cbuffer _UnityProbeVolumeCB : register(b3)
             {
                 float4 unity_ProbeVolumeParams;
                 float4x4 unity_ProbeVolumeWorldToObject;
@@ -6540,7 +6540,7 @@ Shader "Custom/Planet_Base_OCEANMOD"
             };
             struct program54Output
             {
-                float4 sv_Position0 : SV_POSITION0;
+                float4 sv_Position0 : SV_POSITION;
                 float3 texcoord0 : TEXCOORD0;
                 float texcoord4 : TEXCOORD4;
                 float3 texcoord1 : TEXCOORD1;
@@ -6549,7 +6549,7 @@ Shader "Custom/Planet_Base_OCEANMOD"
             };
             struct program100Input
             {
-                float4 sv_Position0 : SV_POSITION0;
+                float4 sv_Position0 : SV_POSITION;
                 float3 texcoord0 : TEXCOORD0;
                 float texcoord4 : TEXCOORD4;
                 float3 texcoord1 : TEXCOORD1;
@@ -6558,7 +6558,7 @@ Shader "Custom/Planet_Base_OCEANMOD"
             };
             struct program100Output
             {
-                float4 sv_Target0 : SV_Target0;
+                float4 sv_Target0 : SV_Target;
             };
             #pragma vertex vert
             program54Output vert(program54Input i)
@@ -6599,9 +6599,9 @@ Shader "Custom/Planet_Base_OCEANMOD"
                 float r1_w_5 = exp2(r1_w_4);
                 float r1_w_6 = (-r1_w_5 + 1);
                 float r2_w_1 = (r1_w_6 * cb0_values[12].x);
-                float r2_w_2 = r2_w_1;
+                float r2_w_2 = saturate(r2_w_1);
                 float r1_w_7 = mad(r1_w_6, cb0_values[12].y, cb0_values[9].x);
-                float r1_w_8 = (r1_w_7 + cb0_values[12].z);
+                float r1_w_8 = saturate((r1_w_7 + cb0_values[12].z));
                 float3 r4_xyz_4 = (((mad(cb0_values[6].xyzx, i.texcoord1.zzzz, (mad(cb0_values[4].xyzx, i.texcoord1.xxxx, ((i.texcoord1.yyyy * cb0_values[5].xyzx)).xyzx)).xyzx)).xyzx + cb0_values[7].xyzx)).xyz;
                 float r2_w_3 = (cb4_values[0].x == 1);
                 float r5_x_10;
@@ -6633,7 +6633,7 @@ Shader "Custom/Planet_Base_OCEANMOD"
                     r5_z_10 = r5_xyzw_10.z;
                     r5_w_4 = r5_xyzw_10.w;
                 }
-                float r2_w_7 = dot(float4(r5_x_10, r5_y_10, r5_z_10, r5_w_4), unity_OcclusionMaskSelector);
+                float r2_w_7 = saturate(dot(float4(r5_x_10, r5_y_10, r5_z_10, r5_w_4), unity_OcclusionMaskSelector));
                 float r3_w_3 = dot(r4_xyz_4.xyzx, r4_xyz_4.xyzx);
                 float4 r4_xyzw_5 = t0.Sample(sampler_linear_clamp1, (r3_w_3.xxxx).xy);
                 float r2_w_8 = (r2_w_7 * r4_xyzw_5.x);
@@ -6646,9 +6646,9 @@ Shader "Custom/Planet_Base_OCEANMOD"
                 float r0_w_5 = rsqrt(r0_w_4);
                 float3 r0_xyz_3 = ((r0_w_5.xxxx * r0_xyz_2.xyzx)).xyz;
                 float nDotV_w_6 = dot(unitClipPos_xyz_11.xyzx, unitViewDir_xyz_2.xyzx);
-                float r2_x_3 = dot(unitClipPos_xyz_11.xyzx, r1_xyz_1.xyzx);
-                float r2_y_3 = dot(unitClipPos_xyz_11.xyzx, r0_xyz_3.xyzx);
-                float r0_x_4 = dot(r1_xyz_1.xyzx, r0_xyz_3.xyzx);
+                float r2_x_3 = saturate(dot(unitClipPos_xyz_11.xyzx, r1_xyz_1.xyzx));
+                float r2_y_3 = saturate(dot(unitClipPos_xyz_11.xyzx, r0_xyz_3.xyzx));
+                float r0_x_4 = saturate(dot(r1_xyz_1.xyzx, r0_xyz_3.xyzx));
                 float r0_y_4 = (r0_x_4 * r0_x_4);
                 float r0_y_5 = dot(r0_y_4.xxxx, r1_w_9.xxxx);
                 float r0_y_6 = (r0_y_5 + -0.5);
@@ -6703,7 +6703,7 @@ Shader "Custom/Planet_Base_OCEANMOD"
                 float r0_w_13 = (-r0_w_12 + 1);
                 float r0_w_14 = (r0_w_13 * cb1_values[5].z);
                 float r0_w_15 = max(r0_w_14, 0);
-                float r0_w_16 = mad(r0_w_15, unity_ProbeVolumeWorldToObject[0].z, unity_ProbeVolumeWorldToObject[0].w);
+                float r0_w_16 = saturate(mad(r0_w_15, unity_ProbeVolumeWorldToObject[0].z, unity_ProbeVolumeWorldToObject[0].w));
                 o.sv_Target0.xyz = ((float4(r0_x_9, r0_y_12, r0_z_19, r0_x_9) * r0_w_16.xxxx)).xyz;
                 o.sv_Target0.w = 1;
                 return o;
@@ -6718,14 +6718,14 @@ Shader "Custom/Planet_Base_OCEANMOD"
             ZWrite Off
             Blend One One
             HLSLPROGRAM
-            cbuffer UnityPerDraw : register(b0)
+            cbuffer _UnityPerDrawCB : register(b0)
             {
                 float4x4 unity_ObjectToWorld;
                 float4 _LightColor0;
                 float4x4 unity_WorldToObject;
                 float4 cb0_values[14];
             };
-            cbuffer UnityPerFrame : register(b1)
+            cbuffer _UnityPerFrameCB : register(b1)
             {
                 float3 _WorldSpaceCameraPos;
                 float4x4 unity_MatrixVP;
@@ -6737,7 +6737,7 @@ Shader "Custom/Planet_Base_OCEANMOD"
                 float4 unity_OcclusionMaskSelector;
                 float4 cb2_values[21];
             };
-            cbuffer UnityProbeVolume : register(b3)
+            cbuffer _UnityProbeVolumeCB : register(b3)
             {
                 float4 unity_ProbeVolumeParams;
                 float4x4 unity_ProbeVolumeWorldToObject;
@@ -6774,7 +6774,7 @@ Shader "Custom/Planet_Base_OCEANMOD"
             };
             struct program53Output
             {
-                float4 sv_Position0 : SV_POSITION0;
+                float4 sv_Position0 : SV_POSITION;
                 float3 texcoord0 : TEXCOORD0;
                 float3 texcoord1 : TEXCOORD1;
                 float3 texcoord2 : TEXCOORD2;
@@ -6782,7 +6782,7 @@ Shader "Custom/Planet_Base_OCEANMOD"
             };
             struct program99Input
             {
-                float4 sv_Position0 : SV_POSITION0;
+                float4 sv_Position0 : SV_POSITION;
                 float3 texcoord0 : TEXCOORD0;
                 float3 texcoord1 : TEXCOORD1;
                 float3 texcoord2 : TEXCOORD2;
@@ -6790,7 +6790,7 @@ Shader "Custom/Planet_Base_OCEANMOD"
             };
             struct program99Output
             {
-                float4 sv_Target0 : SV_Target0;
+                float4 sv_Target0 : SV_Target;
             };
             #pragma vertex vert
             program53Output vert(program53Input i)
@@ -6827,9 +6827,9 @@ Shader "Custom/Planet_Base_OCEANMOD"
                 float r1_w_5 = exp2(r1_w_4);
                 float r1_w_6 = (-r1_w_5 + 1);
                 float r2_w_1 = (r1_w_6 * cb0_values[12].x);
-                float r2_w_2 = r2_w_1;
+                float r2_w_2 = saturate(r2_w_1);
                 float r1_w_7 = mad(r1_w_6, cb0_values[12].y, cb0_values[9].x);
-                float r1_w_8 = (r1_w_7 + cb0_values[12].z);
+                float r1_w_8 = saturate((r1_w_7 + cb0_values[12].z));
                 float3 r5_xyz_4 = (((mad(cb0_values[6].xyzx, i.texcoord1.zzzz, (mad(cb0_values[4].xyzx, i.texcoord1.xxxx, ((i.texcoord1.yyyy * cb0_values[5].xyzx)).xyzx)).xyzx)).xyzx + cb0_values[7].xyzx)).xyz;
                 float r6_x_1 = cb4_values[9].z;
                 float r6_y_1 = cb4_values[10].z;
@@ -6842,7 +6842,7 @@ Shader "Custom/Planet_Base_OCEANMOD"
                 float r2_y_3 = dot(float4(r2_y_2, r2_z_2, r2_w_3, r2_y_2), float4(r2_y_2, r2_z_2, r2_w_3, r2_y_2));
                 float r2_y_4 = sqrt(r2_y_3);
                 float r2_y_5 = (-r2_x_2 + r2_y_4);
-                float r2_x_4 = mad(mad(cb3_values[25].w, r2_y_5, r2_x_2), cb3_values[24].z, cb3_values[24].w);
+                float r2_x_4 = saturate(mad(mad(cb3_values[25].w, r2_y_5, r2_x_2), cb3_values[24].z, cb3_values[24].w));
                 float r2_y_6 = (cb5_values[0].x == 1);
                 float r6_x_9;
                 float r6_y_9;
@@ -6881,7 +6881,7 @@ Shader "Custom/Planet_Base_OCEANMOD"
                     r6_z_9 = r6_xyzw_2.z;
                     r6_w_4 = r6_xyzw_2.w;
                 }
-                float r2_y_12 = dot(float4(r6_x_9, r6_y_9, r6_z_9, r6_w_4), unity_OcclusionMaskSelector);
+                float r2_y_12 = saturate(dot(float4(r6_x_9, r6_y_9, r6_z_9, r6_w_4), unity_OcclusionMaskSelector));
                 float r2_z_7 = (r2_x_4 < 0.99);
                 float r2_z_19;
                 if (r2_z_7)
@@ -6926,9 +6926,9 @@ Shader "Custom/Planet_Base_OCEANMOD"
                 float r0_w_5 = rsqrt(r0_w_4);
                 float3 r0_xyz_3 = ((r0_w_5.xxxx * r0_xyz_2.xyzx)).xyz;
                 float nDotV_w_6 = dot(unitWorldNormal_xyz_6.xyzx, unitViewDir_xyz_1.xyzx);
-                float r2_w_11 = dot(unitWorldNormal_xyz_6.xyzx, r1_xyz_1.xyzx);
-                float r3_x_2 = dot(unitWorldNormal_xyz_6.xyzx, r0_xyz_3.xyzx);
-                float r0_x_4 = dot(r1_xyz_1.xyzx, r0_xyz_3.xyzx);
+                float r2_w_11 = saturate(dot(unitWorldNormal_xyz_6.xyzx, r1_xyz_1.xyzx));
+                float r3_x_2 = saturate(dot(unitWorldNormal_xyz_6.xyzx, r0_xyz_3.xyzx));
+                float r0_x_4 = saturate(dot(r1_xyz_1.xyzx, r0_xyz_3.xyzx));
                 float r0_y_4 = (r0_x_4 * r0_x_4);
                 float r0_y_5 = dot(r0_y_4.xxxx, r1_w_9.xxxx);
                 float r0_y_6 = (r0_y_5 + -0.5);
@@ -6989,14 +6989,14 @@ Shader "Custom/Planet_Base_OCEANMOD"
             ZWrite Off
             Blend One One
             HLSLPROGRAM
-            cbuffer UnityPerDraw : register(b0)
+            cbuffer _UnityPerDrawCB : register(b0)
             {
                 float4x4 unity_ObjectToWorld;
                 float4 _LightColor0;
                 float4x4 unity_WorldToObject;
                 float4 cb0_values[14];
             };
-            cbuffer UnityPerFrame : register(b1)
+            cbuffer _UnityPerFrameCB : register(b1)
             {
                 float3 _WorldSpaceCameraPos;
                 float4x4 unity_MatrixVP;
@@ -7008,7 +7008,7 @@ Shader "Custom/Planet_Base_OCEANMOD"
                 float4 unity_OcclusionMaskSelector;
                 float4 cb2_values[21];
             };
-            cbuffer UnityProbeVolume : register(b3)
+            cbuffer _UnityProbeVolumeCB : register(b3)
             {
                 float4 unity_ProbeVolumeParams;
                 float4x4 unity_ProbeVolumeWorldToObject;
@@ -7045,7 +7045,7 @@ Shader "Custom/Planet_Base_OCEANMOD"
             };
             struct program52Output
             {
-                float4 sv_Position0 : SV_POSITION0;
+                float4 sv_Position0 : SV_POSITION;
                 float3 texcoord0 : TEXCOORD0;
                 float3 texcoord1 : TEXCOORD1;
                 float3 texcoord2 : TEXCOORD2;
@@ -7053,7 +7053,7 @@ Shader "Custom/Planet_Base_OCEANMOD"
             };
             struct program98Input
             {
-                float4 sv_Position0 : SV_POSITION0;
+                float4 sv_Position0 : SV_POSITION;
                 float3 texcoord0 : TEXCOORD0;
                 float3 texcoord1 : TEXCOORD1;
                 float3 texcoord2 : TEXCOORD2;
@@ -7061,7 +7061,7 @@ Shader "Custom/Planet_Base_OCEANMOD"
             };
             struct program98Output
             {
-                float4 sv_Target0 : SV_Target0;
+                float4 sv_Target0 : SV_Target;
             };
             #pragma vertex vert
             program52Output vert(program52Input i)
@@ -7098,9 +7098,9 @@ Shader "Custom/Planet_Base_OCEANMOD"
                 float r1_w_5 = exp2(r1_w_4);
                 float r1_w_6 = (-r1_w_5 + 1);
                 float r2_w_1 = (r1_w_6 * cb0_values[12].x);
-                float r2_w_2 = r2_w_1;
+                float r2_w_2 = saturate(r2_w_1);
                 float r1_w_7 = mad(r1_w_6, cb0_values[12].y, cb0_values[9].x);
-                float r1_w_8 = (r1_w_7 + cb0_values[12].z);
+                float r1_w_8 = saturate((r1_w_7 + cb0_values[12].z));
                 float3 r5_xyz_4 = (((mad(cb0_values[6].xyzx, i.texcoord1.zzzz, (mad(cb0_values[4].xyzx, i.texcoord1.xxxx, ((i.texcoord1.yyyy * cb0_values[5].xyzx)).xyzx)).xyzx)).xyzx + cb0_values[7].xyzx)).xyz;
                 float r6_x_1 = cb4_values[9].z;
                 float r6_y_1 = cb4_values[10].z;
@@ -7151,7 +7151,7 @@ Shader "Custom/Planet_Base_OCEANMOD"
                     r6_z_9 = r6_xyzw_2.z;
                     r6_w_4 = r6_xyzw_2.w;
                 }
-                float r2_y_12 = dot(float4(r6_x_9, r6_y_9, r6_z_9, r6_w_4), unity_OcclusionMaskSelector);
+                float r2_y_12 = saturate(dot(float4(r6_x_9, r6_y_9, r6_z_9, r6_w_4), unity_OcclusionMaskSelector));
                 float3 r6_xyz_10 = ((i.texcoord1.xyzx + -cb2_values[1].xyzx)).xyz;
                 float r2_z_7 = max(abs(r6_xyz_10.y), abs(r6_xyz_10.x));
                 float r2_z_8 = max(abs(r6_xyz_10.z), r2_z_7);
@@ -7169,7 +7169,7 @@ Shader "Custom/Planet_Base_OCEANMOD"
                 float4 r6_xyzw_11 = t0.Sample(sampler_linear_clamp3, (r2_y_14.xxxx).xy);
                 float4 r5_xyzw_5 = t1.Sample(sampler_linear_clamp2, r5_xyz_4.xyz);
                 float r2_y_15 = (r5_xyzw_5.w * r6_xyzw_11.x);
-                float4 r2_xyzw_7 = (((mad(mad(mad(cb3_values[25].w, r2_y_5, r2_x_2), cb3_values[24].z, cb3_values[24].w), r2_y_13, r2_z_16) * r2_y_15)).xxxx * _LightColor0.xyzx);
+                float4 r2_xyzw_7 = (((mad(saturate(mad(mad(cb3_values[25].w, r2_y_5, r2_x_2), cb3_values[24].z, cb3_values[24].w)), r2_y_13, r2_z_16) * r2_y_15)).xxxx * _LightColor0.xyzx);
                 float r2_x_7 = r2_xyzw_7.x;
                 float r2_y_16 = r2_xyzw_7.y;
                 float r2_z_17 = r2_xyzw_7.z;
@@ -7181,9 +7181,9 @@ Shader "Custom/Planet_Base_OCEANMOD"
                 float r0_w_5 = rsqrt(r0_w_4);
                 float3 r0_xyz_3 = ((r0_w_5.xxxx * r0_xyz_2.xyzx)).xyz;
                 float nDotV_w_6 = dot(unitWorldNormal_xyz_6.xyzx, unitViewDir_xyz_1.xyzx);
-                float r2_w_10 = dot(unitWorldNormal_xyz_6.xyzx, r1_xyz_1.xyzx);
-                float r3_x_2 = dot(unitWorldNormal_xyz_6.xyzx, r0_xyz_3.xyzx);
-                float r0_x_4 = dot(r1_xyz_1.xyzx, r0_xyz_3.xyzx);
+                float r2_w_10 = saturate(dot(unitWorldNormal_xyz_6.xyzx, r1_xyz_1.xyzx));
+                float r3_x_2 = saturate(dot(unitWorldNormal_xyz_6.xyzx, r0_xyz_3.xyzx));
+                float r0_x_4 = saturate(dot(r1_xyz_1.xyzx, r0_xyz_3.xyzx));
                 float r0_y_4 = (r0_x_4 * r0_x_4);
                 float r0_y_5 = dot(r0_y_4.xxxx, r1_w_9.xxxx);
                 float r0_y_6 = (r0_y_5 + -0.5);
@@ -7244,14 +7244,14 @@ Shader "Custom/Planet_Base_OCEANMOD"
             ZWrite Off
             Blend One One
             HLSLPROGRAM
-            cbuffer UnityPerDraw : register(b0)
+            cbuffer _UnityPerDrawCB : register(b0)
             {
                 float4x4 unity_ObjectToWorld;
                 float4 _LightColor0;
                 float4x4 unity_WorldToObject;
                 float4 cb0_values[14];
             };
-            cbuffer UnityPerFrame : register(b1)
+            cbuffer _UnityPerFrameCB : register(b1)
             {
                 float3 _WorldSpaceCameraPos;
                 float4x4 unity_MatrixVP;
@@ -7263,7 +7263,7 @@ Shader "Custom/Planet_Base_OCEANMOD"
                 float4 unity_OcclusionMaskSelector;
                 float4 cb2_values[21];
             };
-            cbuffer UnityProbeVolume : register(b3)
+            cbuffer _UnityProbeVolumeCB : register(b3)
             {
                 float4 unity_ProbeVolumeParams;
                 float4x4 unity_ProbeVolumeWorldToObject;
@@ -7298,7 +7298,7 @@ Shader "Custom/Planet_Base_OCEANMOD"
             };
             struct program51Output
             {
-                float4 sv_Position0 : SV_POSITION0;
+                float4 sv_Position0 : SV_POSITION;
                 float3 texcoord0 : TEXCOORD0;
                 float3 texcoord1 : TEXCOORD1;
                 float3 texcoord2 : TEXCOORD2;
@@ -7306,7 +7306,7 @@ Shader "Custom/Planet_Base_OCEANMOD"
             };
             struct program97Input
             {
-                float4 sv_Position0 : SV_POSITION0;
+                float4 sv_Position0 : SV_POSITION;
                 float3 texcoord0 : TEXCOORD0;
                 float3 texcoord1 : TEXCOORD1;
                 float3 texcoord2 : TEXCOORD2;
@@ -7314,7 +7314,7 @@ Shader "Custom/Planet_Base_OCEANMOD"
             };
             struct program97Output
             {
-                float4 sv_Target0 : SV_Target0;
+                float4 sv_Target0 : SV_Target;
             };
             #pragma vertex vert
             program51Output vert(program51Input i)
@@ -7351,9 +7351,9 @@ Shader "Custom/Planet_Base_OCEANMOD"
                 float r1_w_5 = exp2(r1_w_4);
                 float r1_w_6 = (-r1_w_5 + 1);
                 float r2_w_1 = (r1_w_6 * cb0_values[12].x);
-                float r2_w_2 = r2_w_1;
+                float r2_w_2 = saturate(r2_w_1);
                 float r1_w_7 = mad(r1_w_6, cb0_values[12].y, cb0_values[9].x);
-                float r1_w_8 = (r1_w_7 + cb0_values[12].z);
+                float r1_w_8 = saturate((r1_w_7 + cb0_values[12].z));
                 float3 r5_xyz_4 = (((mad(cb0_values[6].xyzx, i.texcoord1.zzzz, (mad(cb0_values[4].xyzx, i.texcoord1.xxxx, ((i.texcoord1.yyyy * cb0_values[5].xyzx)).xyzx)).xyzx)).xyzx + cb0_values[7].xyzx)).xyz;
                 float r6_x_1 = cb4_values[9].z;
                 float r6_y_1 = cb4_values[10].z;
@@ -7366,7 +7366,7 @@ Shader "Custom/Planet_Base_OCEANMOD"
                 float r2_y_3 = dot(float4(r2_y_2, r2_z_2, r2_w_3, r2_y_2), float4(r2_y_2, r2_z_2, r2_w_3, r2_y_2));
                 float r2_y_4 = sqrt(r2_y_3);
                 float r2_y_5 = (-r2_x_2 + r2_y_4);
-                float r2_x_4 = mad(mad(cb3_values[25].w, r2_y_5, r2_x_2), cb3_values[24].z, cb3_values[24].w);
+                float r2_x_4 = saturate(mad(mad(cb3_values[25].w, r2_y_5, r2_x_2), cb3_values[24].z, cb3_values[24].w));
                 float r2_y_6 = (cb5_values[0].x == 1);
                 float r6_x_9;
                 float r6_y_9;
@@ -7405,7 +7405,7 @@ Shader "Custom/Planet_Base_OCEANMOD"
                     r6_z_9 = r6_xyzw_2.z;
                     r6_w_4 = r6_xyzw_2.w;
                 }
-                float r2_y_12 = dot(float4(r6_x_9, r6_y_9, r6_z_9, r6_w_4), unity_OcclusionMaskSelector);
+                float r2_y_12 = saturate(dot(float4(r6_x_9, r6_y_9, r6_z_9, r6_w_4), unity_OcclusionMaskSelector));
                 float r2_z_7 = (r2_x_4 < 0.99);
                 float r2_z_19;
                 if (r2_z_7)
@@ -7448,9 +7448,9 @@ Shader "Custom/Planet_Base_OCEANMOD"
                 float r0_w_5 = rsqrt(r0_w_4);
                 float3 r0_xyz_3 = ((r0_w_5.xxxx * r0_xyz_2.xyzx)).xyz;
                 float nDotV_w_6 = dot(unitWorldNormal_xyz_6.xyzx, unitViewDir_xyz_1.xyzx);
-                float r2_w_11 = dot(unitWorldNormal_xyz_6.xyzx, r1_xyz_1.xyzx);
-                float r3_x_2 = dot(unitWorldNormal_xyz_6.xyzx, r0_xyz_3.xyzx);
-                float r0_x_4 = dot(r1_xyz_1.xyzx, r0_xyz_3.xyzx);
+                float r2_w_11 = saturate(dot(unitWorldNormal_xyz_6.xyzx, r1_xyz_1.xyzx));
+                float r3_x_2 = saturate(dot(unitWorldNormal_xyz_6.xyzx, r0_xyz_3.xyzx));
+                float r0_x_4 = saturate(dot(r1_xyz_1.xyzx, r0_xyz_3.xyzx));
                 float r0_y_4 = (r0_x_4 * r0_x_4);
                 float r0_y_5 = dot(r0_y_4.xxxx, r1_w_9.xxxx);
                 float r0_y_6 = (r0_y_5 + -0.5);
@@ -7511,14 +7511,14 @@ Shader "Custom/Planet_Base_OCEANMOD"
             ZWrite Off
             Blend One One
             HLSLPROGRAM
-            cbuffer UnityPerDraw : register(b0)
+            cbuffer _UnityPerDrawCB : register(b0)
             {
                 float4x4 unity_ObjectToWorld;
                 float4 _LightColor0;
                 float4x4 unity_WorldToObject;
                 float4 cb0_values[14];
             };
-            cbuffer UnityPerFrame : register(b1)
+            cbuffer _UnityPerFrameCB : register(b1)
             {
                 float3 _WorldSpaceCameraPos;
                 float4x4 unity_MatrixVP;
@@ -7530,7 +7530,7 @@ Shader "Custom/Planet_Base_OCEANMOD"
                 float4 unity_OcclusionMaskSelector;
                 float4 cb2_values[21];
             };
-            cbuffer UnityProbeVolume : register(b3)
+            cbuffer _UnityProbeVolumeCB : register(b3)
             {
                 float4 unity_ProbeVolumeParams;
                 float4x4 unity_ProbeVolumeWorldToObject;
@@ -7565,7 +7565,7 @@ Shader "Custom/Planet_Base_OCEANMOD"
             };
             struct program50Output
             {
-                float4 sv_Position0 : SV_POSITION0;
+                float4 sv_Position0 : SV_POSITION;
                 float3 texcoord0 : TEXCOORD0;
                 float3 texcoord1 : TEXCOORD1;
                 float3 texcoord2 : TEXCOORD2;
@@ -7573,7 +7573,7 @@ Shader "Custom/Planet_Base_OCEANMOD"
             };
             struct program96Input
             {
-                float4 sv_Position0 : SV_POSITION0;
+                float4 sv_Position0 : SV_POSITION;
                 float3 texcoord0 : TEXCOORD0;
                 float3 texcoord1 : TEXCOORD1;
                 float3 texcoord2 : TEXCOORD2;
@@ -7581,7 +7581,7 @@ Shader "Custom/Planet_Base_OCEANMOD"
             };
             struct program96Output
             {
-                float4 sv_Target0 : SV_Target0;
+                float4 sv_Target0 : SV_Target;
             };
             #pragma vertex vert
             program50Output vert(program50Input i)
@@ -7618,9 +7618,9 @@ Shader "Custom/Planet_Base_OCEANMOD"
                 float r1_w_5 = exp2(r1_w_4);
                 float r1_w_6 = (-r1_w_5 + 1);
                 float r2_w_1 = (r1_w_6 * cb0_values[12].x);
-                float r2_w_2 = r2_w_1;
+                float r2_w_2 = saturate(r2_w_1);
                 float r1_w_7 = mad(r1_w_6, cb0_values[12].y, cb0_values[9].x);
-                float r1_w_8 = (r1_w_7 + cb0_values[12].z);
+                float r1_w_8 = saturate((r1_w_7 + cb0_values[12].z));
                 float3 r5_xyz_4 = (((mad(cb0_values[6].xyzx, i.texcoord1.zzzz, (mad(cb0_values[4].xyzx, i.texcoord1.xxxx, ((i.texcoord1.yyyy * cb0_values[5].xyzx)).xyzx)).xyzx)).xyzx + cb0_values[7].xyzx)).xyz;
                 float r6_x_1 = cb4_values[9].z;
                 float r6_y_1 = cb4_values[10].z;
@@ -7671,7 +7671,7 @@ Shader "Custom/Planet_Base_OCEANMOD"
                     r6_z_9 = r6_xyzw_2.z;
                     r6_w_4 = r6_xyzw_2.w;
                 }
-                float r2_y_12 = dot(float4(r6_x_9, r6_y_9, r6_z_9, r6_w_4), unity_OcclusionMaskSelector);
+                float r2_y_12 = saturate(dot(float4(r6_x_9, r6_y_9, r6_z_9, r6_w_4), unity_OcclusionMaskSelector));
                 float3 r6_xyz_10 = ((i.texcoord1.xyzx + -cb2_values[1].xyzx)).xyz;
                 float r2_z_7 = max(abs(r6_xyz_10.y), abs(r6_xyz_10.x));
                 float r2_z_8 = max(abs(r6_xyz_10.z), r2_z_7);
@@ -7687,7 +7687,7 @@ Shader "Custom/Planet_Base_OCEANMOD"
                 float r2_y_13 = (-r2_z_16 + r2_y_12);
                 float r2_y_14 = dot(r5_xyz_4.xyzx, r5_xyz_4.xyzx);
                 float4 r5_xyzw_5 = t0.Sample(sampler_linear_clamp2, (r2_y_14.xxxx).xy);
-                float4 r2_xyzw_7 = (((mad(mad(mad(cb3_values[25].w, r2_y_5, r2_x_2), cb3_values[24].z, cb3_values[24].w), r2_y_13, r2_z_16) * r5_xyzw_5.x)).xxxx * _LightColor0.xyzx);
+                float4 r2_xyzw_7 = (((mad(saturate(mad(mad(cb3_values[25].w, r2_y_5, r2_x_2), cb3_values[24].z, cb3_values[24].w)), r2_y_13, r2_z_16) * r5_xyzw_5.x)).xxxx * _LightColor0.xyzx);
                 float r2_x_7 = r2_xyzw_7.x;
                 float r2_y_15 = r2_xyzw_7.y;
                 float r2_z_17 = r2_xyzw_7.z;
@@ -7699,9 +7699,9 @@ Shader "Custom/Planet_Base_OCEANMOD"
                 float r0_w_5 = rsqrt(r0_w_4);
                 float3 r0_xyz_3 = ((r0_w_5.xxxx * r0_xyz_2.xyzx)).xyz;
                 float nDotV_w_6 = dot(unitWorldNormal_xyz_6.xyzx, unitViewDir_xyz_1.xyzx);
-                float r2_w_10 = dot(unitWorldNormal_xyz_6.xyzx, r1_xyz_1.xyzx);
-                float r3_x_2 = dot(unitWorldNormal_xyz_6.xyzx, r0_xyz_3.xyzx);
-                float r0_x_4 = dot(r1_xyz_1.xyzx, r0_xyz_3.xyzx);
+                float r2_w_10 = saturate(dot(unitWorldNormal_xyz_6.xyzx, r1_xyz_1.xyzx));
+                float r3_x_2 = saturate(dot(unitWorldNormal_xyz_6.xyzx, r0_xyz_3.xyzx));
+                float r0_x_4 = saturate(dot(r1_xyz_1.xyzx, r0_xyz_3.xyzx));
                 float r0_y_4 = (r0_x_4 * r0_x_4);
                 float r0_y_5 = dot(r0_y_4.xxxx, r1_w_9.xxxx);
                 float r0_y_6 = (r0_y_5 + -0.5);
@@ -7762,14 +7762,14 @@ Shader "Custom/Planet_Base_OCEANMOD"
             ZWrite Off
             Blend One One
             HLSLPROGRAM
-            cbuffer UnityPerDraw : register(b0)
+            cbuffer _UnityPerDrawCB : register(b0)
             {
                 float4x4 unity_ObjectToWorld;
                 float4 _LightColor0;
                 float4x4 unity_WorldToObject;
                 float4 cb0_values[14];
             };
-            cbuffer UnityPerFrame : register(b1)
+            cbuffer _UnityPerFrameCB : register(b1)
             {
                 float3 _WorldSpaceCameraPos;
                 float4x4 unity_MatrixVP;
@@ -7816,7 +7816,7 @@ Shader "Custom/Planet_Base_OCEANMOD"
             };
             struct program49Output
             {
-                float4 sv_Position0 : SV_POSITION0;
+                float4 sv_Position0 : SV_POSITION;
                 float3 texcoord0 : TEXCOORD0;
                 float3 texcoord1 : TEXCOORD1;
                 float2 texcoord2 : TEXCOORD2;
@@ -7824,7 +7824,7 @@ Shader "Custom/Planet_Base_OCEANMOD"
             };
             struct program95Input
             {
-                float4 sv_Position0 : SV_POSITION0;
+                float4 sv_Position0 : SV_POSITION;
                 float3 texcoord0 : TEXCOORD0;
                 float3 texcoord1 : TEXCOORD1;
                 float2 texcoord2 : TEXCOORD2;
@@ -7832,7 +7832,7 @@ Shader "Custom/Planet_Base_OCEANMOD"
             };
             struct program95Output
             {
-                float4 sv_Target0 : SV_Target0;
+                float4 sv_Target0 : SV_Target;
             };
             #pragma vertex vert
             program49Output vert(program49Input i)
@@ -7874,12 +7874,12 @@ Shader "Custom/Planet_Base_OCEANMOD"
                 float r1_w_2 = (r1_w_1 * cb0_values[13].x);
                 float r1_w_3 = exp2(r1_w_2);
                 float r1_w_4 = (-r1_w_3 + 1);
-                float4 r2_xyzw_3 = mad(((r1_w_4 * cb0_values[12].x)).xxxx, -cb0_values[8].xyzx, cb0_values[8].xyzx);
+                float4 r2_xyzw_3 = mad((saturate((r1_w_4 * cb0_values[12].x))).xxxx, -cb0_values[8].xyzx, cb0_values[8].xyzx);
                 float r2_x_3 = r2_xyzw_3.x;
                 float r2_y_1 = r2_xyzw_3.y;
                 float r2_z_1 = r2_xyzw_3.z;
                 float r1_w_5 = mad(r1_w_4, cb0_values[12].y, cb0_values[9].x);
-                float r1_w_6 = (r1_w_5 + cb0_values[12].z);
+                float r1_w_6 = saturate((r1_w_5 + cb0_values[12].z));
                 float r4_x_1 = cb4_values[9].z;
                 float r4_y_1 = cb4_values[10].z;
                 float r4_z_1 = cb4_values[11].z;
@@ -7889,7 +7889,7 @@ Shader "Custom/Planet_Base_OCEANMOD"
                 float r3_z_2 = sqrt(r3_z_1);
                 float r3_z_3 = (-r2_w_1 + r3_z_2);
                 float r2_w_2 = mad(cb3_values[25].w, r3_z_3, r2_w_1);
-                float r2_w_3 = mad(r2_w_2, cb3_values[24].z, cb3_values[24].w);
+                float r2_w_3 = saturate(mad(r2_w_2, cb3_values[24].z, cb3_values[24].w));
                 float r3_z_4 = (cb5_values[0].x == 1);
                 float r4_x_12;
                 float r4_y_12;
@@ -7920,7 +7920,7 @@ Shader "Custom/Planet_Base_OCEANMOD"
                     r4_z_12 = r4_xyzw_3.z;
                     r4_w_4 = r4_xyzw_3.w;
                 }
-                float r3_z_8 = dot(float4(r4_x_12, r4_y_12, r4_z_12, r4_w_4), unity_OcclusionMaskSelector);
+                float r3_z_8 = saturate(dot(float4(r4_x_12, r4_y_12, r4_z_12, r4_w_4), unity_OcclusionMaskSelector));
                 float4 r4_xyzw_14 = t0.Sample(sampler_linear_clamp1, (((i.texcoord3.xyxx / i.texcoord3.wwww)).xyxx).xy);
                 float r3_z_9 = (r3_z_8 + -r4_xyzw_14.x);
                 float r2_w_4 = mad(r2_w_3, r3_z_9, r4_xyzw_14.x);
@@ -7947,9 +7947,9 @@ Shader "Custom/Planet_Base_OCEANMOD"
                 float r0_w_5 = rsqrt(r0_w_4);
                 float3 r0_xyz_3 = ((r0_w_5.xxxx * r0_xyz_2.xyzx)).xyz;
                 float nDotV_w_6 = dot(float4(unitWorldNormal_x_15, unitWorldNormal_y_15, unitWorldNormal_z_14, unitWorldNormal_x_15), unitViewDir_xyz_1.xyzx);
-                float r1_x_2 = dot(float4(unitWorldNormal_x_15, unitWorldNormal_y_15, unitWorldNormal_z_14, unitWorldNormal_x_15), _WorldSpaceLightPos0.xyzx);
-                float r1_y_2 = dot(float4(unitWorldNormal_x_15, unitWorldNormal_y_15, unitWorldNormal_z_14, unitWorldNormal_x_15), r0_xyz_3.xyzx);
-                float r0_x_4 = dot(_WorldSpaceLightPos0.xyzx, r0_xyz_3.xyzx);
+                float r1_x_2 = saturate(dot(float4(unitWorldNormal_x_15, unitWorldNormal_y_15, unitWorldNormal_z_14, unitWorldNormal_x_15), _WorldSpaceLightPos0.xyzx));
+                float r1_y_2 = saturate(dot(float4(unitWorldNormal_x_15, unitWorldNormal_y_15, unitWorldNormal_z_14, unitWorldNormal_x_15), r0_xyz_3.xyzx));
+                float r0_x_4 = saturate(dot(_WorldSpaceLightPos0.xyzx, r0_xyz_3.xyzx));
                 float r0_y_4 = (r0_x_4 * r0_x_4);
                 float r0_y_5 = dot(r0_y_4.xxxx, r1_w_7.xxxx);
                 float r0_y_6 = (r0_y_5 + -0.5);
@@ -8015,14 +8015,14 @@ Shader "Custom/Planet_Base_OCEANMOD"
             ZWrite Off
             Blend One One
             HLSLPROGRAM
-            cbuffer UnityPerDraw : register(b0)
+            cbuffer _UnityPerDrawCB : register(b0)
             {
                 float4x4 unity_ObjectToWorld;
                 float4 _LightColor0;
                 float4x4 unity_WorldToObject;
                 float4 cb0_values[10];
             };
-            cbuffer UnityPerFrame : register(b1)
+            cbuffer _UnityPerFrameCB : register(b1)
             {
                 float3 _WorldSpaceCameraPos;
                 float4x4 unity_MatrixVP;
@@ -8034,7 +8034,7 @@ Shader "Custom/Planet_Base_OCEANMOD"
                 float4 unity_OcclusionMaskSelector;
                 float4 cb2_values[21];
             };
-            cbuffer UnityProbeVolume : register(b3)
+            cbuffer _UnityProbeVolumeCB : register(b3)
             {
                 float4 unity_ProbeVolumeParams;
                 float4x4 unity_ProbeVolumeWorldToObject;
@@ -8067,21 +8067,21 @@ Shader "Custom/Planet_Base_OCEANMOD"
             };
             struct program48Output
             {
-                float4 sv_Position0 : SV_POSITION0;
+                float4 sv_Position0 : SV_POSITION;
                 float3 texcoord0 : TEXCOORD0;
                 float3 texcoord1 : TEXCOORD1;
                 float4 texcoord3 : TEXCOORD3;
             };
             struct program94Input
             {
-                float4 sv_Position0 : SV_POSITION0;
+                float4 sv_Position0 : SV_POSITION;
                 float3 texcoord0 : TEXCOORD0;
                 float3 texcoord1 : TEXCOORD1;
                 float4 texcoord3 : TEXCOORD3;
             };
             struct program94Output
             {
-                float4 sv_Target0 : SV_Target0;
+                float4 sv_Target0 : SV_Target;
             };
             #pragma vertex vert
             program48Output vert(program48Input i)
@@ -8123,19 +8123,19 @@ Shader "Custom/Planet_Base_OCEANMOD"
                 float r1_w_2 = (r1_w_1 * cb0_values[9].x);
                 float r1_w_3 = exp2(r1_w_2);
                 float r1_w_4 = (-r1_w_3 + 1);
-                float4 r2_xyzw_3 = mad(((r1_w_4 * cb0_values[8].x)).xxxx, -cb0_values[4].xyzx, cb0_values[4].xyzx);
+                float4 r2_xyzw_3 = mad((saturate((r1_w_4 * cb0_values[8].x))).xxxx, -cb0_values[4].xyzx, cb0_values[4].xyzx);
                 float r2_x_3 = r2_xyzw_3.x;
                 float r2_y_1 = r2_xyzw_3.y;
                 float r2_z_1 = r2_xyzw_3.z;
                 float r1_w_5 = mad(r1_w_4, cb0_values[8].y, cb0_values[5].x);
-                float r1_w_6 = (r1_w_5 + cb0_values[8].z);
+                float r1_w_6 = saturate((r1_w_5 + cb0_values[8].z));
                 float r3_x_1 = cb4_values[9].z;
                 float r3_y_1 = cb4_values[10].z;
                 float r3_z_1 = cb4_values[11].z;
                 float r2_w_1 = dot(viewDir_xyz_1.xyzx, float4(r3_x_1, r3_y_1, r3_z_1, r3_x_1));
                 float3 r3_xyz_2 = ((i.texcoord1.xyzx + -cb3_values[25].xyzx)).xyz;
                 float r2_w_2 = mad(cb3_values[25].w, (-r2_w_1 + sqrt(dot(r3_xyz_2.xyzx, r3_xyz_2.xyzx))), r2_w_1);
-                float r2_w_3 = mad(r2_w_2, cb3_values[24].z, cb3_values[24].w);
+                float r2_w_3 = saturate(mad(r2_w_2, cb3_values[24].z, cb3_values[24].w));
                 float r3_x_13;
                 float r3_y_13;
                 float r3_z_12;
@@ -8193,7 +8193,7 @@ Shader "Custom/Planet_Base_OCEANMOD"
                 float r3_y_14 = r3_xyzw_14.y;
                 float r3_z_13 = r3_xyzw_14.z;
                 float4 r4_xyzw_3 = t0.Sample(sampler_linear_clamp1, (float4(r3_y_14, r3_z_13, r3_y_14, r3_y_14)).xy);
-                float r2_w_4 = mad(r2_w_3, (dot(float4(r3_x_13, r3_y_13, r3_z_12, r3_w_8), unity_OcclusionMaskSelector) + -r4_xyzw_3.x), r4_xyzw_3.x);
+                float r2_w_4 = mad(r2_w_3, (saturate(dot(float4(r3_x_13, r3_y_13, r3_z_12, r3_w_8), unity_OcclusionMaskSelector)) + -r4_xyzw_3.x), r4_xyzw_3.x);
                 float4 r3_xyzw_16 = (r2_w_4.xxxx * _LightColor0.xyzx);
                 float r3_x_16 = r3_xyzw_16.x;
                 float r3_y_15 = r3_xyzw_16.y;
@@ -8215,9 +8215,9 @@ Shader "Custom/Planet_Base_OCEANMOD"
                 float r0_w_5 = rsqrt(r0_w_4);
                 float3 r0_xyz_3 = ((r0_w_5.xxxx * r0_xyz_2.xyzx)).xyz;
                 float nDotV_w_6 = dot(float4(unitWorldNormal_x_4, unitWorldNormal_y_2, unitWorldNormal_z_2, unitWorldNormal_x_4), unitViewDir_xyz_1.xyzx);
-                float r1_x_2 = dot(float4(unitWorldNormal_x_4, unitWorldNormal_y_2, unitWorldNormal_z_2, unitWorldNormal_x_4), _WorldSpaceLightPos0.xyzx);
-                float r1_y_2 = dot(float4(unitWorldNormal_x_4, unitWorldNormal_y_2, unitWorldNormal_z_2, unitWorldNormal_x_4), r0_xyz_3.xyzx);
-                float r0_x_4 = dot(_WorldSpaceLightPos0.xyzx, r0_xyz_3.xyzx);
+                float r1_x_2 = saturate(dot(float4(unitWorldNormal_x_4, unitWorldNormal_y_2, unitWorldNormal_z_2, unitWorldNormal_x_4), _WorldSpaceLightPos0.xyzx));
+                float r1_y_2 = saturate(dot(float4(unitWorldNormal_x_4, unitWorldNormal_y_2, unitWorldNormal_z_2, unitWorldNormal_x_4), r0_xyz_3.xyzx));
+                float r0_x_4 = saturate(dot(_WorldSpaceLightPos0.xyzx, r0_xyz_3.xyzx));
                 float r0_y_4 = (r0_x_4 * r0_x_4);
                 float r0_y_5 = dot(r0_y_4.xxxx, r1_w_7.xxxx);
                 float r0_y_6 = (r0_y_5 + -0.5);
@@ -8283,14 +8283,14 @@ Shader "Custom/Planet_Base_OCEANMOD"
             ZWrite Off
             Blend One One
             HLSLPROGRAM
-            cbuffer UnityPerDraw : register(b0)
+            cbuffer _UnityPerDrawCB : register(b0)
             {
                 float4x4 unity_ObjectToWorld;
                 float4 _LightColor0;
                 float4x4 unity_WorldToObject;
                 float4 cb0_values[19];
             };
-            cbuffer UnityPerFrame : register(b1)
+            cbuffer _UnityPerFrameCB : register(b1)
             {
                 float3 _WorldSpaceCameraPos;
                 float4x4 unity_MatrixVP;
@@ -8302,7 +8302,7 @@ Shader "Custom/Planet_Base_OCEANMOD"
                 float4 unity_OcclusionMaskSelector;
                 float4 cb2_values[21];
             };
-            cbuffer UnityProbeVolume : register(b3)
+            cbuffer _UnityProbeVolumeCB : register(b3)
             {
                 float4 unity_ProbeVolumeParams;
                 float4x4 unity_ProbeVolumeWorldToObject;
@@ -8339,7 +8339,7 @@ Shader "Custom/Planet_Base_OCEANMOD"
             };
             struct program47Output
             {
-                float4 sv_Position0 : SV_POSITION0;
+                float4 sv_Position0 : SV_POSITION;
                 float3 texcoord0 : TEXCOORD0;
                 float3 texcoord1 : TEXCOORD1;
                 float4 texcoord2 : TEXCOORD2;
@@ -8347,7 +8347,7 @@ Shader "Custom/Planet_Base_OCEANMOD"
             };
             struct program93Input
             {
-                float4 sv_Position0 : SV_POSITION0;
+                float4 sv_Position0 : SV_POSITION;
                 float3 texcoord0 : TEXCOORD0;
                 float3 texcoord1 : TEXCOORD1;
                 float4 texcoord2 : TEXCOORD2;
@@ -8355,7 +8355,7 @@ Shader "Custom/Planet_Base_OCEANMOD"
             };
             struct program93Output
             {
-                float4 sv_Target0 : SV_Target0;
+                float4 sv_Target0 : SV_Target;
             };
             #pragma vertex vert
             program47Output vert(program47Input i)
@@ -8395,9 +8395,9 @@ Shader "Custom/Planet_Base_OCEANMOD"
                 float r1_w_5 = exp2(r1_w_4);
                 float r1_w_6 = (-r1_w_5 + 1);
                 float r2_w_1 = (r1_w_6 * cb0_values[17].x);
-                float r2_w_2 = r2_w_1;
+                float r2_w_2 = saturate(r2_w_1);
                 float r1_w_7 = mad(r1_w_6, cb0_values[17].y, cb0_values[14].x);
-                float r1_w_8 = (r1_w_7 + cb0_values[17].z);
+                float r1_w_8 = saturate((r1_w_7 + cb0_values[17].z));
                 float4 r5_xyzw_4 = (mad(cb0_values[11].xyzw, i.texcoord1.zzzz, mad(cb0_values[9].xyzw, i.texcoord1.xxxx, (i.texcoord1.yyyy * cb0_values[10].xyzw))) + cb0_values[12].xyzw);
                 float r6_x_1 = cb4_values[9].z;
                 float r6_y_1 = cb4_values[10].z;
@@ -8410,7 +8410,7 @@ Shader "Custom/Planet_Base_OCEANMOD"
                 float r2_y_3 = dot(float4(r2_y_2, r2_z_2, r2_w_3, r2_y_2), float4(r2_y_2, r2_z_2, r2_w_3, r2_y_2));
                 float r2_y_4 = sqrt(r2_y_3);
                 float r2_y_5 = (-r2_x_2 + r2_y_4);
-                float r2_x_4 = mad(mad(cb3_values[25].w, r2_y_5, r2_x_2), cb3_values[24].z, cb3_values[24].w);
+                float r2_x_4 = saturate(mad(mad(cb3_values[25].w, r2_y_5, r2_x_2), cb3_values[24].z, cb3_values[24].w));
                 float r2_y_6 = (cb5_values[0].x == 1);
                 float r6_x_9;
                 float r6_y_9;
@@ -8449,7 +8449,7 @@ Shader "Custom/Planet_Base_OCEANMOD"
                     r6_z_9 = r6_xyzw_2.z;
                     r6_w_4 = r6_xyzw_2.w;
                 }
-                float r2_y_12 = dot(float4(r6_x_9, r6_y_9, r6_z_9, r6_w_4), unity_OcclusionMaskSelector);
+                float r2_y_12 = saturate(dot(float4(r6_x_9, r6_y_9, r6_z_9, r6_w_4), unity_OcclusionMaskSelector));
                 float r2_z_7 = (r2_x_4 < 0.99);
                 float r2_z_15;
                 if (r2_z_7)
@@ -8537,9 +8537,9 @@ Shader "Custom/Planet_Base_OCEANMOD"
                 float r0_w_5 = rsqrt(r0_w_4);
                 float3 r0_xyz_3 = ((r0_w_5.xxxx * r0_xyz_2.xyzx)).xyz;
                 float nDotV_w_6 = dot(unitWorldNormal_xyz_6.xyzx, unitViewDir_xyz_1.xyzx);
-                float r2_w_16 = dot(unitWorldNormal_xyz_6.xyzx, r1_xyz_1.xyzx);
-                float r3_x_2 = dot(unitWorldNormal_xyz_6.xyzx, r0_xyz_3.xyzx);
-                float r0_x_4 = dot(r1_xyz_1.xyzx, r0_xyz_3.xyzx);
+                float r2_w_16 = saturate(dot(unitWorldNormal_xyz_6.xyzx, r1_xyz_1.xyzx));
+                float r3_x_2 = saturate(dot(unitWorldNormal_xyz_6.xyzx, r0_xyz_3.xyzx));
+                float r0_x_4 = saturate(dot(r1_xyz_1.xyzx, r0_xyz_3.xyzx));
                 float r0_y_4 = (r0_x_4 * r0_x_4);
                 float r0_y_5 = dot(r0_y_4.xxxx, r1_w_9.xxxx);
                 float r0_y_6 = (r0_y_5 + -0.5);
@@ -8600,14 +8600,14 @@ Shader "Custom/Planet_Base_OCEANMOD"
             ZWrite Off
             Blend One One
             HLSLPROGRAM
-            cbuffer UnityPerDraw : register(b0)
+            cbuffer _UnityPerDrawCB : register(b0)
             {
                 float4x4 unity_ObjectToWorld;
                 float4 _LightColor0;
                 float4x4 unity_WorldToObject;
                 float4 cb0_values[14];
             };
-            cbuffer UnityPerFrame : register(b1)
+            cbuffer _UnityPerFrameCB : register(b1)
             {
                 float3 _WorldSpaceCameraPos;
                 float4x4 unity_MatrixVP;
@@ -8619,7 +8619,7 @@ Shader "Custom/Planet_Base_OCEANMOD"
                 float4 unity_OcclusionMaskSelector;
                 float4 cb2_values[21];
             };
-            cbuffer UnityProbeVolume : register(b3)
+            cbuffer _UnityProbeVolumeCB : register(b3)
             {
                 float4 unity_ProbeVolumeParams;
                 float4x4 unity_ProbeVolumeWorldToObject;
@@ -8656,7 +8656,7 @@ Shader "Custom/Planet_Base_OCEANMOD"
             };
             struct program46Output
             {
-                float4 sv_Position0 : SV_POSITION0;
+                float4 sv_Position0 : SV_POSITION;
                 float3 texcoord0 : TEXCOORD0;
                 float3 texcoord1 : TEXCOORD1;
                 float4 texcoord2 : TEXCOORD2;
@@ -8664,7 +8664,7 @@ Shader "Custom/Planet_Base_OCEANMOD"
             };
             struct program92Input
             {
-                float4 sv_Position0 : SV_POSITION0;
+                float4 sv_Position0 : SV_POSITION;
                 float3 texcoord0 : TEXCOORD0;
                 float3 texcoord1 : TEXCOORD1;
                 float4 texcoord2 : TEXCOORD2;
@@ -8672,7 +8672,7 @@ Shader "Custom/Planet_Base_OCEANMOD"
             };
             struct program92Output
             {
-                float4 sv_Target0 : SV_Target0;
+                float4 sv_Target0 : SV_Target;
             };
             #pragma vertex vert
             program46Output vert(program46Input i)
@@ -8712,9 +8712,9 @@ Shader "Custom/Planet_Base_OCEANMOD"
                 float r1_w_5 = exp2(r1_w_4);
                 float r1_w_6 = (-r1_w_5 + 1);
                 float r2_w_1 = (r1_w_6 * cb0_values[12].x);
-                float r2_w_2 = r2_w_1;
+                float r2_w_2 = saturate(r2_w_1);
                 float r1_w_7 = mad(r1_w_6, cb0_values[12].y, cb0_values[9].x);
-                float r1_w_8 = (r1_w_7 + cb0_values[12].z);
+                float r1_w_8 = saturate((r1_w_7 + cb0_values[12].z));
                 float4 r5_xyzw_4 = (mad(cb0_values[6].xyzw, i.texcoord1.zzzz, mad(cb0_values[4].xyzw, i.texcoord1.xxxx, (i.texcoord1.yyyy * cb0_values[5].xyzw))) + cb0_values[7].xyzw);
                 float r6_x_1 = cb4_values[9].z;
                 float r6_y_1 = cb4_values[10].z;
@@ -8765,7 +8765,7 @@ Shader "Custom/Planet_Base_OCEANMOD"
                     r6_z_9 = r6_xyzw_2.z;
                     r6_w_4 = r6_xyzw_2.w;
                 }
-                float r2_y_12 = dot(float4(r6_x_9, r6_y_9, r6_z_9, r6_w_4), unity_OcclusionMaskSelector);
+                float r2_y_12 = saturate(dot(float4(r6_x_9, r6_y_9, r6_z_9, r6_w_4), unity_OcclusionMaskSelector));
                 float4 r6_xyzw_10 = (i.texcoord1.yyyy * cb3_values[9].xyzw);
                 float4 r6_xyzw_11 = mad(cb3_values[8].xyzw, i.texcoord1.xxxx, r6_xyzw_10);
                 float4 r6_xyzw_12 = mad(cb3_values[10].xyzw, i.texcoord1.zzzz, r6_xyzw_11);
@@ -8787,7 +8787,7 @@ Shader "Custom/Planet_Base_OCEANMOD"
                 float r2_z_11 = dot(r5_xyzw_4.xyzx, r5_xyzw_4.xyzx);
                 float4 r5_xyzw_5 = t1.Sample(sampler_linear_clamp3, (r2_z_11.xxxx).xy);
                 float r2_y_17 = (r2_y_16 * r5_xyzw_5.x);
-                float4 r2_xyzw_7 = (((mad(mad(mad(cb3_values[25].w, r2_y_5, r2_x_2), cb3_values[24].z, cb3_values[24].w), r2_y_13, r2_z_8) * r2_y_17)).xxxx * _LightColor0.xyzx);
+                float4 r2_xyzw_7 = (((mad(saturate(mad(mad(cb3_values[25].w, r2_y_5, r2_x_2), cb3_values[24].z, cb3_values[24].w)), r2_y_13, r2_z_8) * r2_y_17)).xxxx * _LightColor0.xyzx);
                 float r2_x_7 = r2_xyzw_7.x;
                 float r2_y_18 = r2_xyzw_7.y;
                 float r2_z_12 = r2_xyzw_7.z;
@@ -8799,9 +8799,9 @@ Shader "Custom/Planet_Base_OCEANMOD"
                 float r0_w_5 = rsqrt(r0_w_4);
                 float3 r0_xyz_3 = ((r0_w_5.xxxx * r0_xyz_2.xyzx)).xyz;
                 float nDotV_w_6 = dot(unitWorldNormal_xyz_6.xyzx, unitViewDir_xyz_1.xyzx);
-                float r2_w_12 = dot(unitWorldNormal_xyz_6.xyzx, r1_xyz_1.xyzx);
-                float r3_x_2 = dot(unitWorldNormal_xyz_6.xyzx, r0_xyz_3.xyzx);
-                float r0_x_4 = dot(r1_xyz_1.xyzx, r0_xyz_3.xyzx);
+                float r2_w_12 = saturate(dot(unitWorldNormal_xyz_6.xyzx, r1_xyz_1.xyzx));
+                float r3_x_2 = saturate(dot(unitWorldNormal_xyz_6.xyzx, r0_xyz_3.xyzx));
+                float r0_x_4 = saturate(dot(r1_xyz_1.xyzx, r0_xyz_3.xyzx));
                 float r0_y_4 = (r0_x_4 * r0_x_4);
                 float r0_y_5 = dot(r0_y_4.xxxx, r1_w_9.xxxx);
                 float r0_y_6 = (r0_y_5 + -0.5);
@@ -8862,14 +8862,14 @@ Shader "Custom/Planet_Base_OCEANMOD"
             ZWrite Off
             Blend One One
             HLSLPROGRAM
-            cbuffer UnityPerDraw : register(b0)
+            cbuffer _UnityPerDrawCB : register(b0)
             {
                 float4x4 unity_ObjectToWorld;
                 float4 _LightColor0;
                 float4x4 unity_WorldToObject;
                 float4 cb0_values[14];
             };
-            cbuffer UnityPerFrame : register(b1)
+            cbuffer _UnityPerFrameCB : register(b1)
             {
                 float3 _WorldSpaceCameraPos;
                 float4x4 unity_MatrixVP;
@@ -8881,7 +8881,7 @@ Shader "Custom/Planet_Base_OCEANMOD"
                 float4 unity_OcclusionMaskSelector;
                 float4 cb2_values[21];
             };
-            cbuffer UnityProbeVolume : register(b3)
+            cbuffer _UnityProbeVolumeCB : register(b3)
             {
                 float4 unity_ProbeVolumeParams;
                 float4x4 unity_ProbeVolumeWorldToObject;
@@ -8905,7 +8905,7 @@ Shader "Custom/Planet_Base_OCEANMOD"
             };
             struct program45Output
             {
-                float4 sv_Position0 : SV_POSITION0;
+                float4 sv_Position0 : SV_POSITION;
                 float3 texcoord0 : TEXCOORD0;
                 float3 texcoord1 : TEXCOORD1;
                 float2 texcoord2 : TEXCOORD2;
@@ -8913,7 +8913,7 @@ Shader "Custom/Planet_Base_OCEANMOD"
             };
             struct program91Input
             {
-                float4 sv_Position0 : SV_POSITION0;
+                float4 sv_Position0 : SV_POSITION;
                 float3 texcoord0 : TEXCOORD0;
                 float3 texcoord1 : TEXCOORD1;
                 float2 texcoord2 : TEXCOORD2;
@@ -8921,7 +8921,7 @@ Shader "Custom/Planet_Base_OCEANMOD"
             };
             struct program91Output
             {
-                float4 sv_Target0 : SV_Target0;
+                float4 sv_Target0 : SV_Target;
             };
             #pragma vertex vert
             program45Output vert(program45Input i)
@@ -8955,12 +8955,12 @@ Shader "Custom/Planet_Base_OCEANMOD"
                 float r1_w_2 = (r1_w_1 * cb0_values[13].x);
                 float r1_w_3 = exp2(r1_w_2);
                 float r1_w_4 = (-r1_w_3 + 1);
-                float4 r2_xyzw_3 = mad(((r1_w_4 * cb0_values[12].x)).xxxx, -cb0_values[8].xyzx, cb0_values[8].xyzx);
+                float4 r2_xyzw_3 = mad((saturate((r1_w_4 * cb0_values[12].x))).xxxx, -cb0_values[8].xyzx, cb0_values[8].xyzx);
                 float r2_x_3 = r2_xyzw_3.x;
                 float r2_y_1 = r2_xyzw_3.y;
                 float r2_z_1 = r2_xyzw_3.z;
                 float r1_w_5 = mad(r1_w_4, cb0_values[12].y, cb0_values[9].x);
-                float r1_w_6 = (r1_w_5 + cb0_values[12].z);
+                float r1_w_6 = saturate((r1_w_5 + cb0_values[12].z));
                 float r2_w_1 = (unity_ProbeVolumeParams.x == 1);
                 float r4_x_10;
                 float r4_y_10;
@@ -8992,7 +8992,7 @@ Shader "Custom/Planet_Base_OCEANMOD"
                     r4_z_10 = r4_xyzw_10.z;
                     r4_w_4 = r4_xyzw_10.w;
                 }
-                float r2_w_5 = dot(float4(r4_x_10, r4_y_10, r4_z_10, r4_w_4), unity_OcclusionMaskSelector);
+                float r2_w_5 = saturate(dot(float4(r4_x_10, r4_y_10, r4_z_10, r4_w_4), unity_OcclusionMaskSelector));
                 float4 r3_xyzw_5 = t0.Sample(sampler_linear_clamp1, ((((mad(cb0_values[6].xyxx, i.texcoord1.zzzz, (mad(cb0_values[4].xyxx, i.texcoord1.xxxx, ((i.texcoord1.yyyy * cb0_values[5].xyxx)).xyxx)).xyxx)).xyxx + cb0_values[7].xyxx)).xyxx).xy);
                 float r2_w_6 = (r2_w_5 * r3_xyzw_5.w);
                 float4 r3_xyzw_6 = (r2_w_6.xxxx * _LightColor0.xyzx);
@@ -9011,9 +9011,9 @@ Shader "Custom/Planet_Base_OCEANMOD"
                 float r0_w_5 = rsqrt(r0_w_4);
                 float3 r0_xyz_3 = ((r0_w_5.xxxx * r0_xyz_2.xyzx)).xyz;
                 float nDotV_w_6 = dot(unitWorldNormal_xyz_11.xyzx, unitViewDir_xyz_1.xyzx);
-                float r1_x_2 = dot(unitWorldNormal_xyz_11.xyzx, _WorldSpaceLightPos0.xyzx);
-                float r1_y_2 = dot(unitWorldNormal_xyz_11.xyzx, r0_xyz_3.xyzx);
-                float r0_x_4 = dot(_WorldSpaceLightPos0.xyzx, r0_xyz_3.xyzx);
+                float r1_x_2 = saturate(dot(unitWorldNormal_xyz_11.xyzx, _WorldSpaceLightPos0.xyzx));
+                float r1_y_2 = saturate(dot(unitWorldNormal_xyz_11.xyzx, r0_xyz_3.xyzx));
+                float r0_x_4 = saturate(dot(_WorldSpaceLightPos0.xyzx, r0_xyz_3.xyzx));
                 float r0_y_4 = (r0_x_4 * r0_x_4);
                 float r0_y_5 = dot(r0_y_4.xxxx, r1_w_7.xxxx);
                 float r0_y_6 = (r0_y_5 + -0.5);
@@ -9079,14 +9079,14 @@ Shader "Custom/Planet_Base_OCEANMOD"
             ZWrite Off
             Blend One One
             HLSLPROGRAM
-            cbuffer UnityPerDraw : register(b0)
+            cbuffer _UnityPerDrawCB : register(b0)
             {
                 float4x4 unity_ObjectToWorld;
                 float4 _LightColor0;
                 float4x4 unity_WorldToObject;
                 float4 cb0_values[14];
             };
-            cbuffer UnityPerFrame : register(b1)
+            cbuffer _UnityPerFrameCB : register(b1)
             {
                 float3 _WorldSpaceCameraPos;
                 float4x4 unity_MatrixVP;
@@ -9098,7 +9098,7 @@ Shader "Custom/Planet_Base_OCEANMOD"
                 float4 unity_OcclusionMaskSelector;
                 float4 cb2_values[21];
             };
-            cbuffer UnityProbeVolume : register(b3)
+            cbuffer _UnityProbeVolumeCB : register(b3)
             {
                 float4 unity_ProbeVolumeParams;
                 float4x4 unity_ProbeVolumeWorldToObject;
@@ -9124,7 +9124,7 @@ Shader "Custom/Planet_Base_OCEANMOD"
             };
             struct program44Output
             {
-                float4 sv_Position0 : SV_POSITION0;
+                float4 sv_Position0 : SV_POSITION;
                 float3 texcoord0 : TEXCOORD0;
                 float3 texcoord1 : TEXCOORD1;
                 float3 texcoord2 : TEXCOORD2;
@@ -9132,7 +9132,7 @@ Shader "Custom/Planet_Base_OCEANMOD"
             };
             struct program90Input
             {
-                float4 sv_Position0 : SV_POSITION0;
+                float4 sv_Position0 : SV_POSITION;
                 float3 texcoord0 : TEXCOORD0;
                 float3 texcoord1 : TEXCOORD1;
                 float3 texcoord2 : TEXCOORD2;
@@ -9140,7 +9140,7 @@ Shader "Custom/Planet_Base_OCEANMOD"
             };
             struct program90Output
             {
-                float4 sv_Target0 : SV_Target0;
+                float4 sv_Target0 : SV_Target;
             };
             #pragma vertex vert
             program44Output vert(program44Input i)
@@ -9177,9 +9177,9 @@ Shader "Custom/Planet_Base_OCEANMOD"
                 float r1_w_5 = exp2(r1_w_4);
                 float r1_w_6 = (-r1_w_5 + 1);
                 float r2_w_1 = (r1_w_6 * cb0_values[12].x);
-                float r2_w_2 = r2_w_1;
+                float r2_w_2 = saturate(r2_w_1);
                 float r1_w_7 = mad(r1_w_6, cb0_values[12].y, cb0_values[9].x);
-                float r1_w_8 = (r1_w_7 + cb0_values[12].z);
+                float r1_w_8 = saturate((r1_w_7 + cb0_values[12].z));
                 float3 r4_xyz_4 = (((mad(cb0_values[6].xyzx, i.texcoord1.zzzz, (mad(cb0_values[4].xyzx, i.texcoord1.xxxx, ((i.texcoord1.yyyy * cb0_values[5].xyzx)).xyzx)).xyzx)).xyzx + cb0_values[7].xyzx)).xyz;
                 float r2_w_3 = (unity_ProbeVolumeParams.x == 1);
                 float r5_x_10;
@@ -9212,7 +9212,7 @@ Shader "Custom/Planet_Base_OCEANMOD"
                     r5_z_10 = r5_xyzw_10.z;
                     r5_w_4 = r5_xyzw_10.w;
                 }
-                float r2_w_7 = dot(float4(r5_x_10, r5_y_10, r5_z_10, r5_w_4), unity_OcclusionMaskSelector);
+                float r2_w_7 = saturate(dot(float4(r5_x_10, r5_y_10, r5_z_10, r5_w_4), unity_OcclusionMaskSelector));
                 float r3_w_3 = dot(r4_xyz_4.xyzx, r4_xyz_4.xyzx);
                 float4 r5_xyzw_11 = t0.Sample(sampler_linear_clamp2, (r3_w_3.xxxx).xy);
                 float4 r4_xyzw_5 = t1.Sample(sampler_linear_clamp1, r4_xyz_4.xyz);
@@ -9227,9 +9227,9 @@ Shader "Custom/Planet_Base_OCEANMOD"
                 float r0_w_5 = rsqrt(r0_w_4);
                 float3 r0_xyz_3 = ((r0_w_5.xxxx * r0_xyz_2.xyzx)).xyz;
                 float nDotV_w_6 = dot(unitWorldNormal_xyz_12.xyzx, unitViewDir_xyz_2.xyzx);
-                float r2_x_3 = dot(unitWorldNormal_xyz_12.xyzx, r1_xyz_1.xyzx);
-                float r2_y_3 = dot(unitWorldNormal_xyz_12.xyzx, r0_xyz_3.xyzx);
-                float r0_x_4 = dot(r1_xyz_1.xyzx, r0_xyz_3.xyzx);
+                float r2_x_3 = saturate(dot(unitWorldNormal_xyz_12.xyzx, r1_xyz_1.xyzx));
+                float r2_y_3 = saturate(dot(unitWorldNormal_xyz_12.xyzx, r0_xyz_3.xyzx));
+                float r0_x_4 = saturate(dot(r1_xyz_1.xyzx, r0_xyz_3.xyzx));
                 float r0_y_4 = (r0_x_4 * r0_x_4);
                 float r0_y_5 = dot(r0_y_4.xxxx, r1_w_9.xxxx);
                 float r0_y_6 = (r0_y_5 + -0.5);
@@ -9290,14 +9290,14 @@ Shader "Custom/Planet_Base_OCEANMOD"
             ZWrite Off
             Blend One One
             HLSLPROGRAM
-            cbuffer UnityPerDraw : register(b0)
+            cbuffer _UnityPerDrawCB : register(b0)
             {
                 float4x4 unity_ObjectToWorld;
                 float4 _LightColor0;
                 float4x4 unity_WorldToObject;
                 float4 cb0_values[14];
             };
-            cbuffer UnityPerFrame : register(b1)
+            cbuffer _UnityPerFrameCB : register(b1)
             {
                 float3 _WorldSpaceCameraPos;
                 float4x4 unity_MatrixVP;
@@ -9309,7 +9309,7 @@ Shader "Custom/Planet_Base_OCEANMOD"
                 float4 unity_OcclusionMaskSelector;
                 float4 cb2_values[21];
             };
-            cbuffer UnityProbeVolume : register(b3)
+            cbuffer _UnityProbeVolumeCB : register(b3)
             {
                 float4 unity_ProbeVolumeParams;
                 float4x4 unity_ProbeVolumeWorldToObject;
@@ -9335,7 +9335,7 @@ Shader "Custom/Planet_Base_OCEANMOD"
             };
             struct program43Output
             {
-                float4 sv_Position0 : SV_POSITION0;
+                float4 sv_Position0 : SV_POSITION;
                 float3 texcoord0 : TEXCOORD0;
                 float3 texcoord1 : TEXCOORD1;
                 float4 texcoord2 : TEXCOORD2;
@@ -9343,7 +9343,7 @@ Shader "Custom/Planet_Base_OCEANMOD"
             };
             struct program89Input
             {
-                float4 sv_Position0 : SV_POSITION0;
+                float4 sv_Position0 : SV_POSITION;
                 float3 texcoord0 : TEXCOORD0;
                 float3 texcoord1 : TEXCOORD1;
                 float4 texcoord2 : TEXCOORD2;
@@ -9351,7 +9351,7 @@ Shader "Custom/Planet_Base_OCEANMOD"
             };
             struct program89Output
             {
-                float4 sv_Target0 : SV_Target0;
+                float4 sv_Target0 : SV_Target;
             };
             #pragma vertex vert
             program43Output vert(program43Input i)
@@ -9391,9 +9391,9 @@ Shader "Custom/Planet_Base_OCEANMOD"
                 float r1_w_5 = exp2(r1_w_4);
                 float r1_w_6 = (-r1_w_5 + 1);
                 float r2_w_1 = (r1_w_6 * cb0_values[12].x);
-                float r2_w_2 = r2_w_1;
+                float r2_w_2 = saturate(r2_w_1);
                 float r1_w_7 = mad(r1_w_6, cb0_values[12].y, cb0_values[9].x);
-                float r1_w_8 = (r1_w_7 + cb0_values[12].z);
+                float r1_w_8 = saturate((r1_w_7 + cb0_values[12].z));
                 float4 r4_xyzw_4 = (mad(cb0_values[6].xyzw, i.texcoord1.zzzz, mad(cb0_values[4].xyzw, i.texcoord1.xxxx, (i.texcoord1.yyyy * cb0_values[5].xyzw))) + cb0_values[7].xyzw);
                 float r2_w_3 = (unity_ProbeVolumeParams.x == 1);
                 float r5_x_10;
@@ -9426,7 +9426,7 @@ Shader "Custom/Planet_Base_OCEANMOD"
                     r5_z_10 = r5_xyzw_10.z;
                     r5_w_4 = r5_xyzw_10.w;
                 }
-                float r2_w_7 = dot(float4(r5_x_10, r5_y_10, r5_z_10, r5_w_4), unity_OcclusionMaskSelector);
+                float r2_w_7 = saturate(dot(float4(r5_x_10, r5_y_10, r5_z_10, r5_w_4), unity_OcclusionMaskSelector));
                 float r3_w_3 = (0 < r4_xyzw_4.z);
                 float r3_w_4 = asfloat(asint(r3_w_3) & asint(1065353216));
                 float4 r5_xyzw_13 = t0.Sample(sampler_linear_clamp1, (((((r4_xyzw_4.xyxx / r4_xyzw_4.wwww)).xyxx + float4(0.5, 0.5, 0, 0))).xyxx).xy);
@@ -9451,9 +9451,9 @@ Shader "Custom/Planet_Base_OCEANMOD"
                 float r0_w_5 = rsqrt(r0_w_4);
                 float3 r0_xyz_3 = ((r0_w_5.xxxx * r0_xyz_2.xyzx)).xyz;
                 float nDotV_w_6 = dot(float4(unitWorldNormal_x_14, unitWorldNormal_y_14, unitWorldNormal_z_12, unitWorldNormal_x_14), unitViewDir_xyz_2.xyzx);
-                float r2_x_3 = dot(float4(unitWorldNormal_x_14, unitWorldNormal_y_14, unitWorldNormal_z_12, unitWorldNormal_x_14), r1_xyz_1.xyzx);
-                float r2_y_3 = dot(float4(unitWorldNormal_x_14, unitWorldNormal_y_14, unitWorldNormal_z_12, unitWorldNormal_x_14), r0_xyz_3.xyzx);
-                float r0_x_4 = dot(r1_xyz_1.xyzx, r0_xyz_3.xyzx);
+                float r2_x_3 = saturate(dot(float4(unitWorldNormal_x_14, unitWorldNormal_y_14, unitWorldNormal_z_12, unitWorldNormal_x_14), r1_xyz_1.xyzx));
+                float r2_y_3 = saturate(dot(float4(unitWorldNormal_x_14, unitWorldNormal_y_14, unitWorldNormal_z_12, unitWorldNormal_x_14), r0_xyz_3.xyzx));
+                float r0_x_4 = saturate(dot(r1_xyz_1.xyzx, r0_xyz_3.xyzx));
                 float r0_y_4 = (r0_x_4 * r0_x_4);
                 float r0_y_5 = dot(r0_y_4.xxxx, r1_w_9.xxxx);
                 float r0_y_6 = (r0_y_5 + -0.5);
@@ -9514,24 +9514,24 @@ Shader "Custom/Planet_Base_OCEANMOD"
             ZWrite Off
             Blend One One
             HLSLPROGRAM
-            cbuffer UnityPerDraw : register(b0)
+            cbuffer _UnityPerDrawCB : register(b0)
             {
                 float4x4 unity_ObjectToWorld;
                 float4 _LightColor0;
                 float4x4 unity_WorldToObject;
                 float4 cb0_values[10];
             };
-            cbuffer UnityPerFrame : register(b1)
+            cbuffer _UnityPerFrameCB : register(b1)
             {
                 float3 _WorldSpaceCameraPos;
                 float4x4 unity_MatrixVP;
             };
-            cbuffer UnityLighting : register(b2)
+            cbuffer _UnityLightingCB : register(b2)
             {
                 float4 _WorldSpaceLightPos0;
                 float4 unity_OcclusionMaskSelector;
             };
-            cbuffer UnityProbeVolume : register(b3)
+            cbuffer _UnityProbeVolumeCB : register(b3)
             {
                 float4 unity_ProbeVolumeParams;
                 float4x4 unity_ProbeVolumeWorldToObject;
@@ -9553,21 +9553,21 @@ Shader "Custom/Planet_Base_OCEANMOD"
             };
             struct program42Output
             {
-                float4 sv_Position0 : SV_POSITION0;
+                float4 sv_Position0 : SV_POSITION;
                 float3 texcoord0 : TEXCOORD0;
                 float3 texcoord1 : TEXCOORD1;
                 float4 texcoord3 : TEXCOORD3;
             };
             struct program88Input
             {
-                float4 sv_Position0 : SV_POSITION0;
+                float4 sv_Position0 : SV_POSITION;
                 float3 texcoord0 : TEXCOORD0;
                 float3 texcoord1 : TEXCOORD1;
                 float4 texcoord3 : TEXCOORD3;
             };
             struct program88Output
             {
-                float4 sv_Target0 : SV_Target0;
+                float4 sv_Target0 : SV_Target;
             };
             #pragma vertex vert
             program42Output vert(program42Input i)
@@ -9599,12 +9599,12 @@ Shader "Custom/Planet_Base_OCEANMOD"
                 float r1_w_2 = (r1_w_1 * cb0_values[9].x);
                 float r1_w_3 = exp2(r1_w_2);
                 float r1_w_4 = (-r1_w_3 + 1);
-                float4 r2_xyzw_3 = mad(((r1_w_4 * cb0_values[8].x)).xxxx, -cb0_values[4].xyzx, cb0_values[4].xyzx);
+                float4 r2_xyzw_3 = mad((saturate((r1_w_4 * cb0_values[8].x))).xxxx, -cb0_values[4].xyzx, cb0_values[4].xyzx);
                 float r2_x_3 = r2_xyzw_3.x;
                 float r2_y_1 = r2_xyzw_3.y;
                 float r2_z_1 = r2_xyzw_3.z;
                 float r1_w_5 = mad(r1_w_4, cb0_values[8].y, cb0_values[5].x);
-                float r1_w_6 = (r1_w_5 + cb0_values[8].z);
+                float r1_w_6 = saturate((r1_w_5 + cb0_values[8].z));
                 float r2_w_1 = (unity_ProbeVolumeParams.x == 1);
                 float r3_x_10;
                 float r3_y_11;
@@ -9636,7 +9636,7 @@ Shader "Custom/Planet_Base_OCEANMOD"
                     r3_z_10 = r3_xyzw_10.z;
                     r3_w_4 = r3_xyzw_10.w;
                 }
-                float r2_w_5 = dot(float4(r3_x_10, r3_y_11, r3_z_10, r3_w_4), unity_OcclusionMaskSelector);
+                float r2_w_5 = saturate(dot(float4(r3_x_10, r3_y_11, r3_z_10, r3_w_4), unity_OcclusionMaskSelector));
                 float4 r3_xyzw_11 = (r2_w_5.xxxx * _LightColor0.xyzx);
                 float r3_x_11 = r3_xyzw_11.x;
                 float r3_y_12 = r3_xyzw_11.y;
@@ -9653,9 +9653,9 @@ Shader "Custom/Planet_Base_OCEANMOD"
                 float r0_w_5 = rsqrt(r0_w_4);
                 float3 r0_xyz_3 = ((r0_w_5.xxxx * r0_xyz_2.xyzx)).xyz;
                 float nDotV_w_6 = dot(unitWorldNormal_xyz_1.xyzx, unitViewDir_xyz_1.xyzx);
-                float r1_x_2 = dot(unitWorldNormal_xyz_1.xyzx, _WorldSpaceLightPos0.xyzx);
-                float r1_y_2 = dot(unitWorldNormal_xyz_1.xyzx, r0_xyz_3.xyzx);
-                float r0_x_4 = dot(_WorldSpaceLightPos0.xyzx, r0_xyz_3.xyzx);
+                float r1_x_2 = saturate(dot(unitWorldNormal_xyz_1.xyzx, _WorldSpaceLightPos0.xyzx));
+                float r1_y_2 = saturate(dot(unitWorldNormal_xyz_1.xyzx, r0_xyz_3.xyzx));
+                float r0_x_4 = saturate(dot(_WorldSpaceLightPos0.xyzx, r0_xyz_3.xyzx));
                 float r0_y_4 = (r0_x_4 * r0_x_4);
                 float r0_y_5 = dot(r0_y_4.xxxx, r1_w_7.xxxx);
                 float r0_y_6 = (r0_y_5 + -0.5);
@@ -9720,7 +9720,7 @@ Shader "Custom/Planet_Base_OCEANMOD"
             ZTest LEqual
             ZWrite On
             HLSLPROGRAM
-            cbuffer UnityPerDraw : register(b0)
+            cbuffer _UnityPerDrawCB : register(b0)
             {
                 float4x4 unity_ObjectToWorld;
                 float4x4 unity_WorldToObject;
@@ -9734,7 +9734,7 @@ Shader "Custom/Planet_Base_OCEANMOD"
                 float _EmissionScale;
                 float _AOintensity;
             };
-            cbuffer UnityPerFrame : register(b1)
+            cbuffer _UnityPerFrameCB : register(b1)
             {
                 float4x4 unity_MatrixVP;
             };
@@ -9751,21 +9751,21 @@ Shader "Custom/Planet_Base_OCEANMOD"
             };
             struct program113Output
             {
-                float4 sv_Position0 : SV_POSITION0;
+                float4 sv_Position0 : SV_POSITION;
                 float3 texcoord0 : TEXCOORD0;
                 float3 texcoord1 : TEXCOORD1;
                 float4 texcoord3 : TEXCOORD3;
             };
             struct program119Input
             {
-                float4 sv_Position0 : SV_POSITION0;
+                float4 sv_Position0 : SV_POSITION;
                 float3 texcoord0 : TEXCOORD0;
                 float3 texcoord1 : TEXCOORD1;
                 float4 texcoord3 : TEXCOORD3;
             };
             struct program119Output
             {
-                float4 sv_Target0 : SV_Target0;
+                float4 sv_Target0 : SV_Target;
                 float4 sv_Target1 : SV_Target1;
                 float4 sv_Target2 : SV_Target2;
                 float4 sv_Target3 : SV_Target3;
@@ -9796,8 +9796,8 @@ Shader "Custom/Planet_Base_OCEANMOD"
                 float r0_y_1 = (-r0_x_3 + 1);
                 o.sv_Target0.w = r0_x_3;
                 float r0_y_2 = mad(r0_y_1, _AOsmoothness, _OceanGlossiness.x);
-                o.sv_Target1.w = (r0_y_2 + _SmoothnessShift);
-                float4 r0_xyzw_6 = mad(((r0_y_1 * _AOalbedo)).xxxx, -_Oceancolor.xyzx, _Oceancolor.xyzx);
+                o.sv_Target1.w = saturate((r0_y_2 + _SmoothnessShift));
+                float4 r0_xyzw_6 = mad((saturate((r0_y_1 * _AOalbedo))).xxxx, -_Oceancolor.xyzx, _Oceancolor.xyzx);
                 float r0_x_6 = r0_xyzw_6.x;
                 float r0_y_3 = r0_xyzw_6.y;
                 float r0_z_1 = r0_xyzw_6.z;
@@ -9822,7 +9822,7 @@ Shader "Custom/Planet_Base_OCEANMOD"
             ZTest LEqual
             ZWrite On
             HLSLPROGRAM
-            cbuffer UnityPerDraw : register(b0)
+            cbuffer _UnityPerDrawCB : register(b0)
             {
                 float4x4 unity_ObjectToWorld;
                 float4x4 unity_WorldToObject;
@@ -9837,7 +9837,7 @@ Shader "Custom/Planet_Base_OCEANMOD"
                 float _AOintensity;
                 float4 cb0_values[46];
             };
-            cbuffer UnityPerFrame : register(b1)
+            cbuffer _UnityPerFrameCB : register(b1)
             {
                 float4x4 unity_MatrixVP;
                 float4 cb1_values[42];
@@ -9861,7 +9861,7 @@ Shader "Custom/Planet_Base_OCEANMOD"
             };
             struct program116Output
             {
-                float4 sv_Position0 : SV_POSITION0;
+                float4 sv_Position0 : SV_POSITION;
                 float3 texcoord0 : TEXCOORD0;
                 float3 texcoord1 : TEXCOORD1;
                 float4 texcoord3 : TEXCOORD3;
@@ -9869,7 +9869,7 @@ Shader "Custom/Planet_Base_OCEANMOD"
             };
             struct program122Input
             {
-                float4 sv_Position0 : SV_POSITION0;
+                float4 sv_Position0 : SV_POSITION;
                 float3 texcoord0 : TEXCOORD0;
                 float3 texcoord1 : TEXCOORD1;
                 float4 texcoord3 : TEXCOORD3;
@@ -9877,7 +9877,7 @@ Shader "Custom/Planet_Base_OCEANMOD"
             };
             struct program122Output
             {
-                float4 sv_Target0 : SV_Target0;
+                float4 sv_Target0 : SV_Target;
                 float4 sv_Target1 : SV_Target1;
                 float4 sv_Target2 : SV_Target2;
                 float4 sv_Target3 : SV_Target3;
@@ -9915,12 +9915,12 @@ Shader "Custom/Planet_Base_OCEANMOD"
                                 float r0_w_1 = pow(_OceanAO.x, _AOintensity);
                 float r1_x_1 = (-r0_w_1 + 1);
                 float r1_y_1 = (r1_x_1 * _AOalbedo);
-                float r1_y_2 = r1_y_1;
+                float r1_y_2 = saturate(r1_y_1);
                 float4 r1_xyzw_3 = mad(r1_y_2.xxxx, -_Oceancolor.xxyz, _Oceancolor.xxyz);
                 float r1_y_3 = r1_xyzw_3.y;
                 float r1_z_1 = r1_xyzw_3.z;
                 float r1_w_1 = r1_xyzw_3.w;
-                o.sv_Target1.w = (mad(r1_x_1, _AOsmoothness, _OceanGlossiness.x) + _SmoothnessShift);
+                o.sv_Target1.w = saturate((mad(r1_x_1, _AOsmoothness, _OceanGlossiness.x) + _SmoothnessShift));
                 float3 TEXCOORD0_xyz_1;
                 float r3_x_5;
                 float r3_y_4;
@@ -10018,7 +10018,7 @@ Shader "Custom/Planet_Base_OCEANMOD"
             ZTest LEqual
             ZWrite On
             HLSLPROGRAM
-            cbuffer UnityPerDraw : register(b0)
+            cbuffer _UnityPerDrawCB : register(b0)
             {
                 float4x4 unity_ObjectToWorld;
                 float4x4 unity_WorldToObject;
@@ -10032,7 +10032,7 @@ Shader "Custom/Planet_Base_OCEANMOD"
                 float _EmissionScale;
                 float _AOintensity;
             };
-            cbuffer UnityPerFrame : register(b1)
+            cbuffer _UnityPerFrameCB : register(b1)
             {
                 float4x4 unity_MatrixVP;
             };
@@ -10049,21 +10049,21 @@ Shader "Custom/Planet_Base_OCEANMOD"
             };
             struct program115Output
             {
-                float4 sv_Position0 : SV_POSITION0;
+                float4 sv_Position0 : SV_POSITION;
                 float3 texcoord0 : TEXCOORD0;
                 float3 texcoord1 : TEXCOORD1;
                 float4 texcoord3 : TEXCOORD3;
             };
             struct program121Input
             {
-                float4 sv_Position0 : SV_POSITION0;
+                float4 sv_Position0 : SV_POSITION;
                 float3 texcoord0 : TEXCOORD0;
                 float3 texcoord1 : TEXCOORD1;
                 float4 texcoord3 : TEXCOORD3;
             };
             struct program121Output
             {
-                float4 sv_Target0 : SV_Target0;
+                float4 sv_Target0 : SV_Target;
                 float4 sv_Target1 : SV_Target1;
                 float4 sv_Target2 : SV_Target2;
                 float4 sv_Target3 : SV_Target3;
@@ -10094,8 +10094,8 @@ Shader "Custom/Planet_Base_OCEANMOD"
                 float r0_y_1 = (-r0_x_3 + 1);
                 o.sv_Target0.w = r0_x_3;
                 float r0_y_2 = mad(r0_y_1, _AOsmoothness, _OceanGlossiness.x);
-                o.sv_Target1.w = (r0_y_2 + _SmoothnessShift);
-                float4 r0_xyzw_6 = mad(((r0_y_1 * _AOalbedo)).xxxx, -_Oceancolor.xyzx, _Oceancolor.xyzx);
+                o.sv_Target1.w = saturate((r0_y_2 + _SmoothnessShift));
+                float4 r0_xyzw_6 = mad((saturate((r0_y_1 * _AOalbedo))).xxxx, -_Oceancolor.xyzx, _Oceancolor.xyzx);
                 float r0_x_6 = r0_xyzw_6.x;
                 float r0_y_3 = r0_xyzw_6.y;
                 float r0_z_1 = r0_xyzw_6.z;
@@ -10116,7 +10116,7 @@ Shader "Custom/Planet_Base_OCEANMOD"
             ZTest LEqual
             ZWrite On
             HLSLPROGRAM
-            cbuffer UnityPerDraw : register(b0)
+            cbuffer _UnityPerDrawCB : register(b0)
             {
                 float4x4 unity_ObjectToWorld;
                 float4x4 unity_WorldToObject;
@@ -10131,7 +10131,7 @@ Shader "Custom/Planet_Base_OCEANMOD"
                 float _AOintensity;
                 float4 cb0_values[46];
             };
-            cbuffer UnityPerFrame : register(b1)
+            cbuffer _UnityPerFrameCB : register(b1)
             {
                 float4x4 unity_MatrixVP;
                 float4 cb1_values[42];
@@ -10155,7 +10155,7 @@ Shader "Custom/Planet_Base_OCEANMOD"
             };
             struct program114Output
             {
-                float4 sv_Position0 : SV_POSITION0;
+                float4 sv_Position0 : SV_POSITION;
                 float3 texcoord0 : TEXCOORD0;
                 float3 texcoord1 : TEXCOORD1;
                 float4 texcoord3 : TEXCOORD3;
@@ -10163,7 +10163,7 @@ Shader "Custom/Planet_Base_OCEANMOD"
             };
             struct program120Input
             {
-                float4 sv_Position0 : SV_POSITION0;
+                float4 sv_Position0 : SV_POSITION;
                 float3 texcoord0 : TEXCOORD0;
                 float3 texcoord1 : TEXCOORD1;
                 float4 texcoord3 : TEXCOORD3;
@@ -10171,7 +10171,7 @@ Shader "Custom/Planet_Base_OCEANMOD"
             };
             struct program120Output
             {
-                float4 sv_Target0 : SV_Target0;
+                float4 sv_Target0 : SV_Target;
                 float4 sv_Target1 : SV_Target1;
                 float4 sv_Target2 : SV_Target2;
                 float4 sv_Target3 : SV_Target3;
@@ -10209,12 +10209,12 @@ Shader "Custom/Planet_Base_OCEANMOD"
                                 float r0_w_1 = pow(_OceanAO.x, _AOintensity);
                 float r1_x_1 = (-r0_w_1 + 1);
                 float r1_y_1 = (r1_x_1 * _AOalbedo);
-                float r1_y_2 = r1_y_1;
+                float r1_y_2 = saturate(r1_y_1);
                 float4 r1_xyzw_3 = mad(r1_y_2.xxxx, -_Oceancolor.xxyz, _Oceancolor.xxyz);
                 float r1_y_3 = r1_xyzw_3.y;
                 float r1_z_1 = r1_xyzw_3.z;
                 float r1_w_1 = r1_xyzw_3.w;
-                o.sv_Target1.w = (mad(r1_x_1, _AOsmoothness, _OceanGlossiness.x) + _SmoothnessShift);
+                o.sv_Target1.w = saturate((mad(r1_x_1, _AOsmoothness, _OceanGlossiness.x) + _SmoothnessShift));
                 float3 TEXCOORD0_xyz_1;
                 float r3_x_5;
                 float r3_y_4;
