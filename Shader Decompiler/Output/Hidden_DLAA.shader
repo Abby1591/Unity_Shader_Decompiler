@@ -13,14 +13,13 @@ Shader "Hidden/DLAA"
             ZTest Always
             ZWrite Off
             HLSLPROGRAM
-            cbuffer _UnityPerDrawCB : register(b0)
+            cbuffer _UnityPerDrawCB_b0
             {
-                float4x4 unity_ObjectToWorld;
-                float4 _MainTex_TexelSize;
+                float4x4 unity_ObjectToWorld : packoffset(c0);
             };
-            cbuffer _UnityPerFrameCB : register(b1)
+            cbuffer _UnityPerFrameCB_b1
             {
-                float4x4 unity_MatrixVP;
+                float4x4 unity_MatrixVP : packoffset(c17);
             };
             SamplerState sampler_MainTex;
             Texture2D _MainTex;
@@ -58,8 +57,8 @@ Shader "Hidden/DLAA"
             program3Output frag(program3Input i)
             {
                 program3Output o = (program3Output)0;
-                float4 r0_xyzw_2 = _MainTex.Sample(sampler_MainTex, (((i.texcoord0.xyxx + -_MainTex_TexelSize.xyxx)).xyxx).xy);
-                float4 r1_xyzw_1 = mad(_MainTex_TexelSize.xyxy, float4(1, -1, -1, 1), i.texcoord0.xyxy);
+                float4 r0_xyzw_2 = _MainTex.Sample(sampler_MainTex, (((i.texcoord0.xyxx + -unity_ObjectToWorld[2].xyxx)).xyxx).xy);
+                float4 r1_xyzw_1 = mad(unity_ObjectToWorld[2].xyxy, float4(1, -1, -1, 1), i.texcoord0.xyxy);
                 float4 r2_xyzw_1 = _MainTex.Sample(sampler_MainTex, (r1_xyzw_1.xyxx).xy);
                 float4 r1_xyzw_2 = _MainTex.Sample(sampler_MainTex, (r1_xyzw_1.zwzz).xy);
                 float4 r0_xyzw_3 = (r0_xyzw_2.xyzx + r2_xyzw_1.xyzx);
@@ -70,7 +69,7 @@ Shader "Hidden/DLAA"
                 float r0_x_4 = r0_xyzw_4.x;
                 float r0_y_4 = r0_xyzw_4.y;
                 float r0_z_3 = r0_xyzw_4.z;
-                float4 r1_xyzw_4 = _MainTex.Sample(sampler_MainTex, (((i.texcoord0.xyxx + _MainTex_TexelSize.xyxx)).xyxx).xy);
+                float4 r1_xyzw_4 = _MainTex.Sample(sampler_MainTex, (((i.texcoord0.xyxx + unity_ObjectToWorld[2].xyxx)).xyxx).xy);
                 float4 r0_xyzw_5 = (float4(r0_x_4, r0_y_4, r0_z_3, r0_x_4) + r1_xyzw_4.xyzx);
                 float r0_x_5 = r0_xyzw_5.x;
                 float r0_y_5 = r0_xyzw_5.y;

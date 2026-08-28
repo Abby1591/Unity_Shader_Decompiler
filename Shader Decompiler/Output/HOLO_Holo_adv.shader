@@ -54,7 +54,7 @@ Shader "HOLO/Holo_adv"
             ZWrite On
             Blend SrcAlpha OneMinusSrcColor
             HLSLPROGRAM
-            cbuffer _Globals : register(b0)
+            cbuffer _GlobalsCB_b0
             {
                 float4 _Color;
                 float4 _diff_Color;
@@ -87,23 +87,23 @@ Shader "HOLO/Holo_adv"
                 float _OriginalUVSwitch;
                 float4 cb0_values[13];
             };
-            cbuffer _UnityPerCameraCB : register(b1)
+            cbuffer _UnityPerCameraCB_b1
             {
-                float4 _Time;
-                float4 _SinTime;
-                float4 _CosTime;
-                float3 _WorldSpaceCameraPos;
-                float4 _ScreenParams;
+                float4 _Time : packoffset(c0);
+                float4 _SinTime : packoffset(c1);
+                float4 _CosTime : packoffset(c2);
+                float3 _WorldSpaceCameraPos : packoffset(c4);
+                float4 _ScreenParams : packoffset(c6);
             };
-            cbuffer _UnityPerDrawCB : register(b2)
+            cbuffer _UnityPerDrawCB_b2
             {
-                float4x4 unity_ObjectToWorld;
-                float4x4 unity_WorldToObject;
+                float4x4 unity_ObjectToWorld : packoffset(c0);
+                float4x4 unity_WorldToObject : packoffset(c4);
             };
-            cbuffer _UnityPerFrameCB : register(b3)
+            cbuffer _UnityPerFrameCB_b3
             {
-                float4x4 unity_MatrixV;
-                float4x4 unity_MatrixVP;
+                float4x4 unity_MatrixV : packoffset(c9);
+                float4x4 unity_MatrixVP : packoffset(c17);
             };
             SamplerState sampler_MainTex;
             Texture2D _MainTex;

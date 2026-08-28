@@ -190,8 +190,14 @@ public static class HlslPrettyPrinter
         // fragment stage can seed the matching input registers.
         var stageInterpolators = new Dictionary<string, string>();
 
+        // Build cross-stage cbuffer variable rename mapping: when vert and
+        // frag have different variables at the same byte offset within a
+        // merged cbuffer, one variable is declared and the other's references
+        // in the function body are redirected.
+        var cbufferRenames = BuildCbufferRenameMap(pass);
+
         foreach (HlslResourceNode res in pass.Resources)
-            PrintResource(sb, res, stripRegisterBindings);
+            PrintResource(sb, res, stripRegisterBindings, cbufferRenames);
 
         foreach (HlslStructNode s in pass.Structs)
             PrintStruct(sb, s);
@@ -199,16 +205,16 @@ public static class HlslPrettyPrinter
         if (pass.VertexFunction is not null)
         {
             sb.Append("            #pragma vertex vert\n");
-            PrintFunction(sb, pass.VertexFunction, pass.Cbuffers, fuseTemps, stageOutputs: stageInterpolators, resources: pass.Resources);
+            PrintFunction(sb, pass.VertexFunction, pass.Cbuffers, fuseTemps, stageOutputs: stageInterpolators, resources: pass.Resources, cbufferRenames: cbufferRenames);
         }
         if (pass.FragmentFunction is not null)
         {
             sb.Append("            #pragma fragment frag\n");
-            PrintFunction(sb, pass.FragmentFunction, pass.Cbuffers, fuseTemps, stageInputs: stageInterpolators, resources: pass.Resources);
+            PrintFunction(sb, pass.FragmentFunction, pass.Cbuffers, fuseTemps, stageInputs: stageInterpolators, resources: pass.Resources, cbufferRenames: cbufferRenames);
         }
         foreach (HlslFunctionNode? f in new[] { pass.GeometryFunction, pass.HullFunction, pass.DomainFunction, pass.ComputeFunction })
             if (f is not null)
-                PrintFunction(sb, f, pass.Cbuffers, fuseTemps, resources: pass.Resources);
+                PrintFunction(sb, f, pass.Cbuffers, fuseTemps, resources: pass.Resources, cbufferRenames: cbufferRenames);
 
         sb.Append("            ENDHLSL\n");
         sb.Append("        }\n");
@@ -267,11 +273,97 @@ public static class HlslPrettyPrinter
 
     // ---------- Stage 7: Resources ----------
 
-    private static void PrintResource(StringBuilder sb, HlslResourceNode res, bool stripRegisterBindings)
+    // When vert and frag have different variables at the same byte offset
+    // within a merged cbuffer, one must be declared and the other's
+    // references redirected.  Returns a map from the dropped variable name
+    // to the declared variable name (possibly with an array index for
+    // matrix-row renames).
+    private static Dictionary<string, string> BuildCbufferRenameMap(HlslPassNode pass)
     {
+        var renames = new Dictionary<string, string>();
+
+        // Collect all variables per slot with their full metadata.
+        // key = slot, value = list of (name, offset, sizeBytes, stage, isMatrix)
+        var bySlot = new Dictionary<int, List<(string Name, int Offset, int SizeBytes, string Stage, bool IsMatrix)>>();
+        foreach (var (key, cb) in pass.Cbuffers)
+        {
+            if (!bySlot.TryGetValue(key.Slot, out var list))
+            {
+                list = new List<(string, int, int, string, bool)>();
+                bySlot[key.Slot] = list;
+            }
+            foreach (var v in cb.Variables)
+                list.Add((v.Name, v.Offset, v.SizeBytes, key.Stage, v.IsMatrix));
+        }
+
+        bool IsMatrixName(string name) =>
+            name.Contains("ObjectToWorld") || name.Contains("WorldToObject") ||
+            name.Contains("MatrixVP") || name.Contains("MatrixV") ||
+            name.Contains("MatrixMVP");
+
+        foreach (var (_, vars) in bySlot)
+        {
+            // ---- Pass 1: exact-offset collisions (two names at same offset) ----
+            var byOffset = vars.GroupBy(v => v.Offset);
+            foreach (var og in byOffset)
+            {
+                var uniqueNames = og.Select(v => v.Name).Distinct().ToList();
+                if (uniqueNames.Count <= 1) continue;
+
+                bool hasMatrix = og.Any(v => v.IsMatrix || IsMatrixName(v.Name));
+                string kept;
+                if (hasMatrix)
+                    kept = og.First(v => v.IsMatrix || IsMatrixName(v.Name)).Name;
+                else if (og.Any(v => v.Stage == "Fragment"))
+                    kept = og.First(v => v.Stage == "Fragment").Name;
+                else
+                    kept = uniqueNames[0];
+
+                foreach (string removed in uniqueNames.Where(n => n != kept))
+                {
+                    bool keptIsMatrix = og.First(v => v.Name == kept).IsMatrix || IsMatrixName(kept);
+                    string target = keptIsMatrix ? $"{kept}[0]" : kept;
+                    renames[removed] = target;
+                }
+            }
+
+            // ---- Pass 2: range overlaps (non-matrix var inside matrix span) ----
+            var matrices = vars.Where(v => v.IsMatrix || IsMatrixName(v.Name))
+                               .GroupBy(v => v.Name)
+                               .Select(g => g.First())
+                               .ToList();
+            var nonMatrices = vars.Where(v => !(v.IsMatrix || IsMatrixName(v.Name))).ToList();
+
+            foreach (var nv in nonMatrices)
+            {
+                if (renames.ContainsKey(nv.Name)) continue; // already handled
+                foreach (var mv in matrices)
+                {
+                    if (nv.Offset >= mv.Offset && nv.Offset < mv.Offset + mv.SizeBytes)
+                    {
+                        int row = (nv.Offset - mv.Offset) / 16;
+                        renames[nv.Name] = $"{mv.Name}[{row}]";
+                        break;
+                    }
+                }
+            }
+        }
+
+        return renames;
+    }
+
+    private static void PrintResource(StringBuilder sb, HlslResourceNode res, bool stripRegisterBindings, Dictionary<string, string>? cbufferRenames = null)
+    {
+        // Unity standard cbuffers are assigned to per-stage slots by Unity's
+        // compiler from the cbuffer NAME alone — an explicit register binding
+        // would conflict when vertex and fragment map the same name to
+        // different slots (e.g. UnityPerCamera at b0 in vertex, b1 in
+        // fragment).  Only emit register(bN) for non-Unity cbuffers.
         string reg = stripRegisterBindings && res.Kind is HlslResourceKind.Texture or HlslResourceKind.Sampler
             ? ""
-            : RegisterBinding(res);
+            : (res.Kind == HlslResourceKind.ConstantBuffer && IsUnityCbuffer(res.Name))
+                ? ""
+                : RegisterBinding(res);
         string regSuffix = string.IsNullOrEmpty(reg) ? "" : " : " + reg;
 
         switch (res.Kind)
@@ -284,24 +376,132 @@ public static class HlslPrettyPrinter
                 // Rename them while keeping ALL variables and the register
                 // binding so the bytecode still reads from the correct slot.
                 string cbufferName = IsUnityCbuffer(res.Name)
-                    ? $"_{res.Name}CB"
+                    ? $"_{res.Name.TrimStart('_')}CB_b{res.Slot}"
                     : res.Name;
 
-                sb.Append("            cbuffer ").Append(cbufferName).Append(" : ").Append(reg).Append("\n            {\n");
-                // HLSL infers each member's byte offset from its textual
-                // declaration order when there's no : packoffset(...), so the
-                // order must match the reflected layout. Sort by real offset;
-                // the synthesized cbN_values fallback array has a fake Offset
-                // (0) and is pure filler for reads that didn't resolve to a
-                // named member, so pin it to the end where it can't shift a
-                // real member's inferred offset.
+                sb.Append("            cbuffer ").Append(cbufferName);
+                if (!string.IsNullOrEmpty(reg))
+                    sb.Append(" : ").Append(reg);
+                sb.Append("\n            {\n");
+                // Emit packoffset for all non-synthetic variables.  When two
+                // variables from different stages collide at the same register,
+                // keep only the one that IS the rename target (the other stage's
+                // references are redirected via CbufferVarRenames).
                 var orderedAll = res.Variables
                     .OrderBy(v => v.Name == $"cb{res.Slot}_values" ? 1 : 0)
                     .ThenBy(v => v.Offset)
                     .ToList();
+
+                bool hasSynthetic = orderedAll.Any(v =>
+                    v.Name.StartsWith("cb") && v.Name.Contains("_values"));
+
+                // Collect the set of names that are rename TARGETS — these
+                // are the ones we keep when a collision happens.
+                var renameTargets = new HashSet<string>();
+                if (cbufferRenames is not null)
+                    foreach (string target in cbufferRenames.Values)
+                        renameTargets.Add(target);
+
+                // Build the set of variable names to SKIP (the ones that
+                // were renamed away).  A variable is skipped when:
+                //  (a) it appears as a KEY in the rename map, AND
+                //  (b) its target is also declared in this cbuffer.
+                var skipNames = new HashSet<string>();
+                if (cbufferRenames is not null)
+                {
+                    var declaredNames = new HashSet<string>(orderedAll.Select(v => v.Name));
+                    foreach (var (old, target) in cbufferRenames)
+                    {
+                        string bareTarget = target.Contains('[') ? target[..target.IndexOf('[')] : target;
+                        if (declaredNames.Contains(old) && declaredNames.Contains(bareTarget))
+                            skipNames.Add(old);
+                    }
+                }
+
+                // Emit packoffset for all non-synthetic cbuffers so each
+                // variable lands at the byte offset the DXBC expects.
+                // The overlap check below disables it when variables from
+                // different physical cbuffers would collide (e.g. PicaVoxel
+                // $Globals merged with UnityPerDraw at the same slot).
+                bool needPackoffset = !hasSynthetic;
+                if (needPackoffset)
+                {
+                    // Check for overlapping packoffset ranges among the
+                    // non-skipped, non-synthetic variables.
+                    var poRanges = new List<(uint start, uint end, string name)>();
+                    foreach (HlslCBufferVariable v in orderedAll)
+                    {
+                        if (skipNames.Contains(v.Name) || (v.Name.StartsWith("cb") && v.Name.Contains("_values")))
+                            continue;
+                        bool isScalar = (v.TypeName == "float" || v.TypeName == "int" || v.TypeName == "uint")
+                                        && v.Size <= 4 && v.ArraySize is null;
+                        uint vSize = isScalar ? 4u : v.Size;
+                        if (vSize == 0) vSize = 16;
+                        uint start = v.Offset;
+                        uint end = start + vSize;
+                        foreach (var (ps, pe, pn) in poRanges)
+                        {
+                            if (start < pe && end > ps)
+                            {
+                                needPackoffset = false;
+                                break;
+                            }
+                        }
+                        if (!needPackoffset) break;
+                        poRanges.Add((start, end, v.Name));
+                    }
+                }
+
+                // Track which packoffset values are already taken to avoid
+                // duplicate packoffset annotations.
+                var usedPackOffsets = new HashSet<string>();
+
                 foreach (HlslCBufferVariable v in orderedAll)
-                    sb.Append("                ").Append(v.TypeName).Append(' ').Append(v.Name)
-                      .Append(v.ArraySize is { } n ? $"[{n}]" : "").Append(";\n");
+                {
+                    if (skipNames.Contains(v.Name))
+                        continue;
+                    if (v.Name.StartsWith("cb") && v.Name.Contains("_values"))
+                    {
+                        // Synthetic fallback — no packoffset.
+                        sb.Append("                ").Append(v.TypeName).Append(' ').Append(v.Name);
+                        if (v.ArraySize is { } n)
+                            sb.Append('[').Append(n).Append(']');
+                        sb.Append(";\n");
+                        continue;
+                    }
+
+                    sb.Append("                ").Append(v.TypeName).Append(' ').Append(v.Name);
+                    if (v.ArraySize is { } arrLen)
+                        sb.Append('[').Append(arrLen).Append(']');
+
+                    if (needPackoffset)
+                    {
+                        uint cReg = v.Offset / 16;
+                        uint withinReg = v.Offset % 16;
+                        bool isScalar = (v.TypeName == "float" || v.TypeName == "int" || v.TypeName == "uint")
+                                        && v.Size <= 4 && v.ArraySize is null;
+                        string po;
+                        if (withinReg > 0 || isScalar)
+                        {
+                            string comp = (withinReg / 4) switch
+                            {
+                                1 => ".y",
+                                2 => ".z",
+                                3 => ".w",
+                                _ => ".x"
+                            };
+                            po = $"c{cReg}{comp}";
+                        }
+                        else
+                        {
+                            po = $"c{cReg}";
+                        }
+
+                        if (usedPackOffsets.Add(po))
+                            sb.Append(" : packoffset(").Append(po).Append(')');
+                    }
+                    sb.Append(";\n");
+                }
                 sb.Append("            };\n");
                 break;
 
@@ -335,8 +535,10 @@ public static class HlslPrettyPrinter
 
     // Unity auto-injects these standard cbuffers into HLSLPROGRAM blocks.
     // Re-declaring them causes "Duplicate constant buffer declaration".
+    // $Globals (sanitized to _Globals) is Unity's per-material block that
+    // is also auto-injected.
     private static bool IsUnityCbuffer(string name) =>
-        name.StartsWith("Unity", StringComparison.Ordinal);
+        name.StartsWith("Unity", StringComparison.Ordinal) || name == "_Globals";
 
     // ---------- Stage 8: Structs ----------
 
@@ -409,6 +611,12 @@ public static class HlslPrettyPrinter
         // Texture variable name by register slot — used so RenderRegisterRead
         // emits the Property-matched name (e.g. "_MainTex") instead of "t0".
         public Dictionary<int, string> TextureNameBySlot { get; } = new();
+
+        // Cross-stage cbuffer variable renames: when vert and frag have
+        // different variables at the same packoffset within a merged
+        // cbuffer, one variable is declared and the other's references in
+        // the function body are redirected here.
+        public Dictionary<string, string> CbufferVarRenames { get; } = new();
     }
 
     private static void PrintFunction(
@@ -418,7 +626,8 @@ public static class HlslPrettyPrinter
         bool fuseTemps,
         Dictionary<string, string>? stageInputs = null,
         Dictionary<string, string>? stageOutputs = null,
-        List<HlslResourceNode>? resources = null)
+        List<HlslResourceNode>? resources = null,
+        Dictionary<string, string>? cbufferRenames = null)
     {
         string outType = fn.OutputStruct?.Name ?? "void";
         string inType = fn.InputStruct?.Name ?? "";
@@ -442,6 +651,9 @@ public static class HlslPrettyPrinter
             InputElements = fn.InputElementsByRegister,
             OutputElements = fn.OutputElementsByRegister,
         };
+        if (cbufferRenames is not null)
+            foreach (var (old, fresh) in cbufferRenames)
+                ctx.CbufferVarRenames[old] = fresh;
         if (resources is not null)
             foreach (HlslResourceNode res in resources)
             {
@@ -1440,12 +1652,29 @@ public static class HlslPrettyPrinter
     private static string RenderCbufferRead(IRRegister reg, PrintContext ctx)
     {
         if (reg.SymbolicName is not null)
-            return reg.SymbolicName + MaskOrSwizzleSuffix(reg);
+        {
+            string name = reg.SymbolicName;
+            if (ctx.CbufferVarRenames.TryGetValue(name, out string? renamed))
+                name = renamed;
+            return name + MaskOrSwizzleSuffix(reg);
+        }
 
         if (reg.Indices.Count >= 2
             && ctx.Cbuffers.TryGetValue((int)reg.Indices[0], out CbufferMetadata? cb)
             && ResolveCbufferRead(cb, reg) is { } named)
         {
+            // Try exact match first.
+            if (ctx.CbufferVarRenames.TryGetValue(named, out string? renamed))
+                return renamed;
+
+            // Try prefix match: ResolveCbufferRead may return
+            // "varName.swizzle" but the rename map stores bare "varName".
+            foreach (var (old, fresh) in ctx.CbufferVarRenames)
+            {
+                if (named == old || named.StartsWith(old + ".") || named.StartsWith(old + "["))
+                    return named.Replace(old, fresh);
+            }
+
             return named;
         }
 

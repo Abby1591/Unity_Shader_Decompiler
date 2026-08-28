@@ -20,44 +20,43 @@ Shader "Custom/Planet_Clouds"
             ZWrite Off
             Blend One OneMinusSrcColor
             HLSLPROGRAM
-            cbuffer _Globals : register(b0)
+            cbuffer _GlobalsCB_b0
             {
-                float4 _LightColor0;
-                float _BumpScale;
-                float _AlphaScale;
-                float _DisplacementClouds;
-                float4 _MainTex_ST;
+                float4 _LightColor0 : packoffset(c2);
+                float _BumpScale : packoffset(c4.x);
+                float _AlphaScale : packoffset(c4.y);
+                float _DisplacementClouds : packoffset(c4.z);
+                float4 _MainTex_ST : packoffset(c5);
             };
-            cbuffer _UnityPerDrawCB : register(b1)
+            cbuffer _UnityPerDrawCB_b1
             {
-                float4x4 unity_ObjectToWorld;
-                float4x4 unity_WorldToObject;
-                float3 _WorldSpaceCameraPos;
-                float4 unity_WorldTransformParams;
+                float4x4 unity_ObjectToWorld : packoffset(c0);
+                float4x4 unity_WorldToObject : packoffset(c4);
+                float4 unity_WorldTransformParams : packoffset(c9);
             };
-            cbuffer _UnityPerFrameCB : register(b2)
+            cbuffer _UnityPerFrameCB_b2
             {
-                float4 _WorldSpaceLightPos0;
-                float4x4 unity_MatrixVP;
-                float4 unity_OcclusionMaskSelector;
+                float4 _WorldSpaceLightPos0 : packoffset(c0);
+                float4x4 unity_MatrixVP : packoffset(c17);
+                float4 unity_OcclusionMaskSelector : packoffset(c46);
             };
-            cbuffer _UnityReflectionProbesCB : register(b3)
+            cbuffer _UnityReflectionProbesCB_b3
             {
-                float4 unity_SpecCube0_BoxMax;
-                float4 unity_SpecCube0_BoxMin;
-                float4 unity_SpecCube0_ProbePosition;
-                float4 unity_SpecCube0_HDR;
-                float4 unity_SpecCube1_BoxMax;
-                float4 unity_SpecCube1_BoxMin;
-                float4 unity_SpecCube1_ProbePosition;
-                float4 unity_SpecCube1_HDR;
+                float4 unity_SpecCube0_BoxMax : packoffset(c0);
+                float4 unity_SpecCube0_BoxMin : packoffset(c1);
+                float4 unity_SpecCube0_ProbePosition : packoffset(c2);
+                float4 unity_SpecCube0_HDR : packoffset(c3);
+                float4 unity_SpecCube1_BoxMax : packoffset(c4);
+                float4 unity_SpecCube1_BoxMin : packoffset(c5);
+                float4 unity_SpecCube1_ProbePosition : packoffset(c6);
+                float4 unity_SpecCube1_HDR : packoffset(c7);
             };
-            cbuffer _UnityProbeVolumeCB : register(b4)
+            cbuffer _UnityProbeVolumeCB_b4
             {
-                float4 unity_ProbeVolumeParams;
-                float4x4 unity_ProbeVolumeWorldToObject;
-                float3 unity_ProbeVolumeSizeInv;
-                float3 unity_ProbeVolumeMin;
+                float4 unity_ProbeVolumeParams : packoffset(c0);
+                float4x4 unity_ProbeVolumeWorldToObject : packoffset(c1);
+                float3 unity_ProbeVolumeSizeInv : packoffset(c5);
+                float3 unity_ProbeVolumeMin : packoffset(c6);
             };
             SamplerState sampler_linear_clamp;
             SamplerState sampler_linear_clamp1;
@@ -143,7 +142,7 @@ Shader "Custom/Planet_Clouds"
                 float TEXCOORD1_x_1 = i.texcoord1.w;
                 float TEXCOORD2_y_1 = i.texcoord2.w;
                 float TEXCOORD3_z_1 = i.texcoord3.w;
-                float3 viewDir_xyz_1 = ((-float4(TEXCOORD1_x_1, TEXCOORD2_y_1, TEXCOORD3_z_1, TEXCOORD1_x_1) + _WorldSpaceCameraPos.xyzx)).xyz;
+                float3 viewDir_xyz_1 = ((-float4(TEXCOORD1_x_1, TEXCOORD2_y_1, TEXCOORD3_z_1, TEXCOORD1_x_1) + unity_WorldToObject[0].xyzx)).xyz;
                 float r0_w_1 = dot(viewDir_xyz_1.xyzx, viewDir_xyz_1.xyzx);
                 float r0_w_2 = rsqrt(r0_w_1);
                 float3 unitViewDir_xyz_1 = ((r0_w_2.xxxx * viewDir_xyz_1.xyzx)).xyz;
@@ -323,23 +322,22 @@ Shader "Custom/Planet_Clouds"
             ZWrite Off
             Blend One OneMinusSrcColor
             HLSLPROGRAM
-            cbuffer _Globals : register(b0)
+            cbuffer _GlobalsCB_b0
             {
-                float4 _LightColor0;
-                float _BumpScale;
-                float _AlphaScale;
-                float _DisplacementClouds;
-                float4 _MainTex_ST;
+                float4 _LightColor0 : packoffset(c2);
+                float _BumpScale : packoffset(c4.x);
+                float _AlphaScale : packoffset(c4.y);
+                float _DisplacementClouds : packoffset(c4.z);
+                float4 _MainTex_ST : packoffset(c5);
             };
-            cbuffer _UnityPerDrawCB : register(b1)
+            cbuffer _UnityPerDrawCB_b1
             {
                 float4x4 unity_ObjectToWorld;
                 float4x4 unity_WorldToObject;
-                float3 _WorldSpaceCameraPos;
                 float4 unity_WorldTransformParams;
                 float4 cb1_values[46];
             };
-            cbuffer _UnityPerFrameCB : register(b2)
+            cbuffer _UnityPerFrameCB_b2
             {
                 float4 _WorldSpaceLightPos0;
                 float4x4 unity_MatrixVP;
@@ -358,7 +356,7 @@ Shader "Custom/Planet_Clouds"
                 float4 unity_SpecCube1_HDR;
                 float4 cb3_values[21];
             };
-            cbuffer _UnityProbeVolumeCB : register(b4)
+            cbuffer _UnityProbeVolumeCB_b4
             {
                 float4 unity_ProbeVolumeParams;
                 float4x4 unity_ProbeVolumeWorldToObject;
@@ -464,7 +462,7 @@ Shader "Custom/Planet_Clouds"
                 float TEXCOORD1_x_1 = i.texcoord1.w;
                 float TEXCOORD2_y_1 = i.texcoord2.w;
                 float TEXCOORD3_z_1 = i.texcoord3.w;
-                float3 viewDir_xyz_1 = ((-float4(TEXCOORD1_x_1, TEXCOORD2_y_1, TEXCOORD3_z_1, TEXCOORD1_x_1) + _WorldSpaceCameraPos.xyzx)).xyz;
+                float3 viewDir_xyz_1 = ((-float4(TEXCOORD1_x_1, TEXCOORD2_y_1, TEXCOORD3_z_1, TEXCOORD1_x_1) + unity_WorldToObject[0].xyzx)).xyz;
                 float r0_w_1 = dot(viewDir_xyz_1.xyzx, viewDir_xyz_1.xyzx);
                 float r0_w_2 = rsqrt(r0_w_1);
                 float3 unitViewDir_xyz_1 = ((r0_w_2.xxxx * viewDir_xyz_1.xyzx)).xyz;
@@ -704,40 +702,39 @@ Shader "Custom/Planet_Clouds"
             ZWrite Off
             Blend One OneMinusSrcColor
             HLSLPROGRAM
-            cbuffer _Globals : register(b0)
+            cbuffer _GlobalsCB_b0
             {
-                float4 _LightColor0;
-                float _BumpScale;
-                float _AlphaScale;
-                float _DisplacementClouds;
-                float4 _MainTex_ST;
+                float4 _LightColor0 : packoffset(c2);
+                float _BumpScale : packoffset(c4.x);
+                float _AlphaScale : packoffset(c4.y);
+                float _DisplacementClouds : packoffset(c4.z);
+                float4 _MainTex_ST : packoffset(c5);
             };
-            cbuffer _UnityPerDrawCB : register(b1)
+            cbuffer _UnityPerDrawCB_b1
             {
                 float4x4 unity_ObjectToWorld;
                 float4x4 unity_WorldToObject;
-                float3 _WorldSpaceCameraPos;
                 float4 unity_WorldTransformParams;
                 float4 cb1_values[6];
             };
-            cbuffer _UnityPerFrameCB : register(b2)
+            cbuffer _UnityPerFrameCB_b2
             {
-                float4 _WorldSpaceLightPos0;
-                float4x4 unity_MatrixVP;
-                float4 unity_OcclusionMaskSelector;
+                float4 _WorldSpaceLightPos0 : packoffset(c0);
+                float4x4 unity_MatrixVP : packoffset(c17);
+                float4 unity_OcclusionMaskSelector : packoffset(c46);
             };
-            cbuffer _UnityReflectionProbesCB : register(b3)
+            cbuffer _UnityReflectionProbesCB_b3
             {
-                float4 unity_SpecCube0_BoxMax;
-                float4 unity_SpecCube0_BoxMin;
-                float4 unity_SpecCube0_ProbePosition;
-                float4 unity_SpecCube0_HDR;
-                float4 unity_SpecCube1_BoxMax;
-                float4 unity_SpecCube1_BoxMin;
-                float4 unity_SpecCube1_ProbePosition;
-                float4 unity_SpecCube1_HDR;
+                float4 unity_SpecCube0_BoxMax : packoffset(c0);
+                float4 unity_SpecCube0_BoxMin : packoffset(c1);
+                float4 unity_SpecCube0_ProbePosition : packoffset(c2);
+                float4 unity_SpecCube0_HDR : packoffset(c3);
+                float4 unity_SpecCube1_BoxMax : packoffset(c4);
+                float4 unity_SpecCube1_BoxMin : packoffset(c5);
+                float4 unity_SpecCube1_ProbePosition : packoffset(c6);
+                float4 unity_SpecCube1_HDR : packoffset(c7);
             };
-            cbuffer _UnityProbeVolumeCB : register(b4)
+            cbuffer _UnityProbeVolumeCB_b4
             {
                 float4 unity_ProbeVolumeParams;
                 float4x4 unity_ProbeVolumeWorldToObject;
@@ -837,7 +834,7 @@ Shader "Custom/Planet_Clouds"
                 float TEXCOORD1_x_1 = i.texcoord1.w;
                 float TEXCOORD2_y_1 = i.texcoord2.w;
                 float TEXCOORD3_z_1 = i.texcoord3.w;
-                float3 viewDir_xyz_1 = ((-float4(TEXCOORD1_x_1, TEXCOORD2_y_1, TEXCOORD3_z_1, TEXCOORD1_x_1) + _WorldSpaceCameraPos.xyzx)).xyz;
+                float3 viewDir_xyz_1 = ((-float4(TEXCOORD1_x_1, TEXCOORD2_y_1, TEXCOORD3_z_1, TEXCOORD1_x_1) + unity_WorldToObject[0].xyzx)).xyz;
                 float r0_w_1 = dot(viewDir_xyz_1.xyzx, viewDir_xyz_1.xyzx);
                 float r0_w_2 = rsqrt(r0_w_1);
                 float3 unitViewDir_xyz_1 = ((r0_w_2.xxxx * viewDir_xyz_1.xyzx)).xyz;
@@ -1029,23 +1026,22 @@ Shader "Custom/Planet_Clouds"
             ZWrite Off
             Blend One OneMinusSrcColor
             HLSLPROGRAM
-            cbuffer _Globals : register(b0)
+            cbuffer _GlobalsCB_b0
             {
-                float4 _LightColor0;
-                float _BumpScale;
-                float _AlphaScale;
-                float _DisplacementClouds;
-                float4 _MainTex_ST;
+                float4 _LightColor0 : packoffset(c2);
+                float _BumpScale : packoffset(c4.x);
+                float _AlphaScale : packoffset(c4.y);
+                float _DisplacementClouds : packoffset(c4.z);
+                float4 _MainTex_ST : packoffset(c5);
             };
-            cbuffer _UnityPerDrawCB : register(b1)
+            cbuffer _UnityPerDrawCB_b1
             {
                 float4x4 unity_ObjectToWorld;
                 float4x4 unity_WorldToObject;
-                float3 _WorldSpaceCameraPos;
                 float4 unity_WorldTransformParams;
                 float4 cb1_values[46];
             };
-            cbuffer _UnityPerFrameCB : register(b2)
+            cbuffer _UnityPerFrameCB_b2
             {
                 float4 _WorldSpaceLightPos0;
                 float4x4 unity_MatrixVP;
@@ -1064,12 +1060,12 @@ Shader "Custom/Planet_Clouds"
                 float4 unity_SpecCube1_HDR;
                 float4 cb3_values[21];
             };
-            cbuffer _UnityProbeVolumeCB : register(b4)
+            cbuffer _UnityProbeVolumeCB_b4
             {
-                float4 unity_ProbeVolumeParams;
-                float4x4 unity_ProbeVolumeWorldToObject;
-                float3 unity_ProbeVolumeSizeInv;
-                float3 unity_ProbeVolumeMin;
+                float4 unity_ProbeVolumeParams : packoffset(c0);
+                float4x4 unity_ProbeVolumeWorldToObject : packoffset(c1);
+                float3 unity_ProbeVolumeSizeInv : packoffset(c5);
+                float3 unity_ProbeVolumeMin : packoffset(c6);
             };
             SamplerState sampler_linear_clamp;
             SamplerState sampler_linear_clamp1;
@@ -1161,7 +1157,7 @@ Shader "Custom/Planet_Clouds"
                 float TEXCOORD1_x_1 = i.texcoord1.w;
                 float TEXCOORD2_y_1 = i.texcoord2.w;
                 float TEXCOORD3_z_1 = i.texcoord3.w;
-                float3 viewDir_xyz_1 = ((-float4(TEXCOORD1_x_1, TEXCOORD2_y_1, TEXCOORD3_z_1, TEXCOORD1_x_1) + _WorldSpaceCameraPos.xyzx)).xyz;
+                float3 viewDir_xyz_1 = ((-float4(TEXCOORD1_x_1, TEXCOORD2_y_1, TEXCOORD3_z_1, TEXCOORD1_x_1) + unity_WorldToObject[0].xyzx)).xyz;
                 float r0_w_1 = dot(viewDir_xyz_1.xyzx, viewDir_xyz_1.xyzx);
                 float r0_w_2 = rsqrt(r0_w_1);
                 float3 unitViewDir_xyz_1 = ((r0_w_2.xxxx * viewDir_xyz_1.xyzx)).xyz;
@@ -1390,7 +1386,7 @@ Shader "Custom/Planet_Clouds"
             ZWrite Off
             Blend One One
             HLSLPROGRAM
-            cbuffer _Globals : register(b0)
+            cbuffer _GlobalsCB_b0
             {
                 float4 _LightColor0;
                 float _BumpScale;
@@ -1399,25 +1395,24 @@ Shader "Custom/Planet_Clouds"
                 float4 _MainTex_ST;
                 float4 cb0_values[10];
             };
-            cbuffer _UnityPerDrawCB : register(b1)
+            cbuffer _UnityPerDrawCB_b1
             {
-                float4x4 unity_ObjectToWorld;
-                float4x4 unity_WorldToObject;
-                float3 _WorldSpaceCameraPos;
-                float4 unity_WorldTransformParams;
+                float4x4 unity_ObjectToWorld : packoffset(c0);
+                float4x4 unity_WorldToObject : packoffset(c4);
+                float4 unity_WorldTransformParams : packoffset(c9);
             };
-            cbuffer _UnityPerFrameCB : register(b2)
+            cbuffer _UnityPerFrameCB_b2
             {
-                float4 _WorldSpaceLightPos0;
-                float4x4 unity_MatrixVP;
-                float4 unity_OcclusionMaskSelector;
+                float4 _WorldSpaceLightPos0 : packoffset(c0);
+                float4x4 unity_MatrixVP : packoffset(c17);
+                float4 unity_OcclusionMaskSelector : packoffset(c46);
             };
-            cbuffer _UnityProbeVolumeCB : register(b3)
+            cbuffer _UnityProbeVolumeCB_b3
             {
-                float4 unity_ProbeVolumeParams;
-                float4x4 unity_ProbeVolumeWorldToObject;
-                float3 unity_ProbeVolumeSizeInv;
-                float3 unity_ProbeVolumeMin;
+                float4 unity_ProbeVolumeParams : packoffset(c0);
+                float4x4 unity_ProbeVolumeWorldToObject : packoffset(c1);
+                float3 unity_ProbeVolumeSizeInv : packoffset(c5);
+                float3 unity_ProbeVolumeMin : packoffset(c6);
             };
             SamplerState sampler_linear_clamp;
             SamplerState sampler_linear_clamp1;
@@ -1509,7 +1504,7 @@ Shader "Custom/Planet_Clouds"
                 float r0_w_1 = dot(r0_xyz_1.xyzx, r0_xyz_1.xyzx);
                 float r0_w_2 = rsqrt(r0_w_1);
                 float3 r1_xyz_1 = ((r0_w_2.xxxx * r0_xyz_1.xyzx)).xyz;
-                float3 r2_xyz_1 = ((-i.texcoord4.xyzx + _WorldSpaceCameraPos.xyzx)).xyz;
+                float3 r2_xyz_1 = ((-i.texcoord4.xyzx + unity_WorldToObject[0].xyzx)).xyz;
                 float3 r2_xyz_2 = normalize(r2_xyz_1);
                 float4 r3_xyzw_1 = _MainTex.Sample(sampler_MainTex, (i.texcoord0.xyxx).xy);
                 float4 r4_xyzw_1 = _BumpMap.Sample(sampler_BumpMap, (i.texcoord0.xyxx).xy);
@@ -1633,7 +1628,7 @@ Shader "Custom/Planet_Clouds"
             ZWrite Off
             Blend One One
             HLSLPROGRAM
-            cbuffer _Globals : register(b0)
+            cbuffer _GlobalsCB_b0
             {
                 float4 _LightColor0;
                 float _BumpScale;
@@ -1642,26 +1637,25 @@ Shader "Custom/Planet_Clouds"
                 float4 _MainTex_ST;
                 float4 cb0_values[10];
             };
-            cbuffer _UnityPerDrawCB : register(b1)
+            cbuffer _UnityPerDrawCB_b1
             {
                 float4x4 unity_ObjectToWorld;
                 float4x4 unity_WorldToObject;
-                float3 _WorldSpaceCameraPos;
                 float4 unity_WorldTransformParams;
                 float4 cb1_values[6];
             };
-            cbuffer _UnityPerFrameCB : register(b2)
+            cbuffer _UnityPerFrameCB_b2
             {
-                float4 _WorldSpaceLightPos0;
-                float4x4 unity_MatrixVP;
-                float4 unity_OcclusionMaskSelector;
+                float4 _WorldSpaceLightPos0 : packoffset(c0);
+                float4x4 unity_MatrixVP : packoffset(c17);
+                float4 unity_OcclusionMaskSelector : packoffset(c46);
             };
-            cbuffer _UnityProbeVolumeCB : register(b3)
+            cbuffer _UnityProbeVolumeCB_b3
             {
-                float4 unity_ProbeVolumeParams;
-                float4x4 unity_ProbeVolumeWorldToObject;
-                float3 unity_ProbeVolumeSizeInv;
-                float3 unity_ProbeVolumeMin;
+                float4 unity_ProbeVolumeParams : packoffset(c0);
+                float4x4 unity_ProbeVolumeWorldToObject : packoffset(c1);
+                float3 unity_ProbeVolumeSizeInv : packoffset(c5);
+                float3 unity_ProbeVolumeMin : packoffset(c6);
             };
             cbuffer cb4 : register(b4)
             {
@@ -1760,7 +1754,7 @@ Shader "Custom/Planet_Clouds"
             program46Output frag(program46Input i)
             {
                 program46Output o = (program46Output)0;
-                float3 r0_xyz_1 = ((-i.texcoord4.xyzx + _WorldSpaceCameraPos.xyzx)).xyz;
+                float3 r0_xyz_1 = ((-i.texcoord4.xyzx + unity_WorldToObject[0].xyzx)).xyz;
                 float r0_w_1 = dot(r0_xyz_1.xyzx, r0_xyz_1.xyzx);
                 float r0_w_2 = rsqrt(r0_w_1);
                 float4 r2_xyzw_1 = _MainTex.Sample(sampler_MainTex, (i.texcoord0.xyxx).xy);
@@ -1894,7 +1888,7 @@ Shader "Custom/Planet_Clouds"
             ZWrite Off
             Blend One One
             HLSLPROGRAM
-            cbuffer _Globals : register(b0)
+            cbuffer _GlobalsCB_b0
             {
                 float4 _LightColor0;
                 float _BumpScale;
@@ -1903,26 +1897,25 @@ Shader "Custom/Planet_Clouds"
                 float4 _MainTex_ST;
                 float4 cb0_values[10];
             };
-            cbuffer _UnityPerDrawCB : register(b1)
+            cbuffer _UnityPerDrawCB_b1
             {
                 float4x4 unity_ObjectToWorld;
                 float4x4 unity_WorldToObject;
-                float3 _WorldSpaceCameraPos;
                 float4 unity_WorldTransformParams;
                 float4 cb1_values[6];
             };
-            cbuffer _UnityPerFrameCB : register(b2)
+            cbuffer _UnityPerFrameCB_b2
             {
-                float4 _WorldSpaceLightPos0;
-                float4x4 unity_MatrixVP;
-                float4 unity_OcclusionMaskSelector;
+                float4 _WorldSpaceLightPos0 : packoffset(c0);
+                float4x4 unity_MatrixVP : packoffset(c17);
+                float4 unity_OcclusionMaskSelector : packoffset(c46);
             };
-            cbuffer _UnityProbeVolumeCB : register(b3)
+            cbuffer _UnityProbeVolumeCB_b3
             {
-                float4 unity_ProbeVolumeParams;
-                float4x4 unity_ProbeVolumeWorldToObject;
-                float3 unity_ProbeVolumeSizeInv;
-                float3 unity_ProbeVolumeMin;
+                float4 unity_ProbeVolumeParams : packoffset(c0);
+                float4x4 unity_ProbeVolumeWorldToObject : packoffset(c1);
+                float3 unity_ProbeVolumeSizeInv : packoffset(c5);
+                float3 unity_ProbeVolumeMin : packoffset(c6);
             };
             cbuffer cb4 : register(b4)
             {
@@ -2024,7 +2017,7 @@ Shader "Custom/Planet_Clouds"
                 float r0_w_1 = dot(r0_xyz_1.xyzx, r0_xyz_1.xyzx);
                 float r0_w_2 = rsqrt(r0_w_1);
                 float3 r1_xyz_1 = ((r0_w_2.xxxx * r0_xyz_1.xyzx)).xyz;
-                float3 r2_xyz_1 = ((-i.texcoord4.xyzx + _WorldSpaceCameraPos.xyzx)).xyz;
+                float3 r2_xyz_1 = ((-i.texcoord4.xyzx + unity_WorldToObject[0].xyzx)).xyz;
                 float3 r2_xyz_2 = normalize(r2_xyz_1);
                 float4 r3_xyzw_1 = _MainTex.Sample(sampler_MainTex, (i.texcoord0.xyxx).xy);
                 float4 r4_xyzw_1 = _BumpMap.Sample(sampler_BumpMap, (i.texcoord0.xyxx).xy);
@@ -2158,7 +2151,7 @@ Shader "Custom/Planet_Clouds"
             ZWrite Off
             Blend One One
             HLSLPROGRAM
-            cbuffer _Globals : register(b0)
+            cbuffer _GlobalsCB_b0
             {
                 float4 _LightColor0;
                 float _BumpScale;
@@ -2167,26 +2160,25 @@ Shader "Custom/Planet_Clouds"
                 float4 _MainTex_ST;
                 float4 cb0_values[10];
             };
-            cbuffer _UnityPerDrawCB : register(b1)
+            cbuffer _UnityPerDrawCB_b1
             {
                 float4x4 unity_ObjectToWorld;
                 float4x4 unity_WorldToObject;
-                float3 _WorldSpaceCameraPos;
                 float4 unity_WorldTransformParams;
                 float4 cb1_values[6];
             };
-            cbuffer _UnityPerFrameCB : register(b2)
+            cbuffer _UnityPerFrameCB_b2
             {
-                float4 _WorldSpaceLightPos0;
-                float4x4 unity_MatrixVP;
-                float4 unity_OcclusionMaskSelector;
+                float4 _WorldSpaceLightPos0 : packoffset(c0);
+                float4x4 unity_MatrixVP : packoffset(c17);
+                float4 unity_OcclusionMaskSelector : packoffset(c46);
             };
-            cbuffer _UnityProbeVolumeCB : register(b3)
+            cbuffer _UnityProbeVolumeCB_b3
             {
-                float4 unity_ProbeVolumeParams;
-                float4x4 unity_ProbeVolumeWorldToObject;
-                float3 unity_ProbeVolumeSizeInv;
-                float3 unity_ProbeVolumeMin;
+                float4 unity_ProbeVolumeParams : packoffset(c0);
+                float4x4 unity_ProbeVolumeWorldToObject : packoffset(c1);
+                float3 unity_ProbeVolumeSizeInv : packoffset(c5);
+                float3 unity_ProbeVolumeMin : packoffset(c6);
             };
             cbuffer cb4 : register(b4)
             {
@@ -2288,7 +2280,7 @@ Shader "Custom/Planet_Clouds"
                 float r0_w_1 = dot(r0_xyz_1.xyzx, r0_xyz_1.xyzx);
                 float r0_w_2 = rsqrt(r0_w_1);
                 float3 r1_xyz_1 = ((r0_w_2.xxxx * r0_xyz_1.xyzx)).xyz;
-                float3 r2_xyz_1 = ((-i.texcoord4.xyzx + _WorldSpaceCameraPos.xyzx)).xyz;
+                float3 r2_xyz_1 = ((-i.texcoord4.xyzx + unity_WorldToObject[0].xyzx)).xyz;
                 float3 r2_xyz_2 = normalize(r2_xyz_1);
                 float4 r3_xyzw_1 = _MainTex.Sample(sampler_MainTex, (i.texcoord0.xyxx).xy);
                 float4 r4_xyzw_1 = _BumpMap.Sample(sampler_BumpMap, (i.texcoord0.xyxx).xy);
@@ -2425,7 +2417,7 @@ Shader "Custom/Planet_Clouds"
             ZWrite Off
             Blend One One
             HLSLPROGRAM
-            cbuffer _Globals : register(b0)
+            cbuffer _GlobalsCB_b0
             {
                 float4 _LightColor0;
                 float _BumpScale;
@@ -2434,26 +2426,25 @@ Shader "Custom/Planet_Clouds"
                 float4 _MainTex_ST;
                 float4 cb0_values[5];
             };
-            cbuffer _UnityPerDrawCB : register(b1)
+            cbuffer _UnityPerDrawCB_b1
             {
                 float4x4 unity_ObjectToWorld;
                 float4x4 unity_WorldToObject;
-                float3 _WorldSpaceCameraPos;
                 float4 unity_WorldTransformParams;
                 float4 cb1_values[6];
             };
-            cbuffer _UnityPerFrameCB : register(b2)
+            cbuffer _UnityPerFrameCB_b2
             {
-                float4 _WorldSpaceLightPos0;
-                float4x4 unity_MatrixVP;
-                float4 unity_OcclusionMaskSelector;
+                float4 _WorldSpaceLightPos0 : packoffset(c0);
+                float4x4 unity_MatrixVP : packoffset(c17);
+                float4 unity_OcclusionMaskSelector : packoffset(c46);
             };
-            cbuffer _UnityProbeVolumeCB : register(b3)
+            cbuffer _UnityProbeVolumeCB_b3
             {
-                float4 unity_ProbeVolumeParams;
-                float4x4 unity_ProbeVolumeWorldToObject;
-                float3 unity_ProbeVolumeSizeInv;
-                float3 unity_ProbeVolumeMin;
+                float4 unity_ProbeVolumeParams : packoffset(c0);
+                float4x4 unity_ProbeVolumeWorldToObject : packoffset(c1);
+                float3 unity_ProbeVolumeSizeInv : packoffset(c5);
+                float3 unity_ProbeVolumeMin : packoffset(c6);
             };
             cbuffer cb4 : register(b4)
             {
@@ -2542,7 +2533,7 @@ Shader "Custom/Planet_Clouds"
             program43Output frag(program43Input i)
             {
                 program43Output o = (program43Output)0;
-                float3 r0_xyz_1 = ((-i.texcoord4.xyzx + _WorldSpaceCameraPos.xyzx)).xyz;
+                float3 r0_xyz_1 = ((-i.texcoord4.xyzx + unity_WorldToObject[0].xyzx)).xyz;
                 float r0_w_1 = dot(r0_xyz_1.xyzx, r0_xyz_1.xyzx);
                 float r0_w_2 = rsqrt(r0_w_1);
                 float4 r2_xyzw_1 = _MainTex.Sample(sampler_MainTex, (i.texcoord0.xyxx).xy);
@@ -2671,7 +2662,7 @@ Shader "Custom/Planet_Clouds"
             ZWrite Off
             Blend One One
             HLSLPROGRAM
-            cbuffer _Globals : register(b0)
+            cbuffer _GlobalsCB_b0
             {
                 float4 _LightColor0;
                 float _BumpScale;
@@ -2680,26 +2671,25 @@ Shader "Custom/Planet_Clouds"
                 float4 _MainTex_ST;
                 float4 cb0_values[10];
             };
-            cbuffer _UnityPerDrawCB : register(b1)
+            cbuffer _UnityPerDrawCB_b1
             {
                 float4x4 unity_ObjectToWorld;
                 float4x4 unity_WorldToObject;
-                float3 _WorldSpaceCameraPos;
                 float4 unity_WorldTransformParams;
                 float4 cb1_values[6];
             };
-            cbuffer _UnityPerFrameCB : register(b2)
+            cbuffer _UnityPerFrameCB_b2
             {
-                float4 _WorldSpaceLightPos0;
-                float4x4 unity_MatrixVP;
-                float4 unity_OcclusionMaskSelector;
+                float4 _WorldSpaceLightPos0 : packoffset(c0);
+                float4x4 unity_MatrixVP : packoffset(c17);
+                float4 unity_OcclusionMaskSelector : packoffset(c46);
             };
-            cbuffer _UnityProbeVolumeCB : register(b3)
+            cbuffer _UnityProbeVolumeCB_b3
             {
-                float4 unity_ProbeVolumeParams;
-                float4x4 unity_ProbeVolumeWorldToObject;
-                float3 unity_ProbeVolumeSizeInv;
-                float3 unity_ProbeVolumeMin;
+                float4 unity_ProbeVolumeParams : packoffset(c0);
+                float4x4 unity_ProbeVolumeWorldToObject : packoffset(c1);
+                float3 unity_ProbeVolumeSizeInv : packoffset(c5);
+                float3 unity_ProbeVolumeMin : packoffset(c6);
             };
             cbuffer cb4 : register(b4)
             {
@@ -2799,7 +2789,7 @@ Shader "Custom/Planet_Clouds"
                 float r0_w_1 = dot(r0_xyz_1.xyzx, r0_xyz_1.xyzx);
                 float r0_w_2 = rsqrt(r0_w_1);
                 float3 r1_xyz_1 = ((r0_w_2.xxxx * r0_xyz_1.xyzx)).xyz;
-                float3 r2_xyz_1 = ((-i.texcoord4.xyzx + _WorldSpaceCameraPos.xyzx)).xyz;
+                float3 r2_xyz_1 = ((-i.texcoord4.xyzx + unity_WorldToObject[0].xyzx)).xyz;
                 float3 r2_xyz_2 = normalize(r2_xyz_1);
                 float4 r3_xyzw_1 = _MainTex.Sample(sampler_MainTex, (i.texcoord0.xyxx).xy);
                 float4 r4_xyzw_1 = _BumpMap.Sample(sampler_BumpMap, (i.texcoord0.xyxx).xy);
@@ -2931,7 +2921,7 @@ Shader "Custom/Planet_Clouds"
             ZWrite Off
             Blend One One
             HLSLPROGRAM
-            cbuffer _Globals : register(b0)
+            cbuffer _GlobalsCB_b0
             {
                 float4 _LightColor0;
                 float _BumpScale;
@@ -2940,25 +2930,24 @@ Shader "Custom/Planet_Clouds"
                 float4 _MainTex_ST;
                 float4 cb0_values[10];
             };
-            cbuffer _UnityPerDrawCB : register(b1)
+            cbuffer _UnityPerDrawCB_b1
             {
-                float4x4 unity_ObjectToWorld;
-                float4x4 unity_WorldToObject;
-                float3 _WorldSpaceCameraPos;
-                float4 unity_WorldTransformParams;
+                float4x4 unity_ObjectToWorld : packoffset(c0);
+                float4x4 unity_WorldToObject : packoffset(c4);
+                float4 unity_WorldTransformParams : packoffset(c9);
             };
-            cbuffer _UnityPerFrameCB : register(b2)
+            cbuffer _UnityPerFrameCB_b2
             {
-                float4 _WorldSpaceLightPos0;
-                float4x4 unity_MatrixVP;
-                float4 unity_OcclusionMaskSelector;
+                float4 _WorldSpaceLightPos0 : packoffset(c0);
+                float4x4 unity_MatrixVP : packoffset(c17);
+                float4 unity_OcclusionMaskSelector : packoffset(c46);
             };
-            cbuffer _UnityProbeVolumeCB : register(b3)
+            cbuffer _UnityProbeVolumeCB_b3
             {
-                float4 unity_ProbeVolumeParams;
-                float4x4 unity_ProbeVolumeWorldToObject;
-                float3 unity_ProbeVolumeSizeInv;
-                float3 unity_ProbeVolumeMin;
+                float4 unity_ProbeVolumeParams : packoffset(c0);
+                float4x4 unity_ProbeVolumeWorldToObject : packoffset(c1);
+                float3 unity_ProbeVolumeSizeInv : packoffset(c5);
+                float3 unity_ProbeVolumeMin : packoffset(c6);
             };
             SamplerState sampler_linear_clamp;
             SamplerState sampler_linear_clamp1;
@@ -3049,7 +3038,7 @@ Shader "Custom/Planet_Clouds"
             program41Output frag(program41Input i)
             {
                 program41Output o = (program41Output)0;
-                float3 r0_xyz_1 = ((-i.texcoord4.xyzx + _WorldSpaceCameraPos.xyzx)).xyz;
+                float3 r0_xyz_1 = ((-i.texcoord4.xyzx + unity_WorldToObject[0].xyzx)).xyz;
                 float r0_w_1 = dot(r0_xyz_1.xyzx, r0_xyz_1.xyzx);
                 float r0_w_2 = rsqrt(r0_w_1);
                 float4 r2_xyzw_1 = _MainTex.Sample(sampler_MainTex, (i.texcoord0.xyxx).xy);
@@ -3175,7 +3164,7 @@ Shader "Custom/Planet_Clouds"
             ZWrite Off
             Blend One One
             HLSLPROGRAM
-            cbuffer _Globals : register(b0)
+            cbuffer _GlobalsCB_b0
             {
                 float4 _LightColor0;
                 float _BumpScale;
@@ -3184,25 +3173,24 @@ Shader "Custom/Planet_Clouds"
                 float4 _MainTex_ST;
                 float4 cb0_values[10];
             };
-            cbuffer _UnityPerDrawCB : register(b1)
+            cbuffer _UnityPerDrawCB_b1
             {
-                float4x4 unity_ObjectToWorld;
-                float4x4 unity_WorldToObject;
-                float3 _WorldSpaceCameraPos;
-                float4 unity_WorldTransformParams;
+                float4x4 unity_ObjectToWorld : packoffset(c0);
+                float4x4 unity_WorldToObject : packoffset(c4);
+                float4 unity_WorldTransformParams : packoffset(c9);
             };
-            cbuffer _UnityPerFrameCB : register(b2)
+            cbuffer _UnityPerFrameCB_b2
             {
-                float4 _WorldSpaceLightPos0;
-                float4x4 unity_MatrixVP;
-                float4 unity_OcclusionMaskSelector;
+                float4 _WorldSpaceLightPos0 : packoffset(c0);
+                float4x4 unity_MatrixVP : packoffset(c17);
+                float4 unity_OcclusionMaskSelector : packoffset(c46);
             };
-            cbuffer _UnityProbeVolumeCB : register(b3)
+            cbuffer _UnityProbeVolumeCB_b3
             {
-                float4 unity_ProbeVolumeParams;
-                float4x4 unity_ProbeVolumeWorldToObject;
-                float3 unity_ProbeVolumeSizeInv;
-                float3 unity_ProbeVolumeMin;
+                float4 unity_ProbeVolumeParams : packoffset(c0);
+                float4x4 unity_ProbeVolumeWorldToObject : packoffset(c1);
+                float3 unity_ProbeVolumeSizeInv : packoffset(c5);
+                float3 unity_ProbeVolumeMin : packoffset(c6);
             };
             SamplerState sampler_linear_clamp;
             SamplerState sampler_linear_clamp1;
@@ -3296,7 +3284,7 @@ Shader "Custom/Planet_Clouds"
                 float r0_w_1 = dot(r0_xyz_1.xyzx, r0_xyz_1.xyzx);
                 float r0_w_2 = rsqrt(r0_w_1);
                 float3 r1_xyz_1 = ((r0_w_2.xxxx * r0_xyz_1.xyzx)).xyz;
-                float3 r2_xyz_1 = ((-i.texcoord4.xyzx + _WorldSpaceCameraPos.xyzx)).xyz;
+                float3 r2_xyz_1 = ((-i.texcoord4.xyzx + unity_WorldToObject[0].xyzx)).xyz;
                 float3 r2_xyz_2 = normalize(r2_xyz_1);
                 float4 r3_xyzw_1 = _MainTex.Sample(sampler_MainTex, (i.texcoord0.xyxx).xy);
                 float4 r4_xyzw_1 = _BumpMap.Sample(sampler_BumpMap, (i.texcoord0.xyxx).xy);
@@ -3422,7 +3410,7 @@ Shader "Custom/Planet_Clouds"
             ZWrite Off
             Blend One One
             HLSLPROGRAM
-            cbuffer _Globals : register(b0)
+            cbuffer _GlobalsCB_b0
             {
                 float4 _LightColor0;
                 float _BumpScale;
@@ -3431,25 +3419,24 @@ Shader "Custom/Planet_Clouds"
                 float4 _MainTex_ST;
                 float4 cb0_values[10];
             };
-            cbuffer _UnityPerDrawCB : register(b1)
+            cbuffer _UnityPerDrawCB_b1
             {
-                float4x4 unity_ObjectToWorld;
-                float4x4 unity_WorldToObject;
-                float3 _WorldSpaceCameraPos;
-                float4 unity_WorldTransformParams;
+                float4x4 unity_ObjectToWorld : packoffset(c0);
+                float4x4 unity_WorldToObject : packoffset(c4);
+                float4 unity_WorldTransformParams : packoffset(c9);
             };
-            cbuffer _UnityPerFrameCB : register(b2)
+            cbuffer _UnityPerFrameCB_b2
             {
-                float4 _WorldSpaceLightPos0;
-                float4x4 unity_MatrixVP;
-                float4 unity_OcclusionMaskSelector;
+                float4 _WorldSpaceLightPos0 : packoffset(c0);
+                float4x4 unity_MatrixVP : packoffset(c17);
+                float4 unity_OcclusionMaskSelector : packoffset(c46);
             };
-            cbuffer _UnityProbeVolumeCB : register(b3)
+            cbuffer _UnityProbeVolumeCB_b3
             {
-                float4 unity_ProbeVolumeParams;
-                float4x4 unity_ProbeVolumeWorldToObject;
-                float3 unity_ProbeVolumeSizeInv;
-                float3 unity_ProbeVolumeMin;
+                float4 unity_ProbeVolumeParams : packoffset(c0);
+                float4x4 unity_ProbeVolumeWorldToObject : packoffset(c1);
+                float3 unity_ProbeVolumeSizeInv : packoffset(c5);
+                float3 unity_ProbeVolumeMin : packoffset(c6);
             };
             SamplerState sampler_linear_clamp;
             SamplerState sampler_linear_clamp1;
@@ -3543,7 +3530,7 @@ Shader "Custom/Planet_Clouds"
                 float r0_w_1 = dot(r0_xyz_1.xyzx, r0_xyz_1.xyzx);
                 float r0_w_2 = rsqrt(r0_w_1);
                 float3 r1_xyz_1 = ((r0_w_2.xxxx * r0_xyz_1.xyzx)).xyz;
-                float3 r2_xyz_1 = ((-i.texcoord4.xyzx + _WorldSpaceCameraPos.xyzx)).xyz;
+                float3 r2_xyz_1 = ((-i.texcoord4.xyzx + unity_WorldToObject[0].xyzx)).xyz;
                 float3 r2_xyz_2 = normalize(r2_xyz_1);
                 float4 r3_xyzw_1 = _MainTex.Sample(sampler_MainTex, (i.texcoord0.xyxx).xy);
                 float4 r4_xyzw_1 = _BumpMap.Sample(sampler_BumpMap, (i.texcoord0.xyxx).xy);
@@ -3672,7 +3659,7 @@ Shader "Custom/Planet_Clouds"
             ZWrite Off
             Blend One One
             HLSLPROGRAM
-            cbuffer _Globals : register(b0)
+            cbuffer _GlobalsCB_b0
             {
                 float4 _LightColor0;
                 float _BumpScale;
@@ -3681,25 +3668,24 @@ Shader "Custom/Planet_Clouds"
                 float4 _MainTex_ST;
                 float4 cb0_values[5];
             };
-            cbuffer _UnityPerDrawCB : register(b1)
+            cbuffer _UnityPerDrawCB_b1
             {
-                float4x4 unity_ObjectToWorld;
-                float4x4 unity_WorldToObject;
-                float3 _WorldSpaceCameraPos;
-                float4 unity_WorldTransformParams;
+                float4x4 unity_ObjectToWorld : packoffset(c0);
+                float4x4 unity_WorldToObject : packoffset(c4);
+                float4 unity_WorldTransformParams : packoffset(c9);
             };
-            cbuffer _UnityPerFrameCB : register(b2)
+            cbuffer _UnityPerFrameCB_b2
             {
-                float4 _WorldSpaceLightPos0;
-                float4x4 unity_MatrixVP;
-                float4 unity_OcclusionMaskSelector;
+                float4 _WorldSpaceLightPos0 : packoffset(c0);
+                float4x4 unity_MatrixVP : packoffset(c17);
+                float4 unity_OcclusionMaskSelector : packoffset(c46);
             };
-            cbuffer _UnityProbeVolumeCB : register(b3)
+            cbuffer _UnityProbeVolumeCB_b3
             {
-                float4 unity_ProbeVolumeParams;
-                float4x4 unity_ProbeVolumeWorldToObject;
-                float3 unity_ProbeVolumeSizeInv;
-                float3 unity_ProbeVolumeMin;
+                float4 unity_ProbeVolumeParams : packoffset(c0);
+                float4x4 unity_ProbeVolumeWorldToObject : packoffset(c1);
+                float3 unity_ProbeVolumeSizeInv : packoffset(c5);
+                float3 unity_ProbeVolumeMin : packoffset(c6);
             };
             SamplerState sampler_linear_clamp;
             SamplerState sampler_MainTex;
@@ -3780,7 +3766,7 @@ Shader "Custom/Planet_Clouds"
             program38Output frag(program38Input i)
             {
                 program38Output o = (program38Output)0;
-                float3 r0_xyz_1 = ((-i.texcoord4.xyzx + _WorldSpaceCameraPos.xyzx)).xyz;
+                float3 r0_xyz_1 = ((-i.texcoord4.xyzx + unity_WorldToObject[0].xyzx)).xyz;
                 float r0_w_1 = dot(r0_xyz_1.xyzx, r0_xyz_1.xyzx);
                 float r0_w_2 = rsqrt(r0_w_1);
                 float4 r2_xyzw_1 = _MainTex.Sample(sampler_MainTex, (i.texcoord0.xyxx).xy);

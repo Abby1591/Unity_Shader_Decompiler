@@ -23,26 +23,25 @@ Shader "Custom/Hyperdrive"
             ZTest LEqual
             ZWrite On
             HLSLPROGRAM
-            cbuffer _Globals : register(b0)
+            cbuffer _GlobalsCB_b0
             {
-                float4 _MainTex_ST;
-                float _BrightnessFade;
-                float _Brightness;
-                float _RedShift;
-                float _ColorShift;
-                float _Speed;
-                float _YScale;
-                float _XYScale;
-                float _StarCount;
+                float4 _MainTex_ST : packoffset(c2);
+                float _BrightnessFade : packoffset(c3.x);
+                float _Brightness : packoffset(c3.y);
+                float _RedShift : packoffset(c3.z);
+                float _ColorShift : packoffset(c3.w);
+                float _Speed : packoffset(c4.x);
+                float _YScale : packoffset(c4.y);
+                float _XYScale : packoffset(c4.z);
+                float _StarCount : packoffset(c4.w);
             };
-            cbuffer _UnityPerDrawCB : register(b1)
+            cbuffer _UnityPerDrawCB_b1
             {
-                float4x4 unity_ObjectToWorld;
-                float4 _Time;
+                float4x4 unity_ObjectToWorld : packoffset(c0);
             };
-            cbuffer _UnityPerFrameCB : register(b2)
+            cbuffer _UnityPerFrameCB_b2
             {
-                float4x4 unity_MatrixVP;
+                float4x4 unity_MatrixVP : packoffset(c17);
             };
             struct program1Input
             {
@@ -83,7 +82,7 @@ Shader "Custom/Hyperdrive"
             {
                 program3Output o = (program3Output)0;
                 float r0_y_1 = 1;
-                float r0_z_1 = mad(-_Time.x, _Speed, -_ColorShift);
+                float r0_z_1 = mad(-unity_ObjectToWorld[0].x, _Speed, -_ColorShift);
                 float r0_w_1 = (r0_z_1 + -_ColorShift);
                 float2 r1_xz_1 = ((float4(r0_z_1, r0_z_1, r0_w_1, r0_z_1) * float4(300, 0, 300, 0))).xz;
                 float r0_z_2 = (r0_w_1 + -_ColorShift);

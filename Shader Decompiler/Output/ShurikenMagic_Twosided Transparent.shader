@@ -17,26 +17,25 @@ Shader "ShurikenMagic/Twosided Transparent"
             ZWrite Off
             Blend SrcAlpha OneMinusSrcColor
             HLSLPROGRAM
-            cbuffer _Globals : register(b0)
+            cbuffer _GlobalsCB_b0
             {
-                float4 _LightColor0;
-                float4 _Color;
-                float4 _MainTex_ST;
+                float4 _LightColor0 : packoffset(c2);
+                float4 _Color : packoffset(c4);
+                float4 _MainTex_ST : packoffset(c5);
             };
-            cbuffer _UnityPerDrawCB : register(b1)
+            cbuffer _UnityPerDrawCB_b1
             {
-                float4x4 unity_ObjectToWorld;
-                float4 _WorldSpaceLightPos0;
-                float4x4 unity_WorldToObject;
-                float4 unity_OcclusionMaskSelector;
+                float4x4 unity_ObjectToWorld : packoffset(c0);
+                float4x4 unity_WorldToObject : packoffset(c4);
+                float4 unity_OcclusionMaskSelector : packoffset(c46);
             };
-            cbuffer _UnityPerFrameCB : register(b2)
+            cbuffer _UnityPerFrameCB_b2
             {
-                float4 unity_ProbeVolumeParams;
-                float4x4 unity_ProbeVolumeWorldToObject;
-                float3 unity_ProbeVolumeSizeInv;
-                float3 unity_ProbeVolumeMin;
-                float4x4 unity_MatrixVP;
+                float4 unity_ProbeVolumeParams : packoffset(c0);
+                float4x4 unity_ProbeVolumeWorldToObject : packoffset(c1);
+                float3 unity_ProbeVolumeSizeInv : packoffset(c5);
+                float3 unity_ProbeVolumeMin : packoffset(c6);
+                float4x4 unity_MatrixVP : packoffset(c17);
             };
             SamplerState sampler_linear_clamp;
             SamplerState sampler_MainTex;
@@ -137,7 +136,7 @@ Shader "ShurikenMagic/Twosided Transparent"
                 float r1_x_10 = r1_xyzw_10.x;
                 float r1_y_12 = r1_xyzw_10.y;
                 float r1_z_11 = r1_xyzw_10.z;
-                float r1_w_9 = dot(i.texcoord1.xyzx, _WorldSpaceLightPos0.xyzx);
+                float r1_w_9 = dot(i.texcoord1.xyzx, unity_ObjectToWorld[0].xyzx);
                 float r1_w_10 = max(r1_w_9, 0);
                 o.sv_Target0.xyz = ((r1_w_10.xxxx * ((r0_xyzw_2.xyzx * float4(r1_x_10, r1_y_12, r1_z_11, r1_x_10))).xyzx)).xyz;
                 o.sv_Target0.w = r0_xyzw_2.w;
@@ -153,20 +152,19 @@ Shader "ShurikenMagic/Twosided Transparent"
             ZWrite Off
             Blend SrcAlpha OneMinusSrcColor
             HLSLPROGRAM
-            cbuffer _Globals : register(b0)
+            cbuffer _GlobalsCB_b0
             {
-                float4 _LightColor0;
-                float4 _Color;
-                float4 _MainTex_ST;
+                float4 _LightColor0 : packoffset(c2);
+                float4 _Color : packoffset(c4);
+                float4 _MainTex_ST : packoffset(c5);
             };
-            cbuffer _UnityPerDrawCB : register(b1)
+            cbuffer _UnityPerDrawCB_b1
             {
-                float4x4 unity_ObjectToWorld;
-                float4 _WorldSpaceLightPos0;
-                float4x4 unity_WorldToObject;
-                float4 unity_OcclusionMaskSelector;
+                float4x4 unity_ObjectToWorld : packoffset(c0);
+                float4x4 unity_WorldToObject : packoffset(c4);
+                float4 unity_OcclusionMaskSelector : packoffset(c46);
             };
-            cbuffer _UnityPerFrameCB : register(b2)
+            cbuffer _UnityPerFrameCB_b2
             {
                 float4 unity_ProbeVolumeParams;
                 float4x4 unity_ProbeVolumeWorldToObject;
@@ -336,7 +334,7 @@ Shader "ShurikenMagic/Twosided Transparent"
                 float r1_x_10 = r1_xyzw_10.x;
                 float r1_y_12 = r1_xyzw_10.y;
                 float r1_z_11 = r1_xyzw_10.z;
-                float r1_w_9 = dot(i.texcoord1.xyzx, _WorldSpaceLightPos0.xyzx);
+                float r1_w_9 = dot(i.texcoord1.xyzx, unity_ObjectToWorld[0].xyzx);
                 float r1_w_10 = max(r1_w_9, 0);
                 float4 r1_xyzw_11 = (r0_xyzw_2.xyzx * float4(r1_x_10, r1_y_12, r1_z_11, r1_x_10));
                 float r1_x_11 = r1_xyzw_11.x;
@@ -356,20 +354,19 @@ Shader "ShurikenMagic/Twosided Transparent"
             ZWrite Off
             Blend SrcAlpha OneMinusSrcColor
             HLSLPROGRAM
-            cbuffer _Globals : register(b0)
+            cbuffer _GlobalsCB_b0
             {
-                float4 _LightColor0;
-                float4 _Color;
-                float4 _MainTex_ST;
+                float4 _LightColor0 : packoffset(c2);
+                float4 _Color : packoffset(c4);
+                float4 _MainTex_ST : packoffset(c5);
             };
-            cbuffer _UnityPerDrawCB : register(b1)
+            cbuffer _UnityPerDrawCB_b1
             {
-                float4x4 unity_ObjectToWorld;
-                float4 _WorldSpaceLightPos0;
-                float4x4 unity_WorldToObject;
-                float4 unity_OcclusionMaskSelector;
+                float4x4 unity_ObjectToWorld : packoffset(c0);
+                float4x4 unity_WorldToObject : packoffset(c4);
+                float4 unity_OcclusionMaskSelector : packoffset(c46);
             };
-            cbuffer _UnityPerFrameCB : register(b2)
+            cbuffer _UnityPerFrameCB_b2
             {
                 float4 unity_ProbeVolumeParams;
                 float4x4 unity_ProbeVolumeWorldToObject;
@@ -492,7 +489,7 @@ Shader "ShurikenMagic/Twosided Transparent"
                 float r1_x_10 = r1_xyzw_10.x;
                 float r1_y_12 = r1_xyzw_10.y;
                 float r1_z_11 = r1_xyzw_10.z;
-                float r1_w_9 = dot(i.texcoord1.xyzx, _WorldSpaceLightPos0.xyzx);
+                float r1_w_9 = dot(i.texcoord1.xyzx, unity_ObjectToWorld[0].xyzx);
                 float r1_w_10 = max(r1_w_9, 0);
                 o.sv_Target0.xyz = (mad((saturate(i.texcoord4.x)).xxxx, (mad(((r0_xyzw_2.xyzx * float4(r1_x_10, r1_y_12, r1_z_11, r1_x_10))).xyzx, r1_w_10.xxxx, -unity_ProbeVolumeParams.xyzx)).xyzx, unity_ProbeVolumeParams.xyzx)).xyz;
                 o.sv_Target0.w = r0_xyzw_2.w;
@@ -508,21 +505,20 @@ Shader "ShurikenMagic/Twosided Transparent"
             ZWrite Off
             Blend SrcAlpha OneMinusSrcColor
             HLSLPROGRAM
-            cbuffer _Globals : register(b0)
+            cbuffer _GlobalsCB_b0
             {
-                float4 _LightColor0;
-                float4 _Color;
-                float4 _MainTex_ST;
+                float4 _LightColor0 : packoffset(c2);
+                float4 _Color : packoffset(c4);
+                float4 _MainTex_ST : packoffset(c5);
             };
-            cbuffer _UnityPerDrawCB : register(b1)
+            cbuffer _UnityPerDrawCB_b1
             {
                 float4x4 unity_ObjectToWorld;
-                float4 _WorldSpaceLightPos0;
                 float4x4 unity_WorldToObject;
                 float4 unity_OcclusionMaskSelector;
                 float4 cb1_values[46];
             };
-            cbuffer _UnityPerFrameCB : register(b2)
+            cbuffer _UnityPerFrameCB_b2
             {
                 float4 unity_ProbeVolumeParams;
                 float4x4 unity_ProbeVolumeWorldToObject;
@@ -651,7 +647,7 @@ Shader "ShurikenMagic/Twosided Transparent"
                 float r1_x_10 = r1_xyzw_10.x;
                 float r1_y_12 = r1_xyzw_10.y;
                 float r1_z_11 = r1_xyzw_10.z;
-                float r1_w_9 = dot(i.texcoord1.xyzx, _WorldSpaceLightPos0.xyzx);
+                float r1_w_9 = dot(i.texcoord1.xyzx, unity_ObjectToWorld[0].xyzx);
                 float r1_w_10 = max(r1_w_9, 0);
                 float4 r1_xyzw_11 = (r0_xyzw_2.xyzx * float4(r1_x_10, r1_y_12, r1_z_11, r1_x_10));
                 float r1_x_11 = r1_xyzw_11.x;
@@ -671,27 +667,26 @@ Shader "ShurikenMagic/Twosided Transparent"
             ZWrite Off
             Blend SrcAlpha One
             HLSLPROGRAM
-            cbuffer _Globals : register(b0)
+            cbuffer _GlobalsCB_b0
             {
                 float4 _LightColor0;
                 float4 _Color;
                 float4 _MainTex_ST;
                 float4 cb0_values[10];
             };
-            cbuffer _UnityPerDrawCB : register(b1)
+            cbuffer _UnityPerDrawCB_b1
             {
-                float4x4 unity_ObjectToWorld;
-                float4 _WorldSpaceLightPos0;
-                float4x4 unity_WorldToObject;
-                float4 unity_OcclusionMaskSelector;
+                float4x4 unity_ObjectToWorld : packoffset(c0);
+                float4x4 unity_WorldToObject : packoffset(c4);
+                float4 unity_OcclusionMaskSelector : packoffset(c46);
             };
-            cbuffer _UnityPerFrameCB : register(b2)
+            cbuffer _UnityPerFrameCB_b2
             {
-                float4 unity_ProbeVolumeParams;
-                float4x4 unity_ProbeVolumeWorldToObject;
-                float3 unity_ProbeVolumeSizeInv;
-                float3 unity_ProbeVolumeMin;
-                float4x4 unity_MatrixVP;
+                float4 unity_ProbeVolumeParams : packoffset(c0);
+                float4x4 unity_ProbeVolumeWorldToObject : packoffset(c1);
+                float3 unity_ProbeVolumeSizeInv : packoffset(c5);
+                float3 unity_ProbeVolumeMin : packoffset(c6);
+                float4x4 unity_MatrixVP : packoffset(c17);
             };
             SamplerState sampler_linear_clamp;
             SamplerState sampler_linear_clamp1;
@@ -758,7 +753,7 @@ Shader "ShurikenMagic/Twosided Transparent"
             program34Output frag(program34Input i)
             {
                 program34Output o = (program34Output)0;
-                float3 r0_xyz_1 = ((-i.texcoord2.xyzx + _WorldSpaceLightPos0.xyzx)).xyz;
+                float3 r0_xyz_1 = ((-i.texcoord2.xyzx + unity_ObjectToWorld[0].xyzx)).xyz;
                 float r0_w_1 = dot(r0_xyz_1.xyzx, r0_xyz_1.xyzx);
                 float r0_w_2 = rsqrt(r0_w_1);
                 float4 r1_xyzw_1 = _MainTex.Sample(sampler_MainTex, (i.texcoord0.xyxx).xy);
@@ -820,21 +815,20 @@ Shader "ShurikenMagic/Twosided Transparent"
             ZWrite Off
             Blend SrcAlpha One
             HLSLPROGRAM
-            cbuffer _Globals : register(b0)
+            cbuffer _GlobalsCB_b0
             {
                 float4 _LightColor0;
                 float4 _Color;
                 float4 _MainTex_ST;
                 float4 cb0_values[10];
             };
-            cbuffer _UnityPerDrawCB : register(b1)
+            cbuffer _UnityPerDrawCB_b1
             {
-                float4x4 unity_ObjectToWorld;
-                float4 _WorldSpaceLightPos0;
-                float4x4 unity_WorldToObject;
-                float4 unity_OcclusionMaskSelector;
+                float4x4 unity_ObjectToWorld : packoffset(c0);
+                float4x4 unity_WorldToObject : packoffset(c4);
+                float4 unity_OcclusionMaskSelector : packoffset(c46);
             };
-            cbuffer _UnityPerFrameCB : register(b2)
+            cbuffer _UnityPerFrameCB_b2
             {
                 float4 unity_ProbeVolumeParams;
                 float4x4 unity_ProbeVolumeWorldToObject;
@@ -957,7 +951,7 @@ Shader "ShurikenMagic/Twosided Transparent"
                 float r1_x_6 = r1_xyzw_6.x;
                 float r1_y_5 = r1_xyzw_6.y;
                 float r1_z_6 = r1_xyzw_6.z;
-                float r1_w_3 = dot(i.texcoord1.xyzx, _WorldSpaceLightPos0.xyzx);
+                float r1_w_3 = dot(i.texcoord1.xyzx, unity_ObjectToWorld[0].xyzx);
                 float r1_w_4 = max(r1_w_3, 0);
                 o.sv_Target0.xyz = ((((r1_w_4.xxxx * ((r0_xyzw_2.xyzx * float4(r1_x_6, r1_y_5, r1_z_6, r1_x_6))).xyzx)).xyzx * (saturate(i.texcoord4.x)).xxxx)).xyz;
                 o.sv_Target0.w = r0_xyzw_2.w;
@@ -973,21 +967,20 @@ Shader "ShurikenMagic/Twosided Transparent"
             ZWrite Off
             Blend SrcAlpha One
             HLSLPROGRAM
-            cbuffer _Globals : register(b0)
+            cbuffer _GlobalsCB_b0
             {
                 float4 _LightColor0;
                 float4 _Color;
                 float4 _MainTex_ST;
                 float4 cb0_values[10];
             };
-            cbuffer _UnityPerDrawCB : register(b1)
+            cbuffer _UnityPerDrawCB_b1
             {
-                float4x4 unity_ObjectToWorld;
-                float4 _WorldSpaceLightPos0;
-                float4x4 unity_WorldToObject;
-                float4 unity_OcclusionMaskSelector;
+                float4x4 unity_ObjectToWorld : packoffset(c0);
+                float4x4 unity_WorldToObject : packoffset(c4);
+                float4 unity_OcclusionMaskSelector : packoffset(c46);
             };
-            cbuffer _UnityPerFrameCB : register(b2)
+            cbuffer _UnityPerFrameCB_b2
             {
                 float4 unity_ProbeVolumeParams;
                 float4x4 unity_ProbeVolumeWorldToObject;
@@ -1081,7 +1074,7 @@ Shader "ShurikenMagic/Twosided Transparent"
             program41Output frag(program41Input i)
             {
                 program41Output o = (program41Output)0;
-                float3 r0_xyz_1 = ((-i.texcoord2.xyzx + _WorldSpaceLightPos0.xyzx)).xyz;
+                float3 r0_xyz_1 = ((-i.texcoord2.xyzx + unity_ObjectToWorld[0].xyzx)).xyz;
                 float r0_w_1 = dot(r0_xyz_1.xyzx, r0_xyz_1.xyzx);
                 float r0_w_2 = rsqrt(r0_w_1);
                 float4 r1_xyzw_1 = _MainTex.Sample(sampler_MainTex, (i.texcoord0.xyxx).xy);
@@ -1150,21 +1143,20 @@ Shader "ShurikenMagic/Twosided Transparent"
             ZWrite Off
             Blend SrcAlpha One
             HLSLPROGRAM
-            cbuffer _Globals : register(b0)
+            cbuffer _GlobalsCB_b0
             {
                 float4 _LightColor0;
                 float4 _Color;
                 float4 _MainTex_ST;
                 float4 cb0_values[10];
             };
-            cbuffer _UnityPerDrawCB : register(b1)
+            cbuffer _UnityPerDrawCB_b1
             {
-                float4x4 unity_ObjectToWorld;
-                float4 _WorldSpaceLightPos0;
-                float4x4 unity_WorldToObject;
-                float4 unity_OcclusionMaskSelector;
+                float4x4 unity_ObjectToWorld : packoffset(c0);
+                float4x4 unity_WorldToObject : packoffset(c4);
+                float4 unity_OcclusionMaskSelector : packoffset(c46);
             };
-            cbuffer _UnityPerFrameCB : register(b2)
+            cbuffer _UnityPerFrameCB_b2
             {
                 float4 unity_ProbeVolumeParams;
                 float4x4 unity_ProbeVolumeWorldToObject;
@@ -1253,7 +1245,7 @@ Shader "ShurikenMagic/Twosided Transparent"
             program40Output frag(program40Input i)
             {
                 program40Output o = (program40Output)0;
-                float3 r0_xyz_1 = ((-i.texcoord2.xyzx + _WorldSpaceLightPos0.xyzx)).xyz;
+                float3 r0_xyz_1 = ((-i.texcoord2.xyzx + unity_ObjectToWorld[0].xyzx)).xyz;
                 float r0_w_1 = dot(r0_xyz_1.xyzx, r0_xyz_1.xyzx);
                 float r0_w_2 = rsqrt(r0_w_1);
                 float4 r1_xyzw_1 = _MainTex.Sample(sampler_MainTex, (i.texcoord0.xyxx).xy);
@@ -1332,21 +1324,20 @@ Shader "ShurikenMagic/Twosided Transparent"
             ZWrite Off
             Blend SrcAlpha One
             HLSLPROGRAM
-            cbuffer _Globals : register(b0)
+            cbuffer _GlobalsCB_b0
             {
                 float4 _LightColor0;
                 float4 _Color;
                 float4 _MainTex_ST;
                 float4 cb0_values[10];
             };
-            cbuffer _UnityPerDrawCB : register(b1)
+            cbuffer _UnityPerDrawCB_b1
             {
-                float4x4 unity_ObjectToWorld;
-                float4 _WorldSpaceLightPos0;
-                float4x4 unity_WorldToObject;
-                float4 unity_OcclusionMaskSelector;
+                float4x4 unity_ObjectToWorld : packoffset(c0);
+                float4x4 unity_WorldToObject : packoffset(c4);
+                float4 unity_OcclusionMaskSelector : packoffset(c46);
             };
-            cbuffer _UnityPerFrameCB : register(b2)
+            cbuffer _UnityPerFrameCB_b2
             {
                 float4 unity_ProbeVolumeParams;
                 float4x4 unity_ProbeVolumeWorldToObject;
@@ -1438,7 +1429,7 @@ Shader "ShurikenMagic/Twosided Transparent"
             program38Output frag(program38Input i)
             {
                 program38Output o = (program38Output)0;
-                float3 r0_xyz_1 = ((-i.texcoord2.xyzx + _WorldSpaceLightPos0.xyzx)).xyz;
+                float3 r0_xyz_1 = ((-i.texcoord2.xyzx + unity_ObjectToWorld[0].xyzx)).xyz;
                 float r0_w_1 = dot(r0_xyz_1.xyzx, r0_xyz_1.xyzx);
                 float r0_w_2 = rsqrt(r0_w_1);
                 float4 r1_xyzw_1 = _MainTex.Sample(sampler_MainTex, (i.texcoord0.xyxx).xy);
@@ -1505,27 +1496,26 @@ Shader "ShurikenMagic/Twosided Transparent"
             ZWrite Off
             Blend SrcAlpha One
             HLSLPROGRAM
-            cbuffer _Globals : register(b0)
+            cbuffer _GlobalsCB_b0
             {
                 float4 _LightColor0;
                 float4 _Color;
                 float4 _MainTex_ST;
                 float4 cb0_values[10];
             };
-            cbuffer _UnityPerDrawCB : register(b1)
+            cbuffer _UnityPerDrawCB_b1
             {
-                float4x4 unity_ObjectToWorld;
-                float4 _WorldSpaceLightPos0;
-                float4x4 unity_WorldToObject;
-                float4 unity_OcclusionMaskSelector;
+                float4x4 unity_ObjectToWorld : packoffset(c0);
+                float4x4 unity_WorldToObject : packoffset(c4);
+                float4 unity_OcclusionMaskSelector : packoffset(c46);
             };
-            cbuffer _UnityPerFrameCB : register(b2)
+            cbuffer _UnityPerFrameCB_b2
             {
-                float4 unity_ProbeVolumeParams;
-                float4x4 unity_ProbeVolumeWorldToObject;
-                float3 unity_ProbeVolumeSizeInv;
-                float3 unity_ProbeVolumeMin;
-                float4x4 unity_MatrixVP;
+                float4 unity_ProbeVolumeParams : packoffset(c0);
+                float4x4 unity_ProbeVolumeWorldToObject : packoffset(c1);
+                float3 unity_ProbeVolumeSizeInv : packoffset(c5);
+                float3 unity_ProbeVolumeMin : packoffset(c6);
+                float4x4 unity_MatrixVP : packoffset(c17);
             };
             SamplerState sampler_linear_clamp;
             SamplerState sampler_linear_clamp1;
@@ -1631,7 +1621,7 @@ Shader "ShurikenMagic/Twosided Transparent"
                 float r1_x_6 = r1_xyzw_6.x;
                 float r1_y_5 = r1_xyzw_6.y;
                 float r1_z_6 = r1_xyzw_6.z;
-                float r1_w_3 = dot(i.texcoord1.xyzx, _WorldSpaceLightPos0.xyzx);
+                float r1_w_3 = dot(i.texcoord1.xyzx, unity_ObjectToWorld[0].xyzx);
                 float r1_w_4 = max(r1_w_3, 0);
                 o.sv_Target0.xyz = ((r1_w_4.xxxx * ((r0_xyzw_2.xyzx * float4(r1_x_6, r1_y_5, r1_z_6, r1_x_6))).xyzx)).xyz;
                 o.sv_Target0.w = r0_xyzw_2.w;
@@ -1647,27 +1637,26 @@ Shader "ShurikenMagic/Twosided Transparent"
             ZWrite Off
             Blend SrcAlpha One
             HLSLPROGRAM
-            cbuffer _Globals : register(b0)
+            cbuffer _GlobalsCB_b0
             {
                 float4 _LightColor0;
                 float4 _Color;
                 float4 _MainTex_ST;
                 float4 cb0_values[10];
             };
-            cbuffer _UnityPerDrawCB : register(b1)
+            cbuffer _UnityPerDrawCB_b1
             {
-                float4x4 unity_ObjectToWorld;
-                float4 _WorldSpaceLightPos0;
-                float4x4 unity_WorldToObject;
-                float4 unity_OcclusionMaskSelector;
+                float4x4 unity_ObjectToWorld : packoffset(c0);
+                float4x4 unity_WorldToObject : packoffset(c4);
+                float4 unity_OcclusionMaskSelector : packoffset(c46);
             };
-            cbuffer _UnityPerFrameCB : register(b2)
+            cbuffer _UnityPerFrameCB_b2
             {
-                float4 unity_ProbeVolumeParams;
-                float4x4 unity_ProbeVolumeWorldToObject;
-                float3 unity_ProbeVolumeSizeInv;
-                float3 unity_ProbeVolumeMin;
-                float4x4 unity_MatrixVP;
+                float4 unity_ProbeVolumeParams : packoffset(c0);
+                float4x4 unity_ProbeVolumeWorldToObject : packoffset(c1);
+                float3 unity_ProbeVolumeSizeInv : packoffset(c5);
+                float3 unity_ProbeVolumeMin : packoffset(c6);
+                float4x4 unity_MatrixVP : packoffset(c17);
             };
             SamplerState sampler_linear_clamp;
             SamplerState sampler_linear_clamp1;
@@ -1736,7 +1725,7 @@ Shader "ShurikenMagic/Twosided Transparent"
             program36Output frag(program36Input i)
             {
                 program36Output o = (program36Output)0;
-                float3 r0_xyz_1 = ((-i.texcoord2.xyzx + _WorldSpaceLightPos0.xyzx)).xyz;
+                float3 r0_xyz_1 = ((-i.texcoord2.xyzx + unity_ObjectToWorld[0].xyzx)).xyz;
                 float r0_w_1 = dot(r0_xyz_1.xyzx, r0_xyz_1.xyzx);
                 float r0_w_2 = rsqrt(r0_w_1);
                 float4 r1_xyzw_1 = _MainTex.Sample(sampler_MainTex, (i.texcoord0.xyxx).xy);
@@ -1800,27 +1789,26 @@ Shader "ShurikenMagic/Twosided Transparent"
             ZWrite Off
             Blend SrcAlpha One
             HLSLPROGRAM
-            cbuffer _Globals : register(b0)
+            cbuffer _GlobalsCB_b0
             {
                 float4 _LightColor0;
                 float4 _Color;
                 float4 _MainTex_ST;
                 float4 cb0_values[10];
             };
-            cbuffer _UnityPerDrawCB : register(b1)
+            cbuffer _UnityPerDrawCB_b1
             {
-                float4x4 unity_ObjectToWorld;
-                float4 _WorldSpaceLightPos0;
-                float4x4 unity_WorldToObject;
-                float4 unity_OcclusionMaskSelector;
+                float4x4 unity_ObjectToWorld : packoffset(c0);
+                float4x4 unity_WorldToObject : packoffset(c4);
+                float4 unity_OcclusionMaskSelector : packoffset(c46);
             };
-            cbuffer _UnityPerFrameCB : register(b2)
+            cbuffer _UnityPerFrameCB_b2
             {
-                float4 unity_ProbeVolumeParams;
-                float4x4 unity_ProbeVolumeWorldToObject;
-                float3 unity_ProbeVolumeSizeInv;
-                float3 unity_ProbeVolumeMin;
-                float4x4 unity_MatrixVP;
+                float4 unity_ProbeVolumeParams : packoffset(c0);
+                float4x4 unity_ProbeVolumeWorldToObject : packoffset(c1);
+                float3 unity_ProbeVolumeSizeInv : packoffset(c5);
+                float3 unity_ProbeVolumeMin : packoffset(c6);
+                float4x4 unity_MatrixVP : packoffset(c17);
             };
             SamplerState sampler_linear_clamp;
             SamplerState sampler_linear_clamp1;
@@ -1892,7 +1880,7 @@ Shader "ShurikenMagic/Twosided Transparent"
             program35Output frag(program35Input i)
             {
                 program35Output o = (program35Output)0;
-                float3 r0_xyz_1 = ((-i.texcoord2.xyzx + _WorldSpaceLightPos0.xyzx)).xyz;
+                float3 r0_xyz_1 = ((-i.texcoord2.xyzx + unity_ObjectToWorld[0].xyzx)).xyz;
                 float r0_w_1 = dot(r0_xyz_1.xyzx, r0_xyz_1.xyzx);
                 float r0_w_2 = rsqrt(r0_w_1);
                 float4 r1_xyzw_1 = _MainTex.Sample(sampler_MainTex, (i.texcoord0.xyxx).xy);

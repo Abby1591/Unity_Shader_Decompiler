@@ -20,18 +20,18 @@ Shader "Sprites/GrayScale"
             ZWrite Off
             Blend SrcAlpha OneMinusSrcColor
             HLSLPROGRAM
-            cbuffer _Globals : register(b0)
+            cbuffer _GlobalsCB_b0
             {
-                float4 _Color;
-                float _EffectAmount;
+                float4 _Color : packoffset(c2);
+                float _EffectAmount : packoffset(c3.x);
             };
-            cbuffer _UnityPerDrawCB : register(b1)
+            cbuffer _UnityPerDrawCB_b1
             {
-                float4x4 unity_ObjectToWorld;
+                float4x4 unity_ObjectToWorld : packoffset(c0);
             };
-            cbuffer _UnityPerFrameCB : register(b2)
+            cbuffer _UnityPerFrameCB_b2
             {
-                float4x4 unity_MatrixVP;
+                float4x4 unity_MatrixVP : packoffset(c17);
             };
             SamplerState sampler_MainTex;
             Texture2D _MainTex;
@@ -92,17 +92,17 @@ Shader "Sprites/GrayScale"
             ZWrite Off
             Blend SrcAlpha OneMinusSrcColor
             HLSLPROGRAM
-            cbuffer _Globals : register(b0)
+            cbuffer _GlobalsCB_b0
             {
-                float4 _Color;
-                float _EffectAmount;
+                float4 _Color : packoffset(c2);
+                float _EffectAmount : packoffset(c3.x);
             };
-            cbuffer _UnityPerDrawCB : register(b1)
+            cbuffer _UnityPerDrawCB_b1
             {
                 float4x4 unity_ObjectToWorld;
                 float4 cb1_values[7];
             };
-            cbuffer _UnityPerFrameCB : register(b2)
+            cbuffer _UnityPerFrameCB_b2
             {
                 float4x4 unity_MatrixVP;
                 float4 cb2_values[4];

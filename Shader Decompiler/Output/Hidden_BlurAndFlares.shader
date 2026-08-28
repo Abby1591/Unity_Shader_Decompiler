@@ -14,13 +14,13 @@ Shader "Hidden/BlurAndFlares"
             ZTest Always
             ZWrite Off
             HLSLPROGRAM
-            cbuffer _UnityPerDrawCB : register(b0)
+            cbuffer _UnityPerDrawCB_b0
             {
-                float4x4 unity_ObjectToWorld;
+                float4x4 unity_ObjectToWorld : packoffset(c0);
             };
-            cbuffer _UnityPerFrameCB : register(b1)
+            cbuffer _UnityPerFrameCB_b1
             {
-                float4x4 unity_MatrixVP;
+                float4x4 unity_MatrixVP : packoffset(c17);
             };
             SamplerState sampler_MainTex;
             Texture2D _MainTex;
@@ -70,18 +70,18 @@ Shader "Hidden/BlurAndFlares"
             ZTest Always
             ZWrite Off
             HLSLPROGRAM
-            cbuffer _Globals : register(b0)
+            cbuffer _GlobalsCB_b0
             {
-                float4 _Offsets;
-                float _StretchWidth;
+                float4 _Offsets : packoffset(c2);
+                float _StretchWidth : packoffset(c4.x);
             };
-            cbuffer _UnityPerDrawCB : register(b1)
+            cbuffer _UnityPerDrawCB_b1
             {
-                float4x4 unity_ObjectToWorld;
+                float4x4 unity_ObjectToWorld : packoffset(c0);
             };
-            cbuffer _UnityPerFrameCB : register(b2)
+            cbuffer _UnityPerFrameCB_b2
             {
-                float4x4 unity_MatrixVP;
+                float4x4 unity_MatrixVP : packoffset(c17);
             };
             SamplerState sampler_MainTex;
             Texture2D _MainTex;
@@ -157,21 +157,21 @@ Shader "Hidden/BlurAndFlares"
             ZTest Always
             ZWrite Off
             HLSLPROGRAM
-            cbuffer _Globals : register(b0)
+            cbuffer _GlobalsCB_b0
             {
-                float4 _Offsets;
-                float4 _TintColor;
-                float2 _Threshhold;
-                float _Saturation;
-                float4 _MainTex_TexelSize;
+                float4 _Offsets : packoffset(c2);
+                float4 _TintColor : packoffset(c3);
+                float2 _Threshhold : packoffset(c4.y);
+                float _Saturation : packoffset(c4.w);
+                float4 _MainTex_TexelSize : packoffset(c5);
             };
-            cbuffer _UnityPerDrawCB : register(b1)
+            cbuffer _UnityPerDrawCB_b1
             {
-                float4x4 unity_ObjectToWorld;
+                float4x4 unity_ObjectToWorld : packoffset(c0);
             };
-            cbuffer _UnityPerFrameCB : register(b2)
+            cbuffer _UnityPerFrameCB_b2
             {
-                float4x4 unity_MatrixVP;
+                float4x4 unity_MatrixVP : packoffset(c17);
             };
             SamplerState sampler_MainTex;
             Texture2D _MainTex;
@@ -250,18 +250,18 @@ Shader "Hidden/BlurAndFlares"
             ZTest Always
             ZWrite Off
             HLSLPROGRAM
-            cbuffer _Globals : register(b0)
+            cbuffer _GlobalsCB_b0
             {
-                float4 _Offsets;
-                float4 _MainTex_TexelSize;
+                float4 _Offsets : packoffset(c2);
+                float4 _MainTex_TexelSize : packoffset(c5);
             };
-            cbuffer _UnityPerDrawCB : register(b1)
+            cbuffer _UnityPerDrawCB_b1
             {
-                float4x4 unity_ObjectToWorld;
+                float4x4 unity_ObjectToWorld : packoffset(c0);
             };
-            cbuffer _UnityPerFrameCB : register(b2)
+            cbuffer _UnityPerFrameCB_b2
             {
-                float4x4 unity_MatrixVP;
+                float4x4 unity_MatrixVP : packoffset(c17);
             };
             SamplerState sampler_MainTex;
             Texture2D _MainTex;

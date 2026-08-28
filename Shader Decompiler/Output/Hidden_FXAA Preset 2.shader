@@ -13,14 +13,13 @@ Shader "Hidden/FXAA Preset 2"
             ZTest Always
             ZWrite Off
             HLSLPROGRAM
-            cbuffer _UnityPerDrawCB : register(b0)
+            cbuffer _UnityPerDrawCB_b0
             {
-                float4x4 unity_ObjectToWorld;
-                float4 _MainTex_TexelSize;
+                float4x4 unity_ObjectToWorld : packoffset(c0);
             };
-            cbuffer _UnityPerFrameCB : register(b1)
+            cbuffer _UnityPerFrameCB_b1
             {
-                float4x4 unity_MatrixVP;
+                float4x4 unity_MatrixVP : packoffset(c17);
             };
             SamplerState sampler_MainTex;
             Texture2D _MainTex;
@@ -58,11 +57,11 @@ Shader "Hidden/FXAA Preset 2"
             program3Output frag(program3Input i)
             {
                 program3Output o = (program3Output)0;
-                float4 r0_xyzw_1 = mad(_MainTex_TexelSize.xyxy, float4(0, -1, -1, 0), i.texcoord0.xyxy);
+                float4 r0_xyzw_1 = mad(unity_ObjectToWorld[2].xyxy, float4(0, -1, -1, 0), i.texcoord0.xyxy);
                 float4 r1_xyzw_1 = _MainTex.Sample(sampler_MainTex, (r0_xyzw_1.xyxx).xy);
                 float4 r0_xyzw_2 = _MainTex.Sample(sampler_MainTex, (r0_xyzw_1.zwzz).xy);
                 float4 r2_xyzw_1 = _MainTex.Sample(sampler_MainTex, (i.texcoord0.xyxx).xy);
-                float4 r3_xyzw_1 = mad(_MainTex_TexelSize.xyxy, float4(1, 0, 0, 1), i.texcoord0.xyxy);
+                float4 r3_xyzw_1 = mad(unity_ObjectToWorld[2].xyxy, float4(1, 0, 0, 1), i.texcoord0.xyxy);
                 float4 r4_xyzw_1 = _MainTex.Sample(sampler_MainTex, (r3_xyzw_1.xyxx).xy);
                 float4 r3_xyzw_2 = _MainTex.Sample(sampler_MainTex, (r3_xyzw_1.zwzz).xy);
                 float r0_w_3 = mad(r1_xyzw_1.y, 1.9632107, r1_xyzw_1.x);
@@ -84,12 +83,12 @@ Shader "Hidden/FXAA Preset 2"
                 {
                     float r1_x_8 = max(((mad((r4_w_2 + (r3_w_3 + (r0_w_3 + r1_w_2))), 0.25, -r2_w_2) / r5_x_4) + -0.25), 0);
                     float r1_x_10 = min((r1_x_8 * 1.3333334), 0.75);
-                    float2 r1_yz_2 = ((i.texcoord0.xxyx + -_MainTex_TexelSize.xxyx)).yz;
+                    float2 r1_yz_2 = ((i.texcoord0.xxyx + -unity_ObjectToWorld[2].xxyx)).yz;
                     float4 r5_xyzw_5 = _MainTex.Sample(sampler_MainTex, (r1_yz_2.xyxx).xy);
-                    float4 r6_xyzw_1 = mad(_MainTex_TexelSize.xyxy, float4(1, -1, -1, 1), i.texcoord0.xyxy);
+                    float4 r6_xyzw_1 = mad(unity_ObjectToWorld[2].xyxy, float4(1, -1, -1, 1), i.texcoord0.xyxy);
                     float4 r7_xyzw_1 = _MainTex.Sample(sampler_MainTex, (r6_xyzw_1.xyxx).xy);
                     float4 r6_xyzw_2 = _MainTex.Sample(sampler_MainTex, (r6_xyzw_1.zwzz).xy);
-                    float2 r1_yz_3 = ((i.texcoord0.xxyx + _MainTex_TexelSize.xxyx)).yz;
+                    float2 r1_yz_3 = ((i.texcoord0.xxyx + unity_ObjectToWorld[2].xxyx)).yz;
                     float4 r8_xyzw_1 = _MainTex.Sample(sampler_MainTex, (r1_yz_3.xyxx).xy);
                     float3 r3_xyz_5 = ((r8_xyzw_1.xyzx + ((r6_xyzw_2.xyzx + ((r5_xyzw_5.xyzx + r7_xyzw_1.xyzx)).xyzx)).xyzx)).xyz;
                     float3 r0_xyz_7 = ((((r3_xyzw_2.xyzx + ((r4_xyzw_1.xyzx + ((r2_xyzw_1.xyzx + ((r0_xyzw_2.xyzx + r1_xyzw_1.xyzx)).xyzx)).xyzx)).xyzx)).xyzx + r3_xyz_5.xyzx)).xyz;
@@ -115,7 +114,7 @@ Shader "Hidden/FXAA Preset 2"
                     float r1_z_6 = mad(r3_y_6, 0.25, r1_z_5);
                     float r1_y_8 = (abs(r1_z_6) + r1_y_7);
                     float r1_y_9 = (r1_y_8 >= r3_z_10);
-                    float r1_z_7 = (r1_y_9 ? -_MainTex_TexelSize.y : -_MainTex_TexelSize.x);
+                    float r1_z_7 = (r1_y_9 ? -unity_ObjectToWorld[2].y : -unity_ObjectToWorld[2].x);
                     float r0_w_4 = (r1_y_9 ? r0_w_3 : r1_w_2);
                     float r1_w_3 = (r1_y_9 ? r4_w_2 : r3_w_3);
                     float r3_x_9 = (-r2_w_2 + r0_w_4);
@@ -138,8 +137,8 @@ Shader "Hidden/FXAA Preset 2"
                     float4 r3_xyzw_9 = float4(0, 0, 0, 0);
                     float r3_y_9 = r3_xyzw_9.y;
                     float r3_z_12 = r3_xyzw_9.z;
-                    float r3_x_12 = (_MainTex_TexelSize.xxxy).x;
-                    float r3_w_4 = (_MainTex_TexelSize.xxxy).w;
+                    float r3_x_12 = (unity_ObjectToWorld[2].xxxy).x;
+                    float r3_w_4 = (unity_ObjectToWorld[2].xxxy).w;
                     float4 r3_xyzw_13 = (r1_y_9.xxxx ? float4(r3_x_12, r3_y_9, r3_x_12, r3_x_12) : float4(r3_z_12, r3_w_4, r3_z_12, r3_z_12));
                     float r3_x_13 = r3_xyzw_13.x;
                     float r3_y_10 = r3_xyzw_13.y;

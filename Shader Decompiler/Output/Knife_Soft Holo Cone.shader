@@ -26,34 +26,34 @@ Shader "Knife/Soft Holo Cone"
             ZWrite Off
             Blend SrcAlpha OneMinusSrcColor
             HLSLPROGRAM
-            cbuffer _Globals : register(b0)
+            cbuffer _GlobalsCB_b0
             {
-                float4 _Color;
-                float _MaskSoftness2;
-                float2 _Mask2Speed;
-                float4 _Mask2_ST;
-                float _MaskSoftness;
-                float4 _Mask_ST;
-                float _Softness;
-                float _DepthFadeDistance;
-                float _Alpha;
-                float4 _texcoord_ST;
+                float4 _Color : packoffset(c4);
+                float _MaskSoftness2 : packoffset(c5.x);
+                float2 _Mask2Speed : packoffset(c5.y);
+                float4 _Mask2_ST : packoffset(c6);
+                float _MaskSoftness : packoffset(c7.x);
+                float4 _Mask_ST : packoffset(c8);
+                float _Softness : packoffset(c9.x);
+                float _DepthFadeDistance : packoffset(c11.x);
+                float _Alpha : packoffset(c11.y);
+                float4 _texcoord_ST : packoffset(c12);
             };
-            cbuffer _UnityPerCameraCB : register(b1)
+            cbuffer _UnityPerCameraCB_b1
             {
-                float4 _Time;
-                float3 _WorldSpaceCameraPos;
-                float4 _ProjectionParams;
-                float4 _ZBufferParams;
+                float4 _Time : packoffset(c0);
+                float3 _WorldSpaceCameraPos : packoffset(c4);
+                float4 _ProjectionParams : packoffset(c5);
+                float4 _ZBufferParams : packoffset(c7);
             };
-            cbuffer _UnityPerDrawCB : register(b2)
+            cbuffer _UnityPerDrawCB_b2
             {
-                float4x4 unity_ObjectToWorld;
-                float4x4 unity_WorldToObject;
+                float4x4 unity_ObjectToWorld : packoffset(c0);
+                float4x4 unity_WorldToObject : packoffset(c4);
             };
-            cbuffer _UnityPerFrameCB : register(b3)
+            cbuffer _UnityPerFrameCB_b3
             {
-                float4x4 unity_MatrixVP;
+                float4x4 unity_MatrixVP : packoffset(c17);
             };
             SamplerState sampler_Mask;
             SamplerState sampler_Mask2;
@@ -185,20 +185,20 @@ Shader "Knife/Soft Holo Cone"
             ZWrite Off
             Blend SrcAlpha OneMinusSrcColor
             HLSLPROGRAM
-            cbuffer _Globals : register(b0)
+            cbuffer _GlobalsCB_b0
             {
-                float4 _Color;
-                float _MaskSoftness2;
-                float2 _Mask2Speed;
-                float4 _Mask2_ST;
-                float _MaskSoftness;
-                float4 _Mask_ST;
-                float _Softness;
-                float _DepthFadeDistance;
-                float _Alpha;
-                float4 _texcoord_ST;
+                float4 _Color : packoffset(c4);
+                float _MaskSoftness2 : packoffset(c5.x);
+                float2 _Mask2Speed : packoffset(c5.y);
+                float4 _Mask2_ST : packoffset(c6);
+                float _MaskSoftness : packoffset(c7.x);
+                float4 _Mask_ST : packoffset(c8);
+                float _Softness : packoffset(c9.x);
+                float _DepthFadeDistance : packoffset(c11.x);
+                float _Alpha : packoffset(c11.y);
+                float4 _texcoord_ST : packoffset(c12);
             };
-            cbuffer _UnityPerCameraCB : register(b1)
+            cbuffer _UnityPerCameraCB_b1
             {
                 float4 _Time;
                 float3 _WorldSpaceCameraPos;
@@ -206,13 +206,13 @@ Shader "Knife/Soft Holo Cone"
                 float4 _ZBufferParams;
                 float4 cb1_values[6];
             };
-            cbuffer _UnityPerDrawCB : register(b2)
+            cbuffer _UnityPerDrawCB_b2
             {
                 float4x4 unity_ObjectToWorld;
                 float4x4 unity_WorldToObject;
                 float4 cb2_values[46];
             };
-            cbuffer _UnityPerFrameCB : register(b3)
+            cbuffer _UnityPerFrameCB_b3
             {
                 float4x4 unity_MatrixVP;
                 float4 cb3_values[7];
@@ -396,20 +396,20 @@ Shader "Knife/Soft Holo Cone"
             ZWrite Off
             Blend SrcAlpha OneMinusSrcColor
             HLSLPROGRAM
-            cbuffer _Globals : register(b0)
+            cbuffer _GlobalsCB_b0
             {
-                float4 _Color;
-                float _MaskSoftness2;
-                float2 _Mask2Speed;
-                float4 _Mask2_ST;
-                float _MaskSoftness;
-                float4 _Mask_ST;
-                float _Softness;
-                float _DepthFadeDistance;
-                float _Alpha;
-                float4 _texcoord_ST;
+                float4 _Color : packoffset(c4);
+                float _MaskSoftness2 : packoffset(c5.x);
+                float2 _Mask2Speed : packoffset(c5.y);
+                float4 _Mask2_ST : packoffset(c6);
+                float _MaskSoftness : packoffset(c7.x);
+                float4 _Mask_ST : packoffset(c8);
+                float _Softness : packoffset(c9.x);
+                float _DepthFadeDistance : packoffset(c11.x);
+                float _Alpha : packoffset(c11.y);
+                float4 _texcoord_ST : packoffset(c12);
             };
-            cbuffer _UnityPerCameraCB : register(b1)
+            cbuffer _UnityPerCameraCB_b1
             {
                 float4 _Time;
                 float3 _WorldSpaceCameraPos;
@@ -417,15 +417,15 @@ Shader "Knife/Soft Holo Cone"
                 float4 _ZBufferParams;
                 float4 cb1_values[6];
             };
-            cbuffer _UnityPerDrawCB : register(b2)
+            cbuffer _UnityPerDrawCB_b2
             {
                 float4x4 unity_ObjectToWorld;
                 float4x4 unity_WorldToObject;
                 float4 cb2_values[2];
             };
-            cbuffer _UnityPerFrameCB : register(b3)
+            cbuffer _UnityPerFrameCB_b3
             {
-                float4x4 unity_MatrixVP;
+                float4x4 unity_MatrixVP : packoffset(c17);
             };
             SamplerState sampler_Mask;
             SamplerState sampler_Mask2;
@@ -565,33 +565,33 @@ Shader "Knife/Soft Holo Cone"
             ZWrite Off
             Blend SrcAlpha OneMinusSrcColor
             HLSLPROGRAM
-            cbuffer _Globals : register(b0)
+            cbuffer _GlobalsCB_b0
             {
-                float4 _Color;
-                float _MaskSoftness2;
-                float2 _Mask2Speed;
-                float4 _Mask2_ST;
-                float _MaskSoftness;
-                float4 _Mask_ST;
-                float _Softness;
-                float _DepthFadeDistance;
-                float _Alpha;
-                float4 _texcoord_ST;
+                float4 _Color : packoffset(c4);
+                float _MaskSoftness2 : packoffset(c5.x);
+                float2 _Mask2Speed : packoffset(c5.y);
+                float4 _Mask2_ST : packoffset(c6);
+                float _MaskSoftness : packoffset(c7.x);
+                float4 _Mask_ST : packoffset(c8);
+                float _Softness : packoffset(c9.x);
+                float _DepthFadeDistance : packoffset(c11.x);
+                float _Alpha : packoffset(c11.y);
+                float4 _texcoord_ST : packoffset(c12);
             };
-            cbuffer _UnityPerCameraCB : register(b1)
+            cbuffer _UnityPerCameraCB_b1
             {
-                float4 _Time;
-                float3 _WorldSpaceCameraPos;
-                float4 _ProjectionParams;
-                float4 _ZBufferParams;
+                float4 _Time : packoffset(c0);
+                float3 _WorldSpaceCameraPos : packoffset(c4);
+                float4 _ProjectionParams : packoffset(c5);
+                float4 _ZBufferParams : packoffset(c7);
             };
-            cbuffer _UnityPerDrawCB : register(b2)
+            cbuffer _UnityPerDrawCB_b2
             {
                 float4x4 unity_ObjectToWorld;
                 float4x4 unity_WorldToObject;
                 float4 cb2_values[46];
             };
-            cbuffer _UnityPerFrameCB : register(b3)
+            cbuffer _UnityPerFrameCB_b3
             {
                 float4x4 unity_MatrixVP;
                 float4 cb3_values[7];
@@ -764,7 +764,7 @@ Shader "Knife/Soft Holo Cone"
             ZWrite Off
             Blend SrcAlpha One
             HLSLPROGRAM
-            cbuffer _Globals : register(b0)
+            cbuffer _GlobalsCB_b0
             {
                 float4 _Color;
                 float _MaskSoftness2;
@@ -778,21 +778,21 @@ Shader "Knife/Soft Holo Cone"
                 float4 _texcoord_ST;
                 float4 cb0_values[17];
             };
-            cbuffer _UnityPerCameraCB : register(b1)
+            cbuffer _UnityPerCameraCB_b1
             {
-                float4 _Time;
-                float3 _WorldSpaceCameraPos;
-                float4 _ProjectionParams;
-                float4 _ZBufferParams;
+                float4 _Time : packoffset(c0);
+                float3 _WorldSpaceCameraPos : packoffset(c4);
+                float4 _ProjectionParams : packoffset(c5);
+                float4 _ZBufferParams : packoffset(c7);
             };
-            cbuffer _UnityPerDrawCB : register(b2)
+            cbuffer _UnityPerDrawCB_b2
             {
-                float4x4 unity_ObjectToWorld;
-                float4x4 unity_WorldToObject;
+                float4x4 unity_ObjectToWorld : packoffset(c0);
+                float4x4 unity_WorldToObject : packoffset(c4);
             };
-            cbuffer _UnityPerFrameCB : register(b3)
+            cbuffer _UnityPerFrameCB_b3
             {
-                float4x4 unity_MatrixVP;
+                float4x4 unity_MatrixVP : packoffset(c17);
             };
             SamplerState sampler_Mask;
             SamplerState sampler_Mask2;
@@ -930,7 +930,7 @@ Shader "Knife/Soft Holo Cone"
             ZWrite Off
             Blend SrcAlpha One
             HLSLPROGRAM
-            cbuffer _Globals : register(b0)
+            cbuffer _GlobalsCB_b0
             {
                 float4 _Color;
                 float _MaskSoftness2;
@@ -944,21 +944,21 @@ Shader "Knife/Soft Holo Cone"
                 float4 _texcoord_ST;
                 float4 cb0_values[17];
             };
-            cbuffer _UnityPerCameraCB : register(b1)
+            cbuffer _UnityPerCameraCB_b1
             {
-                float4 _Time;
-                float3 _WorldSpaceCameraPos;
-                float4 _ProjectionParams;
-                float4 _ZBufferParams;
+                float4 _Time : packoffset(c0);
+                float3 _WorldSpaceCameraPos : packoffset(c4);
+                float4 _ProjectionParams : packoffset(c5);
+                float4 _ZBufferParams : packoffset(c7);
             };
-            cbuffer _UnityPerDrawCB : register(b2)
+            cbuffer _UnityPerDrawCB_b2
             {
-                float4x4 unity_ObjectToWorld;
-                float4x4 unity_WorldToObject;
+                float4x4 unity_ObjectToWorld : packoffset(c0);
+                float4x4 unity_WorldToObject : packoffset(c4);
             };
-            cbuffer _UnityPerFrameCB : register(b3)
+            cbuffer _UnityPerFrameCB_b3
             {
-                float4x4 unity_MatrixVP;
+                float4x4 unity_MatrixVP : packoffset(c17);
             };
             SamplerState sampler_Mask;
             SamplerState sampler_Mask2;
@@ -1092,7 +1092,7 @@ Shader "Knife/Soft Holo Cone"
             ZWrite Off
             Blend SrcAlpha One
             HLSLPROGRAM
-            cbuffer _Globals : register(b0)
+            cbuffer _GlobalsCB_b0
             {
                 float4 _Color;
                 float _MaskSoftness2;
@@ -1106,21 +1106,21 @@ Shader "Knife/Soft Holo Cone"
                 float4 _texcoord_ST;
                 float4 cb0_values[17];
             };
-            cbuffer _UnityPerCameraCB : register(b1)
+            cbuffer _UnityPerCameraCB_b1
             {
-                float4 _Time;
-                float3 _WorldSpaceCameraPos;
-                float4 _ProjectionParams;
-                float4 _ZBufferParams;
+                float4 _Time : packoffset(c0);
+                float3 _WorldSpaceCameraPos : packoffset(c4);
+                float4 _ProjectionParams : packoffset(c5);
+                float4 _ZBufferParams : packoffset(c7);
             };
-            cbuffer _UnityPerDrawCB : register(b2)
+            cbuffer _UnityPerDrawCB_b2
             {
-                float4x4 unity_ObjectToWorld;
-                float4x4 unity_WorldToObject;
+                float4x4 unity_ObjectToWorld : packoffset(c0);
+                float4x4 unity_WorldToObject : packoffset(c4);
             };
-            cbuffer _UnityPerFrameCB : register(b3)
+            cbuffer _UnityPerFrameCB_b3
             {
-                float4x4 unity_MatrixVP;
+                float4x4 unity_MatrixVP : packoffset(c17);
             };
             SamplerState sampler_Mask;
             SamplerState sampler_Mask2;
@@ -1254,34 +1254,34 @@ Shader "Knife/Soft Holo Cone"
             ZWrite Off
             Blend SrcAlpha One
             HLSLPROGRAM
-            cbuffer _Globals : register(b0)
+            cbuffer _GlobalsCB_b0
             {
-                float4 _Color;
-                float _MaskSoftness2;
-                float2 _Mask2Speed;
-                float4 _Mask2_ST;
-                float _MaskSoftness;
-                float4 _Mask_ST;
-                float _Softness;
-                float _DepthFadeDistance;
-                float _Alpha;
-                float4 _texcoord_ST;
+                float4 _Color : packoffset(c4);
+                float _MaskSoftness2 : packoffset(c5.x);
+                float2 _Mask2Speed : packoffset(c5.y);
+                float4 _Mask2_ST : packoffset(c6);
+                float _MaskSoftness : packoffset(c7.x);
+                float4 _Mask_ST : packoffset(c8);
+                float _Softness : packoffset(c9.x);
+                float _DepthFadeDistance : packoffset(c11.x);
+                float _Alpha : packoffset(c11.y);
+                float4 _texcoord_ST : packoffset(c12);
             };
-            cbuffer _UnityPerCameraCB : register(b1)
+            cbuffer _UnityPerCameraCB_b1
             {
-                float4 _Time;
-                float3 _WorldSpaceCameraPos;
-                float4 _ProjectionParams;
-                float4 _ZBufferParams;
+                float4 _Time : packoffset(c0);
+                float3 _WorldSpaceCameraPos : packoffset(c4);
+                float4 _ProjectionParams : packoffset(c5);
+                float4 _ZBufferParams : packoffset(c7);
             };
-            cbuffer _UnityPerDrawCB : register(b2)
+            cbuffer _UnityPerDrawCB_b2
             {
-                float4x4 unity_ObjectToWorld;
-                float4x4 unity_WorldToObject;
+                float4x4 unity_ObjectToWorld : packoffset(c0);
+                float4x4 unity_WorldToObject : packoffset(c4);
             };
-            cbuffer _UnityPerFrameCB : register(b3)
+            cbuffer _UnityPerFrameCB_b3
             {
-                float4x4 unity_MatrixVP;
+                float4x4 unity_MatrixVP : packoffset(c17);
             };
             SamplerState sampler_Mask;
             SamplerState sampler_Mask2;
@@ -1410,7 +1410,7 @@ Shader "Knife/Soft Holo Cone"
             ZWrite Off
             Blend SrcAlpha One
             HLSLPROGRAM
-            cbuffer _Globals : register(b0)
+            cbuffer _GlobalsCB_b0
             {
                 float4 _Color;
                 float _MaskSoftness2;
@@ -1424,21 +1424,21 @@ Shader "Knife/Soft Holo Cone"
                 float4 _texcoord_ST;
                 float4 cb0_values[17];
             };
-            cbuffer _UnityPerCameraCB : register(b1)
+            cbuffer _UnityPerCameraCB_b1
             {
-                float4 _Time;
-                float3 _WorldSpaceCameraPos;
-                float4 _ProjectionParams;
-                float4 _ZBufferParams;
+                float4 _Time : packoffset(c0);
+                float3 _WorldSpaceCameraPos : packoffset(c4);
+                float4 _ProjectionParams : packoffset(c5);
+                float4 _ZBufferParams : packoffset(c7);
             };
-            cbuffer _UnityPerDrawCB : register(b2)
+            cbuffer _UnityPerDrawCB_b2
             {
-                float4x4 unity_ObjectToWorld;
-                float4x4 unity_WorldToObject;
+                float4x4 unity_ObjectToWorld : packoffset(c0);
+                float4x4 unity_WorldToObject : packoffset(c4);
             };
-            cbuffer _UnityPerFrameCB : register(b3)
+            cbuffer _UnityPerFrameCB_b3
             {
-                float4x4 unity_MatrixVP;
+                float4x4 unity_MatrixVP : packoffset(c17);
             };
             SamplerState sampler_Mask;
             SamplerState sampler_Mask2;
@@ -1579,7 +1579,7 @@ Shader "Knife/Soft Holo Cone"
             ZWrite Off
             Blend SrcAlpha One
             HLSLPROGRAM
-            cbuffer _Globals : register(b0)
+            cbuffer _GlobalsCB_b0
             {
                 float4 _Color;
                 float _MaskSoftness2;
@@ -1593,21 +1593,21 @@ Shader "Knife/Soft Holo Cone"
                 float4 _texcoord_ST;
                 float4 cb0_values[17];
             };
-            cbuffer _UnityPerCameraCB : register(b1)
+            cbuffer _UnityPerCameraCB_b1
             {
-                float4 _Time;
-                float3 _WorldSpaceCameraPos;
-                float4 _ProjectionParams;
-                float4 _ZBufferParams;
+                float4 _Time : packoffset(c0);
+                float3 _WorldSpaceCameraPos : packoffset(c4);
+                float4 _ProjectionParams : packoffset(c5);
+                float4 _ZBufferParams : packoffset(c7);
             };
-            cbuffer _UnityPerDrawCB : register(b2)
+            cbuffer _UnityPerDrawCB_b2
             {
-                float4x4 unity_ObjectToWorld;
-                float4x4 unity_WorldToObject;
+                float4x4 unity_ObjectToWorld : packoffset(c0);
+                float4x4 unity_WorldToObject : packoffset(c4);
             };
-            cbuffer _UnityPerFrameCB : register(b3)
+            cbuffer _UnityPerFrameCB_b3
             {
-                float4x4 unity_MatrixVP;
+                float4x4 unity_MatrixVP : packoffset(c17);
             };
             SamplerState sampler_Mask;
             SamplerState sampler_Mask2;
@@ -1738,7 +1738,7 @@ Shader "Knife/Soft Holo Cone"
             ZWrite Off
             Blend SrcAlpha One
             HLSLPROGRAM
-            cbuffer _Globals : register(b0)
+            cbuffer _GlobalsCB_b0
             {
                 float4 _Color;
                 float _MaskSoftness2;
@@ -1752,21 +1752,21 @@ Shader "Knife/Soft Holo Cone"
                 float4 _texcoord_ST;
                 float4 cb0_values[17];
             };
-            cbuffer _UnityPerCameraCB : register(b1)
+            cbuffer _UnityPerCameraCB_b1
             {
-                float4 _Time;
-                float3 _WorldSpaceCameraPos;
-                float4 _ProjectionParams;
-                float4 _ZBufferParams;
+                float4 _Time : packoffset(c0);
+                float3 _WorldSpaceCameraPos : packoffset(c4);
+                float4 _ProjectionParams : packoffset(c5);
+                float4 _ZBufferParams : packoffset(c7);
             };
-            cbuffer _UnityPerDrawCB : register(b2)
+            cbuffer _UnityPerDrawCB_b2
             {
-                float4x4 unity_ObjectToWorld;
-                float4x4 unity_WorldToObject;
+                float4x4 unity_ObjectToWorld : packoffset(c0);
+                float4x4 unity_WorldToObject : packoffset(c4);
             };
-            cbuffer _UnityPerFrameCB : register(b3)
+            cbuffer _UnityPerFrameCB_b3
             {
-                float4x4 unity_MatrixVP;
+                float4x4 unity_MatrixVP : packoffset(c17);
             };
             SamplerState sampler_Mask;
             SamplerState sampler_Mask2;
@@ -1909,34 +1909,34 @@ Shader "Knife/Soft Holo Cone"
             ZWrite Off
             Blend SrcAlpha One
             HLSLPROGRAM
-            cbuffer _Globals : register(b0)
+            cbuffer _GlobalsCB_b0
             {
-                float4 _Color;
-                float _MaskSoftness2;
-                float2 _Mask2Speed;
-                float4 _Mask2_ST;
-                float _MaskSoftness;
-                float4 _Mask_ST;
-                float _Softness;
-                float _DepthFadeDistance;
-                float _Alpha;
-                float4 _texcoord_ST;
+                float4 _Color : packoffset(c4);
+                float _MaskSoftness2 : packoffset(c5.x);
+                float2 _Mask2Speed : packoffset(c5.y);
+                float4 _Mask2_ST : packoffset(c6);
+                float _MaskSoftness : packoffset(c7.x);
+                float4 _Mask_ST : packoffset(c8);
+                float _Softness : packoffset(c9.x);
+                float _DepthFadeDistance : packoffset(c11.x);
+                float _Alpha : packoffset(c11.y);
+                float4 _texcoord_ST : packoffset(c12);
             };
-            cbuffer _UnityPerCameraCB : register(b1)
+            cbuffer _UnityPerCameraCB_b1
             {
-                float4 _Time;
-                float3 _WorldSpaceCameraPos;
-                float4 _ProjectionParams;
-                float4 _ZBufferParams;
+                float4 _Time : packoffset(c0);
+                float3 _WorldSpaceCameraPos : packoffset(c4);
+                float4 _ProjectionParams : packoffset(c5);
+                float4 _ZBufferParams : packoffset(c7);
             };
-            cbuffer _UnityPerDrawCB : register(b2)
+            cbuffer _UnityPerDrawCB_b2
             {
-                float4x4 unity_ObjectToWorld;
-                float4x4 unity_WorldToObject;
+                float4x4 unity_ObjectToWorld : packoffset(c0);
+                float4x4 unity_WorldToObject : packoffset(c4);
             };
-            cbuffer _UnityPerFrameCB : register(b3)
+            cbuffer _UnityPerFrameCB_b3
             {
-                float4x4 unity_MatrixVP;
+                float4x4 unity_MatrixVP : packoffset(c17);
             };
             SamplerState sampler_Mask;
             SamplerState sampler_Mask2;
@@ -2061,38 +2061,36 @@ Shader "Knife/Soft Holo Cone"
             ZTest LEqual
             ZWrite On
             HLSLPROGRAM
-            cbuffer _UnityPerCameraCB : register(b0)
+            cbuffer _UnityPerCameraCB_b0
             {
-                float4 _Time;
-                float4 _Color;
-                float3 _WorldSpaceCameraPos;
-                float4 _ProjectionParams;
-                float _MaskSoftness2;
-                float2 _Mask2Speed;
-                float4 _Mask2_ST;
-                float _MaskSoftness;
-                float4 _ZBufferParams;
-                float4 _Mask_ST;
-                float _Softness;
-                float _DepthFadeDistance;
-                float _Alpha;
+                float4 _Color : packoffset(c4);
+                float _MaskSoftness2 : packoffset(c5.x);
+                float2 _Mask2Speed : packoffset(c5.y);
+                float4 _Mask2_ST : packoffset(c6);
+                float _MaskSoftness : packoffset(c7.x);
+                float4 _Mask_ST : packoffset(c8);
+                float _Softness : packoffset(c9.x);
+                float _DepthFadeDistance : packoffset(c11.x);
+                float _Alpha : packoffset(c11.y);
             };
-            cbuffer _UnityLightingCB : register(b1)
+            cbuffer _UnityLightingCB_b1
             {
-                float4 _WorldSpaceLightPos0;
+                float4 _Time : packoffset(c0);
+                float3 _WorldSpaceCameraPos : packoffset(c4);
+                float4 _ZBufferParams : packoffset(c7);
             };
-            cbuffer _UnityShadowsCB : register(b2)
+            cbuffer _UnityShadowsCB_b2
             {
-                float4 unity_LightShadowBias;
+                float4 unity_LightShadowBias : packoffset(c5);
             };
-            cbuffer _UnityPerDrawCB : register(b3)
+            cbuffer _UnityPerDrawCB_b3
             {
-                float4x4 unity_ObjectToWorld;
-                float4x4 unity_WorldToObject;
+                float4x4 unity_ObjectToWorld : packoffset(c0);
+                float4x4 unity_WorldToObject : packoffset(c4);
             };
-            cbuffer _UnityPerFrameCB : register(b4)
+            cbuffer _UnityPerFrameCB_b4
             {
-                float4x4 unity_MatrixVP;
+                float4x4 unity_MatrixVP : packoffset(c17);
             };
             SamplerState sampler_Mask;
             SamplerState sampler_Mask2;
@@ -2147,7 +2145,7 @@ Shader "Knife/Soft Holo Cone"
                 float4 worldPos_xyzw_2 = mad(unity_ObjectToWorld[0], i.position0.xxxx, worldPos_xyzw_1);
                 float4 worldPos_xyzw_3 = mad(unity_ObjectToWorld[2], i.position0.zzzz, worldPos_xyzw_2);
                 float4 worldPos_xyzw_4 = mad(unity_ObjectToWorld[3], i.position0.wwww, worldPos_xyzw_3);
-                float3 r2_xyz_1 = (mad(-worldPos_xyzw_4.xyzx, _WorldSpaceLightPos0.wwww, _WorldSpaceLightPos0.xyzx)).xyz;
+                float3 r2_xyz_1 = (mad(-worldPos_xyzw_4.xyzx, _Time.wwww, _Time.xyzx)).xyz;
                 float r0_w_3 = dot(r2_xyz_1.xyzx, r2_xyz_1.xyzx);
                 float r0_w_4 = rsqrt(r0_w_3);
                 float r0_w_5 = dot(unitWorldNormal_xyz_2.xyzx, ((r0_w_4.xxxx * r2_xyz_1.xyzx)).xyzx);
@@ -2183,7 +2181,7 @@ Shader "Knife/Soft Holo Cone"
                 float worldPos_y_9 = worldPos_xyzw_11.y;
                 float worldPos_z_7 = worldPos_xyzw_11.z;
                 o.texcoord2.xyz = (mad(unity_ObjectToWorld[3].xyzx, i.position0.wwww, float4(worldPos_x_11, worldPos_y_9, worldPos_z_7, worldPos_x_11))).xyz;
-                float r0_y_6 = (r0_xyzw_6.y * _ProjectionParams.x);
+                float r0_y_6 = (r0_xyzw_6.y * _MaskSoftness2.x);
                 float2 r0_xz_7 = ((r0_xyzw_6.xxwx * float4(0.5, 0, 0.5, 0))).xz;
                 float r0_w_11 = (r0_y_6 * 0.5);
                 o.texcoord3.xy = ((r0_xz_7.yyyy + float4(r0_xz_7.x, r0_w_11, r0_xz_7.x, r0_xz_7.x))).xy;
@@ -2252,38 +2250,36 @@ Shader "Knife/Soft Holo Cone"
             ZTest LEqual
             ZWrite On
             HLSLPROGRAM
-            cbuffer _UnityPerCameraCB : register(b0)
+            cbuffer _UnityPerCameraCB_b0
             {
-                float4 _Time;
-                float4 _Color;
-                float3 _WorldSpaceCameraPos;
-                float4 _ProjectionParams;
-                float _MaskSoftness2;
-                float2 _Mask2Speed;
-                float4 _Mask2_ST;
-                float _MaskSoftness;
-                float4 _ZBufferParams;
-                float4 _Mask_ST;
-                float _Softness;
-                float _DepthFadeDistance;
-                float _Alpha;
+                float4 _Color : packoffset(c4);
+                float _MaskSoftness2 : packoffset(c5.x);
+                float2 _Mask2Speed : packoffset(c5.y);
+                float4 _Mask2_ST : packoffset(c6);
+                float _MaskSoftness : packoffset(c7.x);
+                float4 _Mask_ST : packoffset(c8);
+                float _Softness : packoffset(c9.x);
+                float _DepthFadeDistance : packoffset(c11.x);
+                float _Alpha : packoffset(c11.y);
             };
-            cbuffer _UnityLightingCB : register(b1)
+            cbuffer _UnityLightingCB_b1
             {
-                float4 _WorldSpaceLightPos0;
+                float4 _Time : packoffset(c0);
+                float3 _WorldSpaceCameraPos : packoffset(c4);
+                float4 _ZBufferParams : packoffset(c7);
             };
-            cbuffer _UnityShadowsCB : register(b2)
+            cbuffer _UnityShadowsCB_b2
             {
-                float4 unity_LightShadowBias;
+                float4 unity_LightShadowBias : packoffset(c5);
             };
-            cbuffer _UnityPerDrawCB : register(b3)
+            cbuffer _UnityPerDrawCB_b3
             {
-                float4x4 unity_ObjectToWorld;
-                float4x4 unity_WorldToObject;
+                float4x4 unity_ObjectToWorld : packoffset(c0);
+                float4x4 unity_WorldToObject : packoffset(c4);
             };
-            cbuffer _UnityPerFrameCB : register(b4)
+            cbuffer _UnityPerFrameCB_b4
             {
-                float4x4 unity_MatrixVP;
+                float4x4 unity_MatrixVP : packoffset(c17);
             };
             SamplerState sampler_Mask;
             SamplerState sampler_Mask2;
@@ -2338,7 +2334,7 @@ Shader "Knife/Soft Holo Cone"
                 float4 worldPos_xyzw_2 = mad(unity_ObjectToWorld[0], i.position0.xxxx, worldPos_xyzw_1);
                 float4 worldPos_xyzw_3 = mad(unity_ObjectToWorld[2], i.position0.zzzz, worldPos_xyzw_2);
                 float4 worldPos_xyzw_4 = mad(unity_ObjectToWorld[3], i.position0.wwww, worldPos_xyzw_3);
-                float3 r2_xyz_1 = (mad(-worldPos_xyzw_4.xyzx, _WorldSpaceLightPos0.wwww, _WorldSpaceLightPos0.xyzx)).xyz;
+                float3 r2_xyz_1 = (mad(-worldPos_xyzw_4.xyzx, _Time.wwww, _Time.xyzx)).xyz;
                 float r0_w_3 = dot(r2_xyz_1.xyzx, r2_xyz_1.xyzx);
                 float r0_w_4 = rsqrt(r0_w_3);
                 float r0_w_5 = dot(unitWorldNormal_xyz_2.xyzx, ((r0_w_4.xxxx * r2_xyz_1.xyzx)).xyzx);
@@ -2371,7 +2367,7 @@ Shader "Knife/Soft Holo Cone"
                 float worldPos_y_7 = worldPos_xyzw_9.y;
                 float worldPos_z_7 = worldPos_xyzw_9.z;
                 o.texcoord2.xyz = (mad(unity_ObjectToWorld[3].xyzx, i.position0.wwww, float4(worldPos_x_9, worldPos_y_7, worldPos_z_7, worldPos_x_9))).xyz;
-                float r0_y_6 = (r0_xyzw_6.y * _ProjectionParams.x);
+                float r0_y_6 = (r0_xyzw_6.y * _MaskSoftness2.x);
                 float2 r0_xz_7 = ((r0_xyzw_6.xxwx * float4(0.5, 0, 0.5, 0))).xz;
                 float r0_w_11 = (r0_y_6 * 0.5);
                 o.texcoord3.xy = ((r0_xz_7.yyyy + float4(r0_xz_7.x, r0_w_11, r0_xz_7.x, r0_xz_7.x))).xy;

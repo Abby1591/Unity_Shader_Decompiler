@@ -17,26 +17,25 @@ Shader "Toon/Lit"
             ZTest LEqual
             ZWrite On
             HLSLPROGRAM
-            cbuffer _Globals : register(b0)
+            cbuffer _GlobalsCB_b0
             {
-                float4 _LightColor0;
-                float4 _Color;
-                float4 _MainTex_ST;
+                float4 _LightColor0 : packoffset(c2);
+                float4 _Color : packoffset(c4);
+                float4 _MainTex_ST : packoffset(c5);
             };
-            cbuffer _UnityPerDrawCB : register(b1)
+            cbuffer _UnityPerDrawCB_b1
             {
-                float4x4 unity_ObjectToWorld;
-                float4 _WorldSpaceLightPos0;
-                float4x4 unity_WorldToObject;
-                float4 unity_OcclusionMaskSelector;
+                float4x4 unity_ObjectToWorld : packoffset(c0);
+                float4x4 unity_WorldToObject : packoffset(c4);
+                float4 unity_OcclusionMaskSelector : packoffset(c46);
             };
-            cbuffer _UnityPerFrameCB : register(b2)
+            cbuffer _UnityPerFrameCB_b2
             {
-                float4 unity_ProbeVolumeParams;
-                float4x4 unity_ProbeVolumeWorldToObject;
-                float3 unity_ProbeVolumeSizeInv;
-                float3 unity_ProbeVolumeMin;
-                float4x4 unity_MatrixVP;
+                float4 unity_ProbeVolumeParams : packoffset(c0);
+                float4x4 unity_ProbeVolumeWorldToObject : packoffset(c1);
+                float3 unity_ProbeVolumeSizeInv : packoffset(c5);
+                float3 unity_ProbeVolumeMin : packoffset(c6);
+                float4x4 unity_MatrixVP : packoffset(c17);
             };
             SamplerState sampler_linear_clamp;
             SamplerState sampler_Ramp;
@@ -135,7 +134,7 @@ Shader "Toon/Lit"
                     r1_w_4 = r1_xyzw_10.w;
                 }
                 float r0_w_6 = saturate(dot(float4(r1_x_10, r1_y_11, r1_z_10, r1_w_4), unity_OcclusionMaskSelector));
-                float4 r1_xyzw_13 = _Ramp.Sample(sampler_Ramp, ((mad(dot(i.texcoord1.xyzx, _WorldSpaceLightPos0.xyzx), 0.5, 0.5)).xxxx).xy);
+                float4 r1_xyzw_13 = _Ramp.Sample(sampler_Ramp, ((mad(dot(i.texcoord1.xyzx, unity_ObjectToWorld[0].xyzx), 0.5, 0.5)).xxxx).xy);
                 float4 r1_xyzw_14 = (r1_xyzw_13.xyzx * ((r0_xyz_2.xyzx * _LightColor0.xyzx)).xyzx);
                 float r1_x_14 = r1_xyzw_14.x;
                 float r1_y_13 = r1_xyzw_14.y;
@@ -158,21 +157,20 @@ Shader "Toon/Lit"
             ZTest LEqual
             ZWrite On
             HLSLPROGRAM
-            cbuffer _Globals : register(b0)
+            cbuffer _GlobalsCB_b0
             {
-                float4 _LightColor0;
-                float4 _Color;
-                float4 _MainTex_ST;
+                float4 _LightColor0 : packoffset(c2);
+                float4 _Color : packoffset(c4);
+                float4 _MainTex_ST : packoffset(c5);
             };
-            cbuffer _UnityPerDrawCB : register(b1)
+            cbuffer _UnityPerDrawCB_b1
             {
                 float4x4 unity_ObjectToWorld;
-                float4 _WorldSpaceLightPos0;
                 float4x4 unity_WorldToObject;
                 float4 unity_OcclusionMaskSelector;
                 float4 cb1_values[6];
             };
-            cbuffer _UnityPerFrameCB : register(b2)
+            cbuffer _UnityPerFrameCB_b2
             {
                 float4 unity_ProbeVolumeParams;
                 float4x4 unity_ProbeVolumeWorldToObject;
@@ -389,21 +387,20 @@ Shader "Toon/Lit"
             ZTest LEqual
             ZWrite On
             HLSLPROGRAM
-            cbuffer _Globals : register(b0)
+            cbuffer _GlobalsCB_b0
             {
-                float4 _LightColor0;
-                float4 _Color;
-                float4 _MainTex_ST;
+                float4 _LightColor0 : packoffset(c2);
+                float4 _Color : packoffset(c4);
+                float4 _MainTex_ST : packoffset(c5);
             };
-            cbuffer _UnityPerDrawCB : register(b1)
+            cbuffer _UnityPerDrawCB_b1
             {
                 float4x4 unity_ObjectToWorld;
-                float4 _WorldSpaceLightPos0;
                 float4x4 unity_WorldToObject;
                 float4 unity_OcclusionMaskSelector;
                 float4 cb1_values[6];
             };
-            cbuffer _UnityPerFrameCB : register(b2)
+            cbuffer _UnityPerFrameCB_b2
             {
                 float4 unity_ProbeVolumeParams;
                 float4x4 unity_ProbeVolumeWorldToObject;
@@ -608,20 +605,19 @@ Shader "Toon/Lit"
             ZTest LEqual
             ZWrite On
             HLSLPROGRAM
-            cbuffer _Globals : register(b0)
+            cbuffer _GlobalsCB_b0
             {
-                float4 _LightColor0;
-                float4 _Color;
-                float4 _MainTex_ST;
+                float4 _LightColor0 : packoffset(c2);
+                float4 _Color : packoffset(c4);
+                float4 _MainTex_ST : packoffset(c5);
             };
-            cbuffer _UnityPerDrawCB : register(b1)
+            cbuffer _UnityPerDrawCB_b1
             {
-                float4x4 unity_ObjectToWorld;
-                float4 _WorldSpaceLightPos0;
-                float4x4 unity_WorldToObject;
-                float4 unity_OcclusionMaskSelector;
+                float4x4 unity_ObjectToWorld : packoffset(c0);
+                float4x4 unity_WorldToObject : packoffset(c4);
+                float4 unity_OcclusionMaskSelector : packoffset(c46);
             };
-            cbuffer _UnityPerFrameCB : register(b2)
+            cbuffer _UnityPerFrameCB_b2
             {
                 float4 unity_ProbeVolumeParams;
                 float4x4 unity_ProbeVolumeWorldToObject;
@@ -785,7 +781,7 @@ Shader "Toon/Lit"
                     r1_w_4 = r1_xyzw_10.w;
                 }
                 float r0_w_6 = saturate(dot(float4(r1_x_10, r1_y_11, r1_z_10, r1_w_4), unity_OcclusionMaskSelector));
-                float4 r1_xyzw_13 = _Ramp.Sample(sampler_Ramp, ((mad(dot(i.texcoord1.xyzx, _WorldSpaceLightPos0.xyzx), 0.5, 0.5)).xxxx).xy);
+                float4 r1_xyzw_13 = _Ramp.Sample(sampler_Ramp, ((mad(dot(i.texcoord1.xyzx, unity_ObjectToWorld[0].xyzx), 0.5, 0.5)).xxxx).xy);
                 float4 r1_xyzw_14 = (r1_xyzw_13.xyzx * ((r0_xyz_2.xyzx * _LightColor0.xyzx)).xyzx);
                 float r1_x_14 = r1_xyzw_14.x;
                 float r1_y_13 = r1_xyzw_14.y;
@@ -809,20 +805,19 @@ Shader "Toon/Lit"
             ZTest LEqual
             ZWrite On
             HLSLPROGRAM
-            cbuffer _Globals : register(b0)
+            cbuffer _GlobalsCB_b0
             {
-                float4 _LightColor0;
-                float4 _Color;
-                float4 _MainTex_ST;
+                float4 _LightColor0 : packoffset(c2);
+                float4 _Color : packoffset(c4);
+                float4 _MainTex_ST : packoffset(c5);
             };
-            cbuffer _UnityPerDrawCB : register(b1)
+            cbuffer _UnityPerDrawCB_b1
             {
-                float4x4 unity_ObjectToWorld;
-                float4 _WorldSpaceLightPos0;
-                float4x4 unity_WorldToObject;
-                float4 unity_OcclusionMaskSelector;
+                float4x4 unity_ObjectToWorld : packoffset(c0);
+                float4x4 unity_WorldToObject : packoffset(c4);
+                float4 unity_OcclusionMaskSelector : packoffset(c46);
             };
-            cbuffer _UnityPerFrameCB : register(b2)
+            cbuffer _UnityPerFrameCB_b2
             {
                 float4 unity_ProbeVolumeParams;
                 float4x4 unity_ProbeVolumeWorldToObject;
@@ -942,7 +937,7 @@ Shader "Toon/Lit"
                     r1_w_4 = r1_xyzw_10.w;
                 }
                 float r0_w_6 = saturate(dot(float4(r1_x_10, r1_y_11, r1_z_10, r1_w_4), unity_OcclusionMaskSelector));
-                float4 r1_xyzw_13 = _Ramp.Sample(sampler_Ramp, ((mad(dot(i.texcoord1.xyzx, _WorldSpaceLightPos0.xyzx), 0.5, 0.5)).xxxx).xy);
+                float4 r1_xyzw_13 = _Ramp.Sample(sampler_Ramp, ((mad(dot(i.texcoord1.xyzx, unity_ObjectToWorld[0].xyzx), 0.5, 0.5)).xxxx).xy);
                 float4 r1_xyzw_14 = (r1_xyzw_13.xyzx * ((r0_xyz_2.xyzx * _LightColor0.xyzx)).xyzx);
                 float r1_x_14 = r1_xyzw_14.x;
                 float r1_y_13 = r1_xyzw_14.y;
@@ -966,21 +961,20 @@ Shader "Toon/Lit"
             ZTest LEqual
             ZWrite On
             HLSLPROGRAM
-            cbuffer _Globals : register(b0)
+            cbuffer _GlobalsCB_b0
             {
-                float4 _LightColor0;
-                float4 _Color;
-                float4 _MainTex_ST;
+                float4 _LightColor0 : packoffset(c2);
+                float4 _Color : packoffset(c4);
+                float4 _MainTex_ST : packoffset(c5);
             };
-            cbuffer _UnityPerDrawCB : register(b1)
+            cbuffer _UnityPerDrawCB_b1
             {
                 float4x4 unity_ObjectToWorld;
-                float4 _WorldSpaceLightPos0;
                 float4x4 unity_WorldToObject;
                 float4 unity_OcclusionMaskSelector;
                 float4 cb1_values[5];
             };
-            cbuffer _UnityPerFrameCB : register(b2)
+            cbuffer _UnityPerFrameCB_b2
             {
                 float4 unity_ProbeVolumeParams;
                 float4x4 unity_ProbeVolumeWorldToObject;
@@ -1187,21 +1181,20 @@ Shader "Toon/Lit"
             ZTest LEqual
             ZWrite On
             HLSLPROGRAM
-            cbuffer _Globals : register(b0)
+            cbuffer _GlobalsCB_b0
             {
-                float4 _LightColor0;
-                float4 _Color;
-                float4 _MainTex_ST;
+                float4 _LightColor0 : packoffset(c2);
+                float4 _Color : packoffset(c4);
+                float4 _MainTex_ST : packoffset(c5);
             };
-            cbuffer _UnityPerDrawCB : register(b1)
+            cbuffer _UnityPerDrawCB_b1
             {
                 float4x4 unity_ObjectToWorld;
-                float4 _WorldSpaceLightPos0;
                 float4x4 unity_WorldToObject;
                 float4 unity_OcclusionMaskSelector;
                 float4 cb1_values[5];
             };
-            cbuffer _UnityPerFrameCB : register(b2)
+            cbuffer _UnityPerFrameCB_b2
             {
                 float4 unity_ProbeVolumeParams;
                 float4x4 unity_ProbeVolumeWorldToObject;
@@ -1394,21 +1387,20 @@ Shader "Toon/Lit"
             ZTest LEqual
             ZWrite On
             HLSLPROGRAM
-            cbuffer _Globals : register(b0)
+            cbuffer _GlobalsCB_b0
             {
-                float4 _LightColor0;
-                float4 _Color;
-                float4 _MainTex_ST;
+                float4 _LightColor0 : packoffset(c2);
+                float4 _Color : packoffset(c4);
+                float4 _MainTex_ST : packoffset(c5);
             };
-            cbuffer _UnityPerDrawCB : register(b1)
+            cbuffer _UnityPerDrawCB_b1
             {
                 float4x4 unity_ObjectToWorld;
-                float4 _WorldSpaceLightPos0;
                 float4x4 unity_WorldToObject;
                 float4 unity_OcclusionMaskSelector;
                 float4 cb1_values[46];
             };
-            cbuffer _UnityPerFrameCB : register(b2)
+            cbuffer _UnityPerFrameCB_b2
             {
                 float4 unity_ProbeVolumeParams;
                 float4x4 unity_ProbeVolumeWorldToObject;
@@ -1532,7 +1524,7 @@ Shader "Toon/Lit"
                     r1_w_4 = r1_xyzw_10.w;
                 }
                 float r0_w_6 = saturate(dot(float4(r1_x_10, r1_y_11, r1_z_10, r1_w_4), unity_OcclusionMaskSelector));
-                float4 r1_xyzw_13 = _Ramp.Sample(sampler_Ramp, ((mad(dot(i.texcoord1.xyzx, _WorldSpaceLightPos0.xyzx), 0.5, 0.5)).xxxx).xy);
+                float4 r1_xyzw_13 = _Ramp.Sample(sampler_Ramp, ((mad(dot(i.texcoord1.xyzx, unity_ObjectToWorld[0].xyzx), 0.5, 0.5)).xxxx).xy);
                 float4 r1_xyzw_14 = (r1_xyzw_13.xyzx * ((r0_xyz_2.xyzx * _LightColor0.xyzx)).xyzx);
                 float r1_x_14 = r1_xyzw_14.x;
                 float r1_y_13 = r1_xyzw_14.y;
@@ -1556,27 +1548,26 @@ Shader "Toon/Lit"
             ZWrite Off
             Blend One One
             HLSLPROGRAM
-            cbuffer _Globals : register(b0)
+            cbuffer _GlobalsCB_b0
             {
                 float4 _LightColor0;
                 float4 _Color;
                 float4 _MainTex_ST;
                 float4 cb0_values[10];
             };
-            cbuffer _UnityPerDrawCB : register(b1)
+            cbuffer _UnityPerDrawCB_b1
             {
-                float4x4 unity_ObjectToWorld;
-                float4 _WorldSpaceLightPos0;
-                float4x4 unity_WorldToObject;
-                float4 unity_OcclusionMaskSelector;
+                float4x4 unity_ObjectToWorld : packoffset(c0);
+                float4x4 unity_WorldToObject : packoffset(c4);
+                float4 unity_OcclusionMaskSelector : packoffset(c46);
             };
-            cbuffer _UnityPerFrameCB : register(b2)
+            cbuffer _UnityPerFrameCB_b2
             {
-                float4 unity_ProbeVolumeParams;
-                float4x4 unity_ProbeVolumeWorldToObject;
-                float3 unity_ProbeVolumeSizeInv;
-                float3 unity_ProbeVolumeMin;
-                float4x4 unity_MatrixVP;
+                float4 unity_ProbeVolumeParams : packoffset(c0);
+                float4x4 unity_ProbeVolumeWorldToObject : packoffset(c1);
+                float3 unity_ProbeVolumeSizeInv : packoffset(c5);
+                float3 unity_ProbeVolumeMin : packoffset(c6);
+                float4x4 unity_MatrixVP : packoffset(c17);
             };
             SamplerState sampler_linear_clamp;
             SamplerState sampler_Ramp;
@@ -1648,7 +1639,7 @@ Shader "Toon/Lit"
             program58Output frag(program58Input i)
             {
                 program58Output o = (program58Output)0;
-                float3 r0_xyz_1 = ((-i.texcoord2.xyzx + _WorldSpaceLightPos0.xyzx)).xyz;
+                float3 r0_xyz_1 = ((-i.texcoord2.xyzx + unity_ObjectToWorld[0].xyzx)).xyz;
                 float r0_w_1 = dot(r0_xyz_1.xyzx, r0_xyz_1.xyzx);
                 float r0_w_2 = rsqrt(r0_w_1);
                 float4 r1_xyzw_1 = _MainTex.Sample(sampler_MainTex, (i.texcoord0.xyxx).xy);
@@ -1711,21 +1702,20 @@ Shader "Toon/Lit"
             ZWrite Off
             Blend One One
             HLSLPROGRAM
-            cbuffer _Globals : register(b0)
+            cbuffer _GlobalsCB_b0
             {
                 float4 _LightColor0;
                 float4 _Color;
                 float4 _MainTex_ST;
                 float4 cb0_values[10];
             };
-            cbuffer _UnityPerDrawCB : register(b1)
+            cbuffer _UnityPerDrawCB_b1
             {
-                float4x4 unity_ObjectToWorld;
-                float4 _WorldSpaceLightPos0;
-                float4x4 unity_WorldToObject;
-                float4 unity_OcclusionMaskSelector;
+                float4x4 unity_ObjectToWorld : packoffset(c0);
+                float4x4 unity_WorldToObject : packoffset(c4);
+                float4 unity_OcclusionMaskSelector : packoffset(c46);
             };
-            cbuffer _UnityPerFrameCB : register(b2)
+            cbuffer _UnityPerFrameCB_b2
             {
                 float4 unity_ProbeVolumeParams;
                 float4x4 unity_ProbeVolumeWorldToObject;
@@ -1848,7 +1838,7 @@ Shader "Toon/Lit"
                 }
                 float r0_w_6 = saturate(dot(float4(r2_x_10, r2_y_10, r2_z_10, r2_w_4), unity_OcclusionMaskSelector));
                 float4 r1_xyzw_5 = _Ramp.Sample(sampler_Ramp, ((((mad(cb0_values[6].xyxx, i.texcoord2.zzzz, (mad(cb0_values[4].xyxx, i.texcoord2.xxxx, ((i.texcoord2.yyyy * cb0_values[5].xyxx)).xyxx)).xyxx)).xyxx + cb0_values[7].xyxx)).xyxx).xy);
-                float4 r2_xyzw_11 = t2.Sample(sampler_linear_clamp2, ((mad(dot(i.texcoord1.xyzx, _WorldSpaceLightPos0.xyzx), 0.5, 0.5)).xxxx).xy);
+                float4 r2_xyzw_11 = t2.Sample(sampler_linear_clamp2, ((mad(dot(i.texcoord1.xyzx, unity_ObjectToWorld[0].xyzx), 0.5, 0.5)).xxxx).xy);
                 float r0_w_7 = dot(r1_xyzw_5.wwww, r0_w_6.xxxx);
                 float r0_w_8 = saturate(i.texcoord5.x);
                 o.sv_Target0.xyz = ((((r0_w_7.xxxx * ((r2_xyzw_11.xyzx * ((((r0_xyzw_1.xyzx * cb0_values[8].xyzx)).xyzx * _LightColor0.xyzx)).xyzx)).xyzx)).xyzx * r0_w_8.xxxx)).xyz;
@@ -1865,21 +1855,20 @@ Shader "Toon/Lit"
             ZWrite Off
             Blend One One
             HLSLPROGRAM
-            cbuffer _Globals : register(b0)
+            cbuffer _GlobalsCB_b0
             {
                 float4 _LightColor0;
                 float4 _Color;
                 float4 _MainTex_ST;
                 float4 cb0_values[10];
             };
-            cbuffer _UnityPerDrawCB : register(b1)
+            cbuffer _UnityPerDrawCB_b1
             {
-                float4x4 unity_ObjectToWorld;
-                float4 _WorldSpaceLightPos0;
-                float4x4 unity_WorldToObject;
-                float4 unity_OcclusionMaskSelector;
+                float4x4 unity_ObjectToWorld : packoffset(c0);
+                float4x4 unity_WorldToObject : packoffset(c4);
+                float4 unity_OcclusionMaskSelector : packoffset(c46);
             };
-            cbuffer _UnityPerFrameCB : register(b2)
+            cbuffer _UnityPerFrameCB_b2
             {
                 float4 unity_ProbeVolumeParams;
                 float4x4 unity_ProbeVolumeWorldToObject;
@@ -1978,7 +1967,7 @@ Shader "Toon/Lit"
             program66Output frag(program66Input i)
             {
                 program66Output o = (program66Output)0;
-                float3 r0_xyz_1 = ((-i.texcoord2.xyzx + _WorldSpaceLightPos0.xyzx)).xyz;
+                float3 r0_xyz_1 = ((-i.texcoord2.xyzx + unity_ObjectToWorld[0].xyzx)).xyz;
                 float r0_w_1 = dot(r0_xyz_1.xyzx, r0_xyz_1.xyzx);
                 float r0_w_2 = rsqrt(r0_w_1);
                 float4 r1_xyzw_1 = _MainTex.Sample(sampler_MainTex, (i.texcoord0.xyxx).xy);
@@ -2048,21 +2037,20 @@ Shader "Toon/Lit"
             ZWrite Off
             Blend One One
             HLSLPROGRAM
-            cbuffer _Globals : register(b0)
+            cbuffer _GlobalsCB_b0
             {
                 float4 _LightColor0;
                 float4 _Color;
                 float4 _MainTex_ST;
                 float4 cb0_values[10];
             };
-            cbuffer _UnityPerDrawCB : register(b1)
+            cbuffer _UnityPerDrawCB_b1
             {
-                float4x4 unity_ObjectToWorld;
-                float4 _WorldSpaceLightPos0;
-                float4x4 unity_WorldToObject;
-                float4 unity_OcclusionMaskSelector;
+                float4x4 unity_ObjectToWorld : packoffset(c0);
+                float4x4 unity_WorldToObject : packoffset(c4);
+                float4 unity_OcclusionMaskSelector : packoffset(c46);
             };
-            cbuffer _UnityPerFrameCB : register(b2)
+            cbuffer _UnityPerFrameCB_b2
             {
                 float4 unity_ProbeVolumeParams;
                 float4x4 unity_ProbeVolumeWorldToObject;
@@ -2156,7 +2144,7 @@ Shader "Toon/Lit"
             program65Output frag(program65Input i)
             {
                 program65Output o = (program65Output)0;
-                float3 r0_xyz_1 = ((-i.texcoord2.xyzx + _WorldSpaceLightPos0.xyzx)).xyz;
+                float3 r0_xyz_1 = ((-i.texcoord2.xyzx + unity_ObjectToWorld[0].xyzx)).xyz;
                 float r0_w_1 = dot(r0_xyz_1.xyzx, r0_xyz_1.xyzx);
                 float r0_w_2 = rsqrt(r0_w_1);
                 float4 r1_xyzw_1 = _MainTex.Sample(sampler_MainTex, (i.texcoord0.xyxx).xy);
@@ -2228,21 +2216,20 @@ Shader "Toon/Lit"
             ZWrite Off
             Blend One One
             HLSLPROGRAM
-            cbuffer _Globals : register(b0)
+            cbuffer _GlobalsCB_b0
             {
                 float4 _LightColor0;
                 float4 _Color;
                 float4 _MainTex_ST;
                 float4 cb0_values[5];
             };
-            cbuffer _UnityPerDrawCB : register(b1)
+            cbuffer _UnityPerDrawCB_b1
             {
-                float4x4 unity_ObjectToWorld;
-                float4 _WorldSpaceLightPos0;
-                float4x4 unity_WorldToObject;
-                float4 unity_OcclusionMaskSelector;
+                float4x4 unity_ObjectToWorld : packoffset(c0);
+                float4x4 unity_WorldToObject : packoffset(c4);
+                float4 unity_OcclusionMaskSelector : packoffset(c46);
             };
-            cbuffer _UnityPerFrameCB : register(b2)
+            cbuffer _UnityPerFrameCB_b2
             {
                 float4 unity_ProbeVolumeParams;
                 float4x4 unity_ProbeVolumeWorldToObject;
@@ -2359,7 +2346,7 @@ Shader "Toon/Lit"
                     r1_w_4 = r1_xyzw_10.w;
                 }
                 float r0_w_6 = saturate(dot(float4(r1_x_10, r1_y_11, r1_z_10, r1_w_4), unity_OcclusionMaskSelector));
-                float4 r1_xyzw_13 = _Ramp.Sample(sampler_Ramp, ((mad(dot(i.texcoord1.xyzx, _WorldSpaceLightPos0.xyzx), 0.5, 0.5)).xxxx).xy);
+                float4 r1_xyzw_13 = _Ramp.Sample(sampler_Ramp, ((mad(dot(i.texcoord1.xyzx, unity_ObjectToWorld[0].xyzx), 0.5, 0.5)).xxxx).xy);
                 float r0_w_7 = (r0_w_6 + r0_w_6);
                 float r0_w_8 = saturate(i.texcoord5.x);
                 o.sv_Target0.xyz = ((((r0_w_7.xxxx * ((r1_xyzw_13.xyzx * ((((r0_xyzw_1.xyzx * cb0_values[4].xyzx)).xyzx * _LightColor0.xyzx)).xyzx)).xyzx)).xyzx * r0_w_8.xxxx)).xyz;
@@ -2376,21 +2363,20 @@ Shader "Toon/Lit"
             ZWrite Off
             Blend One One
             HLSLPROGRAM
-            cbuffer _Globals : register(b0)
+            cbuffer _GlobalsCB_b0
             {
                 float4 _LightColor0;
                 float4 _Color;
                 float4 _MainTex_ST;
                 float4 cb0_values[10];
             };
-            cbuffer _UnityPerDrawCB : register(b1)
+            cbuffer _UnityPerDrawCB_b1
             {
-                float4x4 unity_ObjectToWorld;
-                float4 _WorldSpaceLightPos0;
-                float4x4 unity_WorldToObject;
-                float4 unity_OcclusionMaskSelector;
+                float4x4 unity_ObjectToWorld : packoffset(c0);
+                float4x4 unity_WorldToObject : packoffset(c4);
+                float4 unity_OcclusionMaskSelector : packoffset(c46);
             };
-            cbuffer _UnityPerFrameCB : register(b2)
+            cbuffer _UnityPerFrameCB_b2
             {
                 float4 unity_ProbeVolumeParams;
                 float4x4 unity_ProbeVolumeWorldToObject;
@@ -2487,7 +2473,7 @@ Shader "Toon/Lit"
             program63Output frag(program63Input i)
             {
                 program63Output o = (program63Output)0;
-                float3 r0_xyz_1 = ((-i.texcoord2.xyzx + _WorldSpaceLightPos0.xyzx)).xyz;
+                float3 r0_xyz_1 = ((-i.texcoord2.xyzx + unity_ObjectToWorld[0].xyzx)).xyz;
                 float r0_w_1 = dot(r0_xyz_1.xyzx, r0_xyz_1.xyzx);
                 float r0_w_2 = rsqrt(r0_w_1);
                 float4 r1_xyzw_1 = _MainTex.Sample(sampler_MainTex, (i.texcoord0.xyxx).xy);
@@ -2555,27 +2541,26 @@ Shader "Toon/Lit"
             ZWrite Off
             Blend One One
             HLSLPROGRAM
-            cbuffer _Globals : register(b0)
+            cbuffer _GlobalsCB_b0
             {
                 float4 _LightColor0;
                 float4 _Color;
                 float4 _MainTex_ST;
                 float4 cb0_values[10];
             };
-            cbuffer _UnityPerDrawCB : register(b1)
+            cbuffer _UnityPerDrawCB_b1
             {
-                float4x4 unity_ObjectToWorld;
-                float4 _WorldSpaceLightPos0;
-                float4x4 unity_WorldToObject;
-                float4 unity_OcclusionMaskSelector;
+                float4x4 unity_ObjectToWorld : packoffset(c0);
+                float4x4 unity_WorldToObject : packoffset(c4);
+                float4 unity_OcclusionMaskSelector : packoffset(c46);
             };
-            cbuffer _UnityPerFrameCB : register(b2)
+            cbuffer _UnityPerFrameCB_b2
             {
-                float4 unity_ProbeVolumeParams;
-                float4x4 unity_ProbeVolumeWorldToObject;
-                float3 unity_ProbeVolumeSizeInv;
-                float3 unity_ProbeVolumeMin;
-                float4x4 unity_MatrixVP;
+                float4 unity_ProbeVolumeParams : packoffset(c0);
+                float4x4 unity_ProbeVolumeWorldToObject : packoffset(c1);
+                float3 unity_ProbeVolumeSizeInv : packoffset(c5);
+                float3 unity_ProbeVolumeMin : packoffset(c6);
+                float4x4 unity_MatrixVP : packoffset(c17);
             };
             SamplerState sampler_linear_clamp;
             SamplerState sampler_Ramp;
@@ -2681,7 +2666,7 @@ Shader "Toon/Lit"
                 }
                 float r0_w_6 = saturate(dot(float4(r2_x_10, r2_y_10, r2_z_10, r2_w_4), unity_OcclusionMaskSelector));
                 float4 r1_xyzw_5 = _Ramp.Sample(sampler_Ramp, ((((mad(cb0_values[6].xyxx, i.texcoord2.zzzz, (mad(cb0_values[4].xyxx, i.texcoord2.xxxx, ((i.texcoord2.yyyy * cb0_values[5].xyxx)).xyxx)).xyxx)).xyxx + cb0_values[7].xyxx)).xyxx).xy);
-                float4 r2_xyzw_11 = t2.Sample(sampler_linear_clamp2, ((mad(dot(i.texcoord1.xyzx, _WorldSpaceLightPos0.xyzx), 0.5, 0.5)).xxxx).xy);
+                float4 r2_xyzw_11 = t2.Sample(sampler_linear_clamp2, ((mad(dot(i.texcoord1.xyzx, unity_ObjectToWorld[0].xyzx), 0.5, 0.5)).xxxx).xy);
                 float r0_w_7 = dot(r1_xyzw_5.wwww, r0_w_6.xxxx);
                 o.sv_Target0.xyz = ((r0_w_7.xxxx * ((r2_xyzw_11.xyzx * ((((r0_xyzw_1.xyzx * cb0_values[8].xyzx)).xyzx * _LightColor0.xyzx)).xyzx)).xyzx)).xyz;
                 o.sv_Target0.w = 1;
@@ -2697,27 +2682,26 @@ Shader "Toon/Lit"
             ZWrite Off
             Blend One One
             HLSLPROGRAM
-            cbuffer _Globals : register(b0)
+            cbuffer _GlobalsCB_b0
             {
                 float4 _LightColor0;
                 float4 _Color;
                 float4 _MainTex_ST;
                 float4 cb0_values[10];
             };
-            cbuffer _UnityPerDrawCB : register(b1)
+            cbuffer _UnityPerDrawCB_b1
             {
-                float4x4 unity_ObjectToWorld;
-                float4 _WorldSpaceLightPos0;
-                float4x4 unity_WorldToObject;
-                float4 unity_OcclusionMaskSelector;
+                float4x4 unity_ObjectToWorld : packoffset(c0);
+                float4x4 unity_WorldToObject : packoffset(c4);
+                float4 unity_OcclusionMaskSelector : packoffset(c46);
             };
-            cbuffer _UnityPerFrameCB : register(b2)
+            cbuffer _UnityPerFrameCB_b2
             {
-                float4 unity_ProbeVolumeParams;
-                float4x4 unity_ProbeVolumeWorldToObject;
-                float3 unity_ProbeVolumeSizeInv;
-                float3 unity_ProbeVolumeMin;
-                float4x4 unity_MatrixVP;
+                float4 unity_ProbeVolumeParams : packoffset(c0);
+                float4x4 unity_ProbeVolumeWorldToObject : packoffset(c1);
+                float3 unity_ProbeVolumeSizeInv : packoffset(c5);
+                float3 unity_ProbeVolumeMin : packoffset(c6);
+                float4x4 unity_MatrixVP : packoffset(c17);
             };
             SamplerState sampler_linear_clamp;
             SamplerState sampler_linear_clamp1;
@@ -2791,7 +2775,7 @@ Shader "Toon/Lit"
             program61Output frag(program61Input i)
             {
                 program61Output o = (program61Output)0;
-                float3 r0_xyz_1 = ((-i.texcoord2.xyzx + _WorldSpaceLightPos0.xyzx)).xyz;
+                float3 r0_xyz_1 = ((-i.texcoord2.xyzx + unity_ObjectToWorld[0].xyzx)).xyz;
                 float r0_w_1 = dot(r0_xyz_1.xyzx, r0_xyz_1.xyzx);
                 float r0_w_2 = rsqrt(r0_w_1);
                 float4 r1_xyzw_1 = _MainTex.Sample(sampler_MainTex, (i.texcoord0.xyxx).xy);
@@ -2856,27 +2840,26 @@ Shader "Toon/Lit"
             ZWrite Off
             Blend One One
             HLSLPROGRAM
-            cbuffer _Globals : register(b0)
+            cbuffer _GlobalsCB_b0
             {
                 float4 _LightColor0;
                 float4 _Color;
                 float4 _MainTex_ST;
                 float4 cb0_values[10];
             };
-            cbuffer _UnityPerDrawCB : register(b1)
+            cbuffer _UnityPerDrawCB_b1
             {
-                float4x4 unity_ObjectToWorld;
-                float4 _WorldSpaceLightPos0;
-                float4x4 unity_WorldToObject;
-                float4 unity_OcclusionMaskSelector;
+                float4x4 unity_ObjectToWorld : packoffset(c0);
+                float4x4 unity_WorldToObject : packoffset(c4);
+                float4 unity_OcclusionMaskSelector : packoffset(c46);
             };
-            cbuffer _UnityPerFrameCB : register(b2)
+            cbuffer _UnityPerFrameCB_b2
             {
-                float4 unity_ProbeVolumeParams;
-                float4x4 unity_ProbeVolumeWorldToObject;
-                float3 unity_ProbeVolumeSizeInv;
-                float3 unity_ProbeVolumeMin;
-                float4x4 unity_MatrixVP;
+                float4 unity_ProbeVolumeParams : packoffset(c0);
+                float4x4 unity_ProbeVolumeWorldToObject : packoffset(c1);
+                float3 unity_ProbeVolumeSizeInv : packoffset(c5);
+                float3 unity_ProbeVolumeMin : packoffset(c6);
+                float4x4 unity_MatrixVP : packoffset(c17);
             };
             SamplerState sampler_linear_clamp;
             SamplerState sampler_Ramp;
@@ -2953,7 +2936,7 @@ Shader "Toon/Lit"
             program60Output frag(program60Input i)
             {
                 program60Output o = (program60Output)0;
-                float3 r0_xyz_1 = ((-i.texcoord2.xyzx + _WorldSpaceLightPos0.xyzx)).xyz;
+                float3 r0_xyz_1 = ((-i.texcoord2.xyzx + unity_ObjectToWorld[0].xyzx)).xyz;
                 float r0_w_1 = dot(r0_xyz_1.xyzx, r0_xyz_1.xyzx);
                 float r0_w_2 = rsqrt(r0_w_1);
                 float4 r1_xyzw_1 = _MainTex.Sample(sampler_MainTex, (i.texcoord0.xyxx).xy);
@@ -3020,27 +3003,26 @@ Shader "Toon/Lit"
             ZWrite Off
             Blend One One
             HLSLPROGRAM
-            cbuffer _Globals : register(b0)
+            cbuffer _GlobalsCB_b0
             {
                 float4 _LightColor0;
                 float4 _Color;
                 float4 _MainTex_ST;
                 float4 cb0_values[5];
             };
-            cbuffer _UnityPerDrawCB : register(b1)
+            cbuffer _UnityPerDrawCB_b1
             {
-                float4x4 unity_ObjectToWorld;
-                float4 _WorldSpaceLightPos0;
-                float4x4 unity_WorldToObject;
-                float4 unity_OcclusionMaskSelector;
+                float4x4 unity_ObjectToWorld : packoffset(c0);
+                float4x4 unity_WorldToObject : packoffset(c4);
+                float4 unity_OcclusionMaskSelector : packoffset(c46);
             };
-            cbuffer _UnityPerFrameCB : register(b2)
+            cbuffer _UnityPerFrameCB_b2
             {
-                float4 unity_ProbeVolumeParams;
-                float4x4 unity_ProbeVolumeWorldToObject;
-                float3 unity_ProbeVolumeSizeInv;
-                float3 unity_ProbeVolumeMin;
-                float4x4 unity_MatrixVP;
+                float4 unity_ProbeVolumeParams : packoffset(c0);
+                float4x4 unity_ProbeVolumeWorldToObject : packoffset(c1);
+                float3 unity_ProbeVolumeSizeInv : packoffset(c5);
+                float3 unity_ProbeVolumeMin : packoffset(c6);
+                float4x4 unity_MatrixVP : packoffset(c17);
             };
             SamplerState sampler_linear_clamp;
             SamplerState sampler_Ramp;
@@ -3135,7 +3117,7 @@ Shader "Toon/Lit"
                     r1_w_4 = r1_xyzw_10.w;
                 }
                 float r0_w_6 = saturate(dot(float4(r1_x_10, r1_y_11, r1_z_10, r1_w_4), unity_OcclusionMaskSelector));
-                float4 r1_xyzw_13 = _Ramp.Sample(sampler_Ramp, ((mad(dot(i.texcoord1.xyzx, _WorldSpaceLightPos0.xyzx), 0.5, 0.5)).xxxx).xy);
+                float4 r1_xyzw_13 = _Ramp.Sample(sampler_Ramp, ((mad(dot(i.texcoord1.xyzx, unity_ObjectToWorld[0].xyzx), 0.5, 0.5)).xxxx).xy);
                 float r0_w_7 = (r0_w_6 + r0_w_6);
                 o.sv_Target0.xyz = ((r0_w_7.xxxx * ((r1_xyzw_13.xyzx * ((((r0_xyzw_1.xyzx * cb0_values[4].xyzx)).xyzx * _LightColor0.xyzx)).xyzx)).xyzx)).xyz;
                 o.sv_Target0.w = 1;

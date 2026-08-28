@@ -74,6 +74,24 @@ internal class Program
             return;
         }
 
+        if (args.Contains("--faithfulness-test"))
+        {
+            // Unified faithfulness test: decompile + recompile-verify +
+            // metadata fidelity in one pass. Exits with 0 on full pass,
+            // 1 on any failure.
+            int ffIdx = Array.IndexOf(args, "--faithfulness-test");
+            string folder = ffIdx + 1 < args.Length
+                ? Path.GetFullPath(args[ffIdx + 1])
+                : FindOutputRoot();
+            if (!Directory.Exists(folder))
+            {
+                Console.WriteLine($"Input not found: {folder}");
+                return;
+            }
+            int exitCode = RunFaithfulnessTest(folder, args);
+            return;
+        }
+
         // args[0] is a folder produced by Extract.py (blob.bin +
         // metadata.json + optional dummy.shader), or a direct blob.bin path.
         // No-args default: the HOLO_Holo input folder in the repo-root Output.
@@ -656,8 +674,13 @@ private static string InterfaceInterpKey(List<Parser.DXBC.Chunks.SignatureElemen
             c.Pipeline.Program.Declarations, c.Dxbc.ResourceDefinition, c.Pipeline.Blocks, pass.Cbuffers, c.Stage.ToString(), textureNames).ToList();
         foreach (HlslResourceNode res in resources)
         {
+            // Cbuffers merge by slot: vert and frag subprograms of the same
+            // pass touch the same constant-buffer slots, so union the
+            // members (keeping the largest array size for any fallback).
             HlslResourceNode? existing = pass.Resources.FirstOrDefault(r =>
-                r.Kind == res.Kind && (r.Slot == res.Slot || r.Name == res.Name));
+                r.Kind == res.Kind && (res.Kind == HlslResourceKind.ConstantBuffer
+                    ? r.Slot == res.Slot
+                    : r.Slot == res.Slot || r.Name == res.Name));
 
             if (existing is null)
             {
@@ -794,5 +817,108 @@ private static string InterfaceInterpKey(List<Parser.DXBC.Chunks.SignatureElemen
         }
 
         return FindOutputRoot();
+    }
+
+    // Runs the full decompilation pipeline on a single blob folder, then
+    // verifies the output .shader against the original DXBC bytecode.
+    // Accepts the same CLI flags as the normal pipeline (--no-fuse-temps,
+    // --no-surface-shaders, --keep-passes) plus --out-root.
+    private static int RunFaithfulnessTest(string folder, string[] args)
+    {
+        string outRoot = ProjectOutputRoot();
+        int outRootFlag = Array.IndexOf(args, "--out-root");
+        if (outRootFlag >= 0 && outRootFlag + 1 < args.Length)
+            outRoot = args[outRootFlag + 1];
+
+        ShaderProject project;
+        try
+        {
+            project = ShaderProject.LoadFromFolder(folder);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Failed to load {folder}: {ex.Message}");
+            return 1;
+        }
+
+        Console.WriteLine($"=== Faithfulness test: {project.Metadata.Name} ===");
+        Console.WriteLine($"Input: {folder}");
+        Console.WriteLine();
+
+        // ── Run the full decompilation pipeline (same as Main) ──
+        byte[] bytes = project.Blob;
+        using var stream = new MemoryStream(bytes);
+        using var reader = new BinaryReader(stream);
+        int[] version = { 2022, 3, 62 };
+        var program = new ShaderProgram(reader, version);
+        HlslShaderNode astShader = HlslAstBuilder.BuildShell(project.Metadata);
+        List<HlslPassNode> allPasses = astShader.SubShaders
+            .SelectMany(ss => ss.Passes).ToList();
+        var candidates = new List<SubprogramCandidate>();
+
+        program.Read(reader, 0);
+
+        for (int i = 0; i < program.m_SubPrograms.Length; i++)
+        {
+            var sp = program.m_SubPrograms[i];
+            if (sp == null) continue;
+
+            try
+            {
+                UnityShaderBlob blob = UnityShaderBlob.Parse(sp.m_ProgramCode, "shipped");
+                byte[] dxbc = blob.Dxbc;
+                var dxbcFile = new DxbcFile();
+                dxbcFile.Load(dxbc);
+                IRPipeline.Result pipelineResult = IRPipeline.Run(dxbcFile);
+                HlslFunctionNode? function = HlslAstBuilder.BuildFunction(
+                    $"program{i}", sp.m_ProgramType,
+                    pipelineResult.Program.Declarations, pipelineResult.Blocks,
+                    dxbcFile.InputSignature, dxbcFile.OutputSignature);
+
+                if (function is not null)
+                {
+                    candidates.Add(new SubprogramCandidate
+                    {
+                        SubIndex = i,
+                        Stage = function.Stage,
+                        Function = function,
+                        Pipeline = pipelineResult,
+                        Dxbc = dxbcFile,
+                        DxbcBytes = dxbc,
+                        Header = blob.Header,
+                        SigIn = InterfaceKey(dxbcFile.InputSignature?.Elements),
+                        SigOut = InterfaceKey(dxbcFile.OutputSignature?.Elements),
+                        SigInInterp = InterfaceInterpKey(dxbcFile.InputSignature?.Elements),
+                        SigOutInterp = InterfaceInterpKey(dxbcFile.OutputSignature?.Elements),
+                    });
+                }
+            }
+            catch { /* skip non-DX11 subprograms */ }
+        }
+
+        BuildVariantPasses(astShader, allPasses, candidates);
+
+        bool fuseTemps = !args.Contains("--no-fuse-temps");
+        bool surfaceReconstruct = !args.Contains("--no-surface-shaders");
+        bool keepPasses = args.Contains("--keep-passes");
+        Directory.CreateDirectory(outRoot);
+
+        string text = HlslPrettyPrinter.Print(astShader, fuseTemps);
+        if (surfaceReconstruct)
+        {
+            string? reconstructed = HlslSurfaceShaderRecognizer.TryReconstruct(text, project.Metadata, keepPasses);
+            if (reconstructed is not null) text = reconstructed;
+        }
+
+        string outPath = Path.Combine(outRoot, SafeFileName(astShader.Name) + ".shader");
+        File.WriteAllText(outPath, text);
+        Console.WriteLine($"Decompiled: {outPath} ({text.Length} chars)");
+        Console.WriteLine();
+
+        // ── Run faithfulness checks ──
+        string shaderText = File.ReadAllText(outPath);
+        var result = FaithfulnessTest.Run(folder, shaderText, outRoot);
+        result.PipelineCompleted = true;
+        return FaithfulnessTest.PrintReport(outPath, result);
     }
 }

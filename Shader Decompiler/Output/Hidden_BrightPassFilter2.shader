@@ -13,14 +13,13 @@ Shader "Hidden/BrightPassFilter2"
             ZTest Always
             ZWrite Off
             HLSLPROGRAM
-            cbuffer _UnityPerDrawCB : register(b0)
+            cbuffer _UnityPerDrawCB_b0
             {
-                float4x4 unity_ObjectToWorld;
-                float4 _Threshhold;
+                float4x4 unity_ObjectToWorld : packoffset(c0);
             };
-            cbuffer _UnityPerFrameCB : register(b1)
+            cbuffer _UnityPerFrameCB_b1
             {
-                float4x4 unity_MatrixVP;
+                float4x4 unity_MatrixVP : packoffset(c17);
             };
             SamplerState sampler_MainTex;
             Texture2D _MainTex;
@@ -60,7 +59,7 @@ Shader "Hidden/BrightPassFilter2"
                 program3Output o = (program3Output)0;
                 float4 r0_xyzw_1 = _MainTex.Sample(sampler_MainTex, (i.texcoord0.xyxx).xy);
                 o.sv_Target0.w = r0_xyzw_1.w;
-                o.sv_Target0.xyz = (max(((r0_xyzw_1.xyzx + -_Threshhold.xxxx)).xyzx, float4(0, 0, 0, 0))).xyz;
+                o.sv_Target0.xyz = (max(((r0_xyzw_1.xyzx + -unity_ObjectToWorld[2].xxxx)).xyzx, float4(0, 0, 0, 0))).xyz;
                 return o;
             }
             ENDHLSL

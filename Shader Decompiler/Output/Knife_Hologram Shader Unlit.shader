@@ -109,25 +109,25 @@ Shader "Knife/Hologram Shader Unlit"
             ZWrite Off
             Blend SrcAlpha OneMinusSrcColor
             HLSLPROGRAM
-            cbuffer _Globals : register(b0)
+            cbuffer _GlobalsCB_b0
             {
-                float _PositionDirection;
-                float4 _MainColor;
-                float _Alpha;
+                float _PositionDirection : packoffset(c3.w);
+                float4 _MainColor : packoffset(c8);
+                float _Alpha : packoffset(c21.z);
             };
-            cbuffer _UnityPerCameraCB : register(b1)
+            cbuffer _UnityPerCameraCB_b1
             {
-                float4 _ProjectionParams;
+                float4 _ProjectionParams : packoffset(c5);
             };
-            cbuffer _UnityPerDrawCB : register(b2)
+            cbuffer _UnityPerDrawCB_b2
             {
-                float4x4 unity_ObjectToWorld;
-                float4x4 unity_WorldToObject;
-                float4 unity_WorldTransformParams;
+                float4x4 unity_ObjectToWorld : packoffset(c0);
+                float4x4 unity_WorldToObject : packoffset(c4);
+                float4 unity_WorldTransformParams : packoffset(c9);
             };
-            cbuffer _UnityPerFrameCB : register(b3)
+            cbuffer _UnityPerFrameCB_b3
             {
-                float4x4 unity_MatrixVP;
+                float4x4 unity_MatrixVP : packoffset(c17);
             };
             struct program3Input
             {
@@ -233,26 +233,26 @@ Shader "Knife/Hologram Shader Unlit"
             ZWrite Off
             Blend SrcAlpha OneMinusSrcColor
             HLSLPROGRAM
-            cbuffer _Globals : register(b0)
+            cbuffer _GlobalsCB_b0
             {
                 float _PositionDirection;
                 float4 _MainColor;
                 float _Alpha;
                 float4 cb0_values[22];
             };
-            cbuffer _UnityPerCameraCB : register(b1)
+            cbuffer _UnityPerCameraCB_b1
             {
                 float4 _ProjectionParams;
                 float4 cb1_values[5];
             };
-            cbuffer _UnityPerDrawCB : register(b2)
+            cbuffer _UnityPerDrawCB_b2
             {
                 float4x4 unity_ObjectToWorld;
                 float4x4 unity_WorldToObject;
                 float4 unity_WorldTransformParams;
                 float4 cb2_values[4];
             };
-            cbuffer _UnityPerFrameCB : register(b3)
+            cbuffer _UnityPerFrameCB_b3
             {
                 float4x4 unity_MatrixVP;
                 float4 cb3_values[13];
@@ -1189,28 +1189,28 @@ Shader "Knife/Hologram Shader Unlit"
             ZWrite Off
             Blend SrcAlpha OneMinusSrcColor
             HLSLPROGRAM
-            cbuffer _Globals : register(b0)
+            cbuffer _GlobalsCB_b0
             {
                 float _PositionDirection;
                 float4 _MainColor;
                 float _Alpha;
                 float4 cb0_values[22];
             };
-            cbuffer _UnityPerCameraCB : register(b1)
+            cbuffer _UnityPerCameraCB_b1
             {
                 float4 _ProjectionParams;
                 float4 cb1_values[8];
             };
-            cbuffer _UnityPerDrawCB : register(b2)
+            cbuffer _UnityPerDrawCB_b2
             {
                 float4x4 unity_ObjectToWorld;
                 float4x4 unity_WorldToObject;
                 float4 unity_WorldTransformParams;
                 float4 cb2_values[4];
             };
-            cbuffer _UnityPerFrameCB : register(b3)
+            cbuffer _UnityPerFrameCB_b3
             {
-                float4x4 unity_MatrixVP;
+                float4x4 unity_MatrixVP : packoffset(c17);
             };
             SamplerState sampler_Line1;
             SamplerState sampler_Line2;
@@ -1495,26 +1495,26 @@ Shader "Knife/Hologram Shader Unlit"
             ZWrite Off
             Blend SrcAlpha OneMinusSrcColor
             HLSLPROGRAM
-            cbuffer _Globals : register(b0)
+            cbuffer _GlobalsCB_b0
             {
                 float _PositionDirection;
                 float4 _MainColor;
                 float _Alpha;
                 float4 cb0_values[19];
             };
-            cbuffer _UnityPerCameraCB : register(b1)
+            cbuffer _UnityPerCameraCB_b1
             {
                 float4 _ProjectionParams;
                 float4 cb1_values[1];
             };
-            cbuffer _UnityPerDrawCB : register(b2)
+            cbuffer _UnityPerDrawCB_b2
             {
                 float4x4 unity_ObjectToWorld;
                 float4x4 unity_WorldToObject;
                 float4 unity_WorldTransformParams;
                 float4 cb2_values[4];
             };
-            cbuffer _UnityPerFrameCB : register(b3)
+            cbuffer _UnityPerFrameCB_b3
             {
                 float4x4 unity_MatrixVP;
                 float4 cb3_values[13];
@@ -2362,26 +2362,26 @@ Shader "Knife/Hologram Shader Unlit"
             ZWrite Off
             Blend SrcAlpha OneMinusSrcColor
             HLSLPROGRAM
-            cbuffer _Globals : register(b0)
+            cbuffer _GlobalsCB_b0
             {
                 float _PositionDirection;
                 float4 _MainColor;
                 float _Alpha;
                 float4 cb0_values[18];
             };
-            cbuffer _UnityPerCameraCB : register(b1)
+            cbuffer _UnityPerCameraCB_b1
             {
                 float4 _ProjectionParams;
                 float4 cb1_values[8];
             };
-            cbuffer _UnityPerDrawCB : register(b2)
+            cbuffer _UnityPerDrawCB_b2
             {
                 float4x4 unity_ObjectToWorld;
                 float4x4 unity_WorldToObject;
                 float4 unity_WorldTransformParams;
                 float4 cb2_values[4];
             };
-            cbuffer _UnityPerFrameCB : register(b3)
+            cbuffer _UnityPerFrameCB_b3
             {
                 float4x4 unity_MatrixVP;
                 float4 cb3_values[13];

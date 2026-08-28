@@ -21,22 +21,16 @@ Shader "ShurikenMagic/TransparentRim"
             ZWrite Off
             Blend SrcAlpha OneMinusSrcColor
             HLSLPROGRAM
-            cbuffer _UnityPerDrawCB : register(b0)
+            cbuffer _UnityPerDrawCB_b0
             {
                 float4x4 unity_ObjectToWorld;
                 float4x4 unity_WorldToObject;
-                float4 _RimColor;
-                float _RimPower;
-                float _AlphaPower;
-                float _InnerColorPower;
-                float _AllPower;
-                float4 _InnerColor;
                 float4 cb0_values[6];
             };
-            cbuffer _UnityPerFrameCB : register(b1)
+            cbuffer _UnityPerFrameCB_b1
             {
-                float3 _WorldSpaceCameraPos;
-                float4x4 unity_MatrixVP;
+                float3 _WorldSpaceCameraPos : packoffset(c4);
+                float4x4 unity_MatrixVP : packoffset(c17);
             };
             struct program6Input
             {
@@ -94,13 +88,13 @@ Shader "ShurikenMagic/TransparentRim"
                 float4 r0_xyzw_7 = exp2(float4(r0_x_6, r0_y_3, r0_x_6, r0_x_6));
                 float r0_x_7 = r0_xyzw_7.x;
                 float r0_y_4 = r0_xyzw_7.y;
-                float4 r0_xyzw_8 = (r0_x_7.xxxx * _RimColor.xxyz);
+                float4 r0_xyzw_8 = (r0_x_7.xxxx * unity_WorldToObject[0].xxyz);
                 float r0_x_8 = r0_xyzw_8.x;
                 float r0_z_3 = r0_xyzw_8.z;
                 float r0_w_3 = r0_xyzw_8.w;
-                o.sv_Target0.w = (r0_y_4 * _AllPower);
-                float3 r1_xyz_1 = ((_InnerColorPower.xxxx * _InnerColor.xyzx)).xyz;
-                o.sv_Target0.xyz = (mad(float4(r0_x_8, r0_z_3, r0_w_3, r0_x_8), _AllPower.xxxx, ((r1_xyz_1.xyzx + r1_xyz_1.xyzx)).xyzx)).xyz;
+                o.sv_Target0.w = (r0_y_4 * unity_WorldToObject[2]);
+                float3 r1_xyz_1 = ((unity_WorldToObject[1].xxxx * unity_WorldToObject[3].xyzx)).xyz;
+                o.sv_Target0.xyz = (mad(float4(r0_x_8, r0_z_3, r0_w_3, r0_x_8), unity_WorldToObject[2].xxxx, ((r1_xyz_1.xyzx + r1_xyz_1.xyzx)).xyzx)).xyz;
                 return o;
             }
             ENDHLSL
@@ -113,19 +107,13 @@ Shader "ShurikenMagic/TransparentRim"
             ZWrite Off
             Blend SrcAlpha OneMinusSrcColor
             HLSLPROGRAM
-            cbuffer _UnityPerDrawCB : register(b0)
+            cbuffer _UnityPerDrawCB_b0
             {
                 float4x4 unity_ObjectToWorld;
                 float4x4 unity_WorldToObject;
-                float4 _RimColor;
-                float _RimPower;
-                float _AlphaPower;
-                float _InnerColorPower;
-                float _AllPower;
-                float4 _InnerColor;
                 float4 cb0_values[6];
             };
-            cbuffer _UnityPerFrameCB : register(b1)
+            cbuffer _UnityPerFrameCB_b1
             {
                 float3 _WorldSpaceCameraPos;
                 float4x4 unity_MatrixVP;
@@ -249,13 +237,13 @@ Shader "ShurikenMagic/TransparentRim"
                 float4 r0_xyzw_7 = exp2(float4(r0_x_6, r0_y_3, r0_x_6, r0_x_6));
                 float r0_x_7 = r0_xyzw_7.x;
                 float r0_y_4 = r0_xyzw_7.y;
-                float4 r0_xyzw_8 = (r0_x_7.xxxx * _RimColor.xxyz);
+                float4 r0_xyzw_8 = (r0_x_7.xxxx * unity_WorldToObject[0].xxyz);
                 float r0_x_8 = r0_xyzw_8.x;
                 float r0_z_3 = r0_xyzw_8.z;
                 float r0_w_3 = r0_xyzw_8.w;
-                o.sv_Target0.w = (r0_y_4 * _AllPower);
-                float3 r1_xyz_1 = ((_InnerColorPower.xxxx * _InnerColor.xyzx)).xyz;
-                float4 r0_xyzw_9 = mad(float4(r0_x_8, r0_z_3, r0_w_3, r0_x_8), _AllPower.xxxx, ((r1_xyz_1.xyzx + r1_xyz_1.xyzx)).xyzx);
+                o.sv_Target0.w = (r0_y_4 * unity_WorldToObject[2]);
+                float3 r1_xyz_1 = ((unity_WorldToObject[1].xxxx * unity_WorldToObject[3].xyzx)).xyz;
+                float4 r0_xyzw_9 = mad(float4(r0_x_8, r0_z_3, r0_w_3, r0_x_8), unity_WorldToObject[2].xxxx, ((r1_xyz_1.xyzx + r1_xyz_1.xyzx)).xyzx);
                 float r0_x_9 = r0_xyzw_9.x;
                 float r0_y_5 = r0_xyzw_9.y;
                 float r0_z_4 = r0_xyzw_9.z;
@@ -277,19 +265,13 @@ Shader "ShurikenMagic/TransparentRim"
             ZWrite Off
             Blend SrcAlpha OneMinusSrcColor
             HLSLPROGRAM
-            cbuffer _UnityPerDrawCB : register(b0)
+            cbuffer _UnityPerDrawCB_b0
             {
                 float4x4 unity_ObjectToWorld;
                 float4x4 unity_WorldToObject;
-                float4 _RimColor;
-                float _RimPower;
-                float _AlphaPower;
-                float _InnerColorPower;
-                float _AllPower;
-                float4 _InnerColor;
                 float4 cb0_values[6];
             };
-            cbuffer _UnityPerFrameCB : register(b1)
+            cbuffer _UnityPerFrameCB_b1
             {
                 float3 _WorldSpaceCameraPos;
                 float4x4 unity_MatrixVP;
@@ -366,13 +348,13 @@ Shader "ShurikenMagic/TransparentRim"
                 float4 r0_xyzw_7 = exp2(float4(r0_x_6, r0_y_3, r0_x_6, r0_x_6));
                 float r0_x_7 = r0_xyzw_7.x;
                 float r0_y_4 = r0_xyzw_7.y;
-                float4 r0_xyzw_8 = (r0_x_7.xxxx * _RimColor.xxyz);
+                float4 r0_xyzw_8 = (r0_x_7.xxxx * unity_WorldToObject[0].xxyz);
                 float r0_x_8 = r0_xyzw_8.x;
                 float r0_z_3 = r0_xyzw_8.z;
                 float r0_w_3 = r0_xyzw_8.w;
-                o.sv_Target0.w = (r0_y_4 * _AllPower);
-                float3 r1_xyz_1 = ((_InnerColorPower.xxxx * _InnerColor.xyzx)).xyz;
-                float4 r0_xyzw_9 = mad(float4(r0_x_8, r0_z_3, r0_w_3, r0_x_8), _AllPower.xxxx, ((r1_xyz_1.xyzx + r1_xyz_1.xyzx)).xyzx);
+                o.sv_Target0.w = (r0_y_4 * unity_WorldToObject[2]);
+                float3 r1_xyz_1 = ((unity_WorldToObject[1].xxxx * unity_WorldToObject[3].xyzx)).xyz;
+                float4 r0_xyzw_9 = mad(float4(r0_x_8, r0_z_3, r0_w_3, r0_x_8), unity_WorldToObject[2].xxxx, ((r1_xyz_1.xyzx + r1_xyz_1.xyzx)).xyzx);
                 float r0_x_9 = r0_xyzw_9.x;
                 float r0_y_5 = r0_xyzw_9.y;
                 float r0_z_4 = r0_xyzw_9.z;
@@ -394,19 +376,13 @@ Shader "ShurikenMagic/TransparentRim"
             ZWrite Off
             Blend SrcAlpha OneMinusSrcColor
             HLSLPROGRAM
-            cbuffer _UnityPerDrawCB : register(b0)
+            cbuffer _UnityPerDrawCB_b0
             {
                 float4x4 unity_ObjectToWorld;
                 float4x4 unity_WorldToObject;
-                float4 _RimColor;
-                float _RimPower;
-                float _AlphaPower;
-                float _InnerColorPower;
-                float _AllPower;
-                float4 _InnerColor;
                 float4 cb0_values[46];
             };
-            cbuffer _UnityPerFrameCB : register(b1)
+            cbuffer _UnityPerFrameCB_b1
             {
                 float3 _WorldSpaceCameraPos;
                 float4x4 unity_MatrixVP;
@@ -489,13 +465,13 @@ Shader "ShurikenMagic/TransparentRim"
                 float4 r0_xyzw_7 = exp2(float4(r0_x_6, r0_y_3, r0_x_6, r0_x_6));
                 float r0_x_7 = r0_xyzw_7.x;
                 float r0_y_4 = r0_xyzw_7.y;
-                float4 r0_xyzw_8 = (r0_x_7.xxxx * _RimColor.xxyz);
+                float4 r0_xyzw_8 = (r0_x_7.xxxx * unity_WorldToObject[0].xxyz);
                 float r0_x_8 = r0_xyzw_8.x;
                 float r0_z_3 = r0_xyzw_8.z;
                 float r0_w_3 = r0_xyzw_8.w;
-                o.sv_Target0.w = (r0_y_4 * _AllPower);
-                float3 r1_xyz_1 = ((_InnerColorPower.xxxx * _InnerColor.xyzx)).xyz;
-                o.sv_Target0.xyz = (mad(float4(r0_x_8, r0_z_3, r0_w_3, r0_x_8), _AllPower.xxxx, ((r1_xyz_1.xyzx + r1_xyz_1.xyzx)).xyzx)).xyz;
+                o.sv_Target0.w = (r0_y_4 * unity_WorldToObject[2]);
+                float3 r1_xyz_1 = ((unity_WorldToObject[1].xxxx * unity_WorldToObject[3].xyzx)).xyz;
+                o.sv_Target0.xyz = (mad(float4(r0_x_8, r0_z_3, r0_w_3, r0_x_8), unity_WorldToObject[2].xxxx, ((r1_xyz_1.xyzx + r1_xyz_1.xyzx)).xyzx)).xyz;
                 return o;
             }
             ENDHLSL
@@ -508,19 +484,13 @@ Shader "ShurikenMagic/TransparentRim"
             ZWrite Off
             Blend SrcAlpha One
             HLSLPROGRAM
-            cbuffer _UnityPerDrawCB : register(b0)
+            cbuffer _UnityPerDrawCB_b0
             {
                 float4x4 unity_ObjectToWorld;
                 float4x4 unity_WorldToObject;
-                float4 _RimColor;
-                float _RimPower;
-                float _AlphaPower;
-                float _InnerColorPower;
-                float _AllPower;
-                float4 _InnerColor;
                 float4 cb0_values[11];
             };
-            cbuffer _UnityPerFrameCB : register(b1)
+            cbuffer _UnityPerFrameCB_b1
             {
                 float3 _WorldSpaceCameraPos;
                 float4x4 unity_MatrixVP;
@@ -598,19 +568,13 @@ Shader "ShurikenMagic/TransparentRim"
             ZWrite Off
             Blend SrcAlpha One
             HLSLPROGRAM
-            cbuffer _UnityPerDrawCB : register(b0)
+            cbuffer _UnityPerDrawCB_b0
             {
                 float4x4 unity_ObjectToWorld;
                 float4x4 unity_WorldToObject;
-                float4 _RimColor;
-                float _RimPower;
-                float _AlphaPower;
-                float _InnerColorPower;
-                float _AllPower;
-                float4 _InnerColor;
                 float4 cb0_values[11];
             };
-            cbuffer _UnityPerFrameCB : register(b1)
+            cbuffer _UnityPerFrameCB_b1
             {
                 float3 _WorldSpaceCameraPos;
                 float4x4 unity_MatrixVP;
@@ -705,19 +669,13 @@ Shader "ShurikenMagic/TransparentRim"
             ZWrite Off
             Blend SrcAlpha One
             HLSLPROGRAM
-            cbuffer _UnityPerDrawCB : register(b0)
+            cbuffer _UnityPerDrawCB_b0
             {
                 float4x4 unity_ObjectToWorld;
                 float4x4 unity_WorldToObject;
-                float4 _RimColor;
-                float _RimPower;
-                float _AlphaPower;
-                float _InnerColorPower;
-                float _AllPower;
-                float4 _InnerColor;
                 float4 cb0_values[11];
             };
-            cbuffer _UnityPerFrameCB : register(b1)
+            cbuffer _UnityPerFrameCB_b1
             {
                 float3 _WorldSpaceCameraPos;
                 float4x4 unity_MatrixVP;
@@ -812,19 +770,13 @@ Shader "ShurikenMagic/TransparentRim"
             ZWrite Off
             Blend SrcAlpha One
             HLSLPROGRAM
-            cbuffer _UnityPerDrawCB : register(b0)
+            cbuffer _UnityPerDrawCB_b0
             {
                 float4x4 unity_ObjectToWorld;
                 float4x4 unity_WorldToObject;
-                float4 _RimColor;
-                float _RimPower;
-                float _AlphaPower;
-                float _InnerColorPower;
-                float _AllPower;
-                float4 _InnerColor;
                 float4 cb0_values[11];
             };
-            cbuffer _UnityPerFrameCB : register(b1)
+            cbuffer _UnityPerFrameCB_b1
             {
                 float3 _WorldSpaceCameraPos;
                 float4x4 unity_MatrixVP;
@@ -924,19 +876,13 @@ Shader "ShurikenMagic/TransparentRim"
             ZWrite Off
             Blend SrcAlpha One
             HLSLPROGRAM
-            cbuffer _UnityPerDrawCB : register(b0)
+            cbuffer _UnityPerDrawCB_b0
             {
                 float4x4 unity_ObjectToWorld;
                 float4x4 unity_WorldToObject;
-                float4 _RimColor;
-                float _RimPower;
-                float _AlphaPower;
-                float _InnerColorPower;
-                float _AllPower;
-                float4 _InnerColor;
                 float4 cb0_values[11];
             };
-            cbuffer _UnityPerFrameCB : register(b1)
+            cbuffer _UnityPerFrameCB_b1
             {
                 float3 _WorldSpaceCameraPos;
                 float4x4 unity_MatrixVP;
@@ -1014,19 +960,13 @@ Shader "ShurikenMagic/TransparentRim"
             ZWrite Off
             Blend SrcAlpha One
             HLSLPROGRAM
-            cbuffer _UnityPerDrawCB : register(b0)
+            cbuffer _UnityPerDrawCB_b0
             {
                 float4x4 unity_ObjectToWorld;
                 float4x4 unity_WorldToObject;
-                float4 _RimColor;
-                float _RimPower;
-                float _AlphaPower;
-                float _InnerColorPower;
-                float _AllPower;
-                float4 _InnerColor;
                 float4 cb0_values[11];
             };
-            cbuffer _UnityPerFrameCB : register(b1)
+            cbuffer _UnityPerFrameCB_b1
             {
                 float3 _WorldSpaceCameraPos;
                 float4x4 unity_MatrixVP;
@@ -1104,19 +1044,13 @@ Shader "ShurikenMagic/TransparentRim"
             ZWrite Off
             Blend SrcAlpha One
             HLSLPROGRAM
-            cbuffer _UnityPerDrawCB : register(b0)
+            cbuffer _UnityPerDrawCB_b0
             {
                 float4x4 unity_ObjectToWorld;
                 float4x4 unity_WorldToObject;
-                float4 _RimColor;
-                float _RimPower;
-                float _AlphaPower;
-                float _InnerColorPower;
-                float _AllPower;
-                float4 _InnerColor;
                 float4 cb0_values[11];
             };
-            cbuffer _UnityPerFrameCB : register(b1)
+            cbuffer _UnityPerFrameCB_b1
             {
                 float3 _WorldSpaceCameraPos;
                 float4x4 unity_MatrixVP;

@@ -21,19 +21,17 @@ Shader "Custom/Horizontal Skybox"
             ZTest LEqual
             ZWrite Off
             HLSLPROGRAM
-            cbuffer _UnityPerDrawCB : register(b0)
+            cbuffer _UnityPerDrawCB_b0
             {
-                float4x4 unity_ObjectToWorld;
-                float4 _Color1;
-                float4 _Color2;
-                float4 _Color3;
-                float _Intensity;
-                float _Exponent1;
-                float _Exponent2;
+                float4x4 unity_ObjectToWorld : packoffset(c0);
+                float4 _Color3 : packoffset(c4);
+                float _Intensity : packoffset(c5.x);
+                float _Exponent1 : packoffset(c5.y);
+                float _Exponent2 : packoffset(c5.z);
             };
-            cbuffer _UnityPerFrameCB : register(b1)
+            cbuffer _UnityPerFrameCB_b1
             {
-                float4x4 unity_MatrixVP;
+                float4x4 unity_MatrixVP : packoffset(c17);
             };
             struct program1Input
             {
@@ -85,7 +83,7 @@ Shader "Custom/Horizontal Skybox"
                 float r0_y_6 = r0_xyzw_8.y;
                 float r0_z_1 = (-r0_y_6 + 1);
                 float r0_z_2 = (-r0_x_8 + r0_z_1);
-                float4 r0_xyzw_9 = mad(_Color3, r0_x_8.xxxx, mad(_Color1, r0_y_6.xxxx, (r0_z_2.xxxx * _Color2)));
+                float4 r0_xyzw_9 = mad(_Color3, r0_x_8.xxxx, mad(unity_ObjectToWorld[2], r0_y_6.xxxx, (r0_z_2.xxxx * unity_ObjectToWorld[3])));
                 o.sv_Target0.xyzw = (r0_xyzw_9 * _Intensity.xxxx);
                 return o;
             }

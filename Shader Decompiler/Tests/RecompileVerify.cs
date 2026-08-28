@@ -410,6 +410,8 @@ public static class RecompileVerify
     }
 
     // --- d3dcompiler interop (see StripSurvivors for the blob reading) ---
+    internal static byte[] CompileHlsl(string hlsl, string entry, string profile) => Compile(hlsl, entry, profile);
+
     private static byte[] Compile(string hlsl, string entry, string profile)
     {
         byte[] src = Encoding.UTF8.GetBytes(hlsl);

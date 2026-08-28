@@ -26,6 +26,19 @@ python Shader Decompiler/Tests/test_picavoxel_shaders.py
 ```
 Tests 4 PicaVoxel shaders end-to-end (Stage 0 + Stage 1+). Requires the C# binary to be built first (`dotnet build`).
 
+### Faithfulness tests (C# + Python)
+```bash
+# Single shader folder:
+dotnet run --project "Shader Decompiler.csproj" -- --faithfulness-test ../Output/HOLO_Holo
+
+# All shaders in Output/:
+python Shader Decompiler/Tests/test_faithfulness.py --parser "Shader Decompiler/bin/Debug/net10.0/Shader Decompiler.exe"
+
+# Filter to specific shaders:
+python Shader Decompiler/Tests/test_faithfulness.py --filter PicaVoxel
+```
+Decompiles the blob, recompiles every HLSLPROGRAM block with d3dcompiler, compares input/output signatures against the shipped subprograms, and checks metadata fidelity (properties, fallback, cbuffer bindings). Reports PASS/FAIL per shader. Requires Windows + d3dcompiler_47.dll.
+
 ### Verification/analysis modes (C# CLI flags, run after build)
 - `--run-spec-tests` — offline spec vectors (no D3D needed)
 - `--verify-signatures [dir]` — ISGN vs d3dcompiler cross-check (Windows)

@@ -14,17 +14,15 @@ Shader "Hidden/LensFlareCreate"
             ZWrite Off
             Blend One One
             HLSLPROGRAM
-            cbuffer _UnityPerDrawCB : register(b0)
+            cbuffer _UnityPerDrawCB_b0
             {
-                float4x4 unity_ObjectToWorld;
-                float4 colorA;
-                float4 colorB;
-                float4 colorC;
-                float4 colorD;
+                float4x4 unity_ObjectToWorld : packoffset(c0);
+                float4 colorC : packoffset(c4);
+                float4 colorD : packoffset(c5);
             };
-            cbuffer _UnityPerFrameCB : register(b1)
+            cbuffer _UnityPerFrameCB_b1
             {
-                float4x4 unity_MatrixVP;
+                float4x4 unity_MatrixVP : packoffset(c17);
             };
             SamplerState sampler_MainTex;
             Texture2D _MainTex;
@@ -76,7 +74,7 @@ Shader "Hidden/LensFlareCreate"
                 float4 r1_xyzw_1 = _MainTex.Sample(sampler_MainTex, (i.texcoord0.xyxx).xy);
                 float4 r1_xyzw_2 = _MainTex.Sample(sampler_MainTex, (i.texcoord2.xyxx).xy);
                 float4 r1_xyzw_3 = _MainTex.Sample(sampler_MainTex, (i.texcoord3.xyxx).xy);
-                o.sv_Target0.xyzw = mad(r1_xyzw_3, colorD, mad(r1_xyzw_2, colorC, mad(r1_xyzw_1, colorA, (r0_xyzw_1 * colorB))));
+                o.sv_Target0.xyzw = mad(r1_xyzw_3, colorD, mad(r1_xyzw_2, colorC, mad(r1_xyzw_1, unity_ObjectToWorld[2], (r0_xyzw_1 * unity_ObjectToWorld[3]))));
                 return o;
             }
             ENDHLSL

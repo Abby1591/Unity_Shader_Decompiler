@@ -21,22 +21,21 @@ Shader "Custom/Hologram_Flicker"
             ZWrite Off
             Blend SrcAlpha OneMinusSrcColor
             HLSLPROGRAM
-            cbuffer _Globals : register(b0)
+            cbuffer _GlobalsCB_b0
             {
-                float4 _MainTex_ST;
-                float _RotationSpeed;
-                float _ReverseSpeed;
-                float _GlitchAmount;
-                float _FlickerAmount;
+                float4 _MainTex_ST : packoffset(c2);
+                float _RotationSpeed : packoffset(c3.x);
+                float _ReverseSpeed : packoffset(c3.y);
+                float _GlitchAmount : packoffset(c3.z);
+                float _FlickerAmount : packoffset(c3.w);
             };
-            cbuffer _UnityPerDrawCB : register(b1)
+            cbuffer _UnityPerDrawCB_b1
             {
-                float4x4 unity_ObjectToWorld;
-                float4 _Time;
+                float4x4 unity_ObjectToWorld : packoffset(c0);
             };
-            cbuffer _UnityPerFrameCB : register(b2)
+            cbuffer _UnityPerFrameCB_b2
             {
-                float4x4 unity_MatrixVP;
+                float4x4 unity_MatrixVP : packoffset(c17);
             };
             SamplerState sampler_MainTex;
             SamplerState sampler_SecondTex;
@@ -80,15 +79,15 @@ Shader "Custom/Hologram_Flicker"
             program3Output frag(program3Input i)
             {
                 program3Output o = (program3Output)0;
-                float r0_x_8 = ((min(frac((sin(((i.texcoord0.x * _Time.x) * 12.9898)) * 43758.547)), _GlitchAmount) + _GlitchAmount) + i.texcoord0.x);
-                float r0_y_1 = mad(_Time.x, _RotationSpeed, r0_x_8);
-                float r0_x_9 = mad(-_Time.x, _ReverseSpeed, r0_x_8);
+                float r0_x_8 = ((min(frac((sin(((i.texcoord0.x * unity_ObjectToWorld[0].x) * 12.9898)) * 43758.547)), _GlitchAmount) + _GlitchAmount) + i.texcoord0.x);
+                float r0_y_1 = mad(unity_ObjectToWorld[0].x, _RotationSpeed, r0_x_8);
+                float r0_x_9 = mad(-unity_ObjectToWorld[0].x, _ReverseSpeed, r0_x_8);
                 float2 r1_xz_1 = (frac(float4(r0_y_1, r0_y_1, r0_x_9, r0_y_1))).xz;
                 float2 TEXCOORD0_yw_1 = (i.texcoord0.yyyy).yw;
                 float4 r0_xyzw_10 = _MainTex.Sample(sampler_MainTex, (float4(r1_xz_1.x, TEXCOORD0_yw_1.x, r1_xz_1.x, r1_xz_1.x)).xy);
                 float4 r1_xyzw_2 = _SecondTex.Sample(sampler_SecondTex, (float4(r1_xz_1.y, TEXCOORD0_yw_1.y, r1_xz_1.y, r1_xz_1.y)).xy);
                 float4 r0_xyzw_11 = (r0_xyzw_10 + r1_xyzw_2);
-                o.sv_Target0.w = saturate((r0_xyzw_11.w + min(frac((sin(_Time.x) * 43758.547)), _FlickerAmount)));
+                o.sv_Target0.w = saturate((r0_xyzw_11.w + min(frac((sin(unity_ObjectToWorld[0].x) * 43758.547)), _FlickerAmount)));
                 o.sv_Target0.xyz = (saturate(r0_xyzw_11.xyzx)).xyz;
                 return o;
             }

@@ -14,19 +14,19 @@ Shader "Hidden/NFAA"
             ZTest Always
             ZWrite Off
             HLSLPROGRAM
-            cbuffer _Globals : register(b0)
+            cbuffer _GlobalsCB_b0
             {
-                float4 _MainTex_TexelSize;
-                float _OffsetScale;
-                float _BlurRadius;
+                float4 _MainTex_TexelSize : packoffset(c2);
+                float _OffsetScale : packoffset(c3.x);
+                float _BlurRadius : packoffset(c3.y);
             };
-            cbuffer _UnityPerDrawCB : register(b1)
+            cbuffer _UnityPerDrawCB_b1
             {
-                float4x4 unity_ObjectToWorld;
+                float4x4 unity_ObjectToWorld : packoffset(c0);
             };
-            cbuffer _UnityPerFrameCB : register(b2)
+            cbuffer _UnityPerFrameCB_b2
             {
-                float4x4 unity_MatrixVP;
+                float4x4 unity_MatrixVP : packoffset(c17);
             };
             SamplerState sampler_MainTex;
             Texture2D _MainTex;

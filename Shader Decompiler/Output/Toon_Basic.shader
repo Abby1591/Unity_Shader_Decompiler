@@ -17,19 +17,19 @@ Shader "Toon/Basic"
             ZTest LEqual
             ZWrite On
             HLSLPROGRAM
-            cbuffer _Globals : register(b0)
+            cbuffer _GlobalsCB_b0
             {
-                float4 _MainTex_ST;
-                float4 _Color;
+                float4 _MainTex_ST : packoffset(c2);
+                float4 _Color : packoffset(c3);
             };
-            cbuffer _UnityPerDrawCB : register(b1)
+            cbuffer _UnityPerDrawCB_b1
             {
-                float4x4 unity_ObjectToWorld;
+                float4x4 unity_ObjectToWorld : packoffset(c0);
             };
-            cbuffer _UnityPerFrameCB : register(b2)
+            cbuffer _UnityPerFrameCB_b2
             {
-                float4x4 unity_MatrixV;
-                float4x4 unity_MatrixVP;
+                float4x4 unity_MatrixV : packoffset(c9);
+                float4x4 unity_MatrixVP : packoffset(c17);
             };
             SamplerState sampler_MainTex;
             SamplerState sampler_ToonShade;
@@ -94,17 +94,17 @@ Shader "Toon/Basic"
             ZTest LEqual
             ZWrite On
             HLSLPROGRAM
-            cbuffer _Globals : register(b0)
+            cbuffer _GlobalsCB_b0
             {
-                float4 _MainTex_ST;
-                float4 _Color;
+                float4 _MainTex_ST : packoffset(c2);
+                float4 _Color : packoffset(c3);
             };
-            cbuffer _UnityPerDrawCB : register(b1)
+            cbuffer _UnityPerDrawCB_b1
             {
                 float4x4 unity_ObjectToWorld;
                 float4 cb1_values[6];
             };
-            cbuffer _UnityPerFrameCB : register(b2)
+            cbuffer _UnityPerFrameCB_b2
             {
                 float4x4 unity_MatrixV;
                 float4x4 unity_MatrixVP;

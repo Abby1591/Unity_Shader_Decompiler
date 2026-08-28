@@ -21,27 +21,24 @@ Shader "Custom/Armor_Shader_UNLIT"
             ZWrite Off
             Blend SrcAlpha OneMinusSrcColor
             HLSLPROGRAM
-            cbuffer _UnityPerCameraCB : register(b0)
+            cbuffer _UnityPerCameraCB_b0
             {
-                float4 _Time;
-                float4 _ArmorColor;
-                float3 _WorldSpaceCameraPos;
-                float4 _ProjectionParams;
-                float4 _EmissionColor;
-                float _EmissionScale;
-                float _AnimationSpeed;
-                float _AnimationAmount;
-                float _RippleSize;
+                float4 _ArmorColor : packoffset(c3);
+                float4 _EmissionColor : packoffset(c5);
+                float _EmissionScale : packoffset(c6.x);
+                float _AnimationSpeed : packoffset(c6.y);
+                float _AnimationAmount : packoffset(c6.z);
+                float _RippleSize : packoffset(c6.w);
             };
-            cbuffer _UnityPerDrawCB : register(b1)
+            cbuffer _UnityPerDrawCB_b1
             {
-                float4x4 unity_ObjectToWorld;
-                float4x4 unity_WorldToObject;
+                float4x4 unity_ObjectToWorld : packoffset(c0);
+                float4x4 unity_WorldToObject : packoffset(c4);
             };
-            cbuffer _UnityPerFrameCB : register(b2)
+            cbuffer _UnityPerFrameCB_b2
             {
-                float4 glstate_lightmodel_ambient;
-                float4x4 unity_MatrixVP;
+                float4 glstate_lightmodel_ambient : packoffset(c0);
+                float4x4 unity_MatrixVP : packoffset(c17);
             };
             struct program1Input
             {
@@ -86,7 +83,7 @@ Shader "Custom/Armor_Shader_UNLIT"
                 float r1_w_2 = dot(float4(worldNormal_x_2, worldNormal_y_2, worldNormal_z_2, worldNormal_x_2), float4(worldNormal_x_2, worldNormal_y_2, worldNormal_z_2, worldNormal_x_2));
                 float r1_w_3 = rsqrt(r1_w_2);
                 o.texcoord1.xyz = ((r1_w_3.xxxx * float4(worldNormal_x_2, worldNormal_y_2, worldNormal_z_2, worldNormal_x_2))).xyz;
-                float r0_y_8 = (clipPos_xyzw_7.y * _ProjectionParams.x);
+                float r0_y_8 = (clipPos_xyzw_7.y * _EmissionColor.x);
                 float4 r1_xyzw_3 = (float4(clipPos_xyzw_7.x, clipPos_xyzw_7.x, clipPos_xyzw_7.w, r0_y_8) * float4(0.5, 0, 0.5, 0.5));
                 float r1_x_3 = r1_xyzw_3.x;
                 float r1_z_3 = r1_xyzw_3.z;
@@ -105,7 +102,7 @@ Shader "Custom/Armor_Shader_UNLIT"
                 float r0_z_3 = sqrt(r0_z_2);
                 float r0_z_4 = sin(r0_z_3);
                 float4 r1_xyzw_1 = (_RippleSize.xxxx + float4(53, 37, 61, 47));
-                float3 r2_xyz_1 = ((_Time.xxxx * float4(345, 300, 390, 0))).xyz;
+                float3 r2_xyz_1 = ((unity_ObjectToWorld[0].xxxx * float4(345, 300, 390, 0))).xyz;
                 float r0_z_5 = mad(-r0_z_4, r1_xyzw_1.z, r2_xyz_1.y);
                 float r0_z_6 = sin(r0_z_5);
                 float r0_z_7 = (r0_z_6 * 0.3);
@@ -133,7 +130,7 @@ Shader "Custom/Armor_Shader_UNLIT"
                 float r0_z_9 = (_RippleSize + 83);
                 float r0_x_6 = saturate((mad(sin(mad(sin(r0_xy_1.y), r0_z_9, r2_xyz_1.z)), 0.9, r0_y_8) * 10));
                 float r0_y_9 = mad(r0_x_6, -2, 3);
-                float4 viewDir_xyzw_10 = (-i.texcoord0.xxyz + _WorldSpaceCameraPos.xxyz);
+                float4 viewDir_xyzw_10 = (-i.texcoord0.xxyz + unity_WorldToObject[0].xxyz);
                 float viewDir_y_10 = viewDir_xyzw_10.y;
                 float viewDir_z_10 = viewDir_xyzw_10.z;
                 float viewDir_w_12 = viewDir_xyzw_10.w;
@@ -161,7 +158,7 @@ Shader "Custom/Armor_Shader_UNLIT"
                 float r0_w_15 = r0_xyzw_18.w;
                 o.sv_Target0.xyz = ((float4(r0_y_18, r0_z_14, r0_w_15, r0_y_18) * _EmissionScale.xxxx)).xyz;
                 float r0_y_19 = (float)(_AnimationSpeed);
-                float r0_y_20 = (r0_y_19 * _Time.x);
+                float r0_y_20 = (r0_y_19 * unity_ObjectToWorld[0].x);
                 float r0_y_21 = sin(r0_y_20);
                 float r0_y_22 = (r0_y_21 * _AnimationAmount);
                 float r0_y_23 = saturate((-abs(r0_y_22) + _ArmorColor.w));
@@ -183,22 +180,20 @@ Shader "Custom/Armor_Shader_UNLIT"
             ZWrite Off
             Blend SrcAlpha OneMinusSrcColor
             HLSLPROGRAM
-            cbuffer _UnityPerDrawCB : register(b0)
+            cbuffer _UnityPerDrawCB_b0
             {
-                float4x4 unity_ObjectToWorld;
-                float4 _ArmorColor;
-                float4x4 unity_WorldToObject;
-                float4 _EmissionColor;
-                float _EmissionScale;
-                float _AnimationSpeed;
-                float _AnimationAmount;
+                float4x4 unity_ObjectToWorld : packoffset(c0);
+                float4x4 unity_WorldToObject : packoffset(c4);
             };
-            cbuffer _UnityPerFrameCB : register(b1)
+            cbuffer _UnityPerFrameCB_b1
             {
-                float4 _Time;
-                float4 glstate_lightmodel_ambient;
-                float3 _WorldSpaceCameraPos;
-                float4x4 unity_MatrixVP;
+                float4 _Time : packoffset(c0);
+                float3 _WorldSpaceCameraPos : packoffset(c4);
+                float4x4 unity_MatrixVP : packoffset(c17);
+            };
+            cbuffer _UnityPerFrameCB_b2
+            {
+                float4 glstate_lightmodel_ambient : packoffset(c0);
             };
             struct program5Input
             {
@@ -245,21 +240,21 @@ Shader "Custom/Armor_Shader_UNLIT"
                 program6Output o = (program6Output)0;
                 float3 viewDir_xyz_1 = ((-i.texcoord0.xyzx + _WorldSpaceCameraPos.xyzx)).xyz;
                 float3 unitViewDir_xyz_2 = normalize(viewDir_xyz_1);
-                float r0_y_3 = mad(-_EmissionScale, 0.3, 3);
+                float r0_y_3 = mad(-unity_WorldToObject[2], 0.3, 3);
                 float4 r0_xyzw_4 = (glstate_lightmodel_ambient.xxyz + glstate_lightmodel_ambient.xxyz);
                 float r0_y_4 = r0_xyzw_4.y;
                 float r0_z_3 = r0_xyzw_4.z;
                 float r0_w_3 = r0_xyzw_4.w;
-                                float4 r0_xyzw_8 = mad((pow((saturate(dot(unitViewDir_xyz_2.xyzx, i.texcoord1.xyzx)) + 1), r0_y_3)).xxxx, _EmissionColor.xyzx, float4(r0_y_4, r0_z_3, r0_w_3, r0_y_4));
+                                float4 r0_xyzw_8 = mad((pow((saturate(dot(unitViewDir_xyz_2.xyzx, i.texcoord1.xyzx)) + 1), r0_y_3)).xxxx, unity_WorldToObject[1].xyzx, float4(r0_y_4, r0_z_3, r0_w_3, r0_y_4));
                 float r0_x_8 = r0_xyzw_8.x;
                 float r0_y_5 = r0_xyzw_8.y;
                 float r0_z_4 = r0_xyzw_8.z;
-                float4 r0_xyzw_9 = (float4(r0_x_8, r0_y_5, r0_z_4, r0_x_8) * _ArmorColor.xyzx);
+                float4 r0_xyzw_9 = (float4(r0_x_8, r0_y_5, r0_z_4, r0_x_8) * unity_ObjectToWorld[3].xyzx);
                 float r0_x_9 = r0_xyzw_9.x;
                 float r0_y_6 = r0_xyzw_9.y;
                 float r0_z_5 = r0_xyzw_9.z;
-                o.sv_Target0.xyz = ((float4(r0_x_9, r0_y_6, r0_z_5, r0_x_9) * _EmissionScale.xxxx)).xyz;
-                o.sv_Target0.w = saturate(((sin(((float)(_AnimationSpeed) * _Time.x)) * _AnimationAmount) + _ArmorColor.w));
+                o.sv_Target0.xyz = ((float4(r0_x_9, r0_y_6, r0_z_5, r0_x_9) * unity_WorldToObject[2].xxxx)).xyz;
+                o.sv_Target0.w = saturate(((sin(((float)(unity_WorldToObject[2]) * _Time.x)) * unity_WorldToObject[2]) + unity_ObjectToWorld[3].w));
                 return o;
             }
             ENDHLSL
@@ -277,18 +272,17 @@ Shader "Custom/Armor_Shader_UNLIT"
             ZWrite Off
             Blend SrcAlpha OneMinusSrcColor
             HLSLPROGRAM
-            cbuffer _UnityPerDrawCB : register(b0)
+            cbuffer _UnityPerDrawCB_b0
             {
-                float4x4 unity_ObjectToWorld;
-                float4 _ArmorColor;
-                float _ArmorAlpha;
-                float4 _EmissionColor;
-                float _EmissionScale;
+                float4x4 unity_ObjectToWorld : packoffset(c0);
+                float _ArmorAlpha : packoffset(c4.x);
+                float4 _EmissionColor : packoffset(c5);
+                float _EmissionScale : packoffset(c6.x);
             };
-            cbuffer _UnityPerFrameCB : register(b1)
+            cbuffer _UnityPerFrameCB_b1
             {
-                float4 glstate_lightmodel_ambient;
-                float4x4 unity_MatrixVP;
+                float4 glstate_lightmodel_ambient : packoffset(c0);
+                float4x4 unity_MatrixVP : packoffset(c17);
             };
             struct program7Input
             {
@@ -328,7 +322,7 @@ Shader "Custom/Armor_Shader_UNLIT"
             program9Output frag(program9Input i)
             {
                 program9Output o = (program9Output)0;
-                o.sv_Target0.xyz = (((((mad(glstate_lightmodel_ambient.xyzx, float4(2, 2, 2, 0), _EmissionColor.xyzx)).xyzx * _ArmorColor.xyzx)).xyzx * _EmissionScale.xxxx)).xyz;
+                o.sv_Target0.xyz = (((((mad(glstate_lightmodel_ambient.xyzx, float4(2, 2, 2, 0), _EmissionColor.xyzx)).xyzx * unity_ObjectToWorld[3].xyzx)).xyzx * _EmissionScale.xxxx)).xyz;
                 o.sv_Target0.w = _ArmorAlpha;
                 return o;
             }
