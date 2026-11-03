@@ -1,0 +1,172 @@
+name: Nightly Build
+
+on:
+  schedule:
+    # 03:00 UTC every day. If master received a commit in the previous
+    # 24 hours, build and publish nightly artifacts.
+    - cron: "0 3 * * *"
+  workflow_dispatch:
+    inputs:
+      force:
+        description: Build even if no commits landed in the last 24 hours
+        required: false
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+concurrency:
+  group: nightly
+  cancel-in-progress: false
+
+env:
+  PROJECT: Shader Decompiler/Shader Decompiler.csproj
+  DOTNET_VERSION: 10.0.x
+
+jobs:
+  check:
+    name: 🔍 Check for Recent Commits
+    runs-on: ubuntu-latest
+    outputs:
+      should_build: ${{ steps.check.outputs.should_build }}
+
+    steps:
+      - name: 📥 Checkout Repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: 🔍 Check the Last 24 Hours
+        id: check
+        shell: bash
+        run: |
+          if [ -n "$(git log --since='24 hours ago' --format='%H' -n 1)" ]; then
+            echo "should_build=true" >> "$GITHUB_OUTPUT"
+            echo "Commits in the last 24 hours:"
+            git log --since='24 hours ago' --format='- %h %s'
+          else
+            echo "should_build=false" >> "$GITHUB_OUTPUT"
+            echo "No commits in the last 24 hours; skipping the nightly build."
+          fi
+
+  build:
+    name: 🌙 ${{ matrix.os }}
+    needs: check
+    if: needs.check.outputs.should_build == 'true' || github.event.inputs.force == 'true'
+    runs-on: ${{ matrix.os }}
+
+    strategy:
+      fail-fast: false
+      matrix:
+        os:
+          - ubuntu-latest
+          - windows-latest
+          - macos-latest
+
+    env:
+      BUILD_DIR: Builds/${{ matrix.os }}
+
+    steps:
+      - name: 📥 Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: 🔧 Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: ${{ env.DOTNET_VERSION }}
+
+      - name: 📋 Environment Information
+        shell: bash
+        run: |
+          echo "::group::Repository Information"
+          echo "Repository : $GITHUB_REPOSITORY"
+          echo "Branch     : $GITHUB_REF_NAME"
+          echo "Commit     : $(git rev-parse --short HEAD)"
+          git --no-pager log -1 --pretty=format:"Author     : %an%nMessage    : %s%nDate       : %ad"
+          echo
+          echo "::endgroup::"
+
+          echo "::group::.NET SDK Information"
+          dotnet --info
+          echo
+          echo "Installed SDKs"
+          dotnet --list-sdks
+          echo "::endgroup::"
+
+      - name: 💾 Cache NuGet Packages
+        uses: actions/cache@v4
+        with:
+          path: ~/.nuget/packages
+          key: ${{ runner.os }}-nuget-${{ hashFiles('**/*.csproj') }}
+          restore-keys: |
+            ${{ runner.os }}-nuget-
+
+      - name: 📥 Restore Packages
+        shell: bash
+        run: dotnet restore "$PROJECT"
+
+      - name: 🚀 Publish
+        shell: bash
+        run: |
+          mkdir -p "$BUILD_DIR/Output" "$BUILD_DIR/Logs"
+
+          echo "::group::Publishing"
+          START=$(date +%s)
+
+          dotnet publish "$PROJECT" \
+            -c Release \
+            --no-restore \
+            -o "$BUILD_DIR/Output" \
+            -bl:"$BUILD_DIR/Logs/build.binlog" \
+            2>&1 | tee "$BUILD_DIR/Logs/build.log"
+
+          END=$(date +%s)
+
+          echo "::endgroup::"
+          echo "Build completed in $((END - START)) seconds."
+
+      - name: 🧪 Offline Spec Tests
+        shell: bash
+        run: |
+          echo "::group::Spec Tests"
+          dotnet "$BUILD_DIR/Output/Shader Decompiler.dll" --run-spec-tests \
+            2>&1 | tee "$BUILD_DIR/Logs/spec-tests.log"
+          echo "::endgroup::"
+
+      - name: 🗓️ Get Build Date
+        id: date
+        shell: bash
+        run: echo "value=$(date -u +%Y-%m-%d)" >> "$GITHUB_OUTPUT"
+
+      - name: 📂 Published Files
+        shell: bash
+        run: |
+          echo "::group::Published Files"
+          find "$BUILD_DIR/Output" -type f | sort
+          echo "::endgroup::"
+
+      - name: ✅ Build Summary
+        if: always()
+        shell: bash
+        run: |
+          {
+            echo "### 🌙 Nightly Build: ${{ matrix.os }}"
+            echo ""
+            echo "| Item | Value |"
+            echo "|------|-------|"
+            echo "| OS | $RUNNER_OS |"
+            echo "| .NET | $DOTNET_VERSION |"
+            echo "| Configuration | Release |"
+            echo "| Output Folder | \`$BUILD_DIR/Output\` |"
+            echo "| Logs | \`$BUILD_DIR/Logs\` |"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: 📤 Upload Nightly Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: UnityShaderDecompiler-nightly-${{ steps.date.outputs.value }}-${{ matrix.os }}
+          path: ${{ env.BUILD_DIR }}
+          if-no-files-found: error
+          compression-level: 9
+          retention-days: 30

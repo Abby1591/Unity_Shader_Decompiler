@@ -1,6 +1,7 @@
 # Unity Shader Decompiler
 
 [![CI](https://github.com/Abby1591/Unity_Shader_Decompiler/actions/workflows/ci-build-info.yml/badge.svg?branch=master)](https://github.com/Abby1591/Unity_Shader_Decompiler/actions/workflows/ci-build-info.yml)
+[![Nightly](https://github.com/Abby1591/Unity_Shader_Decompiler/actions/workflows/nightly.yml/badge.svg?branch=master)](https://github.com/Abby1591/Unity_Shader_Decompiler/actions/workflows/nightly.yml)
 [![.NET](https://img.shields.io/badge/.NET-10.0-512BD4?logo=dotnet&logoColor=white)](https://dotnet.microsoft.com/download/dotnet/10.0)
 [![Python](https://img.shields.io/badge/Python-3.10%2B-3776AB?logo=python&logoColor=white)](https://www.python.org/)
 [![Unity](https://img.shields.io/badge/Unity-2022.3%20D3D11-black?logo=unity&logoColor=white)](https://unity.com/)
@@ -65,6 +66,15 @@ program6Output frag(program6Input i)
 
 Thirty-nine complete examples are checked in under
 [`Shader Decompiler/Output/`](Shader%20Decompiler/Output).
+
+## Builds
+
+- **CI** runs on every push and pull request. It builds on Windows, Linux, and
+  macOS and runs the offline spec tests, but does not publish binaries.
+- **Nightly** runs at 03:00 UTC and publishes
+  `UnityShaderDecompiler-nightly-<date>-<os>` artifacts only when `master`
+  received a commit in the previous 24 hours. It can also be triggered manually
+  with the **force** option.
 
 ## Requirements
 
