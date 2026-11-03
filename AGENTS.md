@@ -52,7 +52,7 @@ Decompiles the blob, recompiles every HLSLPROGRAM block with d3dcompiler, compar
 - **Windows** with `d3dcompiler_47.dll` for D3D-backed modes (disasm, recompile, signatures, strip). Core pipeline is platform-neutral.
 
 ## Gotchas
-- The `.github/workflows/ci-build-info.yml` is outdated — references old `Parser.csproj` and `main` branch; actual project is `Shader Decompiler.csproj` on `master`.
+- CI (`.github/workflows/ci-build-info.yml`) builds `Shader Decompiler/Shader Decompiler.csproj` on `master` and runs `--run-spec-tests` on Windows, Linux, and macOS.
 - `AllowUnsafeBlocks` is enabled in the csproj (pinned-buffer D3D calls).
 - C# namespace is `Parser`, not `ShaderDecompiler`.
 - Folder names are sanitized on Windows (`/` `\` → `_`, trailing dots/spaces stripped).

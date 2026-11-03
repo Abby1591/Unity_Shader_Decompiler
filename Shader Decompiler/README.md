@@ -27,8 +27,9 @@ layout, all CLI flags, and current status. Highlights:
 
 Requires a .NET SDK targeting `net10.0`; `Vortice.D3DCompiler` (Windows) is
 needed for disassembly/recompilation. `AllowUnsafeBlocks` is enabled for the
-pinned-buffer D3D compiler calls. NuGet packages: `Unity` 5.11.10 (AssetStudio),
-`Vortice.D3DCompiler` 3.8.3.
+pinned-buffer D3D compiler calls. The only NuGet package is
+`Vortice.D3DCompiler` 3.8.3; the Unity shader-blob reader (`Unity/Blob/`) is
+vendored AssetStudio code.
 
 ```bash
 dotnet restore "Shader Decompiler.csproj"

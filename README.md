@@ -1,116 +1,242 @@
 # Unity Shader Decompiler
 
-Decompiles compiled Unity shaders — the LZ4-compressed `m_CompressedBlob` inside a serialized `Shader` asset — back into readable ShaderLab source. The input is the plain-text JSON that AssetStudio exports for a shader asset; the output is a `.shader` file with a reconstructed `Properties` block, subshader/pass structure, render state, and per-pass HLSL functions.
+[![CI](https://github.com/Abby1591/Unity_Shader_Decompiler/actions/workflows/ci-build-info.yml/badge.svg?branch=master)](https://github.com/Abby1591/Unity_Shader_Decompiler/actions/workflows/ci-build-info.yml)
+[![.NET](https://img.shields.io/badge/.NET-10.0-512BD4?logo=dotnet&logoColor=white)](https://dotnet.microsoft.com/download/dotnet/10.0)
+[![Python](https://img.shields.io/badge/Python-3.10%2B-3776AB?logo=python&logoColor=white)](https://www.python.org/)
+[![Unity](https://img.shields.io/badge/Unity-2022.3%20D3D11-black?logo=unity&logoColor=white)](https://unity.com/)
 
-The decompilation itself is a C# pipeline: it slices the DXBC container out of each shipped GPU program, decodes every SM4/SM5 instruction, builds a typed SSA IR, runs ~20 optimization and pattern-recognition passes, and finally renders an HLSL AST back to source text. Where a pass is recognized as Unity surface-shader boilerplate, it is rewritten into the canonical `#pragma surface` form.
+**Turn compiled Unity shaders back into readable ShaderLab and HLSL.**
 
+Unity ships shaders as LZ4-compressed blobs of stripped D3D11 DXBC bytecode.
+This project takes the JSON that [AssetStudio](https://github.com/Perfare/AssetStudio)
+exports for a `Shader` asset, recovers the serialized ShaderLab metadata, and
+decompiles every shipped GPU program through a typed SSA IR into per-pass HLSL.
+
+> Not affiliated with, sponsored by, or endorsed by Unity Technologies.
+
+## Features
+
+- **Complete ShaderLab output** — shader name, properties and defaults,
+  fallback, custom editor, tags, LOD, render state, subshaders, and passes.
+- **Readable HLSL** — cbuffers with `packoffset`, textures and samplers, input
+  and output structs, vertex/fragment entry points, expressions, control flow,
+  and intrinsics.
+- **A real compiler pipeline** — typed IR, CFG, dominance, SSA, ~20
+  optimization passes run to a fixed point, and matrix/vector/texture/loop
+  pattern recognition.
+- **Unity-aware reconstruction** — restores macros such as
+  `UnityObjectToClipPos`, reconstructs matrix multiplies, and rewrites lit
+  passes back to `#pragma surface` form when they match.
+- **Verified against the original bytecode** — emitted passes are recompiled
+  with `d3dcompiler` and their signatures are matched against the shipped
+  subprograms.
+- **Debuggable** — dump the IR after every phase and write per-subprogram
+  `.bin`, `.dxbc`, and disassembly artifacts.
+
+## Example
+
+`Toon/Basic`, decompiled from a stripped DXBC blob:
+
+```hlsl
+#pragma vertex vert
+program2Output vert(program2Input i)
+{
+    program2Output o = (program2Output)0;
+    #define UnityObjectToClipPos(v) mul(unity_MatrixVP, v)
+    #define UnityObjectToWorldPos(v) mul(unity_ObjectToWorld, float4(v, 1.0))
+    float4 worldPos_xyzw_4 = UnityObjectToWorldPos(i.position0.xyz);
+    o.sv_Position0.xyzw = UnityObjectToClipPos(worldPos_xyzw_4);
+    o.texcoord0.xy = (mad(i.texcoord0.xyxx, _MainTex_ST.xyxx, _MainTex_ST.zwzz)).xy;
+    ...
+}
+
+#pragma fragment frag
+program6Output frag(program6Input i)
+{
+    program6Output o = (program6Output)0;
+    float4 r0_xyzw_1 = _ToonShade.Sample(sampler_ToonShade, i.texcoord1.xyz);
+    float4 r1_xyzw_1 = _MainTex.Sample(sampler_MainTex, (i.texcoord0.xyxx).xy);
+    float4 r1_xyzw_2 = (r1_xyzw_1 * _Color);
+    o.sv_Target0.xyz = ((((r0_xyzw_1.xyzx + r0_xyzw_1.xyzx)).xyzx * r1_xyzw_2.xyzx)).xyz;
+    o.sv_Target0.w = r1_xyzw_2.w;
+    return o;
+}
 ```
-shaders_json/<Name>.json         AssetStudio JSON export of a Unity Shader asset
-        │
-        │  Stage 0 (Python: Extract.py + libs/)
-        ▼
-Output/<Name>/                   blob.bin + metadata.json + dummy.shader
-        │
-        │  Stage 1+ (C#: Shader Decompiler/)
-        ▼
-Shader Decompiler/Output/<Name>.shader
-```
+
+Thirty-nine complete examples are checked in under
+[`Shader Decompiler/Output/`](Shader%20Decompiler/Output).
 
 ## Requirements
 
-- **Python 3.10+** with the `lz4` package (`pip install lz4`) — for Stage 0.
-- **.NET SDK** targeting `net10.0` — for Stage 1+.
-- **Windows** with `d3dcompiler_47.dll` available — required for DXBC disassembly (`--disasm`), recompile verification (`--recompile-verify`), the signature cross-check (`--verify-signatures`), and the strip-survivor analysis (`--strip-survivors`). The DXBC parser and IR pipeline are platform-neutral; only the D3D-compiler-backed tools need the native library.
+- **[.NET 10 SDK](https://dotnet.microsoft.com/download/dotnet/10.0)** — build
+  and run the decompiler.
+- **Python 3.10+** with [`lz4`](https://pypi.org/project/lz4/) — Stage 0 only.
+- **Windows** with `d3dcompiler_47.dll` — verification modes only.
 
-NuGet packages (`Shader Decompiler/Shader Decompiler.csproj`):
+The core pipeline is platform-neutral. Only `--disasm`,
+`--recompile-verify`, `--recompile-verify-all`, `--verify-signatures`,
+`--strip-survivors`, and `--faithfulness-test` call into the native D3D
+compiler.
 
-| Package | Version | Purpose |
-| --- | --- | --- |
-| `Unity` | 5.11.10 | AssetStudio — Unity shader-blob reader (`ShaderProgram`, `ShaderSubProgram`) |
-| `Vortice.D3DCompiler` | 3.8.3 | D3D compiler P/Invoke — disassembly, recompilation, stripping |
+The only NuGet dependency is
+[`Vortice.D3DCompiler`](https://github.com/amerkoleci/Vortice.Windows) 3.8.3.
+The Unity shader-blob reader is vendored AssetStudio code in
+`Shader Decompiler/Unity/Blob/`.
 
-## Stage 0 — extract the blob from a JSON export (Python)
+## Getting started
 
 ```bash
+git clone https://github.com/Abby1591/Unity_Shader_Decompiler.git
+cd Unity_Shader_Decompiler
+
 pip install lz4
 python Extract.py shaders_json/HOLO_Holo.json
 ```
 
-This reads the export and writes three files into `Output/<Name>/`:
+`Extract.py` writes `Output/HOLO_Holo/`:
 
-| File | Source |
+| File | Contents |
 | --- | --- |
-| `blob.bin` | `m_CompressedBlob`, base64-decoded and LZ4-decompressed (`libs/blob.py` + `libs/lz4util.py`) |
-| `metadata.json` | flattened `m_ParsedForm`: name, properties with defaults, subshaders/passes, render state, per-pass cbuffer layouts (`libs/metadata.py`) |
-| `dummy.shader` | the matching plain-text reference export from `shaders_dummy/`, if one exists (`libs/dummy.py`) |
+| `blob.bin` | `m_CompressedBlob`, base64-decoded and LZ4-decompressed |
+| `metadata.json` | flattened `m_ParsedForm`: properties, subshaders, render state, cbuffer layouts |
+| `dummy.shader` | optional plain-text reference from `shaders_dummy/`, when a match exists |
 
-### Stage 0 flags
-
-| Flag | Default | Effect |
-| --- | --- | --- |
-| `json_path` (positional) | — | the AssetStudio JSON export to process |
-| `--dummy-dir` | `shaders_dummy` | where to look for the matching `.shader` reference |
-| `--out-dir` | `Output` | root output directory |
-| `--flat` | off | write `blob.bin`/`metadata.json`/`dummy.shader` directly into `--out-dir` with no per-shader subfolder |
-
-`Extract.py` prints the exact C# invocation to use next. Folder names are sanitized (`/` and `\` → `_`, trailing dots/spaces stripped) so they are safe on Windows.
-
-## Stage 1+ — decompile (C#)
+Then build and run the decompiler:
 
 ```bash
-cd "Shader Decompiler"
-dotnet restore "Shader Decompiler.csproj"
-dotnet build "Shader Decompiler.csproj" -c Release
-
-# Decompile a Stage 0 output folder
-dotnet run --project "Shader Decompiler.csproj" -- ../Output/HOLO_Holo
-
-# Or a bare blob.bin that sits next to a metadata.json
-dotnet run --project "Shader Decompiler.csproj" -- path/to/blob.bin
+dotnet build "Shader Decompiler/Shader Decompiler.csproj"
+dotnet run --project "Shader Decompiler/Shader Decompiler.csproj" -- Output/HOLO_Holo
 ```
 
-With no arguments it defaults to `../Output/HOLO_Holo`. The generated shader is written to the project-local `Shader Decompiler/Output/<Name>.shader`; `--out-root` redirects it. A summary is printed per subprogram (blob header, DXBC size, decoded instructions, post-optimization IR, SSA verification result, recognized loops, input/output signatures) followed by the pass-recovery report and the final writer stage.
+The result is written to `Shader Decompiler/Output/HOLO_Holo.shader`.
 
-### CLI flags
+## Usage
 
-| Flag | Effect |
+`Shader Decompiler` accepts a Stage 0 output folder or a `blob.bin` with a
+sibling `metadata.json`:
+
+```bash
+# Stage 0 output folder
+dotnet run --project "Shader Decompiler/Shader Decompiler.csproj" -- Output/HOLO_Holo
+
+# Bare blob.bin with metadata.json next to it
+dotnet run --project "Shader Decompiler/Shader Decompiler.csproj" -- path/to/blob.bin
+
+# Write output somewhere other than Shader Decompiler/Output/
+dotnet run --project "Shader Decompiler/Shader Decompiler.csproj" -- Output/HOLO_Holo --out-root ./decompiled
+```
+
+With no arguments, the decompiler defaults to `../Output/HOLO_Holo` relative to
+the project directory.
+
+### Common options
+
+| Option | Purpose |
 | --- | --- |
-| `--out-root <dir>` | write output `.shader` files (and any `--save-subprograms` artifacts) to `<dir>` instead of the project-local `Output/` |
-| `--dump-stages` | print a full IR snapshot after every pipeline phase, so passes can be diffed |
-| `--dump-keywords` | print each subprogram's global + local keyword sets |
-| `--save-subprograms` | also write per-subprogram debug artifacts: `program{i}.bin`, `program{i}.dxbc`, `program{i}.hlsl` |
-| `--no-fuse-temps` | disable temp-fusion in the pretty printer (keep every SSA copy as its own statement) |
-| `--no-surface-shaders` | disable surface-shader recognition; emit the raw reconstructed HLSLPROGRAM passes |
-| `--keep-passes` | when a pass *is* recognized as a surface shader, keep the verified compiled passes as comments (default: omit them so output matches the original line count) |
-| `--run-spec-tests` | run the parser spec-test vectors (§14 classifier + §15) and exit |
-| `--verify-signatures [dir]` | cross-check our ISGN parser against d3dcompiler's `GetInputSignatureBlob` over every shipped subprogram in `dir` (defaults to the repo `Output/`) |
-| `--strip-survivors` | compile synthetic shaders, `D3DStripShader(flags=7)` them, and record which DXBC chunks survive; also scans shipped bytecode |
-| `--recompile-verify [file]` | recompile the HLSLPROGRAM blocks of one decompiled `.shader` with d3dcompiler (`vs_5_0`/`ps_5_0`) and match their signatures against shipped bytecode |
-| `--recompile-verify-all [dir]` | the same verification aggregated over every decompiled `.shader` in `dir` |
-| `--disasm [dir]` | dump the DXBC disassembly of every non-compute subprogram to sibling `<name>.disasm.txt` files |
+| `--out-root <dir>` | Write the `.shader` and subprogram artifacts to `<dir>` |
+| `--dump-stages` | Print the IR after every pipeline phase |
+| `--save-subprograms` | Write per-subprogram `.bin`, `.dxbc`, and disassembly files |
+| `--no-surface-shaders` | Emit raw HLSLPROGRAM passes instead of surface-shader form |
+| `--keep-passes` | Keep original passes as comments when a surface shader is recognized |
+| `--keep-register-bindings` | Keep explicit `register(tN)` / `register(bN)` bindings |
 
-## Pipeline overview
+<details>
+<summary><b>Full CLI reference</b></summary>
 
-The C# side runs, per subprogram, the phases in `IRPipeline` (`DXBC/IR/IRPipeline.cs`):
+<br>
 
-1. **Blob classification** (`DXBC/Extraction/UnityShaderBlob.cs`) — distinguishes non-compute (`0x02` header), compute (u64 sentinel), raw-variant, and wire-frame payloads; slices the DXBC container out.
-2. **Container parse** (`DXBC/Container/DxbcFile.cs`) — validates the `DXBC` magic/version/lengths and parses the typed chunks: `ISGN`, `OSGN`, `OSG5`, `PSGN`, `PCON`, `SFI0`, `RDEF`, `STAT`, and the `SHDR`/`SHEX` shader chunk. Unknown chunks are kept raw, never discarded.
-3. **Instruction decode** (`DXBC/Instructions/ShdrParser.cs`) — every tokenized SM4/SM5 instruction and operand.
-4. **IR build** (`DXBC/IR/IRBuilder.cs` + `Builders/`) — flat, typed IR statements.
-5. **CFG** (`IRBlockBuilder` + `IRControlFlowGraphBuilder`) — basic blocks and edges.
-6. **SSA** — dominators (CHK algorithm), dominance frontiers, phi insertion, renaming (`Core/Analysis/`).
-7. **Optimization to a fixed point** (`Core/Optimizations/IROptimizationPipeline.cs`) — sweeps 9 statement-level passes (constant folding, constant propagation, copy propagation, DCE, algebraic simplification, value numbering, strength reduction, loop-invariant code motion, sparse conditional constant propagation) plus a CFG inner loop (branch simplification, CFG cleanup, phi simplification) until nothing changes (max 50 iterations), re-computing dominators whenever the CFG mutates.
-8. **Pattern recognition** (`IRShaderPatternRecognition` + matrix/vector/texture/loop recognizers) — folds common shader idioms back into high-level IR; loop detection is read-only.
-9. **Leave SSA** (`IRLeaveSsa` + `IRCopyCoalescing`) — phi elimination and vector-copy fusion.
-10. **Metadata binding** (`IRMetadataBinding`) — attaches RDEF/ISGN/OSGN symbolic names to the IR.
-11. **AST build** (`Core/Hlsl/HlslAstBuilder.cs`) — one `HlslFunctionNode` per subprogram; the Shader/SubShader/Pass shell comes straight from `metadata.json`.
-12. **Pass/variant recovery** (`BuildVariantPasses` in `Program.cs`) — Unity serializes subprograms pass-by-pass (all vertex variants, then all fragment variants), so a stage regression marks a pass boundary; vertex/fragment variants are paired by interpolator hand-off signature and byte-identical pairs deduplicated. Geometry/hull/domain/compute functions attach by position.
-13. **Pretty print** (`Core/Hlsl/HlslPrettyPrinter.cs`, stages 13/14) — the AST to `.shader` text: properties, tags, LOD, render state (cull/ztest/zwrite/blend/stencil), HLSLPROGRAM blocks with `#pragma vertex`/`#pragma fragment`, structs, resources with explicit register bindings, and per-function bodies. The printer also reconstructs matrix multiplies from outer-product accumulations and reverts recognized Unity macro idioms (`UnityObjectToClipPos`, `UnityObjectToWorldPos`, `LinearEyeDepth`, `Linear01Depth`) to `#define`s.
-14. **Surface-shader recognition** (`Core/Hlsl/HlslSurfaceShaderRecognizer.cs`, stage 13.5) — when a lit pass carries the compiled signature of a `#pragma surface` source (a `_LightColor0`-driven lighting expression), the pass is rewritten to the canonical CGPROGRAM surface form with an `Input` struct and a `surf()` body.
+#### Stage 0 — `Extract.py`
 
-### IR pipeline stages
+| Argument | Default | Effect |
+| --- | --- | --- |
+| `json_path` (positional) | — | AssetStudio JSON export to process |
+| `--dummy-dir` | `shaders_dummy` | Directory to search for the matching `.shader` reference |
+| `--out-dir` | `Output` | Root output directory |
+| `--flat` | off | Write the three files directly into `--out-dir` instead of a per-shader subfolder |
 
-The per-subprogram phase numbers used throughout the code:
+Folder names are sanitized for Windows (`/` and `\` become `_`, trailing dots
+and spaces are stripped).
+
+#### Stage 1 — `Shader Decompiler`
+
+| Argument | Effect |
+| --- | --- |
+| `<folder>` / `<blob.bin>` (positional) | Stage 0 output folder, or a `blob.bin` with a sibling `metadata.json` |
+| `--out-root <dir>` | Write `.shader` output and subprogram artifacts to `<dir>` instead of the project-local `Output/` |
+| `--dump-stages` | Print a full IR snapshot after every pipeline phase and every optimization pass |
+| `--dump-keywords` | Print each subprogram's global and local keyword sets |
+| `--save-subprograms` | Also write per-subprogram `program{i}.bin`, `program{i}.dxbc`, and `program{i}.hlsl` (disassembly) |
+| `--no-fuse-temps` | Disable temp fusion; keep every SSA copy as a separate statement |
+| `--no-surface-shaders` | Disable surface-shader recognition; emit raw reconstructed HLSLPROGRAM passes |
+| `--keep-passes` | When a pass is recognized as a surface shader, keep the original compiled passes as comments |
+| `--keep-register-bindings` | Keep explicit `register(tN)` / `register(bN)` bindings (stripped by default) |
+| `--faithfulness-test <folder>` | Decompile one folder, then verify recompiled signatures and metadata fidelity; exit code 0 on pass, 1 on failure |
+| `--run-spec-tests` | Run the offline parser spec vectors and exit |
+| `--verify-signatures [dir]` | Cross-check the ISGN parser against `d3dcompiler`'s `GetInputSignatureBlob` for every shipped subprogram in `dir` (default: the project-local `Output/`) |
+| `--strip-survivors` | Compile synthetic shaders, run `D3DStripShader(flags=7)`, and record which DXBC chunks survive; also scans shipped bytecode |
+| `--recompile-verify [file]` | Recompile the HLSLPROGRAM blocks of one `.shader` and match their signatures against shipped bytecode |
+| `--recompile-verify-all [dir]` | Aggregate recompile verification over every decompiled `.shader` in `dir` |
+| `--disasm [dir]` | Dump DXBC disassembly for every non-compute subprogram into sibling `<name>.disasm.txt` files |
+
+</details>
+
+## How it works
+
+```
+AssetStudio JSON export
+  └─ Stage 0: base64 + LZ4 → blob.bin + metadata.json
+       └─ Stage 1: DXBC → typed IR → SSA → optimize → HLSL AST → .shader
+```
+
+1. **Extract** the compressed blob and flatten `m_ParsedForm` into
+   `metadata.json`.
+2. **Parse** the DXBC container, its typed chunks, and the SM4/SM5 instruction
+   stream.
+3. **Rebuild** a typed SSA IR, optimize it to a fixed point, recognize shader
+   patterns, and bind symbolic names from the shader metadata.
+4. **Emit** the `.shader`: pair variants into passes, pretty-print the AST, and
+   recognize Unity surface-shader boilerplate.
+
+<details>
+<summary><b>Pipeline details</b></summary>
+
+<br>
+
+Each subprogram goes through `IRPipeline` (`DXBC/IR/IRPipeline.cs`):
+
+1. **Blob classification** — distinguish non-compute (`0x02` header), compute
+   (u64 sentinel), raw-variant, and wire-frame payloads, then slice out the
+   DXBC container.
+2. **Container parse** — validate the `DXBC` magic and lengths; parse `ISGN`,
+   `OSGN`, `OSG5`, `PSGN`, `PCON`, `SFI0`, `RDEF`, `STAT`, and the
+   `SHDR`/`SHEX` shader chunk. Unknown chunks are preserved raw.
+3. **Instruction decode** — decode every SM4/SM5 instruction and operand.
+4. **IR build** — build flat, typed IR statements.
+5. **CFG** — build basic blocks and edges.
+6. **SSA** — dominators (CHK algorithm), dominance frontiers, phi insertion,
+   and renaming.
+7. **Optimization** — nine statement-level passes (constant folding, constant
+   propagation, copy propagation, dead-code elimination, algebraic
+   simplification, value numbering, strength reduction, loop-invariant code
+   motion, sparse conditional constant propagation) plus a CFG inner loop
+   (branch simplification, CFG cleanup, phi simplification), up to 50
+   iterations.
+8. **Pattern recognition** — fold shader idioms back into high-level IR with
+   the matrix, vector, texture, loop, and shader-pattern recognizers.
+9. **Leave SSA** — eliminate phis and coalesce copies.
+10. **Metadata binding** — attach RDEF/ISGN/OSGN symbolic names to the IR.
+11. **AST build** — one function node per subprogram; the
+    Shader/SubShader/Pass shell comes from `metadata.json`.
+12. **Pass and variant recovery** — `BuildVariantPasses` groups subprograms
+    into passes. Unity serializes them pass-by-pass, so a stage regression
+    marks a pass boundary. Vertex and fragment variants are paired by
+    interpolator hand-off signature, and byte-identical pairs are deduplicated.
+13. **Pretty print** — emit properties, tags, LOD, render state,
+    `HLSLPROGRAM` blocks, structs, resources, and function bodies.
+14. **Surface-shader recognition** — rewrite a pass to `#pragma surface` form
+    when it carries the compiled signature of a surface shader.
+
+`--dump-stages` labels snapshots with these phase names:
 
 ```
 01-cfg (pre-SSA)
@@ -123,95 +249,124 @@ The per-subprogram phase numbers used throughout the code:
 07-metadata-bound
 ```
 
-`--dump-stages` prints each of these; diffing consecutive snapshots pins any corruption to the exact pass that introduced it.
+</details>
 
-## Repository layout
+## Testing
 
-```
-.
-├── Extract.py                      Stage 0 orchestrator (Python)
-├── libs/                           Stage 0 support modules
-│   ├── blob.py                     m_CompressedBlob → raw bytes (base64 + LZ4)
-│   ├── metadata.py                 m_ParsedForm → metadata.json
-│   ├── dummy.py                    locate/copy the matching .shader reference
-│   ├── lz4util.py                  lz4.block.decompress wrapper
-│   └── Reader.py                   little-endian BinaryReader
-│
-├── Shader Decompiler/              Stage 1+ (C# console app, net10.0)
-│   ├── Program.cs                  CLI entrypoint; drives the whole pipeline
-│   ├── Shader Decompiler.csproj    net10.0, Unity 5.11.10, Vortice.D3DCompiler 3.8.3
-│   ├── Core/
-│   │   ├── Analysis/               SSA verifier/renaming/phi-insertion, dominators,
-│   │   │                           dominance frontier, def-use, leave-SSA
-│   │   ├── Hlsl/                   AST, pretty printer, surface-shader recognizer,
-│   │   │                           name recovery, temp fusion, statement tree
-│   │   └── Optimizations/          ~20 rewrite passes + matrix/vector/texture/loop
-│   │                               pattern recognition
-│   ├── DXBC/
-│   │   ├── Chunks/                 ISGN/OSGN/PSGN/RDEF/SFI0/STAT parsers
-│   │   ├── Container/              DxbcFile, chunks, FourCC
-│   │   ├── Disassembly/            DxbcDisassembler (Vortice)
-│   │   ├── Extraction/             UnityShaderBlob classifier, non-compute header
-│   │   ├── Instructions/           opcode table, operand decoding, ShdrParser
-│   │   ├── IR/                     IR model + per-opcode builders + IRPipeline
-│   │   └── Metadata/               ShaderProject + metadata.json deserialization
-│   ├── Unity/Blob/                 Unity shader-blob reader (AssetStudio)
-│   ├── Docs/                       reverse-engineering notes and parser spec
-│   ├── Output/                     generated .shader files (default location)
-│   └── Tests/                      spec vectors, signature cross-check, strip
-│                                   analysis, recompile verification, golden tests
-│
-├── shaders_json/                   AssetStudio JSON exports (input corpus, 39)
-├── shaders_dummy/                  plain-text reference exports (+ Source/ PicaVoxel)
-├── Output/                         Stage 0 output: <Name>/{blob.bin, metadata.json,
-│                                   dummy.shader}, plus decompiled .shader files
-└── .github/workflows/              CI build & publish
-```
+Run the flags below from the repository root, prefixing each with
+`dotnet run --project "Shader Decompiler/Shader Decompiler.csproj" --`.
 
-## Outputs
-
-By default each run writes one `.shader` file per input shader to `Shader Decompiler/Output/` (or `--out-root`). With `--save-subprograms`, per-subprogram debug artifacts are also written:
-
-| File | Contents |
+| Command | What it does |
 | --- | --- |
-| `<Name>.shader` | the reconstructed ShaderLab source |
-| `program{i}.bin` | raw Unity subprogram bytes |
-| `program{i}.dxbc` | the extracted DXBC container |
-| `program{i}.hlsl` | DXBC disassembly (assembly text) via Vortice |
+| `--run-spec-tests` | Offline parser vectors (also run in CI) |
+| `--verify-signatures` | Cross-check ISGN parsing against `d3dcompiler` |
+| `--recompile-verify-all` | Recompile every emitted pass and match shipped signatures |
+| `--strip-survivors` | Check which chunks survive `D3DStripShader(flags=7)` |
+| `--faithfulness-test <folder>` | Decompile, recompile, and check metadata fidelity for one shader |
 
-## Tests
+Golden and faithfulness tests:
 
-- `Tests/test_picavoxel_shaders.py` — golden tests over the four PicaVoxel shaders whose real source is in `shaders_dummy/Source/`. For each: re-runs `Extract.py`, runs the decompiler, and asserts the output preserves the shader name, all declared properties, the fallback, cbuffer register bindings, and named cbuffer members, and that the pipeline reached the final writer stage.
-- `Tests/SpecTestVectors.cs` — offline vectors for the §14 blob classifier and §15 parser behaviors (`--run-spec-tests`).
-- `Tests/SignatureCrossCheck.cs` — our ISGN parser vs. d3dcompiler's own signature extraction, element by element (`--verify-signatures`).
-- `Tests/StripSurvivors.cs` — which DXBC chunks survive `D3DStripShader(flags=7)` (RDEF/STAT are removed; ISGN/OSGN and the shader chunk survive), verified on both synthetic and shipped bytecode (`--strip-survivors`).
-- `Tests/RecompileVerify.cs` — recompiles each decompiled HLSLPROGRAM pass and matches its input/output signature sets against shipped subprograms (`--recompile-verify`, `--recompile-verify-all`, `--disasm`).
+```bash
+# Four PicaVoxel shaders with real source in shaders_dummy/Source/
+python Shader Decompiler/Tests/test_picavoxel_shaders.py \
+  --parser "Shader Decompiler/bin/Debug/net10.0/Shader Decompiler.exe"
 
-The surface-shader recognizer only rewrites passes that pass this recompile gate — the compiled output must match shipped bytecode signatures before it is trusted.
+# Every shader folder in Output/
+python Shader Decompiler/Tests/test_faithfulness.py \
+  --parser "Shader Decompiler/bin/Debug/net10.0/Shader Decompiler.exe"
+```
+
+Use `--filter <substring>` with the faithfulness suite to narrow it to one or
+more shaders.
+
+> [!NOTE]
+> `test_picavoxel_shaders.py` still defaults `--parser` to the old
+> `Parser/bin/Debug/net10.0/Parser.exe` path. Pass the current executable
+> explicitly, as shown above.
+
+## Limitations
+
+- Targets Unity 2022.3 D3D11 shader blobs.
+- Vertex and fragment stages are fully reconstructed. Hull, geometry, domain,
+  and compute programs are parsed and IR-built, but the AST/emit path mainly
+  targets vertex/fragment; other stages attach by serialization order.
+- Surface-shader rewrites are gated on recompiled signature matches. Passes
+  that do not match are emitted as HLSLPROGRAM.
+- `Extract.py` still prints an old `Parser.exe` command hint.
 
 ## Documentation
 
-`Shader Decompiler/Docs/` contains the reverse-engineering work this project is based on:
+- [`Shader Decompiler/Docs/shader_compiler_analysis.md`](Shader%20Decompiler/Docs/shader_compiler_analysis.md) —
+  Ghidra analysis of `UnityShaderCompiler.exe`, covering the IPC wire protocol,
+  RDEF extraction, and `D3DStripShader(flags=7)`.
+- [`Shader Decompiler/Docs/shader_parser_spec.md`](Shader%20Decompiler/Docs/shader_parser_spec.md) —
+  implementation-grade parser spec with every fact labeled PROVEN, STRONGLY
+  INFERRED, POSSIBLE, or UNKNOWN.
 
-- `shader_compiler_analysis.md` — Ghidra analysis of `UnityShaderCompiler.exe`: the IPC wire protocol, how reflection metadata is extracted and how `D3DStripShader(flags=7)` strips the RDEF/debug chunks from shipped bytecode.
-- `shader_parser_spec.md` — an implementation-grade spec for the blob parser, with claims tagged PROVEN / STRONGLY INFERRED / POSSIBLE / UNKNOWN.
+## Project layout
 
-## Current status & limitations
+<details>
+<summary><b>Repository map</b></summary>
 
-- ✅ Full SM4/SM5 DXBC instruction decoding, per-subprogram extraction, blob classification.
-- ✅ Typed SSA IR with CFG, dominators, ~20 optimization passes to a fixed point, and matrix/vector/texture/loop pattern recognition.
-- ✅ Metadata binding from RDEF/ISGN/OSGN, per-pass cbuffer layouts recovered from the serialized shader metadata.
-- ✅ Full `.shader` output via the pretty printer, with Unity macro reversion, matrix-multiply reconstruction, and surface-shader recognition.
-- ✅ Recompile verification of emitted passes against shipped bytecode.
-- ⏳ Hull/geometry/compute subprograms are parsed and IR-built, but the AST path mainly targets vertex/fragment; other stages attach to the shell pass by serialization order.
-- ⚠️ The CI workflow (`.github/workflows/ci-build-info.yml`) still references the old `Parser.csproj` project name and the `main` branch; the project is `Shader Decompiler.csproj` on `master`, so the workflow needs updating before it will pass.
+<br>
+
+```
+.
+├── Extract.py                       Stage 0 orchestrator (Python)
+├── libs/                            blob/metadata/dummy helpers
+│   ├── blob.py                      m_CompressedBlob → raw bytes
+│   ├── metadata.py                  m_ParsedForm → metadata.json
+│   ├── dummy.py                     matching .shader reference lookup
+│   ├── lz4util.py                   LZ4 decompression wrapper
+│   └── Reader.py                    little-endian BinaryReader
+│
+├── Shader Decompiler/               Stage 1 (C#, net10.0)
+│   ├── Program.cs                   CLI and pipeline driver
+│   ├── Core/
+│   │   ├── Analysis/                SSA, dominators, phi insertion, def-use
+│   │   ├── Hlsl/                    AST, pretty printer, surface recognition
+│   │   └── Optimizations/           rewrite passes and pattern recognizers
+│   ├── DXBC/
+│   │   ├── Chunks/                  ISGN/OSGN/PSGN/RDEF/SFI0/STAT
+│   │   ├── Container/               DxbcFile and chunk parsing
+│   │   ├── Disassembly/             Vortice-backed disassembler
+│   │   ├── Extraction/              blob classifier
+│   │   ├── Instructions/            opcodes, operands, ShdrParser
+│   │   ├── IR/                      IR model, builders, IRPipeline
+│   │   └── Metadata/                ShaderProject and metadata loading
+│   ├── Unity/Blob/                  vendored AssetStudio blob reader
+│   ├── Docs/                        reverse-engineering notes and parser spec
+│   ├── Output/                      39 checked-in example decompilations
+│   └── Tests/                       golden, faithfulness, and verification tests
+│
+├── shaders_json/                    39 AssetStudio JSON exports
+├── shaders_dummy/                   reference shaders and Source/
+└── Output/                          generated Stage 0 output (not checked in)
+```
+
+</details>
 
 ## Contributing
 
-- Open issues for bugs and feature requests.
-- PRs welcome. The most valuable contributions right now are extending the golden-test corpus (more real source in `shaders_dummy/`), fixing decoder/optimizer correctness issues, and updating the CI workflow to the current project layout.
-- If you change the pretty printer or surface-shader recognition, keep `--recompile-verify-all` green.
+Issues and pull requests are welcome.
+
+- Add more real shader sources under `shaders_dummy/Source/` to grow the golden
+  corpus.
+- Fix decoder and optimizer correctness bugs.
+- Improve the AST path for hull, geometry, domain, and compute stages.
+
+If you change the pretty printer or surface-shader recognition, keep
+`--recompile-verify-all` green.
+
+## Credits
+
+- [AssetStudio](https://github.com/Perfare/AssetStudio) — the shader-blob reader
+  in `Shader Decompiler/Unity/Blob/` is vendored from it.
+- [Vortice.Windows](https://github.com/amerkoleci/Vortice.Windows) — D3D compiler
+  P/Invoke used for disassembly and recompilation.
+- The reverse-engineering notes in `Shader Decompiler/Docs/` document the
+  UnityShaderCompiler work this project is built on.
 
 ## License
 
-None — add one before publishing.
+No license is currently specified.
