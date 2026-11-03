@@ -13,4 +13,8 @@
       <PackageReference Include="Vortice.D3DCompiler" Version="3.8.3" />
     </ItemGroup>
 
+    <ItemGroup>
+      <InternalsVisibleTo Include="UnityShaderDecompiler.Tests" />
+    </ItemGroup>
+
 </Project>

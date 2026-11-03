@@ -73,7 +73,7 @@ def main():
 
     print()
     print(f"Ready for C# side:")
-    print(f"  Parser.exe \"{blob_path}\"")
+    print(f"  dotnet run --project \"Shader Decompiler/Shader Decompiler.csproj\" -- \"{blob_path}\"")
 
 
 if __name__ == "__main__":

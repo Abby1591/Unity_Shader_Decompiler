@@ -20,11 +20,23 @@ dotnet run --project "Shader Decompiler.csproj" -- ../Output/HOLO_Holo
 ```
 Output goes to `Shader Decompiler/Output/<Name>.shader`. Default input: `../Output/HOLO_Holo`.
 
-### Golden tests (Python)
+### Regression tests (C#, xUnit)
+```bash
+dotnet test UnityShaderDecompiler.sln
+
+# Fast tier used by per-commit CI (no native d3dcompiler):
+dotnet test UnityShaderDecompiler.sln --filter "Category!=D3D"
+
+# Native d3dcompiler round-trips (Windows):
+dotnet test UnityShaderDecompiler.sln --filter "Category=D3D"
+```
+The suite lives in `tests/UnityShaderDecompiler.Tests` and uses checked-in fixtures under `tests/Fixtures/` (blob.bin + metadata.json), so it needs no Python or network access. It ports the old spec vectors into individual xUnit cases and covers the whole in-process pipeline via `Parser.Decompiler`.
+
+### Golden tests (Python, end-to-end)
 ```bash
 python Shader Decompiler/Tests/test_picavoxel_shaders.py
 ```
-Tests 4 PicaVoxel shaders end-to-end (Stage 0 + Stage 1+). Requires the C# binary to be built first (`dotnet build`).
+Tests 4 PicaVoxel shaders end-to-end (Stage 0 + Stage 1+). Requires the C# binary to be built first (`dotnet build`). Defaults to `Shader Decompiler/bin/Debug/net10.0/Shader Decompiler.exe`; pass `--parser` to override.
 
 ### Faithfulness tests (C# + Python)
 ```bash
@@ -52,10 +64,13 @@ Decompiles the blob, recompiles every HLSLPROGRAM block with d3dcompiler, compar
 - **Windows** with `d3dcompiler_47.dll` for D3D-backed modes (disasm, recompile, signatures, strip). Core pipeline is platform-neutral.
 
 ## Gotchas
-- CI (`.github/workflows/ci-build-info.yml`) builds every push/PR and runs `--run-spec-tests` on Windows, Linux, and macOS; nightly (`.github/workflows/nightly.yml`) publishes artifacts at 03:00 UTC only when `master` has commits in the previous 24h.
+- CI (`.github/workflows/ci-build-info.yml`) builds every push/PR on Windows, Linux, and macOS, runs `dotnet test --filter "Category!=D3D"`, and smoke-tests `--run-spec-tests`; nightly (`.github/workflows/nightly.yml`) publishes artifacts at 03:00 UTC only when `master` has commits in the previous 24h, then runs the full test tier plus the Windows golden e2e suite.
+- `Program.cs` is only CLI dispatch. The pipeline lives in `Decompiler.cs` (`Decompiler.Decompile` / `DecompileFolder`) and is the entry point tests should use.
 - `AllowUnsafeBlocks` is enabled in the csproj (pinned-buffer D3D calls).
 - C# namespace is `Parser`, not `ShaderDecompiler`.
 - Folder names are sanitized on Windows (`/` `\` → `_`, trailing dots/spaces stripped).
 - The decompiler defaults to `../Output/HOLO_Holo` when invoked with no arguments.
 - Output location: `.shader` files go to `Shader Decompiler/Output/` (the project's `ProjectOutputRoot`), not the repo-root `Output/`.
-- **Golden test binary path is stale**: `test_picavoxel_shaders.py` defaults `--parser` to `Parser/bin/Debug/net10.0/Parser.exe` (old project name). Pass the actual path after building: `python Shader Decompiler/Tests/test_picavoxel_shaders.py --parser "Shader Decompiler/bin/Debug/net10.0/Shader Decompiler.exe"`
+- Both Python runners auto-detect a `dotnet` install with a net10.0 runtime (explicit `DOTNET`, then PATH, then `~/.dotnet`), so they work locally and in CI without a hard-coded user path.
+- Test fixtures are deliberately checked in under `tests/Fixtures/`; regenerate one with `python Extract.py shaders_json/<name>.json --out-dir Output` and copy the folder.
+- `test_faithfulness.py` treats a decompiler crash or a missing `Result:` line as a hard failure (never a skip).

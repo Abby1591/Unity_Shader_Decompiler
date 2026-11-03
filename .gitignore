@@ -3,3 +3,13 @@
 /Shader Decompiler/obj/
 /Shader Decompiler/Folder.DotSettings.user
 /.idea/
+
+# Test project build output
+/tests/**/bin/
+/tests/**/obj/
+TestResults/
+*.trx
+
+# Local CI scratch
+/Builds/
+

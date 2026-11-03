@@ -21,7 +21,9 @@ concurrency:
   cancel-in-progress: false
 
 env:
+  SOLUTION: UnityShaderDecompiler.sln
   PROJECT: Shader Decompiler/Shader Decompiler.csproj
+  TEST_PROJECT: tests/UnityShaderDecompiler.Tests/UnityShaderDecompiler.Tests.csproj
   DOTNET_VERSION: 10.0.x
 
 jobs:
@@ -132,6 +134,29 @@ jobs:
           echo "::group::Spec Tests"
           dotnet "$BUILD_DIR/Output/Shader Decompiler.dll" --run-spec-tests \
             2>&1 | tee "$BUILD_DIR/Logs/spec-tests.log"
+          echo "::endgroup::"
+
+      - name: 🧪 Full Regression Tests
+        shell: bash
+        run: |
+          echo "::group::dotnet test (full tier)"
+          dotnet restore "$SOLUTION"
+          dotnet test "$SOLUTION" \
+            -c Release \
+            --logger "trx;LogFileName=test-results.trx" \
+            --results-directory "$BUILD_DIR/Logs" \
+            2>&1 | tee "$BUILD_DIR/Logs/tests.log"
+          echo "::endgroup::"
+
+      - name: 🥇 Golden End-to-End Tests
+        if: runner.os == 'Windows'
+        shell: bash
+        run: |
+          echo "::group::PicaVoxel golden tests"
+          python -m pip install --quiet lz4
+          python "Shader Decompiler/Tests/test_picavoxel_shaders.py" \
+            --parser "Shader Decompiler/bin/Release/net10.0/Shader Decompiler.exe" \
+            2>&1 | tee "$BUILD_DIR/Logs/golden-tests.log"
           echo "::endgroup::"
 
       - name: 🗓️ Get Build Date

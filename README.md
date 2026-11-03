@@ -263,36 +263,54 @@ Each subprogram goes through `IRPipeline` (`DXBC/IR/IRPipeline.cs`):
 
 ## Testing
 
-Run the flags below from the repository root, prefixing each with
+The primary regression suite is a normal `dotnet test` project:
+
+```bash
+dotnet test UnityShaderDecompiler.sln
+```
+
+It runs in a few seconds and covers:
+
+- offline blob-classifier and DXBC-container vectors,
+- in-process decompilation of checked-in fixture blobs,
+- metadata fidelity (name, properties, fallback, cbuffer slots),
+- SSA validity, variant pairing, and deterministic output,
+- Windows-only `d3dcompiler` round-trips under `Category=D3D`.
+
+Every push and pull request runs the fast tier (everything except the native
+D3D checks):
+
+```bash
+dotnet test UnityShaderDecompiler.sln --filter "Category!=D3D"
+```
+
+The end-to-end Python runners exercise Stage 0 plus the CLI:
+
+```bash
+# Four PicaVoxel shaders with real source in shaders_dummy/Source/
+python Shader Decompiler/Tests/test_picavoxel_shaders.py
+
+# Every shader folder in Output/
+python Shader Decompiler/Tests/test_faithfulness.py
+
+# Narrow the faithfulness suite to one or more shaders
+python Shader Decompiler/Tests/test_faithfulness.py --filter PicaVoxel
+```
+
+Both default to `Shader Decompiler/bin/Debug/net10.0/Shader Decompiler.exe`;
+pass `--parser` to point somewhere else.
+
+Additional verification modes live on the CLI. Run them from the repository
+root, prefixing each with
 `dotnet run --project "Shader Decompiler/Shader Decompiler.csproj" --`.
 
 | Command | What it does |
 | --- | --- |
-| `--run-spec-tests` | Offline parser vectors (also run in CI) |
+| `--run-spec-tests` | Offline parser vectors (also run in CI as a smoke test) |
 | `--verify-signatures` | Cross-check ISGN parsing against `d3dcompiler` |
 | `--recompile-verify-all` | Recompile every emitted pass and match shipped signatures |
 | `--strip-survivors` | Check which chunks survive `D3DStripShader(flags=7)` |
 | `--faithfulness-test <folder>` | Decompile, recompile, and check metadata fidelity for one shader |
-
-Golden and faithfulness tests:
-
-```bash
-# Four PicaVoxel shaders with real source in shaders_dummy/Source/
-python Shader Decompiler/Tests/test_picavoxel_shaders.py \
-  --parser "Shader Decompiler/bin/Debug/net10.0/Shader Decompiler.exe"
-
-# Every shader folder in Output/
-python Shader Decompiler/Tests/test_faithfulness.py \
-  --parser "Shader Decompiler/bin/Debug/net10.0/Shader Decompiler.exe"
-```
-
-Use `--filter <substring>` with the faithfulness suite to narrow it to one or
-more shaders.
-
-> [!NOTE]
-> `test_picavoxel_shaders.py` still defaults `--parser` to the old
-> `Parser/bin/Debug/net10.0/Parser.exe` path. Pass the current executable
-> explicitly, as shown above.
 
 ## Limitations
 
@@ -302,7 +320,8 @@ more shaders.
   targets vertex/fragment; other stages attach by serialization order.
 - Surface-shader rewrites are gated on recompiled signature matches. Passes
   that do not match are emitted as HLSLPROGRAM.
-- `Extract.py` still prints an old `Parser.exe` command hint.
+- Passes declared in metadata with no compiled DX11 variants in the blob are
+  emitted as empty shells; the decompiler does not fabricate program bodies.
 
 ## Documentation
 
@@ -322,6 +341,7 @@ more shaders.
 
 ```
 .
+├── UnityShaderDecompiler.sln        Solution (app + tests)
 ├── Extract.py                       Stage 0 orchestrator (Python)
 ├── libs/                            blob/metadata/dummy helpers
 │   ├── blob.py                      m_CompressedBlob → raw bytes
@@ -331,7 +351,8 @@ more shaders.
 │   └── Reader.py                    little-endian BinaryReader
 │
 ├── Shader Decompiler/               Stage 1 (C#, net10.0)
-│   ├── Program.cs                   CLI and pipeline driver
+│   ├── Program.cs                   CLI dispatch and verification modes
+│   ├── Decompiler.cs                Reusable, in-process pipeline API
 │   ├── Core/
 │   │   ├── Analysis/                SSA, dominators, phi insertion, def-use
 │   │   ├── Hlsl/                    AST, pretty printer, surface recognition
@@ -347,7 +368,11 @@ more shaders.
 │   ├── Unity/Blob/                  vendored AssetStudio blob reader
 │   ├── Docs/                        reverse-engineering notes and parser spec
 │   ├── Output/                      39 checked-in example decompilations
-│   └── Tests/                       golden, faithfulness, and verification tests
+│   └── Tests/                       golden, faithfulness, and verification harnesses
+│
+├── tests/
+│   ├── UnityShaderDecompiler.Tests/ xUnit regression suite (`dotnet test`)
+│   └── Fixtures/                    checked-in blob.bin + metadata.json fixtures
 │
 ├── shaders_json/                    39 AssetStudio JSON exports
 ├── shaders_dummy/                   reference shaders and Source/

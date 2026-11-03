@@ -18,19 +18,49 @@ Usage:
 
 import argparse
 import os
+import shutil
 import subprocess
 import sys
 from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
-DOTNET = os.environ.get("DOTNET", r"C:\Users\Abby\.dotnet\dotnet.exe")
 OUTPUT_DIR = REPO_ROOT / "Output"
+
+
+def find_dotnet():
+    """Pick a dotnet install that can run the net10.0 apphost."""
+    candidates = []
+    if os.environ.get("DOTNET"):
+        candidates.append(os.environ["DOTNET"])
+    which = shutil.which("dotnet")
+    if which:
+        candidates.append(which)
+    home = Path.home() / ".dotnet" / ("dotnet.exe" if os.name == "nt" else "dotnet")
+    candidates.append(str(home))
+
+    for candidate in candidates:
+        if not Path(candidate).exists():
+            continue
+        try:
+            out = subprocess.run(
+                [candidate, "--list-runtimes"],
+                capture_output=True, text=True, timeout=30,
+            ).stdout
+        except Exception:
+            continue
+        if "Microsoft.NETCore.App 10." in out:
+            return candidate
+    return candidates[0]
+
+
+DOTNET = find_dotnet()
 
 
 def run(cmd, cwd, timeout=600):
     env = os.environ.copy()
-    env.setdefault("DOTNET_ROOT", str(Path(DOTNET).parent))
-    env.setdefault("DOTNET_MULTILEVEL_LOOKUP", "0")
+    if os.path.isabs(DOTNET):
+        env.setdefault("DOTNET_ROOT", str(Path(DOTNET).parent))
+        env.setdefault("DOTNET_MULTILEVEL_LOOKUP", "0")
     return subprocess.run(
         cmd, cwd=str(cwd), capture_output=True, text=True,
         timeout=timeout, env=env,
@@ -88,10 +118,14 @@ def main():
         )
         log = r.stdout + r.stderr
 
-        if r.returncode != 0 and "Unhandled exception" in log:
-            print(f"  SKIP (crash)")
-            skipped += 1
-            results.append((name, "SKIP"))
+        if "Unhandled exception" in log:
+            # A decompiler crash is a hard failure, never a skip: otherwise a
+            # broken parser can silently turn the whole run green.
+            print("  FAIL (decompiler crash)")
+            for line in log.strip().splitlines()[-8:]:
+                print("    |", line)
+            failed += 1
+            results.append((name, "FAIL"))
             continue
 
         # Parse the structured output
@@ -129,9 +163,11 @@ def main():
                 failed += 1
                 results.append((name, "FAIL"))
             else:
-                print(f"  UNKNOWN (no Result line in output)")
-                skipped += 1
-                results.append((name, "SKIP"))
+                print("  FAIL (no Result line in output)")
+                for line in lines[-5:]:
+                    print("    |", line)
+                failed += 1
+                results.append((name, "FAIL"))
 
         print()
 

@@ -15,7 +15,9 @@ concurrency:
   cancel-in-progress: true
 
 env:
+  SOLUTION: UnityShaderDecompiler.sln
   PROJECT: Shader Decompiler/Shader Decompiler.csproj
+  TEST_PROJECT: tests/UnityShaderDecompiler.Tests/UnityShaderDecompiler.Tests.csproj
   DOTNET_VERSION: 10.0.x
 
 jobs:
@@ -71,7 +73,7 @@ jobs:
 
       - name: 📥 Restore Packages
         shell: bash
-        run: dotnet restore "$PROJECT"
+        run: dotnet restore "$SOLUTION"
 
       - name: 🏗️ Build
         shell: bash
@@ -81,7 +83,7 @@ jobs:
           echo "::group::Building"
           START=$(date +%s)
 
-          dotnet build "$PROJECT" \
+          dotnet build "$SOLUTION" \
             -c Release \
             --no-restore \
             -bl:"$BUILD_DIR/Logs/build.binlog" \
@@ -92,10 +94,23 @@ jobs:
           echo "::endgroup::"
           echo "Build completed in $((END - START)) seconds."
 
-      - name: 🧪 Offline Spec Tests
+      - name: 🧪 Regression Tests
         shell: bash
         run: |
-          echo "::group::Spec Tests"
+          echo "::group::dotnet test (fast tier)"
+          dotnet test "$TEST_PROJECT" \
+            -c Release \
+            --no-build \
+            --filter "Category!=D3D" \
+            --logger "trx;LogFileName=test-results.trx" \
+            --results-directory "$BUILD_DIR/Logs" \
+            2>&1 | tee "$BUILD_DIR/Logs/tests.log"
+          echo "::endgroup::"
+
+      - name: 🚬 CLI Smoke Test
+        shell: bash
+        run: |
+          echo "::group::CLI smoke test"
           dotnet "Shader Decompiler/bin/Release/net10.0/Shader Decompiler.dll" --run-spec-tests \
             2>&1 | tee "$BUILD_DIR/Logs/spec-tests.log"
           echo "::endgroup::"

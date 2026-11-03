@@ -7,9 +7,10 @@ optimization, pattern recognition, HLSL AST building, and full `.shader` output.
 See the [project README](../README.md) for the pipeline overview, repository
 layout, all CLI flags, and current status. Highlights:
 
-- **Entry point:** `Program.cs` (blob classification → container parse → IR →
-  SSA → optimization → AST → pretty print → surface-shader recognition, plus
-  the verification/test modes).
+- **Entry point:** `Program.cs` (CLI dispatch and verification modes).
+- **Pipeline:** `Decompiler.cs` — blob classification → container parse → IR →
+  SSA → optimization → AST → pretty print → surface-shader recognition. This is
+  the reusable API the tests call in-process.
 - **Parse:** `DXBC/Container` (`DxbcFile`, chunks), `DXBC/Chunks`
   (ISGN/OSGN/PSGN/RDEF/SFI0/STAT), `DXBC/Instructions` (`ShdrParser`),
   `DXBC/Extraction` (`UnityShaderBlob` classifier).
@@ -19,9 +20,10 @@ layout, all CLI flags, and current status. Highlights:
   recognition.
 - **AST & emit:** `Core/Hlsl` — `HlslAstBuilder`, `HlslPrettyPrinter`,
   `HlslSurfaceShaderRecognizer`, `HlslNameRecovery`, `HlslFuseTemps`.
-- **Tests:** `Tests/` — golden PicaVoxel tests (`test_picavoxel_shaders.py`),
-  spec vectors, signature cross-check, strip-survivor analysis, recompile
-  verification.
+- **Tests:** `tests/UnityShaderDecompiler.Tests` — xUnit regression suite
+  (`dotnet test`), backed by checked-in `tests/Fixtures/`. `Tests/` retains the
+  golden PicaVoxel runner, signature cross-check, strip-survivor analysis, and
+  recompile verification.
 - **Unity blob reader:** `Unity/Blob/` (AssetStudio `ShaderProgram`,
   `ShaderSubProgram`).
 
@@ -35,4 +37,7 @@ vendored AssetStudio code.
 dotnet restore "Shader Decompiler.csproj"
 dotnet build "Shader Decompiler.csproj" -c Release
 dotnet run --project "Shader Decompiler.csproj" -- ../Output/HOLO_Holo
+
+# Regression suite (from the repository root)
+dotnet test UnityShaderDecompiler.sln
 ```
