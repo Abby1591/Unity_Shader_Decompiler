@@ -6,8 +6,10 @@ public partial class IRBuilder
 {
     private readonly bool _preserveRegisterBits;
 
+    // Initializes the requested register-storage mode.
     public IRBuilder() : this(false) { }
 
+    // Initializes the requested register-storage mode.
     public IRBuilder(bool preserveRegisterBits) => _preserveRegisterBits = preserveRegisterBits;
     private readonly Dictionary<(RegisterType Type, uint Index), IRValueType> _registerTypes = new();
     
@@ -519,22 +521,31 @@ public partial class IRBuilder
         return TypedRead(operand, IRExpression.IRIntrinsic.AsUInt);
     }
 
+    // Interprets a register value using the instruction operand type.
     private IRExpression TypedRead(Operand operand, IRExpression.IRIntrinsic interpretation)
     {
         IRRegister register = BuildRegister(operand);
         IRExpression value = new IRExpression.RegisterExpression { Register = register };
-        if (!_preserveRegisterBits) return value;
+        if (!_preserveRegisterBits)
+        {
+            return value;
+        }
         ShdrParser.OperandModifier modifier = register.Modifier;
         register.Modifier = ShdrParser.OperandModifier.None;
         value = new IRExpression.IntrinsicExpression { Intrinsic = interpretation, Arguments = { value } };
         // Integer negation is two's complement, not a float sign-bit flip.
         if (modifier is ShdrParser.OperandModifier.Abs or ShdrParser.OperandModifier.AbsNeg)
+        {
             value = new IRExpression.UnaryExpression { Operation = IRExpression.UnaryExpression.UnaryOperation.Absolute, Operand = value };
+        }
         if (modifier is ShdrParser.OperandModifier.Neg or ShdrParser.OperandModifier.AbsNeg)
+        {
             value = new IRExpression.UnaryExpression { Operation = IRExpression.UnaryExpression.UnaryOperation.Negate, Operand = value };
+        }
         return value;
     }
 
+    // Preserves bit interpretation when constructing an instruction expression.
     private IRExpression BuildRawExpression(Operand operand) => operand.RegisterType == RegisterType.Immediate32
         ? BuildUIntExpression(operand)
         : new IRExpression.IntrinsicExpression

@@ -102,7 +102,9 @@ public partial class IRBuilder
         uint stride = program.Declarations.OfType<IRDeclaration.IRResourceStructuredDeclaration>()
             .Single(d => d.Slot == resource.Index).StructureStride;
         if (stride == 0 || stride % 4 != 0)
+            {
             throw new InvalidDataException($"Invalid structured resource stride {stride} at t{resource.Index}.");
+        }
         AddAssignment(program, destination, new IRExpression.TextureOperationExpression
         {
             Operation = IRExpression.TextureOperation.LoadStructured,

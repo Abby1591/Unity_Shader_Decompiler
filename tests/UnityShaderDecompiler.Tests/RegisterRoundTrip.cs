@@ -13,8 +13,10 @@ using Xunit;
 
 namespace UnityShaderDecompiler.Tests;
 
+// Covers register round trip.
 internal static class RegisterRoundTrip
 {
+    // Compiles the fixture HLSL into a DXBC container.
     internal static DxbcFile Compile(string source, string entry = "main")
     {
         DxbcFile file = new DxbcFile();
@@ -22,6 +24,7 @@ internal static class RegisterRoundTrip
         return file;
     }
 
+    // Decompiles and recompiles a fixture without changing its register bits.
     internal static DxbcFile Recompile(DxbcFile original, bool fuseTemps = false)
     {
         IRPipeline.Result pipeline = IRPipeline.Run(original, dumpStages: false, preserveArithmetic: !fuseTemps);
@@ -54,69 +57,20 @@ internal static class RegisterRoundTrip
         };
         foreach (Instruction instruction in file.Shader!.Instructions)
         {
-            if (instruction.Opcode.ToString().StartsWith("Dcl", StringComparison.Ordinal)) continue;
-            if (instruction.Opcode == Opcode.Ret) return registers[(RegisterType.Output, 0)];
-            Assert.True(instruction.Opcode is Opcode.Mov or Opcode.MovC or Opcode.INe or Opcode.IEq
-                or Opcode.And or Opcode.LdStructured or Opcode.IAdd or Opcode.Ishl or Opcode.Ushr or Opcode.Bfi,
-                $"Unexpected opcode: {instruction.Opcode}");
-            Operand destination = instruction.Operands[0];
-            uint[] result = new uint[4];
-            for (int lane = 0; lane < 4; lane++)
+            if (instruction.Opcode.ToString().StartsWith("Dcl", StringComparison.Ordinal))
             {
-                if ((destination.Mask & (1 << lane)) == 0) continue;
-                uint first = Read(instruction.Operands[1], lane, registers);
-                if (instruction.Opcode == Opcode.Mov) result[lane] = first;
-                else if (instruction.Opcode == Opcode.MovC)
-                    result[lane] = Read(instruction.Operands[first != 0 ? 2 : 3], lane, registers);
-                else if (instruction.Opcode == Opcode.Bfi)
-                {
-                    int width = (int)(first & 31);
-                    int offset = (int)(Read(instruction.Operands[2], lane, registers) & 31);
-                    uint mask = unchecked(((1u << width) - 1u) << offset);
-                    uint insert = Read(instruction.Operands[3], lane, registers);
-                    uint original = Read(instruction.Operands[4], lane, registers);
-                    result[lane] = ((insert << offset) & mask) | (original & ~mask);
-                }
-                else if (instruction.Opcode == Opcode.LdStructured)
-                {
-                    Assert.NotNull(structuredWords);
-                    Operand resource = instruction.Operands[3];
-                    Instruction declaration = Assert.Single(file.Shader.Instructions,
-                        item => item.Opcode == Opcode.DclResourceStructured
-                            && item.Operands[0].RegisterIndex == resource.RegisterIndex);
-                    uint stride = declaration.ExtraData.Single();
-                    uint offset = Read(instruction.Operands[2], lane, registers);
-                    Assert.Equal(0u, offset % 4);
-                    result[lane] = structuredWords[checked((int)((first * stride + offset) / 4)) + Component(resource, lane)];
-                }
-                else
-                {
-                    uint second = Read(instruction.Operands[2], lane, registers);
-                    result[lane] = instruction.Opcode switch
-                    {
-                        Opcode.INe => first != second ? uint.MaxValue : 0u,
-                        Opcode.IEq => first == second ? uint.MaxValue : 0u,
-                        Opcode.And => first & second,
-                        Opcode.IAdd => unchecked(first + second),
-                        Opcode.Ishl => first << (int)(second & 31),
-                        Opcode.Ushr => first >> (int)(second & 31),
-                        _ => throw new InvalidOperationException(),
-                    };
-                }
-                if (instruction.Saturate)
-                {
-                    float value = BitConverter.UInt32BitsToSingle(result[lane]);
-                    result[lane] = BitConverter.SingleToUInt32Bits(float.IsNaN(value) ? 0f : Math.Clamp(value, 0f, 1f));
-                }
+                continue;
             }
-            (RegisterType, uint) key = (destination.RegisterType, destination.RegisterIndex);
-            if (!registers.TryGetValue(key, out uint[]? target)) registers[key] = target = new uint[4];
-            for (int lane = 0; lane < 4; lane++)
-                if ((destination.Mask & (1 << lane)) != 0) target[lane] = result[lane];
+            if (instruction.Opcode == Opcode.Ret)
+            {
+                return registers[(RegisterType.Output, 0)];
+            }
+            ExecuteInstruction(file, instruction, registers, structuredWords);
         }
         throw new InvalidOperationException("Fixture has no return instruction.");
     }
 
+    // Selects the source component requested by an operand.
     private static int Component(Operand operand, int lane) => operand.ComponentMode switch
     {
         Operand.OperandComponentMode.Select1 => operand.Component,
@@ -124,12 +78,105 @@ internal static class RegisterRoundTrip
         _ => lane,
     };
 
+    // Reads the selected operand lane without applying numeric conversion.
     private static uint Read(Operand operand, int lane, Dictionary<(RegisterType, uint), uint[]> registers)
     {
         Assert.Equal(ShdrParser.OperandModifier.None, operand.Modifier);
         int component = Component(operand, lane);
         if (operand.RegisterType == RegisterType.Immediate32)
+        {
             return operand.Immediate32Values![operand.Immediate32Values.Length == 1 ? 0 : component];
+        }
         return registers[(operand.RegisterType, operand.RegisterIndex)][component];
+    }
+
+    // Executes one supported fixture instruction and writes its masked result.
+    private static void ExecuteInstruction(DxbcFile file, Instruction instruction, Dictionary<(RegisterType, uint), uint[]> registers, uint[]? structuredWords)
+    {
+        Assert.True(instruction.Opcode is Opcode.Mov or Opcode.MovC or Opcode.INe or Opcode.IEq
+            or Opcode.And or Opcode.LdStructured or Opcode.IAdd or Opcode.Ishl or Opcode.Ushr or Opcode.Bfi,
+            $"Unexpected opcode: {instruction.Opcode}");
+        Operand destination = instruction.Operands[0];
+        uint[] result = new uint[4];
+        for (int lane = 0; lane < 4; lane++)
+        {
+            if ((destination.Mask & (1 << lane)) == 0)
+            {
+                continue;
+            }
+            result[lane] = EvaluateLane(file, instruction, lane, registers, structuredWords);
+            if (instruction.Saturate)
+            {
+                float value = BitConverter.UInt32BitsToSingle(result[lane]);
+                result[lane] = BitConverter.SingleToUInt32Bits(float.IsNaN(value) ? 0f : Math.Clamp(value, 0f, 1f));
+            }
+        }
+        (RegisterType, uint) key = (destination.RegisterType, destination.RegisterIndex);
+        if (!registers.TryGetValue(key, out uint[]? target))
+        {
+            registers[key] = target = new uint[4];
+        }
+        for (int lane = 0; lane < 4; lane++)
+        {
+            if ((destination.Mask & (1 << lane)) != 0)
+            {
+                target[lane] = result[lane];
+            }
+        }
+    }
+
+    // Evaluates one lane without changing its raw register bits.
+    private static uint EvaluateLane(DxbcFile file, Instruction instruction, int lane, Dictionary<(RegisterType, uint), uint[]> registers, uint[]? structuredWords)
+    {
+        uint first = Read(instruction.Operands[1], lane, registers);
+        if (instruction.Opcode == Opcode.Mov)
+        {
+            return first;
+        }
+        else if (instruction.Opcode == Opcode.MovC)
+        {
+            return Read(instruction.Operands[first != 0 ? 2 : 3], lane, registers);
+        }
+        else if (instruction.Opcode == Opcode.Bfi)
+        {
+            int width = (int)(first & 31);
+            int offset = (int)(Read(instruction.Operands[2], lane, registers) & 31);
+            uint mask = unchecked(((1u << width) - 1u) << offset);
+            uint insert = Read(instruction.Operands[3], lane, registers);
+            uint original = Read(instruction.Operands[4], lane, registers);
+            return ((insert << offset) & mask) | (original & ~mask);
+        }
+        else if (instruction.Opcode == Opcode.LdStructured)
+        {
+            return ReadStructuredWord(file, instruction, lane, registers, structuredWords, first);
+        }
+        else
+        {
+            uint second = Read(instruction.Operands[2], lane, registers);
+            return instruction.Opcode switch
+            {
+                Opcode.INe => first != second ? uint.MaxValue : 0u,
+                Opcode.IEq => first == second ? uint.MaxValue : 0u,
+                Opcode.And => first & second,
+                Opcode.IAdd => unchecked(first + second),
+                Opcode.Ishl => first << (int)(second & 31),
+                Opcode.Ushr => first >> (int)(second & 31),
+                _ => throw new InvalidOperationException(),
+            };
+        }
+    }
+
+    // Reads one structured-buffer word using the serialized stride and offset.
+    private static uint ReadStructuredWord(DxbcFile file, Instruction instruction, int lane, Dictionary<(RegisterType, uint), uint[]> registers, uint[]? structuredWords, uint first)
+    {
+        Assert.NotNull(structuredWords);
+        Operand resource = instruction.Operands[3];
+        Instruction declaration = Assert.Single(file.Shader!.Instructions,
+            item => item.Opcode == Opcode.DclResourceStructured
+                && item.Operands[0].RegisterIndex == resource.RegisterIndex);
+        uint stride = declaration.ExtraData.Single();
+        uint offset = Read(instruction.Operands[2], lane, registers);
+        Assert.Equal(0u, offset % 4);
+        return structuredWords[checked((int)((first * stride + offset) / 4)) + Component(resource, lane)];
     }
 }

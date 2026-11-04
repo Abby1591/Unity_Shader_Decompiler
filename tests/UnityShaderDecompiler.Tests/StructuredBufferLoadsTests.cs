@@ -10,8 +10,10 @@ using Xunit;
 
 namespace UnityShaderDecompiler.Tests;
 
+// Covers structured buffer loads tests.
 public sealed class StructuredBufferLoadsTests
 {
+    // Verifies that structured load preserves words through native round trip.
     [Theory]
     [InlineData("float")]
     [InlineData("uint")]
@@ -19,7 +21,10 @@ public sealed class StructuredBufferLoadsTests
     [Trait("Category", "D3D")]
     public void StructuredLoadPreservesWordsThroughNativeRoundTrip(string type)
     {
-        if (!OperatingSystem.IsWindows()) return;
+        if (!OperatingSystem.IsWindows())
+        {
+            return;
+        }
 
         string source = $"struct Element {{ uint4 padding; {type}4 value; }}; " +
             $"StructuredBuffer<Element> data : register(t7); " +
@@ -46,36 +51,14 @@ public sealed class StructuredBufferLoadsTests
         }
     }
 
+    // Verifies that structured load uses byte offset and resource swizzle.
     [Theory]
     [InlineData(4u, 32u, true)]
     [InlineData(2u, 32u, false)]
     [InlineData(32u, 32u, false)]
     public void StructuredLoadUsesByteOffsetAndResourceSwizzle(uint offset, uint stride, bool valid)
     {
-        IRRegister resource = new()
-        {
-            RegisterType = RegisterType.Resource, Index = 7,
-            ComponentMode = Operand.OperandComponentMode.Swizzle,
-            Swizzle = 2 | (0 << 2) | (1 << 4) | (3 << 6),
-        };
-        HlslFunctionNode function = new() { Name = "frag", Stage = HlslShaderStage.Fragment };
-        function.Statements.Statements.Add(new HlslAssignmentStatement
-        {
-            Destination = Temp(0, 3),
-            Expression = new IRExpression.TextureOperationExpression
-            {
-                Operation = IRExpression.TextureOperation.LoadStructured,
-                Resource = resource, StructuredStride = stride, DestinationMask = 3,
-                Coordinates = new IRExpression.ConstantExpression
-                {
-                    Kind = IRExpression.ConstantExpression.ConstantKind.UInt, RawValues = new uint[] { 5 },
-                },
-                Offset = new IRExpression.ConstantExpression
-                {
-                    Kind = IRExpression.ConstantExpression.ConstantKind.UInt, RawValues = new uint[] { offset },
-                },
-            },
-        });
+        HlslFunctionNode function = BuildStructuredRead(offset, stride);
         if (valid)
         {
             string source = Print(function);
@@ -87,6 +70,7 @@ public sealed class StructuredBufferLoadsTests
         }
     }
 
+    // Verifies that structured buffer declaration uses its actual stride.
     [Fact]
     public void StructuredBufferDeclarationUsesItsActualStride()
     {
@@ -95,8 +79,11 @@ public sealed class StructuredBufferLoadsTests
         HlslPassNode pass = new HlslPassNode();
         pass.Resources.Add(new HlslResourceNode
         {
-            Name = "t7", Kind = HlslResourceKind.Texture, Slot = 7,
-            TypeHint = "StructuredBuffer", StructureStride = 32,
+            Name = "t7",
+            Kind = HlslResourceKind.Texture,
+            Slot = 7,
+            TypeHint = "StructuredBuffer",
+            StructureStride = 32,
         });
         subShader.Passes.Add(pass);
         shader.SubShaders.Add(subShader);
@@ -106,6 +93,7 @@ public sealed class StructuredBufferLoadsTests
         Assert.Contains("StructuredBuffer<t7_element> t7", source);
     }
 
+    // Wraps the fixture function in a shader and emits its HLSL.
     private static string Print(HlslFunctionNode function)
     {
         function.RawTemporaryStorage = true;
@@ -116,6 +104,7 @@ public sealed class StructuredBufferLoadsTests
         return HlslPrettyPrinter.Print(shader, fuseTemps: false);
     }
 
+    // Creates a temporary register with the requested index and lane mask.
     private static IRRegister Temp(uint index, byte mask = 1)
     {
         IRRegister register = new IRRegister
@@ -127,13 +116,53 @@ public sealed class StructuredBufferLoadsTests
             ComponentMode = Operand.OperandComponentMode.Mask,
         };
         for (int component = 0; component < 4; component++)
+        {
             if ((mask & (1 << component)) != 0)
+            {
                 register.SsaVersion[component] = 1;
+            }
+        }
         return register;
     }
 
+    // Creates a scalar floating-point constant for the fixture.
     private static IRExpression.ConstantExpression Float(float value) => new()
     {
         RawValues = new[] { unchecked((uint)BitConverter.SingleToInt32Bits(value)) },
     };
+
+    // Builds a structured load with the supplied byte offset and resource swizzle.
+    private static HlslFunctionNode BuildStructuredRead(uint offset, uint stride)
+    {
+        IRRegister resource = new()
+        {
+            RegisterType = RegisterType.Resource,
+            Index = 7,
+            ComponentMode = Operand.OperandComponentMode.Swizzle,
+            Swizzle = 2 | (0 << 2) | (1 << 4) | (3 << 6),
+        };
+        HlslFunctionNode function = new() { Name = "frag", Stage = HlslShaderStage.Fragment };
+        function.Statements.Statements.Add(new HlslAssignmentStatement
+        {
+            Destination = Temp(0, 3),
+            Expression = new IRExpression.TextureOperationExpression
+            {
+                Operation = IRExpression.TextureOperation.LoadStructured,
+                Resource = resource,
+                StructuredStride = stride,
+                DestinationMask = 3,
+                Coordinates = new IRExpression.ConstantExpression
+                {
+                    Kind = IRExpression.ConstantExpression.ConstantKind.UInt,
+                    RawValues = new uint[] { 5 },
+                },
+                Offset = new IRExpression.ConstantExpression
+                {
+                    Kind = IRExpression.ConstantExpression.ConstantKind.UInt,
+                    RawValues = new uint[] { offset },
+                },
+            },
+        });
+        return function;
+    }
 }

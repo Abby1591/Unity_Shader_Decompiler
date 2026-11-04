@@ -514,7 +514,9 @@ public static class HlslPrettyPrinter
                       .Append(res.Name).Append(regSuffix).Append(";\n");
                 }
                 else
+                    {
                     sb.Append("            ").Append(res.TypeHint ?? "Texture2D").Append(' ').Append(res.Name).Append(regSuffix).Append(";\n");
+                }
                 break;
 
             case HlslResourceKind.Sampler:
@@ -685,7 +687,9 @@ public static class HlslPrettyPrinter
         HlslSemanticNaming.Apply(fn.Statements, cbuffers, stageInputs, stageOutputs);
 
         if (fuseTemps && !fn.RawTemporaryStorage)
+            {
             HlslFuseTemps.Apply(fn.Statements, MaxFuseNodes);
+        }
 
         // Buffer the body so the Unity macro defines collected during
         // printing (ctx.Macros) can be emitted ahead of the statements that
@@ -748,7 +752,9 @@ public static class HlslPrettyPrinter
                 foreach (string line in ctx.PreserveArithmetic
                     ? lines
                     : CollapseExtractChains(RevertUnityMacros(lines, ctx), ctx))
+                    {
                     sb.Append(pad).Append(line).Append('\n');
+                }
                 i = j;
             }
             else
@@ -1950,7 +1956,9 @@ public static class HlslPrettyPrinter
         };
 
         if (ctx.RawTemporaryStorage && reg.RegisterType is RegisterType.Temp or RegisterType.IndexableTemp)
+            {
             rendered = $"asfloat({rendered})";
+        }
         return ApplyRegisterModifier(reg.Modifier, rendered);
     }
 
@@ -2092,6 +2100,7 @@ public static class HlslPrettyPrinter
         yield return $"o.{FieldNameFor(dest, ctx)}{MaskOrSwizzleSuffix(dest)} = {OutputValue(rhs, elements?.FirstOrDefault(), ctx)};";
     }
 
+    // Converts register bits to the declared output component type.
     private static string OutputValue(string bits, SignatureElement? element, PrintContext ctx) =>
         !ctx.RawTemporaryStorage ? bits : element?.ComponentType switch
         {
@@ -2165,7 +2174,9 @@ public static class HlslPrettyPrinter
 
         string rawRhs = RenderExpression(expr, ctx);
         if (ctx.RawTemporaryStorage && dest.RegisterType is RegisterType.Temp or RegisterType.IndexableTemp or RegisterType.Output)
+            {
             rawRhs = EncodeRegisterBits(rawRhs, expr);
+        }
 
         // DXBC computes full-lane expressions (the source operand's 4-wide
         // swizzle) regardless of how many components the destination
@@ -2223,7 +2234,9 @@ public static class HlslPrettyPrinter
                 ctx.DeclaredViews[(LocationOf(dest, c), v)] = (scalarName, new List<int> { c });
             string component = ExtractComponent(expr, c, ctx);
             if (ctx.RawTemporaryStorage)
+                {
                 component = EncodeRegisterBits(component, expr);
+            }
             string line = $"{scalarName} = {component};";
             yield return ctx.Declared.Add(scalarName) ? $"{DeclType(1, ctx)} {line}" : line;
         }
@@ -2270,6 +2283,7 @@ public static class HlslPrettyPrinter
         return componentCount == 1 ? type : $"{type}{componentCount}";
     }
 
+    // Preserves the raw bits of values written to temporary registers.
     private static string EncodeRegisterBits(string value, IRExpression expression) => expression switch
     {
         IRExpression.RegisterExpression => $"asuint({value})",
@@ -2597,7 +2611,9 @@ public static class HlslPrettyPrinter
     private static string RenderBitwise(IRExpression.BinaryExpression b, PrintContext ctx)
     {
         if (ctx.RawTemporaryStorage)
+            {
             return $"({RenderExpression(b.Left, ctx)} {BinaryOpText(b.Operation)} {RenderExpression(b.Right, ctx)})";
+        }
         string Op(IRExpression side)
         {
             string s = RenderExpression(side, ctx);
@@ -2653,7 +2669,9 @@ public static class HlslPrettyPrinter
         // fxc folds frac(x + integer) even with /Gis, losing the add's rounding.
         // Use the DXBC definition of frc to retain that dependency.
         if (ctx.RawTemporaryStorage && expr.Intrinsic == IRExpression.IRIntrinsic.FractionalPart)
+            {
             return $"({Arg(0)} - floor({Arg(0)}))";
+        }
 
         // Casts use C-style cast syntax, not a function call.
         switch (expr.Intrinsic)
@@ -2765,7 +2783,9 @@ public static class HlslPrettyPrinter
     private static string RenderTextureOp(IRExpression.TextureOperationExpression tex, PrintContext ctx)
     {
         if (tex.Operation == IRExpression.TextureOperation.LoadStructured)
+            {
             return RenderStructuredLoad(tex, ctx);
+        }
 
         string resource = RenderRegisterRead(tex.Resource, ctx);
         string? sampler = tex.Sampler is null ? null : RenderRegisterRead(tex.Sampler, ctx);
@@ -2820,22 +2840,15 @@ public static class HlslPrettyPrinter
         };
     }
 
+    // Renders structured-buffer reads with their byte offsets and swizzles.
     private static string RenderStructuredLoad(IRExpression.TextureOperationExpression tex, PrintContext ctx)
     {
-        // Float temporaries can numerically convert integer outputs and lose payload bits.
-        if (!ctx.RawTemporaryStorage)
-            throw new InvalidDataException("Structured loads require raw register storage in the HLSL function.");
-
-        if (tex.Coordinates is null || tex.Offset is null)
-            throw new InvalidDataException("Structured load requires an element index and a byte offset.");
-        uint? byteOffset = tex.Offset is IRExpression.ConstantExpression { RawValues.Length: 1 } offset
-            ? offset.RawValues[0] : null;
-        if (byteOffset.HasValue && byteOffset.Value % 4 != 0)
-            throw new InvalidDataException($"Unaligned structured load offset {byteOffset.Value}.");
-
+        uint? byteOffset = ValidateStructuredLoad(tex, ctx);
         List<int> lanes = MaskIndices(tex.DestinationMask);
         if (lanes.Count == 0)
+        {
             throw new InvalidDataException("Structured load has no destination lanes.");
+        }
         List<int> swizzle = ActiveComponents(tex.Resource);
         List<string> values = new List<string>();
         foreach (int lane in lanes)
@@ -2845,7 +2858,9 @@ public static class HlslPrettyPrinter
             {
                 uint index = byteOffset.Value / 4 + (uint)swizzle[lane];
                 if (index >= tex.StructuredStride / 4)
+                {
                     throw new InvalidDataException($"Structured load exceeds element stride at t{tex.Resource.Index}.");
+                }
                 word = index.ToString(System.Globalization.CultureInfo.InvariantCulture);
             }
             else
@@ -2857,5 +2872,27 @@ public static class HlslPrettyPrinter
         return lanes.Count == 1
             ? $"asfloat({values[0]})"
             : $"asfloat(uint{lanes.Count}({string.Join(", ", values)}))";
+    }
+
+    // Rejects unsupported storage and unaligned structured-load offsets.
+    private static uint? ValidateStructuredLoad(IRExpression.TextureOperationExpression tex, PrintContext ctx)
+    {
+        // Float temporaries can numerically convert integer outputs and lose payload bits.
+        if (!ctx.RawTemporaryStorage)
+        {
+            throw new InvalidDataException("Structured loads require raw register storage in the HLSL function.");
+        }
+
+        if (tex.Coordinates is null || tex.Offset is null)
+        {
+            throw new InvalidDataException("Structured load requires an element index and a byte offset.");
+        }
+        uint? byteOffset = tex.Offset is IRExpression.ConstantExpression { RawValues.Length: 1 } offset
+            ? offset.RawValues[0] : null;
+        if (byteOffset.HasValue && byteOffset.Value % 4 != 0)
+        {
+            throw new InvalidDataException($"Unaligned structured load offset {byteOffset.Value}.");
+        }
+        return byteOffset;
     }
 }

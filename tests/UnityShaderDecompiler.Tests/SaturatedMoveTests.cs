@@ -3,15 +3,20 @@ using UnityShaderDecompiler.Core.DXBC.Instructions;
 
 namespace UnityShaderDecompiler.Tests;
 
+// Covers saturated move tests.
 public sealed class SaturatedMoveTests
 {
+    // Verifies that saturated moves clamp float values before storing bits.
     [Theory]
     [InlineData(false)]
     [InlineData(true)]
     [Trait("Category", "D3D")]
     public void SaturatedMovesClampFloatValuesBeforeStoringBits(bool conditional)
     {
-        if (!OperatingSystem.IsWindows()) return;
+        if (!OperatingSystem.IsWindows())
+        {
+            return;
+        }
         string selection = conditional ? "((asuint(value.y) & 1u) != 0u ? value : float4(-0.5, 0.25, 1.5, 0))" : "value";
         DxbcFile original = RegisterRoundTrip.Compile(
             $"uint4 main(float4 value:TEXCOORD0):SV_Target {{ return asuint(saturate({selection})); }}");

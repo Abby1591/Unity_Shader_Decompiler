@@ -83,7 +83,9 @@ public static class IRPipeline
         //    the others, but doing it here means it sees the same
         //    simplified shape as everything else.
             if (!preserveArithmetic)
+                {
                 IRShaderPatternRecognition.Run(blocks);
+            }
             Snapshot("05-pattern-recognized", blocks);
             List<IRLoopPatternRecognition.LoopInfo> loops = IRShaderPatternRecognition.DetectLoops(blocks);
 

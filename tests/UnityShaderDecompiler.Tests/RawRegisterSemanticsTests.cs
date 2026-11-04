@@ -10,8 +10,10 @@ using Xunit;
 
 namespace UnityShaderDecompiler.Tests;
 
+// Covers raw register semantics tests.
 public sealed class RawRegisterSemanticsTests
 {
+    // Verifies that integer moves preserve bits through native round trip.
     [Theory]
     [InlineData("uint", false)]
     [InlineData("int", false)]
@@ -20,7 +22,10 @@ public sealed class RawRegisterSemanticsTests
     [Trait("Category", "D3D")]
     public void IntegerMovesPreserveBitsThroughNativeRoundTrip(string type, bool conditional)
     {
-        if (!OperatingSystem.IsWindows()) return;
+        if (!OperatingSystem.IsWindows())
+        {
+            return;
+        }
 
         // These integers also encode NaNs, a subnormal and negative zero as floats.
         uint[] selected = { 0xffffffffu, 0x7fc12345u, 0x00000001u, 0x80000000u };
@@ -44,6 +49,7 @@ public sealed class RawRegisterSemanticsTests
         }
     }
 
+    // Verifies that integer source modifier is applied after bit interpretation.
     [Fact]
     public void IntegerSourceModifierIsAppliedAfterBitInterpretation()
     {
@@ -71,66 +77,22 @@ public sealed class RawRegisterSemanticsTests
         Assert.Equal(ShdrParser.OperandModifier.None, register.Register.Modifier);
     }
 
+    // Verifies that fractional part retains preceding addition when recompiled.
     [Fact]
     [Trait("Category", "D3D")]
     public void FractionalPartRetainsPrecedingAdditionWhenRecompiled()
     {
-        if (!OperatingSystem.IsWindows()) return;
+        if (!OperatingSystem.IsWindows())
+        {
+            return;
+        }
 
-        UnityShaderDecompiler.Core.DXBC.Chunks.SignatureElement input = new UnityShaderDecompiler.Core.DXBC.Chunks.SignatureElement
-        {
-            SemanticName = "TEXCOORD", Mask = 1, ComponentType = 3,
-        };
-        UnityShaderDecompiler.Core.DXBC.Chunks.SignatureElement output = new UnityShaderDecompiler.Core.DXBC.Chunks.SignatureElement
-        {
-            SemanticName = "SV_Target", Mask = 1, ComponentType = 3,
-        };
-        HlslFunctionNode function = new HlslFunctionNode
-        {
-            Name = "frag", Stage = HlslShaderStage.Fragment, RawTemporaryStorage = true,
-            InputStruct = new HlslStructNode { Name = "TestInput" },
-            OutputStruct = new HlslStructNode { Name = "TestOutput" },
-        };
-        function.InputStruct.Fields.Add(new HlslFieldNode
-        {
-            Name = HlslAstBuilder.ToFieldName("TEXCOORD0"), Semantic = "TEXCOORD0", TypeHint = "float",
-        });
-        function.OutputStruct.Fields.Add(new HlslFieldNode
-        {
-            Name = HlslAstBuilder.ToFieldName("SV_Target0"), Semantic = "SV_Target0", TypeHint = "float",
-        });
-        function.InputElementsByRegister[0] = new() { input };
-        function.OutputElementsByRegister[0] = new() { output };
-        IRRegister source = Temp(0);
-        source.RegisterType = RegisterType.Input;
-        source.SymbolicName = "TEXCOORD0";
-        IRRegister destination = Temp(0);
-        destination.RegisterType = RegisterType.Output;
-        destination.SymbolicName = "SV_Target0";
-        function.Statements.Statements.Add(new HlslAssignmentStatement
-        {
-            Destination = Temp(1),
-            Expression = new IRExpression.BinaryExpression
-            {
-                Operation = IRExpression.BinaryOperation.Add,
-                Left = new IRExpression.RegisterExpression { Register = source }, Right = Float(1),
-            },
-        });
-        function.Statements.Statements.Add(new HlslAssignmentStatement
-        {
-            Destination = destination,
-            Expression = new IRExpression.IntrinsicExpression
-            {
-                Intrinsic = IRExpression.IRIntrinsic.FractionalPart,
-                Arguments = { new IRExpression.RegisterExpression { Register = Temp(1) } },
-            },
-        });
-        function.Statements.Statements.Add(new HlslReturnStatement());
+        HlslFunctionNode function = BuildFractionFunction();
         HlslShaderNode shader = new HlslShaderNode { Name = "Test/Fraction" };
         HlslSubShaderNode subShader = new HlslSubShaderNode();
         HlslPassNode pass = new HlslPassNode { FragmentFunction = function };
-        pass.Structs.Add(function.InputStruct);
-        pass.Structs.Add(function.OutputStruct);
+        pass.Structs.Add(function.InputStruct!);
+        pass.Structs.Add(function.OutputStruct!);
         subShader.Passes.Add(pass);
         shader.SubShaders.Add(subShader);
         string text = HlslPrettyPrinter.Print(shader, fuseTemps: false);
@@ -147,12 +109,15 @@ public sealed class RawRegisterSemanticsTests
         Assert.Contains(instructions.Skip(floor + 1), i => i.Opcode == Opcode.Add);
     }
 
+    // Verifies that raw temporary storage keeps comparison masks and integer arithmetic.
     [Fact]
     public void RawTemporaryStorageKeepsComparisonMasksAndIntegerArithmetic()
     {
         HlslFunctionNode function = new HlslFunctionNode
         {
-            Name = "frag", Stage = HlslShaderStage.Fragment, RawTemporaryStorage = true,
+            Name = "frag",
+            Stage = HlslShaderStage.Fragment,
+            RawTemporaryStorage = true,
         };
         function.Statements.Statements.Add(new HlslAssignmentStatement
         {
@@ -160,9 +125,131 @@ public sealed class RawRegisterSemanticsTests
             Expression = new IRExpression.BinaryExpression
             {
                 Operation = IRExpression.BinaryOperation.LessThan,
-                Left = Float(1), Right = Float(2),
+                Left = Float(1),
+                Right = Float(2),
             },
         });
+        AddSignedAddition(function);
+        string source = Print(function);
+        Assert.Contains("uint r0_x_1", source);
+        Assert.Contains("? 0xffffffffu : 0u", source);
+        Assert.Contains("asint(r0_x_1)", source);
+        Assert.Contains("uint r1_x_1 = asuint(", source);
+    }
+
+    // Wraps the fixture function in a shader and emits its HLSL.
+    private static string Print(HlslFunctionNode function)
+    {
+        HlslShaderNode shader = new HlslShaderNode { Name = "Test/Scope" };
+        HlslSubShaderNode subShader = new HlslSubShaderNode();
+        subShader.Passes.Add(new HlslPassNode { FragmentFunction = function });
+        shader.SubShaders.Add(subShader);
+        return HlslPrettyPrinter.Print(shader, fuseTemps: false);
+    }
+
+    // Creates a temporary register with the requested index and lane mask.
+    private static IRRegister Temp(uint index, byte mask = 1)
+    {
+        IRRegister register = new IRRegister
+        {
+            RegisterType = RegisterType.Temp,
+            Index = index,
+            Type = IRValueType.Float,
+            Mask = mask,
+            ComponentMode = Operand.OperandComponentMode.Mask,
+        };
+        for (int component = 0; component < 4; component++)
+        {
+            if ((mask & (1 << component)) != 0)
+            {
+                register.SsaVersion[component] = 1;
+            }
+        }
+        return register;
+    }
+
+    // Creates a scalar floating-point constant for the fixture.
+    private static IRExpression.ConstantExpression Float(float value) => new()
+    {
+        RawValues = new[] { unchecked((uint)BitConverter.SingleToInt32Bits(value)) },
+    };
+
+    // Builds a fragment function that computes frac(x + 1).
+    private static HlslFunctionNode BuildFractionFunction()
+    {
+        HlslFunctionNode function = CreateFractionInterface();
+        IRRegister source = Temp(0);
+        source.RegisterType = RegisterType.Input;
+        source.SymbolicName = "TEXCOORD0";
+        IRRegister destination = Temp(0);
+        destination.RegisterType = RegisterType.Output;
+        destination.SymbolicName = "SV_Target0";
+        function.Statements.Statements.Add(new HlslAssignmentStatement
+        {
+            Destination = Temp(1),
+            Expression = new IRExpression.BinaryExpression
+            {
+                Operation = IRExpression.BinaryOperation.Add,
+                Left = new IRExpression.RegisterExpression { Register = source },
+                Right = Float(1),
+            },
+        });
+        function.Statements.Statements.Add(new HlslAssignmentStatement
+        {
+            Destination = destination,
+            Expression = new IRExpression.IntrinsicExpression
+            {
+                Intrinsic = IRExpression.IRIntrinsic.FractionalPart,
+                Arguments = { new IRExpression.RegisterExpression { Register = Temp(1) } },
+            },
+        });
+        function.Statements.Statements.Add(new HlslReturnStatement());
+        return function;
+    }
+
+    // Creates matching scalar input and output interfaces for the fraction fixture.
+    private static HlslFunctionNode CreateFractionInterface()
+    {
+        UnityShaderDecompiler.Core.DXBC.Chunks.SignatureElement input = new UnityShaderDecompiler.Core.DXBC.Chunks.SignatureElement
+        {
+            SemanticName = "TEXCOORD",
+            Mask = 1,
+            ComponentType = 3,
+        };
+        UnityShaderDecompiler.Core.DXBC.Chunks.SignatureElement output = new UnityShaderDecompiler.Core.DXBC.Chunks.SignatureElement
+        {
+            SemanticName = "SV_Target",
+            Mask = 1,
+            ComponentType = 3,
+        };
+        HlslFunctionNode function = new HlslFunctionNode
+        {
+            Name = "frag",
+            Stage = HlslShaderStage.Fragment,
+            RawTemporaryStorage = true,
+            InputStruct = new HlslStructNode { Name = "TestInput" },
+            OutputStruct = new HlslStructNode { Name = "TestOutput" },
+        };
+        function.InputStruct.Fields.Add(new HlslFieldNode
+        {
+            Name = HlslAstBuilder.ToFieldName("TEXCOORD0"),
+            Semantic = "TEXCOORD0",
+            TypeHint = "float",
+        });
+        function.OutputStruct.Fields.Add(new HlslFieldNode
+        {
+            Name = HlslAstBuilder.ToFieldName("SV_Target0"),
+            Semantic = "SV_Target0",
+            TypeHint = "float",
+        });
+        function.InputElementsByRegister[0] = new() { input };
+        function.OutputElementsByRegister[0] = new() { output };
+        return function;
+    }
+
+    // Adds signed integer arithmetic after a raw comparison-mask read.
+    private static void AddSignedAddition(HlslFunctionNode function)
+    {
         IRExpression.IntrinsicExpression signedRead = new IRExpression.IntrinsicExpression
         {
             Intrinsic = IRExpression.IRIntrinsic.AsInt,
@@ -177,44 +264,10 @@ public sealed class RawRegisterSemanticsTests
                 Left = signedRead,
                 Right = new IRExpression.ConstantExpression
                 {
-                    Kind = IRExpression.ConstantExpression.ConstantKind.Int, RawValues = new uint[] { 2 },
+                    Kind = IRExpression.ConstantExpression.ConstantKind.Int,
+                    RawValues = new uint[] { 2 },
                 },
             },
         });
-        string source = Print(function);
-        Assert.Contains("uint r0_x_1", source);
-        Assert.Contains("? 0xffffffffu : 0u", source);
-        Assert.Contains("asint(r0_x_1)", source);
-        Assert.Contains("uint r1_x_1 = asuint(", source);
     }
-
-    private static string Print(HlslFunctionNode function)
-    {
-        HlslShaderNode shader = new HlslShaderNode { Name = "Test/Scope" };
-        HlslSubShaderNode subShader = new HlslSubShaderNode();
-        subShader.Passes.Add(new HlslPassNode { FragmentFunction = function });
-        shader.SubShaders.Add(subShader);
-        return HlslPrettyPrinter.Print(shader, fuseTemps: false);
-    }
-
-    private static IRRegister Temp(uint index, byte mask = 1)
-    {
-        IRRegister register = new IRRegister
-        {
-            RegisterType = RegisterType.Temp,
-            Index = index,
-            Type = IRValueType.Float,
-            Mask = mask,
-            ComponentMode = Operand.OperandComponentMode.Mask,
-        };
-        for (int component = 0; component < 4; component++)
-            if ((mask & (1 << component)) != 0)
-                register.SsaVersion[component] = 1;
-        return register;
-    }
-
-    private static IRExpression.ConstantExpression Float(float value) => new()
-    {
-        RawValues = new[] { unchecked((uint)BitConverter.SingleToInt32Bits(value)) },
-    };
 }

@@ -320,7 +320,9 @@ public static class HlslAstBuilder
 
                 case IRDeclaration.IRResourceStructuredDeclaration structured:
                     if (structured.StructureStride == 0 || structured.StructureStride % 4 != 0)
+                        {
                         throw new InvalidDataException($"Invalid structured resource stride {structured.StructureStride} at t{structured.Slot}.");
+                    }
                     yield return new HlslResourceNode
                     {
                         Name = $"t{structured.Slot}",
