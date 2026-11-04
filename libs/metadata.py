@@ -1,20 +1,20 @@
 """
-Stage 0.2 — Metadata Extraction
+Stage 0.2 â€” Metadata Extraction
 
 Pulls everything the backend (C#) needs out of the raw Unity shader JSON
 (the AssetStudio export) into a single metadata.json, keyed by shader name.
 
-This does NOT touch m_CompressedBlob — that stays in blob.py/ShaderBlob.
+This does NOT touch m_CompressedBlob â€” that stays in blob.py/ShaderBlob.
 """
 
 import json
+from .shader_json import load_shader_json, parameter_offset
 
 
 class ShaderMetadata:
     def __init__(self, json_path):
         self.json_path = json_path
-        with open(json_path, "r", encoding="utf8") as f:
-            self.data = json.load(f)
+        self.data = load_shader_json(json_path)
 
     def build(self):
         d = self.data
@@ -38,16 +38,6 @@ class ShaderMetadata:
             json.dump(self.build(), f, indent=2)
 
     # -- helpers --
-
-    @staticmethod
-    def _parameter_offset(parameter):
-        # Unity renamed this field; AssetRipper also normalizes older exports.
-        field = "m_OffsetInConstantBuffer" if "m_OffsetInConstantBuffer" in parameter else "m_Index"
-        offset = parameter.get(field)
-        if type(offset) is not int or offset < 0 or offset % 4:
-            raise ValueError(
-                f"Invalid or missing constant-buffer byte offset for parameter {parameter.get('m_NameIndex')}: {offset!r}")
-        return offset
 
     @staticmethod
     def _get(d, key, default=None):
@@ -117,7 +107,7 @@ class ShaderMetadata:
                     for v in b.get("m_VectorParams", []) or []:
                         entry = {
                             "name": index_to_name.get(v.get("m_NameIndex"), ""),
-                            "offset": ShaderMetadata._parameter_offset(v),
+                            "offset": parameter_offset(v),
                             "dim": v.get("m_Dim", 0),
                             "arraySize": v.get("m_ArraySize", 0),
                         }
@@ -127,7 +117,7 @@ class ShaderMetadata:
                     for m in b.get("m_MatrixParams", []) or []:
                         entry = {
                             "name": index_to_name.get(m.get("m_NameIndex"), ""),
-                            "offset": ShaderMetadata._parameter_offset(m),
+                            "offset": parameter_offset(m),
                             "rowCount": m.get("m_RowCount", 0),
                             "arraySize": m.get("m_ArraySize", 0),
                             "isMatrix": True,
@@ -172,11 +162,11 @@ class ShaderMetadata:
 
     def _constant_buffers(self, p, prog_keys, index_to_name, name_layouts=None):
         # Unity serializes the constant-buffer layout (name + per-variable
-        # byte offset) in each stage's m_CommonParameters — this is the
+        # byte offset) in each stage's m_CommonParameters â€” this is the
         # per-pass replacement for the RDEF chunk Unity strips from shipped
         # bytecode. Each stage binds its OWN table (cb0 in the vertex
         # program can be a different buffer than cb0 in the fragment
-        # program), so cbuffers are keyed by (stage, slot) — never merged
+        # program), so cbuffers are keyed by (stage, slot) â€” never merged
         # across stages, or different buffers that share a slot number
         # would collide at the same byte offsets.
         by_key = {}
@@ -221,14 +211,14 @@ class ShaderMetadata:
                 for v in b.get("m_VectorParams", []) or []:
                     cb["variables"].append({
                         "name": index_to_name.get(v.get("m_NameIndex"), ""),
-                        "offset": ShaderMetadata._parameter_offset(v),
+                        "offset": parameter_offset(v),
                         "dim": v.get("m_Dim", 0),
                         "arraySize": v.get("m_ArraySize", 0),
                     })
                 for m in b.get("m_MatrixParams", []) or []:
                     cb["variables"].append({
                         "name": index_to_name.get(m.get("m_NameIndex"), ""),
-                        "offset": ShaderMetadata._parameter_offset(m),
+                        "offset": parameter_offset(m),
                         "rowCount": m.get("m_RowCount", 0),
                         "arraySize": m.get("m_ArraySize", 0),
                         "isMatrix": True,
@@ -236,7 +226,7 @@ class ShaderMetadata:
 
             # A program can bind a buffer (its name index appears in
             # m_ConstantBufferBindings) without listing it in
-            # m_ConstantBuffers — Unity only serializes the buffers the
+            # m_ConstantBuffers â€” Unity only serializes the buffers the
             # stage touches. When the bound name's layout is known from
             # another pass/stage of the same shader, reuse it so reads of
             # that (stage, slot) still resolve to real names.
@@ -280,7 +270,7 @@ class ShaderMetadata:
     @staticmethod
     def _unwrap(v, default=None):
         # Unity wraps most scalar render state in
-        # {"m_Name": "...", "m_Value": N} — flatten to just N.
+        # {"m_Name": "...", "m_Value": N} â€” flatten to just N.
         if isinstance(v, dict) and "m_Value" in v:
             return v["m_Value"]
         return v if v is not None else default
@@ -290,7 +280,7 @@ class ShaderMetadata:
         # like m_Culling/m_ZTest/m_ZWrite/m_RtBlend0 (values wrapped as
         # {"m_Value": N}). That's the schema the C# side (HlslRenderstateBuilder)
         # consumes. A few exports use a nested rasterState/depthState shape
-        # instead — fall back to that when the flat keys are absent.
+        # instead â€” fall back to that when the flat keys are absent.
         if not isinstance(state, dict):
             return {}
 
