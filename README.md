@@ -235,6 +235,7 @@ Each subprogram goes through `IRPipeline` (`DXBC/IR/IRPipeline.cs`):
    the matrix, vector, texture, loop, and shader-pattern recognizers.
 9. **Leave SSA** — eliminate phis and coalesce copies.
 10. **Metadata binding** — attach RDEF/ISGN/OSGN symbolic names to the IR.
+    Temporary names retain register identity to avoid collisions.
 11. **AST build** — one function node per subprogram; the
     Shader/SubShader/Pass shell comes from `metadata.json`.
 12. **Pass and variant recovery** — `BuildVariantPasses` groups subprograms
