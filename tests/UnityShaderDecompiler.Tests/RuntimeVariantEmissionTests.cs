@@ -10,6 +10,72 @@ public sealed class RuntimeVariantEmissionTests
 {
     [Fact]
     [Trait("Category", "D3D")]
+    public void DefaultModeKeepsLogAndContinueForAFailedSerializedProgram()
+    {
+        if (!OperatingSystem.IsWindows()) return;
+        using TempDirectory folder = new TempDirectory();
+        List<(ShaderGpuProgramType Stage, byte[] Code)> programs = new List<(ShaderGpuProgramType, byte[])>
+        {
+            (ShaderGpuProgramType.DX11VertexSM40, "DXBC"u8.ToArray()),
+            (ShaderGpuProgramType.DX11PixelSM40, RecompileVerify.CompileHlsl("float4 main():SV_Target { return 1; }", "main", "ps_4_0")),
+        };
+        File.WriteAllBytes(Path.Combine(folder.Path, "blob.bin"), BuildBlob(programs));
+        File.WriteAllText(Path.Combine(folder.Path, "metadata.json"), JsonSerializer.Serialize(new
+        {
+            name = "Test/PartialInput", subShaders = new[] { new { passes = new[] { new
+            {
+                directXPrograms = new[]
+                {
+                    new { blobIndex = 0, stage = "Vertex", keywords = Array.Empty<string>(), keywordMask = Array.Empty<string>() },
+                    new { blobIndex = 1, stage = "Fragment", keywords = Array.Empty<string>(), keywordMask = Array.Empty<string>() },
+                },
+            } } } },
+        }));
+        DecompilationResult result = Decompiler.DecompileFolder(folder.Path, new DecompileOptions { Verbose = false });
+        Assert.Equal(1, Assert.Single(result.Subprograms).Index);
+        Assert.Throws<InvalidDataException>(() => Decompiler.DecompileFolder(folder.Path,
+            new DecompileOptions { RestoreKeywordVariants = true, Verbose = false }));
+    }
+
+    [Fact]
+    [Trait("Category", "D3D")]
+    public void DefaultModeRetainsGeometryProgramsWithSerializedReferences()
+    {
+        if (!OperatingSystem.IsWindows()) return;
+        using TempDirectory folder = new TempDirectory();
+        const string varying = "struct V { float4 position:SV_POSITION; float marker:TEXCOORD0; }; ";
+        List<(ShaderGpuProgramType Stage, byte[] Code)> programs = new List<(ShaderGpuProgramType, byte[])>
+        {
+            (ShaderGpuProgramType.DX11VertexSM40, RecompileVerify.CompileHlsl(varying
+                + "V main(float4 p:POSITION) { V o; o.position=p; o.marker=p.x; return o; }", "main", "vs_4_0")),
+            (ShaderGpuProgramType.DX11GeometrySM40, RecompileVerify.CompileHlsl(varying
+                + "[maxvertexcount(1)] void main(point V input[1], inout PointStream<V> output) { output.Append(input[0]); }", "main", "gs_4_0")),
+            (ShaderGpuProgramType.DX11PixelSM40, RecompileVerify.CompileHlsl(varying
+                + "float4 main(V i):SV_Target { return i.marker; }", "main", "ps_4_0")),
+        };
+        File.WriteAllBytes(Path.Combine(folder.Path, "blob.bin"), BuildBlob(programs));
+        File.WriteAllText(Path.Combine(folder.Path, "metadata.json"), JsonSerializer.Serialize(new
+        {
+            name = "Test/GeometryVariants", subShaders = new[] { new { passes = new[] { new
+            {
+                name = "Geometry", directXPrograms = new[]
+                {
+                    new { blobIndex = 0, stage = "Vertex", keywords = Array.Empty<string>(), keywordMask = Array.Empty<string>() },
+                    new { blobIndex = 1, stage = "Geometry", keywords = Array.Empty<string>(), keywordMask = Array.Empty<string>() },
+                    new { blobIndex = 2, stage = "Fragment", keywords = Array.Empty<string>(), keywordMask = Array.Empty<string>() },
+                },
+            } } } },
+        }));
+        DecompilationResult result = Decompiler.DecompileFolder(folder.Path,
+            new DecompileOptions { Verbose = false, ReconstructSurfaceShaders = false });
+        Assert.Equal(3, result.Subprograms.Count);
+        Assert.NotNull(Assert.Single(result.Passes).GeometryFunction);
+        Assert.NotNull(result.Passes[0].VertexFunction);
+        Assert.NotNull(result.Passes[0].FragmentFunction);
+    }
+
+    [Fact]
+    [Trait("Category", "D3D")]
     public void NativeProgramsKeepTheirPassesAndSelectByKeywords()
     {
         if (!OperatingSystem.IsWindows()) return;

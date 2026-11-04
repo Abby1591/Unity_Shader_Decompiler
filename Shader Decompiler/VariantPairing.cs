@@ -5,6 +5,47 @@ namespace Parser;
 
 internal static class VariantPairing
 {
+    // Expanded passes may contain any serialized graphics stage, not only vertex/fragment.
+    internal static List<ProgramVariantMetadata[]> Group(IReadOnlyList<ProgramVariantMetadata> programs)
+    {
+        string[] stageOrder = { "Vertex", "Hull", "Domain", "Geometry", "Fragment" };
+        if (programs.Count == 0 || programs.Any(program => !stageOrder.Contains(program.Stage)))
+            throw new InvalidDataException("Serialized variants contain an unknown graphics stage.");
+        List<ProgramVariantMetadata[]> groups = new List<ProgramVariantMetadata[]> { Array.Empty<ProgramVariantMetadata>() };
+        foreach (string stageName in stageOrder)
+        {
+            ProgramVariantMetadata[] stage = programs.Where(program => program.Stage == stageName).ToArray();
+            if (stage.Length == 0) continue;
+            foreach (ProgramVariantMetadata program in stage)
+            {
+                if (program.BlobIndex < 0 || program.Keywords.Any(string.IsNullOrWhiteSpace)
+                    || program.KeywordMask.Any(string.IsNullOrWhiteSpace)
+                    || program.Keywords.Distinct(StringComparer.Ordinal).Count() != program.Keywords.Length
+                    || program.KeywordMask.Distinct(StringComparer.Ordinal).Count() != program.KeywordMask.Length
+                    || program.Keywords.Except(program.KeywordMask).Any()
+                    || !program.KeywordMask.ToHashSet(StringComparer.Ordinal).SetEquals(stage[0].KeywordMask))
+                    throw new InvalidDataException("Serialized variants contain invalid or inconsistent stage metadata.");
+            }
+            List<ProgramVariantMetadata[]> next = new List<ProgramVariantMetadata[]>();
+            foreach (ProgramVariantMetadata[] group in groups)
+                foreach (ProgramVariantMetadata candidate in stage)
+                {
+                    bool compatible = group.All(previous =>
+                    {
+                        HashSet<string> shared = previous.KeywordMask.Intersect(candidate.KeywordMask).ToHashSet(StringComparer.Ordinal);
+                        return previous.Keywords.Where(shared.Contains).ToHashSet(StringComparer.Ordinal)
+                            .SetEquals(candidate.Keywords.Where(shared.Contains));
+                    });
+                    if (compatible) next.Add(group.Append(candidate).ToArray());
+                }
+            groups = next;
+        }
+        HashSet<ProgramVariantMetadata> matched = groups.SelectMany(group => group).ToHashSet();
+        if (programs.Any(program => !matched.Contains(program)))
+            throw new InvalidDataException("Serialized shader variants contain an unmatched stage.");
+        return groups.DistinctBy(group => string.Join(",", group.Select(program => program.BlobIndex))).ToList();
+    }
+
     internal static bool InterfacesMatch(IReadOnlyList<SignatureElement> outputs, IReadOnlyList<SignatureElement> inputs)
     {
         // Adjacent DirectX stages share register locations as well as semantics.

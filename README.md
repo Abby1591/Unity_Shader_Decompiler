@@ -239,7 +239,8 @@ Each subprogram goes through `IRPipeline` (`DXBC/IR/IRPipeline.cs`):
     Shader/SubShader/Pass shell comes from `metadata.json`.
 12. **Pass and variant recovery** — use serialized program references when
     available, pairing stages whose enabled keywords agree within their shared
-    keyword masks. Validate stage interfaces; older metadata falls back to
+    keyword masks, including Geometry/Hull/Domain in expanded passes. Validate
+    stage interfaces; older metadata falls back to
     serialization order and signatures. Byte-identical pairs are deduplicated.
 13. **Pretty print** — emit properties, tags, LOD, render state,
     `HLSLPROGRAM` blocks, structs, resources, and function bodies.
