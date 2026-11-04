@@ -1,0 +1,4 @@
+# Preserve upstream sources, importer snapshots, and exports byte-for-byte.
+Source/*.shader -text whitespace=-blank-at-eol
+Imported/*.shader -text whitespace=-blank-at-eol
+Json/*.json -text whitespace=cr-at-eol

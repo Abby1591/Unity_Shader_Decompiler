@@ -1,0 +1,18 @@
+{
+  "repository": "https://github.com/SlightlyMad/VolumetricLights",
+  "commit": "d20b6f9a47ae857e1d313b147db2df3ef44b9196",
+  "unity": "6000.0.75f1",
+  "graphicsApi": "Direct3D11",
+  "exporter": "AssetStudioModCLI 0.20.0.0",
+  "files": {
+    "Source/BilateralBlur.shader": "ed3cd194d27be303e0a648a04685c01622bc02e6cca7d8c3bea27fbc126656bd",
+    "Source/BlitAdd.shader": "d783e52f62494db7ec3ec656d6e90181c65a54a9072bc273f71d185ecd796784",
+    "Source/VolumetricLight.shader": "6aad6c38a4256471d3a4bf1704c3192afb01d66c353540822f624b1173dab973",
+    "Imported/BilateralBlur.shader": "7adff3672a1093c11634b53a7c4d5bf2a33c2c71a19c1c91acc88be431b7a38a",
+    "Imported/BlitAdd.shader": "361f7c1d1af13d8df3751df9d1af484a6d010bc06e65db2635380ea694bc2f0b",
+    "Imported/VolumetricLight.shader": "119aad3a4219cad09ab12b853bae12b049b90a56f7e0bc7340c9edc2bb27438f",
+    "Json/BilateralBlur.json": "af791b0a9655645699825e2a3f40a14828decf6c090a12ae5c666ecaa0472600",
+    "Json/BlitAdd.json": "39a02d21c946dac77ac8d41776b6dd7c2386ae76ee5b818907c442626ee0e177",
+    "Json/VolumetricLight.json": "faaec0af7cc376de79c112dd1658ed586b719ce385bdc821342b1aa2bc630132"
+  }
+}
