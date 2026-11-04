@@ -5,8 +5,10 @@ using UnityShaderDecompiler.Core.DXBC;
 
 namespace UnityShaderDecompiler.Tests;
 
+// Covers native feature info tests.
 public class NativeFeatureInfoTests
 {
+    // Verifies that legacy statistics fields remain available with an explicit availability flag.
     [Fact]
     public void LegacyStatisticsFieldsRemainAvailableWithAnExplicitAvailabilityFlag()
     {
@@ -27,14 +29,20 @@ public class NativeFeatureInfoTests
             "CMaxNumThreadsX", "CMaxNumThreadsY", "CMaxNumThreadsZ",
         };
         foreach (string field in fields)
+        {
             Assert.Equal(typeof(uint), typeof(UnityShaderDecompiler.Core.DXBC.Chunks.Sfi0Chunk).GetField(field)?.FieldType);
+        }
     }
 
+    // Verifies that feature flags match the native compilers eight byte payload.
     [Fact]
     [Trait("Category", "D3D")]
     public void FeatureFlagsMatchTheNativeCompilersEightBytePayload()
     {
-        if (!OperatingSystem.IsWindows()) return;
+        if (!OperatingSystem.IsWindows())
+        {
+            return;
+        }
 
         const string source = "float main(float x : TEXCOORD) : SV_Target "
             + "{ double value = (double)x; return (float)(value * value); }";

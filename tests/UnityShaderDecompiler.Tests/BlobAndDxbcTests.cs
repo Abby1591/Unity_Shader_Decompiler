@@ -224,6 +224,7 @@ public class BlobAndDxbcTests
         Assert.Empty(file.UnknownChunks);
     }
 
+    // Verifies that SFI0 chunk rejects invalid length.
     [Fact]
     public void Sfi0Chunk_RejectsInvalidLength()
     {
