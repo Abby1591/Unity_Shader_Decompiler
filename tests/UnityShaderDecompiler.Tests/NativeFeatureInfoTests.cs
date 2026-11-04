@@ -8,6 +8,29 @@ namespace UnityShaderDecompiler.Tests;
 public class NativeFeatureInfoTests
 {
     [Fact]
+    public void LegacyStatisticsFieldsRemainAvailableWithAnExplicitAvailabilityFlag()
+    {
+        using MemoryStream stream = new MemoryStream(BitConverter.GetBytes(1UL));
+        using BinaryReader reader = new BinaryReader(stream);
+        Parser.DXBC.Chunks.Sfi0Chunk chunk = new Parser.DXBC.Chunks.Sfi0Chunk();
+        chunk.Read(reader);
+        Assert.Equal(1UL, chunk.FeatureFlags);
+        Assert.False(chunk.HasLegacyStatistics);
+        string[] fields =
+        {
+            "InputPrimitive", "OutputPrimitive", "MaxInputSignatureRegisterCount", "MaxOutputSignatureRegisterCount",
+            "MaxInputPatchConstantSignatureRegisterCount", "MaxOutputPatchCount", "PatchConstantPrimitive",
+            "CTemps", "CIndexableTemp", "CGsInstanceCount", "CControlPoints", "COutputControlPoints", "CTgsm",
+            "CInputGsInstanceCount", "COutputs", "CInputs", "CPatchConst", "CNumThreadsX", "CNumThreadsY", "CNumThreadsZ",
+            "CGsOutputTopology", "CInputPrimitive", "CMaxOutputVertices", "COutputTopology", "CMaxTemp", "CMaxOutputPatchCount",
+            "CMaxGsInstanceCount", "CMaxIndexableTemp", "CMaxInputGsInstanceCount", "CMaxOutputs", "CMaxInputs", "CMaxPatchConst",
+            "CMaxNumThreadsX", "CMaxNumThreadsY", "CMaxNumThreadsZ",
+        };
+        foreach (string field in fields)
+            Assert.Equal(typeof(uint), typeof(Parser.DXBC.Chunks.Sfi0Chunk).GetField(field)?.FieldType);
+    }
+
+    [Fact]
     [Trait("Category", "D3D")]
     public void FeatureFlagsMatchTheNativeCompilersEightBytePayload()
     {
