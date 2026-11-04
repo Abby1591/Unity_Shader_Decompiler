@@ -237,10 +237,10 @@ Each subprogram goes through `IRPipeline` (`DXBC/IR/IRPipeline.cs`):
 10. **Metadata binding** — attach RDEF/ISGN/OSGN symbolic names to the IR.
 11. **AST build** — one function node per subprogram; the
     Shader/SubShader/Pass shell comes from `metadata.json`.
-12. **Pass and variant recovery** — `BuildVariantPasses` groups subprograms
-    into passes. Unity serializes them pass-by-pass, so a stage regression
-    marks a pass boundary. Vertex and fragment variants are paired by
-    interpolator hand-off signature, and byte-identical pairs are deduplicated.
+12. **Pass and variant recovery** — use serialized program references when
+    available, pairing stages whose enabled keywords agree within their shared
+    keyword masks. Validate stage interfaces; older metadata falls back to
+    serialization order and signatures. Byte-identical pairs are deduplicated.
 13. **Pretty print** — emit properties, tags, LOD, render state,
     `HLSLPROGRAM` blocks, structs, resources, and function bodies.
 14. **Surface-shader recognition** — rewrite a pass to `#pragma surface` form
@@ -318,6 +318,8 @@ root, prefixing each with
 - Vertex and fragment stages are fully reconstructed. Hull, geometry, domain,
   and compute programs are parsed and IR-built, but the AST/emit path mainly
   targets vertex/fragment; other stages attach by serialization order.
+- Compatible keyword variants are emitted as separate passes. Runtime keyword
+  selection is not implemented.
 - Surface-shader rewrites are gated on recompiled signature matches. Passes
   that do not match are emitted as HLSLPROGRAM.
 - Passes declared in metadata with no compiled DX11 variants in the blob are
