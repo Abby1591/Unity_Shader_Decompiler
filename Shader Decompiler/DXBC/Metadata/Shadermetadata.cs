@@ -121,6 +121,12 @@ public sealed class ShaderProperty
 
     private static float[] ParseDefaultComponents(JsonElement el)
     {
+        if (el.TryGetProperty("type", out JsonElement propertyType) && propertyType.ToString() == "5"
+            && (!el.TryGetProperty("defaultValue", out JsonElement integerDefault)
+                || integerDefault.ValueKind != JsonValueKind.Object
+                || !integerDefault.TryGetProperty("x", out JsonElement integerBits)
+                || integerBits.ValueKind != JsonValueKind.Number))
+            throw new InvalidDataException("Integer property requires a numeric serialized default.");
         if (!el.TryGetProperty("defaultValue", out var dv) || dv.ValueKind != JsonValueKind.Object)
             return Array.Empty<float>();
 
