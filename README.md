@@ -231,6 +231,7 @@ Each subprogram goes through `IRPipeline` (`DXBC/IR/IRPipeline.cs`):
    motion, sparse conditional constant propagation) plus a CFG inner loop
    (branch simplification, CFG cleanup, phi simplification), up to 50
    iterations.
+   Vector casts and dot products retain the required component widths.
 8. **Pattern recognition** — fold shader idioms back into high-level IR with
    the matrix, vector, texture, loop, and shader-pattern recognizers.
 9. **Leave SSA** — eliminate phis and coalesce copies.
