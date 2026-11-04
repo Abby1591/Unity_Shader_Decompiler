@@ -1126,8 +1126,9 @@ internal static class HlslMathSimplify
                 {
                     string swz = dotA[(dotIdx + 1)..];
                     string baseName = dotA[..dotIdx];
-                    normDims = swz.Distinct().Count();
-                    vec = baseName;
+                    string lanes = new(swz.Distinct().ToArray());
+                    normDims = lanes.Length;
+                    vec = $"{baseName}.{lanes}";
                 }
                 else
                 {

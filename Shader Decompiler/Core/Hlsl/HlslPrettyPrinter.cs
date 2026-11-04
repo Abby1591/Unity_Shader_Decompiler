@@ -2458,7 +2458,7 @@ public static class HlslPrettyPrinter
         IRExpression.BinaryExpression b => $"({RenderExpression(b.Left, ctx)} {BinaryOpText(b.Operation)} {RenderExpression(b.Right, ctx)})",
         IRExpression.UnaryExpression u => RenderUnary(u, ctx),
         IRExpression.ConditionalExpression c => $"({RenderExpression(c.Condition, ctx)} ? {RenderExpression(c.TrueExpression, ctx)} : {RenderExpression(c.FalseExpression, ctx)})",
-        IRExpression.DotProductExpression d => $"dot({RenderExpression(d.Left, ctx)}, {RenderExpression(d.Right, ctx)})",
+        IRExpression.DotProductExpression d => RenderDotProduct(d, ctx),
         IRExpression.SwizzleExpression s => RenderSwizzle(s, ctx),
         IRExpression.RegisterExpression r => RenderRegisterRead(r.Register, ctx),
         IRExpression.ConstantExpression => expr.ToString()!,
@@ -2507,6 +2507,14 @@ public static class HlslPrettyPrinter
             if (components[i] != i)
                 return false;
         return true;
+    }
+
+    private static string RenderDotProduct(IRExpression.DotProductExpression dot, PrintContext ctx)
+    {
+        if (dot.Components is < 2 or > 4)
+            throw new InvalidOperationException($"Unsupported dot-product width: {dot.Components}");
+        string lanes = "xyzw"[..dot.Components];
+        return $"dot(({RenderExpression(dot.Left, ctx)}).{lanes}, ({RenderExpression(dot.Right, ctx)}).{lanes})";
     }
 
     private static string RenderUnary(IRExpression.UnaryExpression u, PrintContext ctx) => u.Operation switch
@@ -2594,11 +2602,17 @@ public static class HlslPrettyPrinter
         // Casts use C-style cast syntax, not a function call.
         switch (expr.Intrinsic)
         {
-            case IRExpression.IRIntrinsic.CastFloat: return $"(float)({Arg(0)})";
-            case IRExpression.IRIntrinsic.CastInt: return $"(int)({Arg(0)})";
-            case IRExpression.IRIntrinsic.CastUInt: return $"(uint)({Arg(0)})";
-            case IRExpression.IRIntrinsic.CastDouble: return $"(double)({Arg(0)})";
-            case IRExpression.IRIntrinsic.CastBool: return $"(bool)({Arg(0)})";
+            case IRExpression.IRIntrinsic.CastFloat: return $"({CastType("float")})({Arg(0)})";
+            case IRExpression.IRIntrinsic.CastInt: return $"({CastType("int")})({Arg(0)})";
+            case IRExpression.IRIntrinsic.CastUInt: return $"({CastType("uint")})({Arg(0)})";
+            case IRExpression.IRIntrinsic.CastDouble: return $"({CastType("double")})({Arg(0)})";
+            case IRExpression.IRIntrinsic.CastBool: return $"({CastType("bool")})({Arg(0)})";
+        }
+
+        string CastType(string scalar)
+        {
+            int width = ExpressionWidth(expr.Arguments[0], ctx);
+            return width <= 1 ? scalar : $"{scalar}{width}";
         }
 
         string? name = expr.Intrinsic switch
