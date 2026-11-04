@@ -40,6 +40,16 @@ class ShaderMetadata:
     # -- helpers --
 
     @staticmethod
+    def _parameter_offset(parameter):
+        # Unity renamed this field; AssetRipper also normalizes older exports.
+        field = "m_OffsetInConstantBuffer" if "m_OffsetInConstantBuffer" in parameter else "m_Index"
+        offset = parameter.get(field)
+        if type(offset) is not int or offset < 0 or offset % 4:
+            raise ValueError(
+                f"Invalid or missing constant-buffer byte offset for parameter {parameter.get('m_NameIndex')}: {offset!r}")
+        return offset
+
+    @staticmethod
     def _get(d, key, default=None):
         return d.get(key, default) if isinstance(d, dict) else default
 
@@ -107,7 +117,7 @@ class ShaderMetadata:
                     for v in b.get("m_VectorParams", []) or []:
                         entry = {
                             "name": index_to_name.get(v.get("m_NameIndex"), ""),
-                            "offset": v.get("m_Index", 0),
+                            "offset": ShaderMetadata._parameter_offset(v),
                             "dim": v.get("m_Dim", 0),
                             "arraySize": v.get("m_ArraySize", 0),
                         }
@@ -117,7 +127,7 @@ class ShaderMetadata:
                     for m in b.get("m_MatrixParams", []) or []:
                         entry = {
                             "name": index_to_name.get(m.get("m_NameIndex"), ""),
-                            "offset": m.get("m_Index", 0),
+                            "offset": ShaderMetadata._parameter_offset(m),
                             "rowCount": m.get("m_RowCount", 0),
                             "arraySize": m.get("m_ArraySize", 0),
                             "isMatrix": True,
@@ -211,14 +221,14 @@ class ShaderMetadata:
                 for v in b.get("m_VectorParams", []) or []:
                     cb["variables"].append({
                         "name": index_to_name.get(v.get("m_NameIndex"), ""),
-                        "offset": v.get("m_Index", 0),
+                        "offset": ShaderMetadata._parameter_offset(v),
                         "dim": v.get("m_Dim", 0),
                         "arraySize": v.get("m_ArraySize", 0),
                     })
                 for m in b.get("m_MatrixParams", []) or []:
                     cb["variables"].append({
                         "name": index_to_name.get(m.get("m_NameIndex"), ""),
-                        "offset": m.get("m_Index", 0),
+                        "offset": ShaderMetadata._parameter_offset(m),
                         "rowCount": m.get("m_RowCount", 0),
                         "arraySize": m.get("m_ArraySize", 0),
                         "isMatrix": True,
