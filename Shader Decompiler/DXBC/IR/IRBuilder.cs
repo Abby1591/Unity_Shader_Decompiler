@@ -4,6 +4,9 @@ namespace Parser.DXBC.IR;
 
 public partial class IRBuilder
 {
+    private readonly bool _preserveRegisterBits;
+
+    public IRBuilder(bool preserveRegisterBits = false) => _preserveRegisterBits = preserveRegisterBits;
     private readonly Dictionary<(RegisterType Type, uint Index), IRValueType> _registerTypes = new();
     
     public IRProgram Build(ShdrParser parser)
@@ -483,10 +486,7 @@ public partial class IRBuilder
             };
         }
 
-        return new IRExpression.RegisterExpression
-        {
-            Register = BuildRegister(operand)
-        };
+        return TypedRead(operand, IRExpression.IRIntrinsic.AsFloat);
     }
 
     private IRExpression BuildIntExpression(Operand operand)
@@ -500,10 +500,7 @@ public partial class IRBuilder
             };
         }
 
-        return new IRExpression.RegisterExpression
-        {
-            Register = BuildRegister(operand)
-        };
+        return TypedRead(operand, IRExpression.IRIntrinsic.AsInt);
     }
 
     private IRExpression BuildUIntExpression(Operand operand)
@@ -517,11 +514,32 @@ public partial class IRBuilder
             };
         }
 
-        return new IRExpression.RegisterExpression
-        {
-            Register = BuildRegister(operand)
-        };
+        return TypedRead(operand, IRExpression.IRIntrinsic.AsUInt);
     }
+
+    private IRExpression TypedRead(Operand operand, IRExpression.IRIntrinsic interpretation)
+    {
+        IRRegister register = BuildRegister(operand);
+        IRExpression value = new IRExpression.RegisterExpression { Register = register };
+        if (!_preserveRegisterBits) return value;
+        ShdrParser.OperandModifier modifier = register.Modifier;
+        register.Modifier = ShdrParser.OperandModifier.None;
+        value = new IRExpression.IntrinsicExpression { Intrinsic = interpretation, Arguments = { value } };
+        // Integer negation is two's complement, not a float sign-bit flip.
+        if (modifier is ShdrParser.OperandModifier.Abs or ShdrParser.OperandModifier.AbsNeg)
+            value = new IRExpression.UnaryExpression { Operation = IRExpression.UnaryExpression.UnaryOperation.Absolute, Operand = value };
+        if (modifier is ShdrParser.OperandModifier.Neg or ShdrParser.OperandModifier.AbsNeg)
+            value = new IRExpression.UnaryExpression { Operation = IRExpression.UnaryExpression.UnaryOperation.Negate, Operand = value };
+        return value;
+    }
+
+    private IRExpression BuildRawExpression(Operand operand) => operand.RegisterType == RegisterType.Immediate32
+        ? BuildUIntExpression(operand)
+        : new IRExpression.IntrinsicExpression
+        {
+            Intrinsic = IRExpression.IRIntrinsic.AsUInt,
+            Arguments = { BuildExpression(operand) },
+        };
 
     private IRExpression BuildDoubleExpression(Operand operand)
     {
@@ -542,7 +560,7 @@ public partial class IRBuilder
     
     private IRExpression BuildBoolExpression(Operand operand)
     {
-        IRExpression expression = BuildExpression(operand);
+        IRExpression expression = _preserveRegisterBits ? BuildUIntExpression(operand) : BuildExpression(operand);
 
         if (expression.Type == IRValueType.Bool)
             return expression;

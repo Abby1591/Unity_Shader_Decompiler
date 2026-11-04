@@ -221,7 +221,7 @@ public static class Decompiler
                     log.WriteLine($"Saved: {dxbcPath}");
                 }
 
-                IRPipeline.Result pipelineResult = IRPipeline.Run(dxbcFile, options.DumpStages);
+                IRPipeline.Result pipelineResult = IRPipeline.Run(dxbcFile, options.DumpStages, preserveArithmetic: !options.FuseTemps);
 
                 if (options.DumpStages)
                 {
@@ -314,6 +314,7 @@ public static class Decompiler
                 }
                 else
                 {
+                    function.RawTemporaryStorage = !options.FuseTemps;
                     candidates.Add(new DecompiledSubprogram
                     {
                         Index = i,

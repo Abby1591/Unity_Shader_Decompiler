@@ -8,7 +8,8 @@ public partial class IRBuilder
 
     private void BuildMov(IRProgram program, Instruction instruction)
     {
-        Emit(program, instruction, BuildExpression(instruction.Operands[1]));
+        Emit(program, instruction, _preserveRegisterBits
+            ? BuildRawExpression(instruction.Operands[1]) : BuildExpression(instruction.Operands[1]));
     }
 
     private void BuildMovC(IRProgram program, Instruction instruction)
@@ -17,8 +18,8 @@ public partial class IRBuilder
             new IRExpression.ConditionalExpression
             {
                 Condition = BuildBoolExpression(instruction.Operands[1]),
-                TrueExpression = BuildExpression(instruction.Operands[2]),
-                FalseExpression = BuildExpression(instruction.Operands[3])
+                TrueExpression = _preserveRegisterBits ? BuildRawExpression(instruction.Operands[2]) : BuildExpression(instruction.Operands[2]),
+                FalseExpression = _preserveRegisterBits ? BuildRawExpression(instruction.Operands[3]) : BuildExpression(instruction.Operands[3])
             };
 
         Emit(program, instruction, expression);

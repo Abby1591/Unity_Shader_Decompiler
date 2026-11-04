@@ -564,6 +564,9 @@ public static class HlslPrettyPrinter
         // used to render RDEF-less cbN[slot] reads as real variable names.
         public Dictionary<int, CbufferMetadata> Cbuffers { get; set; } = new();
 
+        public bool PreserveArithmetic { get; init; }
+        public bool RawTemporaryStorage { get; init; }
+
         // Identifier each defining instruction actually declared for a
         // value, keyed by the value's structural identity (storage location
         // + SSA version), NOT by its rendered name string. Reads resolve
@@ -648,6 +651,8 @@ public static class HlslPrettyPrinter
         {
             Cbuffers = cbuffers,
             Stage = fn.Stage,
+            PreserveArithmetic = !fuseTemps,
+            RawTemporaryStorage = fn.RawTemporaryStorage,
             InputElements = fn.InputElementsByRegister,
             OutputElements = fn.OutputElementsByRegister,
         };
@@ -690,7 +695,7 @@ public static class HlslPrettyPrinter
         // multiplies (CollapseMatrixMul), then common math idioms (normalize,
         // dot, lerp, vector-by-matrix mul) simplify. Must run after
         // PrintBlock so every use in the body is visible.
-        sb.Append(HlslMathSimplify.Simplify(body.ToString()));
+        sb.Append(fuseTemps ? HlslMathSimplify.Simplify(body.ToString()) : body.ToString());
         sb.Append("            }\n");
     }
 
@@ -732,7 +737,9 @@ public static class HlslPrettyPrinter
                 for (int k = i; k < j; k++)
                     lines.AddRange(RenderStatementLines(stmts[k], ctx));
 
-                foreach (string line in CollapseExtractChains(RevertUnityMacros(lines, ctx), ctx))
+                foreach (string line in ctx.PreserveArithmetic
+                    ? lines
+                    : CollapseExtractChains(RevertUnityMacros(lines, ctx), ctx))
                     sb.Append(pad).Append(line).Append('\n');
                 i = j;
             }
@@ -1485,7 +1492,7 @@ public static class HlslPrettyPrinter
                 {
                     if (!ctx.Declared.Add(name))
                         continue; // already in scope — don't redeclare
-                    sb.Append(pad).Append(DeclType(comps)).Append(' ').Append(name).Append(";\n");
+                    sb.Append(pad).Append(DeclType(comps, ctx)).Append(' ').Append(name).Append(";\n");
                 }
 
                 sb.Append(pad).Append("if (").Append(RenderExpression(iff.Condition, ctx)).Append(")\n");
@@ -1516,7 +1523,7 @@ public static class HlslPrettyPrinter
                 {
                     if (!ctx.Declared.Add(name))
                         continue; // already in scope — don't redeclare
-                    sb.Append(pad).Append(DeclType(comps)).Append(' ').Append(name).Append(";\n");
+                    sb.Append(pad).Append(DeclType(comps, ctx)).Append(' ').Append(name).Append(";\n");
                 }
 
                 sb.Append(pad).Append("[loop]\n").Append(pad).Append("while (true)\n").Append(pad).Append("{\n");
@@ -1847,7 +1854,7 @@ public static class HlslPrettyPrinter
                 : $"{firstName}.{readLetters}";
         }
 
-        return $"float{active.Count}({string.Join(", ", resolved.Select(r => ComponentView(r.Name, r.Active, r.Comp)))})";
+        return $"{DeclType(active.Count, ctx)}({string.Join(", ", resolved.Select(r => ComponentView(r.Name, r.Active, r.Comp)))})";
     }
 
     // Renders one component of a declared name: a scalar declaration
@@ -1934,6 +1941,8 @@ public static class HlslPrettyPrinter
                 BaseIdentifier(reg, ctx) + MaskOrSwizzleSuffix(reg),
         };
 
+        if (ctx.RawTemporaryStorage && reg.RegisterType is RegisterType.Temp or RegisterType.IndexableTemp)
+            rendered = $"asfloat({rendered})";
         return ApplyRegisterModifier(reg.Modifier, rendered);
     }
 
@@ -2055,25 +2064,33 @@ public static class HlslPrettyPrinter
             if (groups.Count == 1 && groups[0].Positions.Count == active.Count)
             {
                 var (el, pos) = groups[0];
-                yield return $"o.{ElementFieldName(el)}{ElementLocalSuffix(el, pos)} = {rhs};";
+                yield return $"o.{ElementFieldName(el)}{ElementLocalSuffix(el, pos)} = {OutputValue(rhs, el, ctx)};";
             }
             else if (groups.Count > 1)
             {
                 foreach ((SignatureElement el, List<int> pos) in groups)
                 {
                     string slice = string.Concat(pos.Select(p => ComponentLetters[p]));
-                    yield return $"o.{ElementFieldName(el)}{ElementLocalSuffix(el, pos)} = ({rawRhs}).{slice};";
+                    yield return $"o.{ElementFieldName(el)}{ElementLocalSuffix(el, pos)} = {OutputValue($"({rawRhs}).{slice}", el, ctx)};";
                 }
             }
             else
             {
-                yield return $"o.{FieldNameFor(dest, ctx)}{MaskOrSwizzleSuffix(dest)} = {rhs};";
+                yield return $"o.{FieldNameFor(dest, ctx)}{MaskOrSwizzleSuffix(dest)} = {OutputValue(rhs, null, ctx)};";
             }
             yield break;
         }
 
-        yield return $"o.{FieldNameFor(dest, ctx)}{MaskOrSwizzleSuffix(dest)} = {rhs};";
+        yield return $"o.{FieldNameFor(dest, ctx)}{MaskOrSwizzleSuffix(dest)} = {OutputValue(rhs, elements?.FirstOrDefault(), ctx)};";
     }
+
+    private static string OutputValue(string bits, SignatureElement? element, PrintContext ctx) =>
+        !ctx.RawTemporaryStorage ? bits : element?.ComponentType switch
+        {
+            1 => bits,
+            2 => $"asint({bits})",
+            _ => $"asfloat({bits})",
+        };
 
     // Emits one or more statement lines for a single destination write.
     // Multiple lines only happen when the written components have
@@ -2133,12 +2150,14 @@ public static class HlslPrettyPrinter
                         continue;
                     string scalar = ScalarIdentifier(src, c, ctx);
                     if (ctx.Declared.Add(scalar))
-                        yield return $"float {scalar};";
+                        yield return $"{DeclType(1, ctx)} {scalar};";
                 }
             }
         }
 
         string rawRhs = RenderExpression(expr, ctx);
+        if (ctx.RawTemporaryStorage && dest.RegisterType is RegisterType.Temp or RegisterType.IndexableTemp or RegisterType.Output)
+            rawRhs = EncodeRegisterBits(rawRhs, expr);
 
         // DXBC computes full-lane expressions (the source operand's 4-wide
         // swizzle) regardless of how many components the destination
@@ -2177,7 +2196,7 @@ public static class HlslPrettyPrinter
                     ctx.DeclaredViews[(LocationOf(dest, c), vv)] = (name, active);
 
             yield return ctx.Declared.Add(name)
-                ? $"{DeclType(active.Count)} {name} = {rhs};"
+                ? $"{DeclType(active.Count, ctx)} {name} = {rhs};"
                 : $"{name} = {rhs};";
             yield break;
         }
@@ -2194,8 +2213,11 @@ public static class HlslPrettyPrinter
             string scalarName = ScalarIdentifier(dest, c, ctx);
             if (dest.SsaVersion[c] is { } v)
                 ctx.DeclaredViews[(LocationOf(dest, c), v)] = (scalarName, new List<int> { c });
-            string line = $"{scalarName} = {ExtractComponent(expr, c, ctx)};";
-            yield return ctx.Declared.Add(scalarName) ? $"float {line}" : line;
+            string component = ExtractComponent(expr, c, ctx);
+            if (ctx.RawTemporaryStorage)
+                component = EncodeRegisterBits(component, expr);
+            string line = $"{scalarName} = {component};";
+            yield return ctx.Declared.Add(scalarName) ? $"{DeclType(1, ctx)} {line}" : line;
         }
     }
 
@@ -2228,12 +2250,25 @@ public static class HlslPrettyPrinter
                 Operand.OperandComponentMode.Select1 => r.Component,
                 _ => pos,
             };
-            return ResolveComponent(r, source, ctx);
+            string value = ResolveComponent(r, source, ctx);
+            return ctx.RawTemporaryStorage ? $"asfloat({value})" : value;
         }
         return $"({RenderExpression(expr, ctx)}).{ComponentLetters[component]}";
     }
 
-    private static string DeclType(int componentCount) => componentCount == 1 ? "float" : $"float{componentCount}";
+    private static string DeclType(int componentCount, PrintContext ctx)
+    {
+        string type = ctx.RawTemporaryStorage ? "uint" : "float";
+        return componentCount == 1 ? type : $"{type}{componentCount}";
+    }
+
+    private static string EncodeRegisterBits(string value, IRExpression expression) => expression switch
+    {
+        IRExpression.RegisterExpression => $"asuint({value})",
+        _ when expression.Type == IRValueType.Bool => $"(({value}) ? 0xffffffffu : 0u)",
+        _ when expression.Type == IRValueType.UInt => value,
+        _ => $"asuint({value})",
+    };
 
     // HLSL (like C) won't assign a wide vector into a narrower L-value, but
     // DXBC's per-lane semantics mean the RHS expression naturally renders at
@@ -2550,6 +2585,8 @@ public static class HlslPrettyPrinter
 
     private static string RenderBitwise(IRExpression.BinaryExpression b, PrintContext ctx)
     {
+        if (ctx.RawTemporaryStorage)
+            return $"({RenderExpression(b.Left, ctx)} {BinaryOpText(b.Operation)} {RenderExpression(b.Right, ctx)})";
         string Op(IRExpression side)
         {
             string s = RenderExpression(side, ctx);
@@ -2590,6 +2627,11 @@ public static class HlslPrettyPrinter
     {
         string Arg(int n) => RenderExpression(expr.Arguments[n], ctx);
         string AllArgs() => string.Join(", ", expr.Arguments.Select(a => RenderExpression(a, ctx)));
+
+        // fxc folds frac(x + integer) even with /Gis, losing the add's rounding.
+        // Use the DXBC definition of frc to retain that dependency.
+        if (ctx.RawTemporaryStorage && expr.Intrinsic == IRExpression.IRIntrinsic.FractionalPart)
+            return $"({Arg(0)} - floor({Arg(0)}))";
 
         // Casts use C-style cast syntax, not a function call.
         switch (expr.Intrinsic)
