@@ -190,8 +190,6 @@ and spaces are stripped).
 | `--recompile-verify-all [dir]` | Aggregate recompile verification over every decompiled `.shader` in `dir` |
 | `--disasm [dir]` | Dump DXBC disassembly for every non-compute subprogram into sibling `<name>.disasm.txt` files |
 
-`--fail-on-error` is strict: an export containing unsupported non-DXBC programs also fails when the parser cannot read them.
-
 </details>
 
 ## How it works
