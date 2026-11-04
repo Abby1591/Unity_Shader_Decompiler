@@ -6,4 +6,6 @@ Read `m_OffsetInConstantBuffer` when present and legacy `m_Index` otherwise. Ass
 
 Validation: ten generic Python tests and all four existing PicaVoxel extraction/decompilation tests pass. Two additional local shaders were exported directly from the same game bundle with AssetStudioMod CLI v0.20.0 and AssetRipper: decompressed blobs and extracted metadata match across exporters. Those external fixtures are not included in this PR.
 
+With the separate emitter fixes combined, both shaders produce identical ShaderLab/HLSL/DXBC from either exporter. All four outputs pass native recompilation and deterministic DXBC execution comparisons, including serialized constant inputs. These finite interpreter checks are not GPU-rendering equivalence proofs.
+
 All 51 baseline C# tests pass with an en-US default culture. The unchanged golden test fails under fr-FR on upstream because of decimal separators; the numeric-formatting PR fixes that independently. No existing assertions or golden files are changed here.
