@@ -1,9 +1,9 @@
-# Preserve structured resource strides and load offsets
+# Preserve register bits and structured-buffer loads
 
-Structured loads previously combined the element index with a byte offset and assumed a fixed element layout. Preserve the declared stride, the byte offset and the resource swizzle independently; reject unaligned or out-of-range accesses.
+Float temporary storage can corrupt integer moves and structured-buffer results. With `--no-fuse-temps`, preserve raw uint storage, typed reads and outputs, full-bit comparison masks and integer source modifiers. Keep arithmetic rewrites from removing the addition before fractional-part evaluation.
 
-Depends on #7 (`fix/raw-register-semantics`), now included in this branch. Native tests exposed numeric float-to-integer conversions in the standalone version: raw register transport is required to preserve integer output bits. Review the structured-load changes against that branch, and merge #7 first.
+Structured loads preserve element stride, byte offset and resource swizzle independently. These changes belong together because correct addressing alone still loses integer output bits without raw register transport. Structured loads require `--no-fuse-temps`; fused mode, dynamic offsets and unaligned or out-of-range accesses fail explicitly. This PR includes the former #7; no separate dependency remains.
 
-Three native round trips cover float, uint and int outputs, a 32-byte stride, a nonzero member offset, swizzling and two elements. A restricted bytecode evaluator checks exact words, including NaN payloads, subnormals and signed zero; unexpected conversions fail. The integer cases fail without #7 and pass with it. Structured loads require `--no-fuse-temps`; fused mode now fails explicitly instead of risking numeric conversion. All three native cases verify that rejection as well as the successful bit-preserving path. These checks do not prove GPU execution equivalence.
+Native round trips cover signed/unsigned `mov` and `movc`, plus float/uint/int structured loads with stride, offset and swizzle. A restricted bytecode evaluator checks exact output words, including NaN payloads, subnormals and signed zero, and rejects unexpected operations. Regression checks also verify rejection of fused structured loads. These are compiler/bytecode checks, not GPU execution tests.
 
-Validation: 65 C# tests and all four PicaVoxel end-to-end cases pass on Windows. The isolated suite uses en-US because upstream's fr-FR golden-output failure is addressed separately in #5.
+Validation: 65 C# tests and all four PicaVoxel end-to-end cases pass on Windows. The isolated suite uses en-US because upstream's fr-FR golden-output failure is addressed separately in #5. The README documents both raw register preservation and the structured-load restriction.
