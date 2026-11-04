@@ -1,6 +1,6 @@
-using Parser.DXBC;
-using Parser.DXBC.Instructions;
-using Parser.DXBC.IR;
+using UnityShaderDecompiler.Core.DXBC;
+using UnityShaderDecompiler.Core.DXBC.Instructions;
+using UnityShaderDecompiler.Core.DXBC.IR;
 
 namespace UnityShaderDecompiler.Tests;
 

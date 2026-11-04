@@ -1,11 +1,11 @@
 using System;
 using System.Linq;
-using Parser.Core.Hlsl;
-using Parser.Core.Hlsl.Ast;
-using Parser.Core.Analysis;
-using Parser.Core.Optimizations;
-using Parser.DXBC.Instructions;
-using Parser.DXBC.IR;
+using UnityShaderDecompiler.Core.Hlsl;
+using UnityShaderDecompiler.Core.Hlsl.Ast;
+using UnityShaderDecompiler.Core.Analysis;
+using UnityShaderDecompiler.Core.Optimizations;
+using UnityShaderDecompiler.Core.DXBC.Instructions;
+using UnityShaderDecompiler.Core.DXBC.IR;
 using Xunit;
 
 namespace UnityShaderDecompiler.Tests;
@@ -25,10 +25,10 @@ public sealed class StructuredBufferLoadsTests
             $"StructuredBuffer<Element> data : register(t7); " +
             $"{type}4 main(nointerpolation uint index : TEXCOORD0) : SV_Target " +
             "{ return data[index].value.zxyw; }";
-        Parser.DXBC.DxbcFile original = RegisterRoundTrip.Compile(source);
+        UnityShaderDecompiler.Core.DXBC.DxbcFile original = RegisterRoundTrip.Compile(source);
         Assert.Contains(original.Shader!.Instructions, instruction => instruction.Opcode == Opcode.LdStructured);
-        Parser.DXBC.DxbcFile defaultRebuilt = RegisterRoundTrip.Recompile(original, fuseTemps: true);
-        Parser.DXBC.DxbcFile rebuilt = RegisterRoundTrip.Recompile(original);
+        UnityShaderDecompiler.Core.DXBC.DxbcFile defaultRebuilt = RegisterRoundTrip.Recompile(original, fuseTemps: true);
+        UnityShaderDecompiler.Core.DXBC.DxbcFile rebuilt = RegisterRoundTrip.Recompile(original);
         Assert.Equal(original.OutputSignature!.Elements[0].ComponentType,
             rebuilt.OutputSignature!.Elements[0].ComponentType);
         uint[] words = {

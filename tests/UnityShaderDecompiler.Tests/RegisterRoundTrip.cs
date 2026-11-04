@@ -3,12 +3,12 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text.RegularExpressions;
 using AssetStudio;
-using Parser;
-using Parser.Core.Hlsl;
-using Parser.Core.Hlsl.Ast;
-using Parser.DXBC;
-using Parser.DXBC.Instructions;
-using Parser.DXBC.IR;
+using UnityShaderDecompiler.Core;
+using UnityShaderDecompiler.Core.Hlsl;
+using UnityShaderDecompiler.Core.Hlsl.Ast;
+using UnityShaderDecompiler.Core.DXBC;
+using UnityShaderDecompiler.Core.DXBC.Instructions;
+using UnityShaderDecompiler.Core.DXBC.IR;
 using Xunit;
 
 namespace UnityShaderDecompiler.Tests;
@@ -18,7 +18,7 @@ internal static class RegisterRoundTrip
     internal static DxbcFile Compile(string source, string entry = "main")
     {
         DxbcFile file = new DxbcFile();
-        file.Load(RecompileVerify.CompileHlsl(source, entry, "ps_5_0"));
+        file.Load(UnityShaderDecompiler.Core.DXBC.Compilation.DxbcCompiler.Compile(source, entry, "ps_5_0"));
         return file;
     }
 

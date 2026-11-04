@@ -11,3 +11,5 @@ Saturated moves clamp the floating-point value before storing its bits. Integer 
 Native round trips cover signed/unsigned moves, saturation and low-bit selection, plus float/uint/int structured loads with stride, offset and swizzle. A restricted bytecode evaluator checks exact output words, including NaN payloads, subnormals and signed zero, and rejects unexpected operations. The saturation regression fails with the former implementation and passes with the fix. These are compiler/bytecode checks, not GPU execution tests.
 
 Validation: 72 C# tests and all four PicaVoxel cases pass on Windows. New regressions fail before the compatibility fix and pass afterward, covering default options, dynamic offsets and the old API. Isolated C# tests use en-US; the upstream fr-FR golden-output failure is addressed separately in #5.
+
+Upstream sync: merged `417f26b` (Core/Cli split and namespace rename). Adapted regression tests to the new layout and shared DXBC compiler; no test assertions were relaxed.

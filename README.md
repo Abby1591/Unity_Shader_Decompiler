@@ -65,12 +65,13 @@ program6Output frag(program6Input i)
 ```
 
 Thirty-nine complete examples are checked in under
-[`Shader Decompiler/Output/`](Shader%20Decompiler/Output).
+[`samples/`](samples).
 
 ## Builds
 
 - **CI** runs on every push and pull request. It builds on Windows, Linux, and
-  macOS and runs the offline spec tests, but does not publish binaries.
+  macOS, runs the fast regression tier and the offline spec tests, but does not
+  publish binaries.
 - **Nightly** runs at 03:00 UTC and publishes
   `UnityShaderDecompiler-nightly-<date>-<os>` artifacts only when `master`
   received a commit in the previous 24 hours. It can also be triggered manually
@@ -91,7 +92,7 @@ compiler.
 The only NuGet dependency is
 [`Vortice.D3DCompiler`](https://github.com/amerkoleci/Vortice.Windows) 3.8.3.
 The Unity shader-blob reader is vendored AssetStudio code in
-`Shader Decompiler/Unity/Blob/`.
+`src/UnityShaderDecompiler.Core/Unity/Blob/`.
 
 ## Getting started
 
@@ -114,11 +115,11 @@ python Extract.py shaders_json/HOLO_Holo.json
 Then build and run the decompiler:
 
 ```bash
-dotnet build "Shader Decompiler/Shader Decompiler.csproj"
-dotnet run --project "Shader Decompiler/Shader Decompiler.csproj" -- Output/HOLO_Holo
+dotnet build UnityShaderDecompiler.sln
+dotnet run --project "src/UnityShaderDecompiler.Cli/UnityShaderDecompiler.Cli.csproj" -- Output/HOLO_Holo
 ```
 
-The result is written to `Shader Decompiler/Output/HOLO_Holo.shader`.
+The result is written to `src/UnityShaderDecompiler.Cli/Output/HOLO_Holo.shader`.
 
 ## Usage
 
@@ -127,17 +128,17 @@ sibling `metadata.json`:
 
 ```bash
 # Stage 0 output folder
-dotnet run --project "Shader Decompiler/Shader Decompiler.csproj" -- Output/HOLO_Holo
+dotnet run --project "src/UnityShaderDecompiler.Cli/UnityShaderDecompiler.Cli.csproj" -- Output/HOLO_Holo
 
 # Bare blob.bin with metadata.json next to it
-dotnet run --project "Shader Decompiler/Shader Decompiler.csproj" -- path/to/blob.bin
+dotnet run --project "src/UnityShaderDecompiler.Cli/UnityShaderDecompiler.Cli.csproj" -- path/to/blob.bin
 
-# Write output somewhere other than Shader Decompiler/Output/
-dotnet run --project "Shader Decompiler/Shader Decompiler.csproj" -- Output/HOLO_Holo --out-root ./decompiled
+# Write output somewhere other than the project-local Output/
+dotnet run --project "src/UnityShaderDecompiler.Cli/UnityShaderDecompiler.Cli.csproj" -- Output/HOLO_Holo --out-root ./decompiled
 ```
 
-With no arguments, the decompiler defaults to `../Output/HOLO_Holo` relative to
-the project directory.
+With no arguments, the decompiler looks for `Output/HOLO_Holo` in the working
+directory and then one level up.
 
 ### Common options
 
@@ -289,21 +290,22 @@ The end-to-end Python runners exercise Stage 0 plus the CLI:
 
 ```bash
 # Four PicaVoxel shaders with real source in shaders_dummy/Source/
-python Shader Decompiler/Tests/test_picavoxel_shaders.py
+python tests/e2e/test_picavoxel_shaders.py
 
 # Every shader folder in Output/
-python Shader Decompiler/Tests/test_faithfulness.py
+python tests/e2e/test_faithfulness.py
 
 # Narrow the faithfulness suite to one or more shaders
-python Shader Decompiler/Tests/test_faithfulness.py --filter PicaVoxel
+python tests/e2e/test_faithfulness.py --filter PicaVoxel
 ```
 
-Both default to `Shader Decompiler/bin/Debug/net10.0/Shader Decompiler.exe`;
-pass `--parser` to point somewhere else.
+Both default to
+`src/UnityShaderDecompiler.Cli/bin/Debug/net10.0/Shader Decompiler.exe`; pass
+`--parser` to point somewhere else.
 
 Additional verification modes live on the CLI. Run them from the repository
 root, prefixing each with
-`dotnet run --project "Shader Decompiler/Shader Decompiler.csproj" --`.
+`dotnet run --project "src/UnityShaderDecompiler.Cli/UnityShaderDecompiler.Cli.csproj" --`.
 
 | Command | What it does |
 | --- | --- |
@@ -335,10 +337,10 @@ conditions that fxc can otherwise fold away through a float round trip.
 
 ## Documentation
 
-- [`Shader Decompiler/Docs/shader_compiler_analysis.md`](Shader%20Decompiler/Docs/shader_compiler_analysis.md) —
+- [`docs/shader_compiler_analysis.md`](docs/shader_compiler_analysis.md) —
   Ghidra analysis of `UnityShaderCompiler.exe`, covering the IPC wire protocol,
   RDEF extraction, and `D3DStripShader(flags=7)`.
-- [`Shader Decompiler/Docs/shader_parser_spec.md`](Shader%20Decompiler/Docs/shader_parser_spec.md) —
+- [`docs/shader_parser_spec.md`](docs/shader_parser_spec.md) —
   implementation-grade parser spec with every fact labeled PROVEN, STRONGLY
   INFERRED, POSSIBLE, or UNKNOWN.
 
@@ -351,7 +353,7 @@ conditions that fxc can otherwise fold away through a float round trip.
 
 ```
 .
-├── UnityShaderDecompiler.sln        Solution (app + tests)
+├── UnityShaderDecompiler.sln        Solution (core + CLI + tests)
 ├── Extract.py                       Stage 0 orchestrator (Python)
 ├── libs/                            blob/metadata/dummy helpers
 │   ├── blob.py                      m_CompressedBlob → raw bytes
@@ -360,30 +362,35 @@ conditions that fxc can otherwise fold away through a float round trip.
 │   ├── lz4util.py                   LZ4 decompression wrapper
 │   └── Reader.py                    little-endian BinaryReader
 │
-├── Shader Decompiler/               Stage 1 (C#, net10.0)
-│   ├── Program.cs                   CLI dispatch and verification modes
-│   ├── Decompiler.cs                Reusable, in-process pipeline API
-│   ├── Core/
-│   │   ├── Analysis/                SSA, dominators, phi insertion, def-use
-│   │   ├── Hlsl/                    AST, pretty printer, surface recognition
-│   │   └── Optimizations/           rewrite passes and pattern recognizers
-│   ├── DXBC/
-│   │   ├── Chunks/                  ISGN/OSGN/PSGN/RDEF/SFI0/STAT
-│   │   ├── Container/               DxbcFile and chunk parsing
-│   │   ├── Disassembly/             Vortice-backed disassembler
-│   │   ├── Extraction/              blob classifier
-│   │   ├── Instructions/            opcodes, operands, ShdrParser
-│   │   ├── IR/                      IR model, builders, IRPipeline
-│   │   └── Metadata/                ShaderProject and metadata loading
-│   ├── Unity/Blob/                  vendored AssetStudio blob reader
-│   ├── Docs/                        reverse-engineering notes and parser spec
-│   ├── Output/                      39 checked-in example decompilations
-│   └── Tests/                       golden, faithfulness, and verification harnesses
+├── src/
+│   ├── UnityShaderDecompiler.Core/  parsing, IR, optimization, HLSL emission
+│   │   ├── Decompiler.cs            Reusable, in-process pipeline API
+│   │   ├── Core/
+│   │   │   ├── Analysis/            SSA, dominators, phi insertion, def-use
+│   │   │   ├── Hlsl/                AST, pretty printer, surface recognition
+│   │   │   └── Optimizations/       rewrite passes and pattern recognizers
+│   │   ├── DXBC/
+│   │   │   ├── Chunks/              ISGN/OSGN/PSGN/RDEF/SFI0/STAT
+│   │   │   ├── Compilation/         native d3dcompiler wrapper
+│   │   │   ├── Container/           DxbcFile and chunk parsing
+│   │   │   ├── Disassembly/         Vortice-backed disassembler
+│   │   │   ├── Extraction/          blob classifier
+│   │   │   ├── Instructions/        opcodes, operands, ShdrParser
+│   │   │   ├── IR/                  IR model, builders, IRPipeline
+│   │   │   └── Metadata/            ShaderProject and metadata loading
+│   │   └── Unity/Blob/              vendored AssetStudio blob reader
+│   │
+│   └── UnityShaderDecompiler.Cli/   entry point and verification harnesses
+│       ├── Program.cs               CLI dispatch
+│       └── Verification/            spec vectors, faithfulness, recompile checks
 │
 ├── tests/
 │   ├── UnityShaderDecompiler.Tests/ xUnit regression suite (`dotnet test`)
+│   ├── e2e/                         Python end-to-end runners (Stage 0 + CLI)
 │   └── Fixtures/                    checked-in blob.bin + metadata.json fixtures
 │
+├── docs/                            reverse-engineering notes and parser spec
+├── samples/                         39 checked-in example decompilations
 ├── shaders_json/                    39 AssetStudio JSON exports
 ├── shaders_dummy/                   reference shaders and Source/
 └── Output/                          generated Stage 0 output (not checked in)
@@ -401,17 +408,17 @@ Issues and pull requests are welcome.
 - Improve the AST path for hull, geometry, domain, and compute stages.
 
 If you change the pretty printer or surface-shader recognition, keep
-`--recompile-verify-all` green.
+`dotnet test` and `--recompile-verify-all` green.
 
 ## Credits
 
 - [AssetStudio](https://github.com/Perfare/AssetStudio) — the shader-blob reader
-  in `Shader Decompiler/Unity/Blob/` is vendored from it.
+  in `src/UnityShaderDecompiler.Core/Unity/Blob/` is vendored from it.
 - [Vortice.Windows](https://github.com/amerkoleci/Vortice.Windows) — D3D compiler
   P/Invoke used for disassembly and recompilation.
-- The reverse-engineering notes in `Shader Decompiler/Docs/` document the
-  UnityShaderCompiler work this project is built on.
+- The reverse-engineering notes in `docs/` document the UnityShaderCompiler work
+  this project is built on.
 
 ## License
 
-No license is currently specified.
+Apache License 2.0 — see [LICENSE](LICENSE).

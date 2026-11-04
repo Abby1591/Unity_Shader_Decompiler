@@ -1,11 +1,11 @@
 using System;
 using System.Linq;
-using Parser.Core.Hlsl;
-using Parser.Core.Hlsl.Ast;
-using Parser.Core.Analysis;
-using Parser.Core.Optimizations;
-using Parser.DXBC.Instructions;
-using Parser.DXBC.IR;
+using UnityShaderDecompiler.Core.Hlsl;
+using UnityShaderDecompiler.Core.Hlsl.Ast;
+using UnityShaderDecompiler.Core.Analysis;
+using UnityShaderDecompiler.Core.Optimizations;
+using UnityShaderDecompiler.Core.DXBC.Instructions;
+using UnityShaderDecompiler.Core.DXBC.IR;
 using Xunit;
 
 namespace UnityShaderDecompiler.Tests;
@@ -28,11 +28,11 @@ public sealed class RawRegisterSemanticsTests
         string first = $"{type}4(0xffffffffu, 0x7fc12345u, 1u, 0x80000000u)";
         string second = $"{type}4(0x01000001u, 0xffc54321u, 0x7fffffffu, 0x80000001u)";
         string value = conditional ? $"condition ? {first} : {second}" : first;
-        Parser.DXBC.DxbcFile original = RegisterRoundTrip.Compile(
+        UnityShaderDecompiler.Core.DXBC.DxbcFile original = RegisterRoundTrip.Compile(
             $"{type}4 main(nointerpolation uint condition : TEXCOORD0) : SV_Target {{ return {value}; }}");
         Assert.Contains(original.Shader!.Instructions, instruction =>
             instruction.Opcode == (conditional ? Opcode.MovC : Opcode.Mov));
-        Parser.DXBC.DxbcFile rebuilt = RegisterRoundTrip.Recompile(original);
+        UnityShaderDecompiler.Core.DXBC.DxbcFile rebuilt = RegisterRoundTrip.Recompile(original);
         Assert.Equal(original.OutputSignature!.Elements[0].ComponentType,
             rebuilt.OutputSignature!.Elements[0].ComponentType);
         foreach (uint condition in new uint[] { 0, 1, 0x80000000u, uint.MaxValue })
@@ -77,11 +77,11 @@ public sealed class RawRegisterSemanticsTests
     {
         if (!OperatingSystem.IsWindows()) return;
 
-        Parser.DXBC.Chunks.SignatureElement input = new Parser.DXBC.Chunks.SignatureElement
+        UnityShaderDecompiler.Core.DXBC.Chunks.SignatureElement input = new UnityShaderDecompiler.Core.DXBC.Chunks.SignatureElement
         {
             SemanticName = "TEXCOORD", Mask = 1, ComponentType = 3,
         };
-        Parser.DXBC.Chunks.SignatureElement output = new Parser.DXBC.Chunks.SignatureElement
+        UnityShaderDecompiler.Core.DXBC.Chunks.SignatureElement output = new UnityShaderDecompiler.Core.DXBC.Chunks.SignatureElement
         {
             SemanticName = "SV_Target", Mask = 1, ComponentType = 3,
         };
@@ -136,8 +136,8 @@ public sealed class RawRegisterSemanticsTests
         string text = HlslPrettyPrinter.Print(shader, fuseTemps: false);
         string hlsl = System.Text.RegularExpressions.Regex.Match(text,
             @"HLSLPROGRAM(.*?)ENDHLSL", System.Text.RegularExpressions.RegexOptions.Singleline).Groups[1].Value;
-        Parser.DXBC.DxbcFile dxbc = new Parser.DXBC.DxbcFile();
-        dxbc.Load(Parser.RecompileVerify.CompileHlsl(hlsl, "frag", "ps_4_0"));
+        UnityShaderDecompiler.Core.DXBC.DxbcFile dxbc = new UnityShaderDecompiler.Core.DXBC.DxbcFile();
+        dxbc.Load(UnityShaderDecompiler.Core.DXBC.Compilation.DxbcCompiler.Compile(hlsl, "frag", "ps_4_0"));
 
         // frac(x + 1) loses the add under fxc optimization; round_ni must keep it.
         System.Collections.Generic.List<Instruction> instructions = dxbc.Shader!.Instructions;
