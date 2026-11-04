@@ -120,6 +120,9 @@ dotnet run --project "Shader Decompiler/Shader Decompiler.csproj" -- Output/HOLO
 
 The result is written to `Shader Decompiler/Output/HOLO_Holo.shader`.
 
+A DirectX subprogram failure aborts decompilation with its index and cause,
+instead of silently omitting it from the final shader.
+
 ## Usage
 
 `Shader Decompiler` accepts a Stage 0 output folder or a `blob.bin` with a
