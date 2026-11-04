@@ -1,10 +1,10 @@
 """
-Stage 0.2 â€” Metadata Extraction
+Stage 0.2 — Metadata Extraction
 
 Pulls everything the backend (C#) needs out of the raw Unity shader JSON
 (the AssetStudio export) into a single metadata.json, keyed by shader name.
 
-This does NOT touch m_CompressedBlob â€” that stays in blob.py/ShaderBlob.
+This does NOT touch m_CompressedBlob — that stays in blob.py/ShaderBlob.
 """
 
 import json
@@ -181,11 +181,11 @@ class ShaderMetadata:
 
     def _constant_buffers(self, p, prog_keys, index_to_name, name_layouts=None):
         # Unity serializes the constant-buffer layout (name + per-variable
-        # byte offset) in each stage's m_CommonParameters â€” this is the
+        # byte offset) in each stage's m_CommonParameters — this is the
         # per-pass replacement for the RDEF chunk Unity strips from shipped
         # bytecode. Each stage binds its OWN table (cb0 in the vertex
         # program can be a different buffer than cb0 in the fragment
-        # program), so cbuffers are keyed by (stage, slot) â€” never merged
+        # program), so cbuffers are keyed by (stage, slot) — never merged
         # across stages, or different buffers that share a slot number
         # would collide at the same byte offsets.
         by_key = {}
@@ -224,6 +224,7 @@ class ShaderMetadata:
                     "slot": slot,
                     "stage": stage,
                     "name": index_to_name.get(b.get("m_NameIndex"), ""),
+                    "size": b.get("m_Size", 0),
                     "variables": [],
                 })
                 for v in b.get("m_VectorParams", []) or []:
@@ -244,7 +245,7 @@ class ShaderMetadata:
 
             # A program can bind a buffer (its name index appears in
             # m_ConstantBufferBindings) without listing it in
-            # m_ConstantBuffers â€” Unity only serializes the buffers the
+            # m_ConstantBuffers — Unity only serializes the buffers the
             # stage touches. When the bound name's layout is known from
             # another pass/stage of the same shader, reuse it so reads of
             # that (stage, slot) still resolve to real names.
@@ -262,6 +263,7 @@ class ShaderMetadata:
                             "slot": slot,
                             "stage": stage,
                             "name": cb_name,
+                            "size": 0,
                             "variables": [dict(v) for v in name_layouts[cb_name]],
                         }
 
@@ -279,6 +281,7 @@ class ShaderMetadata:
                 "slot": cb["slot"],
                 "stage": cb["stage"],
                 "name": cb["name"],
+                "size": cb["size"],
                 "variables": variables,
             })
         return out
@@ -286,7 +289,7 @@ class ShaderMetadata:
     @staticmethod
     def _unwrap(v, default=None):
         # Unity wraps most scalar render state in
-        # {"m_Name": "...", "m_Value": N} â€” flatten to just N.
+        # {"m_Name": "...", "m_Value": N} — flatten to just N.
         if isinstance(v, dict) and "m_Value" in v:
             return v["m_Value"]
         return v if v is not None else default
@@ -296,7 +299,7 @@ class ShaderMetadata:
         # like m_Culling/m_ZTest/m_ZWrite/m_RtBlend0 (values wrapped as
         # {"m_Value": N}). That's the schema the C# side (HlslRenderstateBuilder)
         # consumes. A few exports use a nested rasterState/depthState shape
-        # instead â€” fall back to that when the flat keys are absent.
+        # instead — fall back to that when the flat keys are absent.
         if not isinstance(state, dict):
             return {}
 

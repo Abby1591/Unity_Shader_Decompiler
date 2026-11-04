@@ -1,7 +1,7 @@
 # Pair shader variants using serialized program references
 
-Use serialized indices and stage keyword masks to pair vertex and fragment programs, including vertex reuse for fragment-only keywords. Reject missing programs and incompatible stage interfaces. This preserves the existing expansion into separate passes; it does not implement runtime keyword selection.
+Grouping programs by blob order can pair unrelated variants. Use serialized program indices and pair stage variants when their enabled keywords agree on the intersection of their keyword masks. Stage-only keywords remain independent: a vertex variant can therefore pair with multiple fragment-only variants. Reject missing programs and incompatible interfaces.
 
-Validation: 54 C# tests and all four existing PicaVoxel extraction/decompilation tests pass. C# tests use an en-US default culture; the upstream fr-FR golden-output failure is addressed independently by the numeric-formatting PR. 1 Python tests also pass.
+Preserve constant-buffer sizes in the extracted metadata, including the existing zero sentinel for a binding with no serialized extent. A Python serialization test covers both paths. Runtime keyword selection remains unimplemented: compatible combinations are still emitted as separate passes.
 
-This branch is based directly on upstream `1850608`; it does not include the other review branches. No proprietary fixtures or machine-specific paths are added.
+Validation: 54 C# tests, two Python tests and all four PicaVoxel end-to-end cases pass. The isolated C# suite uses en-US; upstream's fr-FR golden-output failure is addressed separately in #5. Regenerate shared golden references after combining emitter changes.
