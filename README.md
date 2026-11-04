@@ -145,6 +145,7 @@ the project directory.
 | --- | --- |
 | `--out-root <dir>` | Write the `.shader` and subprogram artifacts to `<dir>` |
 | `--dump-stages` | Print the IR after every pipeline phase |
+| `--no-fuse-temps` | Preserve raw register bits and arithmetic order; disable temporary fusion |
 | `--save-subprograms` | Write per-subprogram `.bin`, `.dxbc`, and disassembly files |
 | `--no-surface-shaders` | Emit raw HLSLPROGRAM passes instead of surface-shader form |
 | `--keep-passes` | Keep original passes as comments when a surface shader is recognized |
@@ -176,7 +177,7 @@ and spaces are stripped).
 | `--dump-stages` | Print a full IR snapshot after every pipeline phase and every optimization pass |
 | `--dump-keywords` | Print each subprogram's global and local keyword sets |
 | `--save-subprograms` | Also write per-subprogram `program{i}.bin`, `program{i}.dxbc`, and `program{i}.hlsl` (disassembly) |
-| `--no-fuse-temps` | Disable temp fusion; keep every SSA copy as a separate statement |
+| `--no-fuse-temps` | Keep raw uint temporary storage with typed reads and outputs; disable temporary fusion and arithmetic rewrites |
 | `--no-surface-shaders` | Disable surface-shader recognition; emit raw reconstructed HLSLPROGRAM passes |
 | `--keep-passes` | When a pass is recognized as a surface shader, keep the original compiled passes as comments |
 | `--keep-register-bindings` | Keep explicit `register(tN)` / `register(bN)` bindings (stripped by default) |
