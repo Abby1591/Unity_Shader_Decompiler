@@ -87,6 +87,7 @@ public static class HlslPrettyPrinter
         HlslPropertyKind.Color => "Color",
         HlslPropertyKind.Vector => "Vector",
         HlslPropertyKind.Float => "Float",
+        HlslPropertyKind.Integer => "Integer",
         HlslPropertyKind.Range when p.Range is { } r => $"Range({r.Min}, {r.Max})",
         // Range with no recovered bounds (metadata carried no default value,
         // so min/max slots are absent) — emit as Float rather than
@@ -107,6 +108,17 @@ public static class HlslPrettyPrinter
     {
         if (p.Kind == HlslPropertyKind.Texture)
             return "\"\" {}";
+
+        if (p.Kind == HlslPropertyKind.Integer)
+        {
+            // Unity stores integer property bits in the serialized float slot.
+            float value = p.DefaultComponents.Length == 4 ? p.DefaultComponents[0]
+                : p.DefaultValue is { } integerDefault && integerDefault.TryGetProperty("x", out JsonElement x)
+                    ? x.GetSingle() : throw new InvalidDataException("Integer property has no serialized default.");
+            if (!float.IsFinite(value))
+                throw new InvalidDataException("Integer property bits cannot be recovered from a non-finite JSON float.");
+            return BitConverter.SingleToInt32Bits(value).ToString(System.Globalization.CultureInfo.InvariantCulture);
+        }
 
         // Typed default (Metadata layer, float[4] — the same {x,y,z,w} the
         // printer used to read out of the raw JsonElement below).

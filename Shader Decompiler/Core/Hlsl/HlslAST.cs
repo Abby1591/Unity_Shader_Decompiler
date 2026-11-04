@@ -30,7 +30,7 @@ public sealed class HlslShaderNode
 }
 
 // Mirrors Unity's serialized shader property type enum
-// (m_Type: Color=0, Vector=1, Float=2, Range=3, Texture=4).
+// (m_Type: Color=0, Vector=1, Float=2, Range=3, Texture=4, Int=5).
 public enum HlslPropertyKind
 {
     Color = 0,
@@ -38,6 +38,7 @@ public enum HlslPropertyKind
     Float = 2,
     Range = 3,
     Texture = 4,
+    Integer = 5,
     Unknown = -1,
 }
 

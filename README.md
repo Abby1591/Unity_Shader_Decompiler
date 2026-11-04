@@ -314,6 +314,10 @@ root, prefixing each with
 
 ## Limitations
 
+Serialized integer properties (type 5) emit as ShaderLab `Integer`, preserving
+the integer bits stored in the float default slot. Non-finite JSON defaults are
+rejected because their original integer payload cannot be recovered reliably.
+
 - Targets Unity 2022.3 D3D11 shader blobs.
 - Vertex and fragment stages are fully reconstructed. Hull, geometry, domain,
   and compute programs are parsed and IR-built, but the AST/emit path mainly
