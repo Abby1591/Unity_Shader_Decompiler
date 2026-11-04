@@ -612,10 +612,9 @@ public static class Decompiler
             // Cbuffers merge by slot: vert and frag subprograms of the same
             // pass touch the same constant-buffer slots, so union the
             // members (keeping the largest array size for any fallback).
+            // Equal names do not make resources at different bindings identical.
             HlslResourceNode? existing = pass.Resources.FirstOrDefault(r =>
-                r.Kind == res.Kind && (res.Kind == HlslResourceKind.ConstantBuffer
-                    ? r.Slot == res.Slot
-                    : r.Slot == res.Slot || r.Name == res.Name));
+                r.Kind == res.Kind && r.Slot == res.Slot);
 
             if (existing is null)
             {
@@ -649,6 +648,35 @@ public static class Decompiler
                         existing.Variables.Add(v);
                     }
                 }
+            }
+        }
+
+        // A fallback array is shared by all stages in the emitted HLSL pass.
+        // Once present, every stage reads raw slots, including stages whose
+        // reads were resolved to named metadata members before the merge.
+        foreach (HlslResourceNode buffer in pass.Resources.Where(r => r.Kind == HlslResourceKind.ConstantBuffer))
+        {
+            HlslCBufferVariable? raw = buffer.Variables.FirstOrDefault(
+                v => v.Name == $"cb{buffer.Slot}_values" && v.ArraySize is not null);
+            if (raw is null)
+                continue;
+            int metadataRegisters = pass.Cbuffers
+                .Where(entry => entry.Key.Slot == (int)buffer.Slot)
+                .Select(entry => (entry.Value.Size + 15) / 16)
+                .DefaultIfEmpty(0)
+                .Max();
+            int count = Math.Max(raw.ArraySize!.Value, metadataRegisters);
+            if (count > raw.ArraySize.Value)
+            {
+                buffer.Variables.Remove(raw);
+                buffer.Variables.Add(new HlslCBufferVariable
+                {
+                    Name = raw.Name,
+                    TypeName = raw.TypeName,
+                    Offset = raw.Offset,
+                    Size = (uint)count * 16,
+                    ArraySize = count,
+                });
             }
         }
 

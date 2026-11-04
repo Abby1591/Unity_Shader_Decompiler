@@ -45,29 +45,7 @@ Shader "HOLO/Holo"
             ZWrite On
             Blend SrcAlpha OneMinusSrcColor
             HLSLPROGRAM
-            cbuffer _GlobalsCB_b0
-            {
-                float4 _Color;
-                float4 _diff_Color;
-                float4 _Diffuse_ST;
-                float4 _N_map_ST;
-                float4 _M_map_ST;
-                float _intensity;
-                float _deform;
-                float _Bias;
-                float _Scale;
-                float _Power;
-                float _Speed;
-                float _t;
-                float _X;
-                float _Y;
-                float _glitchColor;
-                float _monochrom;
-                float _Opacity;
-                float _noise_details;
-                float _OriginalUVSwitch;
-                float4 cb0_values[8];
-            };
+            cbuffer _GlobalsCB_b0 : register(b0) { float4 cb0_values[12]; };
             cbuffer _UnityPerCameraCB_b1
             {
                 float4 _Time : packoffset(c0);
@@ -86,6 +64,7 @@ Shader "HOLO/Holo"
             SamplerState sampler_MainTex;
             Texture2D _MainTex;
             SamplerState sampler_Diffuse;
+            SamplerState sampler_MainTex2;
             SamplerState sampler_originalDiffuse;
             Texture2D _originalDiffuse;
             Texture2D _Diffuse;
@@ -127,16 +106,16 @@ Shader "HOLO/Holo"
             {
                 program1Output o = (program1Output)0;
                 float4x4 objectToView = mul(unity_ObjectToWorld, unity_MatrixV);
-                float r0_w_1 = (_Speed * _Time.x);
+                float r0_w_1 = (cb0_values[8].y * _Time.x);
                 float r0_w_2 = (r0_w_1 * 60);
                 float r0_w_3 = (sin(r0_w_2) + 1);
-                float r1_w_1 = (cos(r0_w_2) * _M_map_ST.y);
-                float r0_w_4 = (r0_w_3 * _M_map_ST.w);
+                float r1_w_1 = (cos(r0_w_2) * cb0_values[6].y);
+                float r0_w_4 = (r0_w_3 * cb0_values[6].w);
                 float4 uvMMap_xyzw_2 = mad(i.texcoord0.xyxx, r1_w_1.xxxx, r0_w_4.xxxx);
                 float uvMMap_x_2 = uvMMap_xyzw_2.x;
                 float uvMMap_y_1 = uvMMap_xyzw_2.y;
                 float4 sampleMMap_xyzw_3 = _MainTex.SampleLevel(sampler_MainTex, (float4(uvMMap_x_2, uvMMap_y_1, uvMMap_x_2, uvMMap_x_2)).xy, 0);
-                float r0_w_5 = (int)(_noise_details);
+                float r0_w_5 = (int)(cb0_values[10].x);
                 float4 r4_xyzw_3 = (_Time.xxyz * float4(0, 0.1, 0.1, 0.1));
                 float r4_y_3 = r4_xyzw_3.y;
                 float r4_z_2 = r4_xyzw_3.z;
@@ -188,8 +167,8 @@ Shader "HOLO/Holo"
                 float4 r4_xyzw_6 = (sampleMMap_xyzw_3.xxxx * float4(r4_y_5, r4_z_4, r4_w_3, r4_y_5));
                 float r4_y_6 = r4_xyzw_6.y;
                 float r4_z_5 = r4_xyzw_6.z;
-                float r4_x_5 = (r4_x_4 * _X);
-                float r4_y_7 = (r4_y_6 * _Y);
+                float r4_x_5 = (r4_x_4 * cb0_values[8].w);
+                float r4_y_7 = (r4_y_6 * cb0_values[9].x);
                 float r4_x_6 = ((float4(r4_x_5, r4_y_7, r4_z_5, r4_x_5) * i.normal0.xyzx)).x;
                 float4 r4_xyzw_8 = (float4(r4_x_5, r4_y_7, r4_z_5, r4_x_5) * i.normal0.xyzx);
                 float r4_y_8 = r4_xyzw_8.y;
@@ -236,8 +215,8 @@ Shader "HOLO/Holo"
                 float unitDirToSurface_y_10 = unitDirToSurface_xyzw_10.y;
                 float unitDirToSurface_z_13 = unitDirToSurface_xyzw_10.z;
                 float nDotV_x_11 = dot(float4(unitDirToSurface_x_10, unitDirToSurface_y_10, unitDirToSurface_z_13, unitDirToSurface_x_10), unitWorldNormal_xyz_7.xyzx);
-                float r0_y_11 = (_Scale * _Bias);
-                                float fresnel_x_15 = pow((nDotV_x_11 + _t), _Power);
+                float r0_y_11 = (cb0_values[7].w * cb0_values[7].z);
+                                float fresnel_x_15 = pow((nDotV_x_11 + cb0_values[8].z), cb0_values[8].x);
                 o.texcoord4.x = (fresnel_x_15 * r0_y_11);
                 o.texcoord0.xyzw = i.texcoord0.xyzw;
                 o.texcoord1.xyzw = float4(0, 0, 0, 0);
@@ -251,28 +230,28 @@ Shader "HOLO/Holo"
             program3Output frag(program3Input i)
             {
                 program3Output o = (program3Output)0;
-                float4 r0_xyzw_2 = (((_Speed * _Time.x)).xxxx * float4(30, 60, 120, 0));
+                float4 r0_xyzw_2 = (((cb0_values[8].y * _Time.x)).xxxx * float4(30, 60, 120, 0));
                 float r0_x_2 = r0_xyzw_2.x;
                 float r0_y_1 = r0_xyzw_2.y;
                 float r0_z_1 = r0_xyzw_2.z;
                 float r1_x_1 = sin(r0_y_1);
                 float r0_y_2 = (r1_x_1 + 1);
-                float2 r1_yz_1 = ((r0_x_2.xxxx * _N_map_ST.zzwz)).yz;
-                float2 uvNMap_yz_2 = (mad(i.texcoord0.xxyx, _N_map_ST.xxyx, r1_yz_1.xxyx)).yz;
-                float4 sampleNMap_xyzw_1 = _MainTex.Sample(s2, (uvNMap_yz_2.xyxx).xy);
-                float r0_w_1 = (cos(r0_y_1) * _M_map_ST.y);
-                float r0_y_3 = (r0_y_2 * _M_map_ST.w);
+                float2 r1_yz_1 = ((r0_x_2.xxxx * cb0_values[5].zzwz)).yz;
+                float2 uvNMap_yz_2 = (mad(i.texcoord0.xxyx, cb0_values[5].xxyx, r1_yz_1.xxyx)).yz;
+                float4 sampleNMap_xyzw_1 = _MainTex.Sample(sampler_MainTex2, (uvNMap_yz_2.xyxx).xy);
+                float r0_w_1 = (cos(r0_y_1) * cb0_values[6].y);
+                float r0_y_3 = (r0_y_2 * cb0_values[6].w);
                 float4 uvMMap_xyzw_4 = mad(i.texcoord0.xxxy, r0_w_1.xxxx, r0_y_3.xxxx);
                 float uvMMap_y_4 = uvMMap_xyzw_4.y;
                 float uvMMap_w_2 = uvMMap_xyzw_4.w;
                 float4 sampleMMap_xyzw_2 = _originalDiffuse.Sample(sampler_originalDiffuse, (float4(uvMMap_y_4, uvMMap_w_2, uvMMap_y_4, uvMMap_y_4)).xy);
-                float4 r0_xyzw_5 = (_OriginalUVSwitch.xxxx == float4(0, 0, 0, 1));
+                float4 r0_xyzw_5 = (cb0_values[11].yyyy == float4(0, 0, 0, 1));
                 float r0_y_5 = r0_xyzw_5.y;
                 float r0_w_3 = r0_xyzw_5.w;
                 float4 sampleDiffuse_xyzw_3;
                 if (r0_y_5)
                 {
-                    float2 uvDiffuse_yz_3 = (mad(i.texcoord2.xxyx, _Diffuse_ST.yyyy, _Diffuse_ST.wwww)).yz;
+                    float2 uvDiffuse_yz_3 = (mad(i.texcoord2.xxyx, cb0_values[4].yyyy, cb0_values[4].wwww)).yz;
                     float4 sampleDiffuse_xyzw_2 = _Diffuse.Sample(sampler_Diffuse, (uvDiffuse_yz_3.xyxx).xy);
                     sampleDiffuse_xyzw_3 = sampleDiffuse_xyzw_2;
                 }
@@ -294,8 +273,8 @@ Shader "HOLO/Holo"
                 float r0_x_4 = r0_xyzw_4.x;
                 float r0_z_3 = r0_xyzw_4.z;
                 float r0_w_4 = (r0_x_4 * i.texcoord0.x);
-                float2 r1_yz_5 = (mad(r0_w_4.xxxx, _intensity.xxxx, i.texcoord0.xxyx)).yz;
-                float r0_w_5 = (int)(_noise_details);
+                float2 r1_yz_5 = (mad(r0_w_4.xxxx, cb0_values[7].xxxx, i.texcoord0.xxyx)).yz;
+                float r0_w_5 = (int)(cb0_values[10].x);
                 float4 r2_xyzw_3 = (_Time.xyxx * float4(0.1, 0.1, 0, 0));
                 float r2_x_3 = r2_xyzw_3.x;
                 float r2_y_2 = r2_xyzw_3.y;
@@ -335,30 +314,30 @@ Shader "HOLO/Holo"
                     r2_zw_3 = r2_zw_4.xy;
                     noiseAccum_xy_3 = noiseAccum_xy_4;
                 }
-                float2 r1_yz_6 = ((noiseAccum_xy_3.xxyx * _glitchColor.xxxx)).yz;
+                float2 r1_yz_6 = ((noiseAccum_xy_3.xxyx * cb0_values[9].yyyy)).yz;
                 float r0_x_5 = ((float4(r0_x_4, r0_y_6, r0_z_3, r0_x_4) * float4(r1_yz_6.x, r1_x_1, r1_yz_6.x, r1_yz_6.x))).x;
                 float4 r0_xyzw_7 = (float4(r0_x_4, r0_y_6, r0_z_3, r0_x_4) * float4(r1_yz_6.x, r1_x_1, r1_yz_6.x, r1_yz_6.x));
                 float r0_y_7 = r0_xyzw_7.y;
                 float r0_z_4 = r0_xyzw_7.z;
                 float r0_y_8 = (r1_yz_6.y * r0_y_7);
-                float4 r0_xyzw_6 = (float4(r0_x_5, r0_y_8, r0_z_4, r0_x_5) * _intensity.xxxx);
+                float4 r0_xyzw_6 = (float4(r0_x_5, r0_y_8, r0_z_4, r0_x_5) * cb0_values[7].xxxx);
                 float r0_x_6 = r0_xyzw_6.x;
                 float r0_y_9 = r0_xyzw_6.y;
                 float r0_z_5 = r0_xyzw_6.z;
-                float r1_y_7 = mad(r0_y_9, 0.375, _Color.y);
-                float4 r1_xyzw_2 = mad(float4(r0_x_6, r0_x_6, r0_z_5, r0_x_6), float4(0.1875, 0, 0.75, 0), _Color.xxzx);
+                float r1_y_7 = mad(r0_y_9, 0.375, cb0_values[2].y);
+                float4 r1_xyzw_2 = mad(float4(r0_x_6, r0_x_6, r0_z_5, r0_x_6), float4(0.1875, 0, 0.75, 0), cb0_values[2].xxzx);
                 float r1_x_2 = r1_xyzw_2.x;
                 float r1_z_7 = r1_xyzw_2.z;
-                float r4_w_6 = (sampleDiffuse_xyzw_5.w * _Opacity);
-                float r0_x_7 = ((float4(sampleDiffuse_xyzw_5.x, sampleDiffuse_xyzw_5.y, sampleDiffuse_xyzw_5.z, r4_w_6) * _diff_Color)).x;
-                float4 r0_xyzw_10 = (float4(sampleDiffuse_xyzw_5.x, sampleDiffuse_xyzw_5.y, sampleDiffuse_xyzw_5.z, r4_w_6) * _diff_Color);
+                float r4_w_6 = (sampleDiffuse_xyzw_5.w * cb0_values[9].w);
+                float r0_x_7 = ((float4(sampleDiffuse_xyzw_5.x, sampleDiffuse_xyzw_5.y, sampleDiffuse_xyzw_5.z, r4_w_6) * cb0_values[3].xyzw)).x;
+                float4 r0_xyzw_10 = (float4(sampleDiffuse_xyzw_5.x, sampleDiffuse_xyzw_5.y, sampleDiffuse_xyzw_5.z, r4_w_6) * cb0_values[3].xyzw);
                 float r0_y_10 = r0_xyzw_10.y;
                 float r0_z_6 = r0_xyzw_10.z;
                 float r0_w_6 = r0_xyzw_10.w;
-                float r1_w_3 = (_monochrom == 1);
+                float r1_w_3 = (cb0_values[9].z == 1);
                 float r2_x_5 = (r1_z_7 + (r1_y_7 + r1_x_2));
                 float r2_y_3 = (r0_y_10 + r0_x_7);
-                float r2_y_4 = mad(sampleDiffuse_xyzw_5.z, _diff_Color.z, r2_y_3);
+                float r2_y_4 = mad(sampleDiffuse_xyzw_5.z, cb0_values[3].z, r2_y_3);
                 float4 r2_xyzw_6 = (float4(r2_x_5, r2_y_4, r2_x_5, r2_x_5) * float4(0.33333334, 0.33333334, 0, 0));
                 float r2_x_6 = r2_xyzw_6.x;
                 float r2_y_5 = r2_xyzw_6.y;
@@ -374,7 +353,7 @@ Shader "HOLO/Holo"
                 float r1_x_4 = r1_xyzw_4.x;
                 float r1_y_9 = r1_xyzw_4.y;
                 float r1_z_9 = r1_xyzw_4.z;
-                float r1_w_4 = (-r0_w_6 + _Color.w);
+                float r1_w_4 = (-r0_w_6 + cb0_values[2].w);
                 o.sv_Target0.xyzw = mad(i.texcoord4.xxxx, float4(r1_x_4, r1_y_9, r1_z_9, r1_w_4), float4(monochromSelect_x_8, monochromSelect_y_11, monochromSelect_z_7, r0_w_6));
                 return o;
             }

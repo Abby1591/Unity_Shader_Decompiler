@@ -197,6 +197,7 @@ public sealed class PassMetadata
 public sealed class CbufferMetadata
 {
     public int Slot { get; init; } = -1;
+    public int Size { get; init; }
     // Stage this buffer is bound in (Vertex/Fragment/Geometry/...). Stages
     // bind their own cbuffer tables, so two different buffers can legally
     // share a slot number across stages (e.g. UnityPerDraw and $Globals
@@ -212,6 +213,9 @@ public sealed class CbufferMetadata
             Slot = el.TryGetProperty("slot", out var s) && s.ValueKind == JsonValueKind.Number
                 ? s.GetInt32()
                 : -1,
+            Size = el.TryGetProperty("size", out JsonElement size) && size.ValueKind == JsonValueKind.Number
+                ? size.GetInt32()
+                : 0,
             Stage = el.TryGetProperty("stage", out var st) && st.ValueKind == JsonValueKind.String
                 ? st.GetString() ?? ""
                 : "",
