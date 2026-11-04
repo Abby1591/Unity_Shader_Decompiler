@@ -1,7 +1,7 @@
 import base64
-import json
 
 from .lz4util import decompress
+from .shader_json import load_shader_json
 
 
 class ShaderBlob:
@@ -9,8 +9,7 @@ class ShaderBlob:
     def __init__(self, json_path):
         self.json_path = json_path
 
-        with open(json_path, "r", encoding="utf8") as f:
-            self.data = json.load(f)
+        self.data = load_shader_json(json_path)
 
     @property
     def name(self):
