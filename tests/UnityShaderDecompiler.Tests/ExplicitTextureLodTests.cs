@@ -10,15 +10,18 @@ using Xunit;
 
 namespace UnityShaderDecompiler.Tests;
 
+// Covers explicit texture lod tests.
 public sealed class ExplicitTextureLodTests
 {
+    // Verifies that explicit zero LOD is not replaced by implicit derivatives.
     [Fact]
     public void ExplicitZeroLodIsNotReplacedByImplicitDerivatives()
     {
         IRExpression.TextureOperationExpression sample = new IRExpression.TextureOperationExpression
         {
             Operation = IRExpression.TextureOperation.SampleLevel,
-            LOD = Float(0), Coordinates = Float(1),
+            LOD = Float(0),
+            Coordinates = Float(1),
             Resource = new IRRegister { RegisterType = RegisterType.Resource, Index = 0 },
             Sampler = new IRRegister { RegisterType = RegisterType.Sampler, Index = 0 },
         };
@@ -36,6 +39,7 @@ public sealed class ExplicitTextureLodTests
         Assert.Same(sample.LOD, actual.LOD);
     }
 
+    // Wraps the fixture function in a shader and emits its HLSL.
     private static string Print(HlslFunctionNode function)
     {
         HlslShaderNode shader = new HlslShaderNode { Name = "Test/Scope" };
@@ -45,6 +49,7 @@ public sealed class ExplicitTextureLodTests
         return HlslPrettyPrinter.Print(shader, fuseTemps: false);
     }
 
+    // Creates a temporary register with the requested index and lane mask.
     private static IRRegister Temp(uint index, byte mask = 1)
     {
         IRRegister register = new IRRegister
@@ -56,11 +61,16 @@ public sealed class ExplicitTextureLodTests
             ComponentMode = Operand.OperandComponentMode.Mask,
         };
         for (int component = 0; component < 4; component++)
+        {
             if ((mask & (1 << component)) != 0)
+            {
                 register.SsaVersion[component] = 1;
+            }
+        }
         return register;
     }
 
+    // Creates a scalar floating-point constant for the fixture.
     private static IRExpression.ConstantExpression Float(float value) => new()
     {
         RawValues = new[] { unchecked((uint)BitConverter.SingleToInt32Bits(value)) },
