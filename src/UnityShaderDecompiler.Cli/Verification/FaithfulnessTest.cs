@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -8,6 +8,7 @@ using System.Text.RegularExpressions;
 using AssetStudio;
 using Parser.DXBC;
 using Parser.DXBC.Chunks;
+using Parser.DXBC.Compilation;
 using Parser.DXBC.Extraction;
 using Parser.DXBC.Metadata;
 
@@ -53,13 +54,13 @@ public static class FaithfulnessTest
         string blobPath = Path.Combine(folder, "blob.bin");
         string metaPath = Path.Combine(folder, "metadata.json");
 
-        // ── 1. Load shipped subprogram signatures ──
+        // â”€â”€ 1. Load shipped subprogram signatures â”€â”€
         var shipped = new List<(string Stage, string Label, HashSet<string> Input, HashSet<string> Output)>();
         if (File.Exists(blobPath))
             shipped.AddRange(LoadShipped(blobPath));
         result.SubprogramCount = shipped.Count;
 
-        // ── 2. Recompile HLSLPROGRAM blocks and match signatures ──
+        // â”€â”€ 2. Recompile HLSLPROGRAM blocks and match signatures â”€â”€
         var blocks = ExtractHlslProgramBlocks(shaderText).ToList();
         result.PassCount = blocks.Count;
         int passIdx = 0;
@@ -95,7 +96,7 @@ public static class FaithfulnessTest
             }
         }
 
-        // ── 3. Metadata fidelity ──
+        // â”€â”€ 3. Metadata fidelity â”€â”€
         if (File.Exists(metaPath))
         {
             string metaText = File.ReadAllText(metaPath);
@@ -198,7 +199,7 @@ public static class FaithfulnessTest
         return result;
     }
 
-    // ── helpers (shared with RecompileVerify) ──
+    // â”€â”€ helpers (shared with RecompileVerify) â”€â”€
 
     private static string Canonical(SignatureElement e) =>
         $"{e.SemanticName}:{e.SemanticIndex}:{e.SystemValue}:{System.Numerics.BitOperations.PopCount(e.Mask)}";
@@ -237,7 +238,7 @@ public static class FaithfulnessTest
         byte[] dxbc;
         try
         {
-            dxbc = RecompileVerify.CompileHlsl(block, entry, profile);
+            dxbc = DxbcCompiler.Compile(block, entry, profile);
         }
         catch (Exception e)
         {

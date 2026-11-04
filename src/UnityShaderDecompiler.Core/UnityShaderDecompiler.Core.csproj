@@ -1,0 +1,23 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFramework>net10.0</TargetFramework>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <Nullable>enable</Nullable>
+        <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+
+        <!-- Namespaces still use the historical Parser.* roots. -->
+        <RootNamespace>Parser</RootNamespace>
+        <AssemblyName>UnityShaderDecompiler.Core</AssemblyName>
+        <GenerateDocumentationFile>false</GenerateDocumentationFile>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <PackageReference Include="Vortice.D3DCompiler" Version="3.8.3" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <InternalsVisibleTo Include="UnityShaderDecompiler.Tests" />
+    </ItemGroup>
+
+</Project>

@@ -81,7 +81,7 @@ public class GoldenMetadataTests
     {
         var result = FixtureCache.Decompile("HOLO_Holo");
         string golden = System.IO.Path.Combine(
-            TestPaths.RepoRoot, "Shader Decompiler", "Output", "HOLO_Holo.shader");
+            TestPaths.RepoRoot, "samples", "HOLO_Holo.shader");
 
         if (!System.IO.File.Exists(golden))
             return; // generated examples are optional in a source-only checkout

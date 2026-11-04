@@ -1,17 +1,15 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Runtime.InteropServices;
 using System.Text;
 using AssetStudio;
 using Parser.DXBC;
 using Parser.DXBC.Chunks;
+using Parser.DXBC.Compilation;
 using Parser.DXBC.Disassembly;
 using Parser.DXBC.Extraction;
 using Parser.DXBC.Metadata;
-using Vortice.D3DCompiler;
-using Vortice.Direct3D;
 
 namespace Parser;
 
@@ -111,7 +109,7 @@ public static class RecompileVerify
         byte[] dxbc;
         try
         {
-            dxbc = Compile(block, entry, profile);
+            dxbc = DxbcCompiler.Compile(block, entry, profile);
         }
         catch (Exception e)
         {
@@ -131,7 +129,7 @@ public static class RecompileVerify
     // pairs of float2 outputs onto one register (TEXCOORD1 mask 0xC) where
     // the original compiler used separate registers (mask 0x3), so the same
     // interface compiles to different masks. The component COUNT is what
-    // matters — a float2 vs float3 field is a real decompiler bug and still
+    // matters â€” a float2 vs float3 field is a real decompiler bug and still
     // mismatches via the popcount.
     private static string Canonical(SignatureElement e) =>
         $"{e.SemanticName}:{e.SemanticIndex}:{e.SystemValue}:{System.Numerics.BitOperations.PopCount(e.Mask)}";
@@ -188,7 +186,7 @@ public static class RecompileVerify
     }
 
     // Dumps the DXBC disassembly of every non-compute subprogram in each
-    // folder's blob.bin to <folder>\.disasm.txt — bytecode-level ground
+    // folder's blob.bin to <folder>\.disasm.txt â€” bytecode-level ground
     // truth for diagnosing decompiler output (swizzle/type bugs etc.).
     public static void DumpDisasm(string outputRoot)
     {
@@ -408,53 +406,4 @@ public static class RecompileVerify
             i = end + "ENDHLSL".Length;
         }
     }
-
-    // --- d3dcompiler interop (see StripSurvivors for the blob reading) ---
-    internal static byte[] CompileHlsl(string hlsl, string entry, string profile) => Compile(hlsl, entry, profile);
-
-    private static byte[] Compile(string hlsl, string entry, string profile)
-    {
-        byte[] src = Encoding.UTF8.GetBytes(hlsl);
-        int hr = D3DCompile(
-            src, (nuint)src.Length, "decompiled.hlsl",
-            IntPtr.Zero, IntPtr.Zero, entry, profile,
-            (uint)(ShaderFlags.EnableStrictness | ShaderFlags.OptimizationLevel0),
-            0, out IntPtr code, out IntPtr errors);
-        if (hr < 0 || code == IntPtr.Zero)
-        {
-            string msg = errors == IntPtr.Zero
-                ? $"HRESULT 0x{hr:X8}"
-                : ReadComBlobString(errors);
-            throw new InvalidOperationException(msg);
-        }
-        return ReadComBlob(code);
-    }
-
-    [DllImport("d3dcompiler_47.dll", CharSet = CharSet.Ansi, CallingConvention = CallingConvention.StdCall)]
-    private static extern int D3DCompile(
-        byte[] pSrcData, nuint srcDataSize, string pSourceName,
-        IntPtr pDefines, IntPtr pInclude, string pEntrypoint, string pTarget,
-        uint flags1, uint flags2, out IntPtr ppCode, out IntPtr ppErrorMsgs);
-
-    private static byte[] ReadComBlob(IntPtr blob)
-    {
-        IntPtr vtbl = Marshal.ReadIntPtr(blob);
-        var getPtr = Marshal.GetDelegateForFunctionPointer<GetBufferPointerFn>(Marshal.ReadIntPtr(vtbl, 3 * IntPtr.Size));
-        var getSize = Marshal.GetDelegateForFunctionPointer<GetBufferSizeFn>(Marshal.ReadIntPtr(vtbl, 4 * IntPtr.Size));
-        byte[] bytes = new byte[getSize(blob)];
-        Marshal.Copy(getPtr(blob), bytes, 0, bytes.Length);
-        return bytes;
-    }
-
-    private static string ReadComBlobString(IntPtr blob)
-    {
-        byte[] bytes = ReadComBlob(blob);
-        return Encoding.UTF8.GetString(bytes).Trim('\0');
-    }
-
-    [UnmanagedFunctionPointer(CallingConvention.StdCall)]
-    private delegate IntPtr GetBufferPointerFn(IntPtr self);
-
-    [UnmanagedFunctionPointer(CallingConvention.StdCall)]
-    private delegate nuint GetBufferSizeFn(IntPtr self);
 }

@@ -88,8 +88,10 @@ internal class Program
 
         // args[0] is a folder produced by Extract.py (blob.bin +
         // metadata.json + optional dummy.shader), or a direct blob.bin path.
-        // No-args default: the HOLO_Holo input folder in the repo-root Output.
-        string inputPath = args.Length > 0 ? args[0] : "../Output/HOLO_Holo";
+        // No-args default: the HOLO_Holo input folder under the repo Output/,
+        // resolved from either the working directory or one level up so the
+        // app works whether it is launched from the repo root or from src/.
+        string inputPath = args.Length > 0 ? args[0] : DefaultInputFolder();
 
         // Output root for the generated .shader (+ opt-in program*.bin/
         // .dxbc/.hlsl artifacts). Defaults to the project-local Output/ so
@@ -158,6 +160,21 @@ internal class Program
 
     // Locate the decompiler Output/ folder regardless of the launch directory.
     private static string FindOutputRoot() => Decompiler.FindOutputRoot();
+
+    // No-args input: the HOLO_Holo Stage 0 folder. Check the working
+    // directory first, then one level up (the historical layout where the app
+    // was launched from its own project folder).
+    private static string DefaultInputFolder()
+    {
+        string cwd = Directory.GetCurrentDirectory();
+        string[] candidates =
+        {
+            Path.Combine(cwd, "Output", "HOLO_Holo"),
+            Path.Combine(cwd, "..", "Output", "HOLO_Holo"),
+        };
+
+        return candidates.FirstOrDefault(Directory.Exists) ?? candidates[0];
+    }
 
     // Runs the full decompilation pipeline on a single blob folder, then
     // verifies the output .shader against the original DXBC bytecode.

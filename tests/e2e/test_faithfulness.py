@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+﻿#!/usr/bin/env python3
 """
 Automated faithfulness test: runs the C# decompiler's --faithfulness-test
 flag on every shader folder in Output/ (each containing blob.bin +
@@ -13,7 +13,7 @@ For each shader the test:
      named cbuffer members.
 
 Usage:
-    python Shader Decompiler/Tests/test_faithfulness.py [--parser PATH] [--out-dir DIR]
+    python tests/e2e/test_faithfulness.py [--parser PATH] [--out-dir DIR]
 """
 
 import argparse
@@ -79,7 +79,7 @@ def find_shader_dirs(out_dir):
 def main():
     ap = argparse.ArgumentParser(description="Faithfulness test across all shader folders")
     ap.add_argument("--parser", default=str(
-        REPO_ROOT / "Shader Decompiler" / "bin" / "Debug" / "net10.0" / "Shader Decompiler.exe"),
+        REPO_ROOT / "src" / "UnityShaderDecompiler.Cli" / "bin" / "Debug" / "net10.0" / "Shader Decompiler.exe"),
         help="path to the built Shader Decompiler.exe")
     ap.add_argument("--out-dir", default=str(OUTPUT_DIR),
         help="root folder containing per-shader subfolders (Output/)")
@@ -114,7 +114,7 @@ def main():
 
         r = run(
             [str(parser_exe), "--faithfulness-test", str(folder)],
-            REPO_ROOT / "Shader Decompiler",
+            REPO_ROOT / "src" / "UnityShaderDecompiler.Cli",
         )
         log = r.stdout + r.stderr
 

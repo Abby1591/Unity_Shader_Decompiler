@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+﻿#!/usr/bin/env python3
 """
 Golden tests for the four PicaVoxel shaders whose real source the repo has
 (shaders_dummy/Source/*.shader). For each shader the test:
@@ -23,7 +23,7 @@ Expected values are read from the JSON export itself (the true input), so
 this stays in sync with the corpus rather than hard-coding stale facts.
 
 Usage:
-    python "Shader Decompiler/Tests/test_picavoxel_shaders.py" [--keep] [--parser PATH]
+    python "tests/e2e/test_picavoxel_shaders.py" [--keep] [--parser PATH]
 """
 
 import argparse
@@ -110,7 +110,7 @@ def main():
     ap.add_argument("--keep", action="store_true",
                     help="do not delete the extracted Output/<name> folders at the end")
     ap.add_argument("--parser",
-                    default=str(REPO_ROOT / "Shader Decompiler" / "bin" / "Debug" / "net10.0" / "Shader Decompiler.exe"),
+                    default=str(REPO_ROOT / "src" / "UnityShaderDecompiler.Cli" / "bin" / "Debug" / "net10.0" / "Shader Decompiler.exe"),
                     help="path to the built Shader Decompiler.exe")
     ap.add_argument("--out-root", default=str(OUT_DIR),
                     help="root folder that Extract.py writes into")
@@ -121,8 +121,8 @@ def main():
     # The parser resolves its output via ProjectOutputRoot(): it walks up from
     # the executable to the C# project folder's Output/ regardless of launch
     # cwd, so the .shader lands in <project>/Output (visible in the IDE).
-    parser_out = REPO_ROOT / "Shader Decompiler" / "Output"
-    parser_out.mkdir(exist_ok=True)
+    parser_out = REPO_ROOT / "src" / "UnityShaderDecompiler.Cli" / "Output"
+    parser_out.mkdir(parents=True, exist_ok=True)
 
     if not parser_exe.exists():
         print(f"Parser.exe not found at {parser_exe}; run 'dotnet build' first.")
@@ -150,7 +150,8 @@ def main():
 
         # Stage 1+: decompile. The parser writes the final .shader into the
         # C# project's Output/ (ProjectOutputRoot), independent of launch cwd.
-        r = run([str(parser_exe), str(blob_folder)], REPO_ROOT / "Shader Decompiler")
+        r = run([str(parser_exe), str(blob_folder)],
+                REPO_ROOT / "src" / "UnityShaderDecompiler.Cli")
         log = r.stdout + r.stderr
         if r.returncode != 0 or "Unhandled exception" in log:
             print(f"[{label}] FAIL: decompiler crashed (exit {r.returncode})")
