@@ -10,8 +10,8 @@ public class SamplerBindingTests
     public void SameRecoveredNameDoesNotMergeDifferentSamplerSlots()
     {
         DecompilationResult result = FixtureCache.Decompile("HOLO_Holo");
-        HlslPassNode pass = Assert.Single(result.Passes.Where(p =>
-            p.Resources.Any(r => r.Kind == HlslResourceKind.Sampler && r.Slot == 2)));
+        HlslPassNode pass = Assert.Single(result.Passes, p =>
+            p.Resources.Any(r => r.Kind == HlslResourceKind.Sampler && r.Slot == 2));
         HlslResourceNode first = Assert.Single(pass.Resources,
             r => r.Kind == HlslResourceKind.Sampler && r.Slot == 0);
         HlslResourceNode second = Assert.Single(pass.Resources,
