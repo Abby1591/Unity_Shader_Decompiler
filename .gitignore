@@ -1,15 +1,26 @@
-/Shader Decompiler/.idea/
-/Shader Decompiler/bin/
-/Shader Decompiler/obj/
-/Shader Decompiler/Folder.DotSettings.user
-/.idea/
-
-# Test project build output
+# Build output
+/src/**/bin/
+/src/**/obj/
+/src/**/Output/
 /tests/**/bin/
 /tests/**/obj/
+
+# IDE
+/.idea/
+/src/**/.idea/
+*.DotSettings.user
+qodana.sarif.json
+
+# Test results
 TestResults/
 *.trx
 
 # Local CI scratch
 /Builds/
 
+# Generated Stage 0 output
+/Output/
+
+# Python
+__pycache__/
+*.pyc

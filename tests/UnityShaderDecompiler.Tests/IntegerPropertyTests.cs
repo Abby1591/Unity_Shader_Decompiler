@@ -1,6 +1,6 @@
 using System.Text.Json;
-using Parser.Core.Hlsl.Ast;
-using Parser.DXBC.Metadata;
+using UnityShaderDecompiler.Core.Hlsl.Ast;
+using UnityShaderDecompiler.Core.DXBC.Metadata;
 
 namespace UnityShaderDecompiler.Tests;
 
