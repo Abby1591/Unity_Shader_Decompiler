@@ -16,6 +16,18 @@ namespace UnityShaderDecompiler.Tests;
 /// </summary>
 public class DecompilerIntegrationTests
 {
+    // Keeps both metadata passes when they share one compiled vertex program.
+    [Fact]
+    public void BrightPassFilter_ReusesVertexAcrossFragmentPasses()
+    {
+        DecompilationResult result = FixtureCache.Decompile("Hidden_BrightPassFilter2");
+
+        Assert.Equal(2, result.Passes.Count);
+        Assert.All(result.Passes, pass => Assert.NotNull(pass.VertexFunction));
+        Assert.All(result.Passes, pass => Assert.NotNull(pass.FragmentFunction));
+        Assert.DoesNotContain("_StubCB", result.ShaderText);
+    }
+
     public static TheoryData<string, string> Fixtures => new()
     {
         { "HOLO_Holo", "HOLO/Holo" },

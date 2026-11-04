@@ -568,12 +568,30 @@ public static class Decompiler
                 }
             }
 
+            // Reuse a serialized vertex when each metadata pass has its own fragment.
+            bool sharedVertexPasses = groups.Count == 1 && verts.Count == 1
+                && frags.Count == allPasses.Count && frags.Count > 1
+                && frags.All(f => verts[0].OutputInterpolators == f.InputInterpolators
+                    && verts[0].OutputSignature.Split(';', StringSplitOptions.RemoveEmptyEntries)
+                        .All(f.InputSignature.Split(';', StringSplitOptions.RemoveEmptyEntries).Contains));
+            if (sharedVertexPasses)
+            {
+                foreach (DecompiledSubprogram fragment in frags)
+                {
+                    if (usedFrags.Add(fragment))
+                    {
+                        pairs.Add((verts[0], fragment));
+                    }
+                }
+            }
+
             // First pair fills the shell pass; the rest get clones.
             for (int pi = 0; pi < pairs.Count; pi++)
             {
                 var (v, f) = pairs[pi];
-                HlslPassNode pass = pi == 0 ? shell : ClonePass(shell);
-                if (!ReferenceEquals(pass, shell))
+                HlslPassNode pass = sharedVertexPasses ? allPasses[pi]
+                    : pi == 0 ? shell : ClonePass(shell);
+                if (!sharedVertexPasses && !ReferenceEquals(pass, shell))
                 {
                     HlslSubShaderNode ss = subshaderByPass[shell];
                     int insertAt = ss.Passes.IndexOf(shell) + 1;
