@@ -10,8 +10,10 @@ using Xunit;
 
 namespace UnityShaderDecompiler.Tests;
 
+// Covers vector expression widths tests.
 public sealed class VectorExpressionWidthsTests
 {
+    // Verifies that normalize simplification keeps the dot product lanes.
     [Fact]
     public void NormalizeSimplificationKeepsTheDotProductLanes()
     {
@@ -24,6 +26,7 @@ public sealed class VectorExpressionWidthsTests
         Assert.DoesNotMatch(@"normalize\(cb1_values\s*\[5\]\)", simplified);
     }
 
+    // Verifies that three component dot does not read the fourth lane.
     [Fact]
     public void ThreeComponentDotDoesNotReadTheFourthLane()
     {
@@ -43,6 +46,7 @@ public sealed class VectorExpressionWidthsTests
         Assert.Matches(@"dot\(\(.+\)\.xyz, \(.+\)\.xyz\)", source);
     }
 
+    // Verifies that vector cast preserves width for component access.
     [Fact]
     public void VectorCastPreservesWidthForComponentAccess()
     {
@@ -66,6 +70,7 @@ public sealed class VectorExpressionWidthsTests
         Assert.DoesNotContain("(float)r0_xyzw_1", source);
     }
 
+    // Wraps the fixture function in a shader and emits its HLSL.
     private static string Print(HlslFunctionNode function)
     {
         HlslShaderNode shader = new HlslShaderNode { Name = "Test/Scope" };
@@ -75,6 +80,7 @@ public sealed class VectorExpressionWidthsTests
         return HlslPrettyPrinter.Print(shader, fuseTemps: false);
     }
 
+    // Creates a temporary register with the requested index and lane mask.
     private static IRRegister Temp(uint index, byte mask = 1)
     {
         IRRegister register = new IRRegister
@@ -86,11 +92,16 @@ public sealed class VectorExpressionWidthsTests
             ComponentMode = Operand.OperandComponentMode.Mask,
         };
         for (int component = 0; component < 4; component++)
+        {
             if ((mask & (1 << component)) != 0)
+            {
                 register.SsaVersion[component] = 1;
+            }
+        }
         return register;
     }
 
+    // Creates a scalar floating-point constant for the fixture.
     private static IRExpression.ConstantExpression Float(float value) => new()
     {
         RawValues = new[] { unchecked((uint)BitConverter.SingleToInt32Bits(value)) },

@@ -2509,10 +2509,13 @@ public static class HlslPrettyPrinter
         return true;
     }
 
+    // Renders a dot product using only its active vector lanes.
     private static string RenderDotProduct(IRExpression.DotProductExpression dot, PrintContext ctx)
     {
         if (dot.Components is < 2 or > 4)
+        {
             throw new InvalidOperationException($"Unsupported dot-product width: {dot.Components}");
+        }
         string lanes = "xyzw"[..dot.Components];
         return $"dot(({RenderExpression(dot.Left, ctx)}).{lanes}, ({RenderExpression(dot.Right, ctx)}).{lanes})";
     }
@@ -2609,6 +2612,7 @@ public static class HlslPrettyPrinter
             case IRExpression.IRIntrinsic.CastBool: return $"({CastType("bool")})({Arg(0)})";
         }
 
+        // Preserves the vector width when rendering a typed cast.
         string CastType(string scalar)
         {
             int width = ExpressionWidth(expr.Arguments[0], ctx);
