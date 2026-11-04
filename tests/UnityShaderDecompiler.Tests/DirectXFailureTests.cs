@@ -1,6 +1,6 @@
 using System.IO;
 using AssetStudio;
-using Parser;
+using UnityShaderDecompiler.Core;
 
 namespace UnityShaderDecompiler.Tests;
 
