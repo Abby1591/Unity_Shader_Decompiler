@@ -2638,6 +2638,17 @@ public static class HlslPrettyPrinter
         string Arg(int n) => RenderExpression(expr.Arguments[n], ctx);
         string AllArgs() => string.Join(", ", expr.Arguments.Select(a => RenderExpression(a, ctx)));
 
+        // Keep integer reads in integer storage: fxc can fold a known subnormal
+        // float round-trip to zero even when it only transports register bits.
+        if (ctx.RawTemporaryStorage && expr.Intrinsic is IRExpression.IRIntrinsic.AsUInt or IRExpression.IRIntrinsic.AsInt
+            && expr.Arguments[0] is IRExpression.RegisterExpression { Register: { } register }
+            && register.RegisterType is RegisterType.Temp or RegisterType.IndexableTemp
+            && register.Modifier == ShdrParser.OperandModifier.None)
+        {
+            string bits = RenderTempRead(register, ctx);
+            return expr.Intrinsic == IRExpression.IRIntrinsic.AsUInt ? bits : $"asint({bits})";
+        }
+
         // fxc folds frac(x + integer) even with /Gis, losing the add's rounding.
         // Use the DXBC definition of frc to retain that dependency.
         if (ctx.RawTemporaryStorage && expr.Intrinsic == IRExpression.IRIntrinsic.FractionalPart)

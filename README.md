@@ -315,6 +315,10 @@ root, prefixing each with
 
 ## Limitations
 
+With `--no-fuse-temps`, saturated moves clamp floating-point values before
+storing raw bits. Integer reads remain in integer storage, preserving low-bit
+conditions that fxc can otherwise fold away through a float round trip.
+
 - Targets Unity 2022.3 D3D11 shader blobs.
 - Structured-buffer loads require `--no-fuse-temps`. Element stride, constant
   byte offsets and swizzles are preserved; fused mode, dynamic offsets and

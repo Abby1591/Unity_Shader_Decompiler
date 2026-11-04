@@ -184,7 +184,7 @@ public sealed class RawRegisterSemanticsTests
         string source = Print(function);
         Assert.Contains("uint r0_x_1", source);
         Assert.Contains("? 0xffffffffu : 0u", source);
-        Assert.Contains("asint(asfloat(r0_x_1))", source);
+        Assert.Contains("asint(r0_x_1)", source);
         Assert.Contains("uint r1_x_1 = asuint(", source);
     }
 

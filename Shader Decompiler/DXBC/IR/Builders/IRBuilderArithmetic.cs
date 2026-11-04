@@ -8,7 +8,8 @@ public partial class IRBuilder
 
     private void BuildMov(IRProgram program, Instruction instruction)
     {
-        Emit(program, instruction, _preserveRegisterBits
+        // Saturated moves interpret the payload as float before clamping.
+        Emit(program, instruction, _preserveRegisterBits && !instruction.Saturate
             ? BuildRawExpression(instruction.Operands[1]) : BuildExpression(instruction.Operands[1]));
     }
 
@@ -18,8 +19,8 @@ public partial class IRBuilder
             new IRExpression.ConditionalExpression
             {
                 Condition = BuildBoolExpression(instruction.Operands[1]),
-                TrueExpression = _preserveRegisterBits ? BuildRawExpression(instruction.Operands[2]) : BuildExpression(instruction.Operands[2]),
-                FalseExpression = _preserveRegisterBits ? BuildRawExpression(instruction.Operands[3]) : BuildExpression(instruction.Operands[3])
+                TrueExpression = _preserveRegisterBits && !instruction.Saturate ? BuildRawExpression(instruction.Operands[2]) : BuildExpression(instruction.Operands[2]),
+                FalseExpression = _preserveRegisterBits && !instruction.Saturate ? BuildRawExpression(instruction.Operands[3]) : BuildExpression(instruction.Operands[3])
             };
 
         Emit(program, instruction, expression);

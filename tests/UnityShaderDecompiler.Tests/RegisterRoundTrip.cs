@@ -89,6 +89,11 @@ internal static class RegisterRoundTrip
                         _ => throw new InvalidOperationException(),
                     };
                 }
+                if (instruction.Saturate)
+                {
+                    float value = BitConverter.UInt32BitsToSingle(result[lane]);
+                    result[lane] = BitConverter.SingleToUInt32Bits(float.IsNaN(value) ? 0f : Math.Clamp(value, 0f, 1f));
+                }
             }
             (RegisterType, uint) key = (destination.RegisterType, destination.RegisterIndex);
             if (!registers.TryGetValue(key, out uint[]? target)) registers[key] = target = new uint[4];
