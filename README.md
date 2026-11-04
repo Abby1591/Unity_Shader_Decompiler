@@ -219,7 +219,8 @@ Each subprogram goes through `IRPipeline` (`DXBC/IR/IRPipeline.cs`):
    DXBC container.
 2. **Container parse** — validate the `DXBC` magic and lengths; parse `ISGN`,
    `OSGN`, `OSG5`, `PSGN`, `PCON`, `SFI0`, `RDEF`, `STAT`, and the
-   `SHDR`/`SHEX` shader chunk. Unknown chunks are preserved raw.
+   `SHDR`/`SHEX` shader chunk. `SFI0` is read as a 64-bit feature mask; invalid
+   lengths are rejected. Unknown chunks are preserved raw.
 3. **Instruction decode** — decode every SM4/SM5 instruction and operand.
 4. **IR build** — build flat, typed IR statements.
 5. **CFG** — build basic blocks and edges.
