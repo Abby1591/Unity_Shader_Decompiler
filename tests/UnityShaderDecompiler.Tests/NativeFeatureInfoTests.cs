@@ -1,7 +1,7 @@
 using System;
 using System.Buffers.Binary;
-using Parser;
-using Parser.DXBC;
+using UnityShaderDecompiler.Core;
+using UnityShaderDecompiler.Core.DXBC;
 
 namespace UnityShaderDecompiler.Tests;
 
@@ -12,7 +12,7 @@ public class NativeFeatureInfoTests
     {
         using MemoryStream stream = new MemoryStream(BitConverter.GetBytes(1UL));
         using BinaryReader reader = new BinaryReader(stream);
-        Parser.DXBC.Chunks.Sfi0Chunk chunk = new Parser.DXBC.Chunks.Sfi0Chunk();
+        UnityShaderDecompiler.Core.DXBC.Chunks.Sfi0Chunk chunk = new UnityShaderDecompiler.Core.DXBC.Chunks.Sfi0Chunk();
         chunk.Read(reader);
         Assert.Equal(1UL, chunk.FeatureFlags);
         Assert.False(chunk.HasLegacyStatistics);
@@ -27,7 +27,7 @@ public class NativeFeatureInfoTests
             "CMaxNumThreadsX", "CMaxNumThreadsY", "CMaxNumThreadsZ",
         };
         foreach (string field in fields)
-            Assert.Equal(typeof(uint), typeof(Parser.DXBC.Chunks.Sfi0Chunk).GetField(field)?.FieldType);
+            Assert.Equal(typeof(uint), typeof(UnityShaderDecompiler.Core.DXBC.Chunks.Sfi0Chunk).GetField(field)?.FieldType);
     }
 
     [Fact]
@@ -38,7 +38,7 @@ public class NativeFeatureInfoTests
 
         const string source = "float main(float x : TEXCOORD) : SV_Target "
             + "{ double value = (double)x; return (float)(value * value); }";
-        byte[] bytes = RecompileVerify.CompileHlsl(source, "main", "ps_5_0");
+        byte[] bytes = UnityShaderDecompiler.Core.DXBC.Compilation.DxbcCompiler.Compile(source, "main", "ps_5_0");
         DxbcFile compiled = new();
         compiled.Load(bytes);
         DxbcChunk featureInfo = Assert.Single(compiled.Chunks, chunk => chunk.Name.ToString() == "SFI0");

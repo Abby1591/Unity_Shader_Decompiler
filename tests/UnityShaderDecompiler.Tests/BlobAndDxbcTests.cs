@@ -2,8 +2,8 @@ using System;
 using System.IO;
 using System.Linq;
 using System.Text;
-using Parser.DXBC;
-using Parser.DXBC.Extraction;
+using UnityShaderDecompiler.Core.DXBC;
+using UnityShaderDecompiler.Core.DXBC.Extraction;
 
 namespace UnityShaderDecompiler.Tests;
 
