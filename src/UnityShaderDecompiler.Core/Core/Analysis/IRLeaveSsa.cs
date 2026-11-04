@@ -74,7 +74,9 @@ public static class IRLeaveSsa
             // Closing a conditional joins both paths. Copies appended here
             // must stay after the marker, rather than move into one branch.
             if (pred.Statements[0] is IRStatement.IREndIf or IRStatement.IREndSwitch)
+                {
                 break;
+            }
             if (pred.Predecessors.Count == 0)
                 break; // nothing real to redirect to (entry block) — leave as-is
 

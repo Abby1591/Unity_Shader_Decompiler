@@ -2366,26 +2366,37 @@ public static class HlslPrettyPrinter
         return result;
     }
 
+    // Collects temporary register names used by an expression.
     private static void AddNames(HlslBlockStatement block, Dictionary<string, int> names, PrintContext ctx)
     {
         foreach ((string name, int comps) in WrittenDeclNames(block.Statements, ctx))
             if (!names.TryGetValue(name, out int prev) || comps > prev)
+            {
                 names[name] = comps;
+            }
 
         foreach (HlslStatementNode stmt in block.Statements)
+        {
             switch (stmt)
             {
                 case HlslIfStatement nested:
                     AddNames(nested.Then, names, ctx);
-                    if (nested.Else is not null) AddNames(nested.Else, names, ctx);
+                    if (nested.Else is not null)
+                    {
+                        AddNames(nested.Else, names, ctx);
+                    }
                     break;
                 case HlslLoopStatement loop:
                     AddNames(loop.Body, names, ctx);
                     break;
                 case HlslSwitchStatement sw:
-                    foreach (HlslSwitchCase c in sw.Cases) AddNames(c.Body, names, ctx);
+                    foreach (HlslSwitchCase c in sw.Cases)
+                    {
+                        AddNames(c.Body, names, ctx);
+                    }
                     break;
             }
+        }
     }
 
     // Names first written at the top level of a loop body that are not yet
