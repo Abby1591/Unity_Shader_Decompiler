@@ -1,7 +1,7 @@
 using System;
 using System.IO;
 using System.Linq;
-using Parser;
+using UnityShaderDecompiler.Core;
 
 namespace UnityShaderDecompiler.Tests;
 
@@ -10,7 +10,7 @@ public class MetadataTests
     [Fact]
     public void LoadFromFolder_ReadsNamePropertiesAndSubShaders()
     {
-        var project = Parser.DXBC.Metadata.ShaderProject.LoadFromFolder(
+        var project = UnityShaderDecompiler.Core.DXBC.Metadata.ShaderProject.LoadFromFolder(
             TestPaths.FixtureFolder("HOLO_Holo"));
 
         Assert.Equal("HOLO/Holo", project.Metadata.Name);
@@ -25,7 +25,7 @@ public class MetadataTests
     {
         using var temp = new TempDirectory();
         var ex = Assert.Throws<FileNotFoundException>(() =>
-            Parser.DXBC.Metadata.ShaderProject.LoadFromFolder(temp.Path));
+            UnityShaderDecompiler.Core.DXBC.Metadata.ShaderProject.LoadFromFolder(temp.Path));
         Assert.Contains("blob.bin", ex.Message);
     }
 

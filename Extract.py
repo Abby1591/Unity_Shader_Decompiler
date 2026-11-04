@@ -1,5 +1,5 @@
-"""
-Stage 0 — Frontend / Preprocessing orchestrator.
+﻿"""
+Stage 0 â€” Frontend / Preprocessing orchestrator.
 
 For a given shader JSON export, produces the three inputs Program.cs (C#)
 now expects, all in one per-shader output folder:
@@ -44,7 +44,7 @@ def main():
         print(f"Not found: {json_path}")
         sys.exit(1)
 
-    # 0.1 — blob
+    # 0.1 â€” blob
     shader = ShaderBlob(str(json_path))
     blob = shader.get_blob()
 
@@ -58,13 +58,13 @@ def main():
         f.write(blob)
     print(f"Saved {blob_path} ({len(blob)} bytes)")
 
-    # 0.2 — metadata
+    # 0.2 â€” metadata
     meta = ShaderMetadata(str(json_path))
     meta_path = out_dir / "metadata.json"
     meta.save(str(meta_path))
     print(f"Saved {meta_path}")
 
-    # 0.3 — dummy shader (best effort, not required)
+    # 0.3 â€” dummy shader (best effort, not required)
     dummy_path = out_dir / "dummy.shader"
     if copy_dummy_shader(shader.name, args.dummy_dir, str(dummy_path)):
         print(f"Saved {dummy_path}")
@@ -73,7 +73,7 @@ def main():
 
     print()
     print(f"Ready for C# side:")
-    print(f"  dotnet run --project \"Shader Decompiler/Shader Decompiler.csproj\" -- \"{blob_path}\"")
+    print(f"  dotnet run --project \"src/UnityShaderDecompiler.Cli/UnityShaderDecompiler.Cli.csproj\" -- \"{blob_path}\"")
 
 
 if __name__ == "__main__":

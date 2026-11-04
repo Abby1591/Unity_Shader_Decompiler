@@ -1,10 +1,10 @@
 using System;
 using System.Linq;
 using System.Text.RegularExpressions;
-using Parser;
-using Parser.Core.Hlsl.Ast;
-using Parser.DXBC;
-using Parser.DXBC.Chunks;
+using UnityShaderDecompiler.Core;
+using UnityShaderDecompiler.Core.Hlsl.Ast;
+using UnityShaderDecompiler.Core.DXBC;
+using UnityShaderDecompiler.Core.DXBC.Chunks;
 
 namespace UnityShaderDecompiler.Tests;
 
@@ -44,7 +44,7 @@ public class CbufferEmissionTests
         Assert.NotEmpty(declaration);
         string source = declaration + "\nfloat4 main() : SV_Target { return cb1_values[1]; }";
         DxbcFile compiled = new();
-        compiled.Load(RecompileVerify.CompileHlsl(source, "main", "ps_5_0"));
+        compiled.Load(UnityShaderDecompiler.Core.DXBC.Compilation.DxbcCompiler.Compile(source, "main", "ps_5_0"));
 
         RdefConstantBuffer reflected = Assert.Single(compiled.ResourceDefinition!.ConstantBuffers);
         Assert.Equal(emittedName, reflected.Name);

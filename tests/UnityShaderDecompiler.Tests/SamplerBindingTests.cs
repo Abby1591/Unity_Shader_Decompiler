@@ -1,6 +1,6 @@
 using System.Linq;
-using Parser;
-using Parser.Core.Hlsl.Ast;
+using UnityShaderDecompiler.Core;
+using UnityShaderDecompiler.Core.Hlsl.Ast;
 
 namespace UnityShaderDecompiler.Tests;
 

@@ -1,6 +1,6 @@
 using System;
 using System.Text.RegularExpressions;
-using Parser;
+using UnityShaderDecompiler.Core;
 
 namespace UnityShaderDecompiler.Tests;
 
@@ -19,6 +19,6 @@ public class GoldenNativeCompilationTests
             @"HLSLPROGRAM(.*?)ENDHLSL", RegexOptions.Singleline);
         Assert.NotEmpty(blocks);
         foreach (Match block in blocks)
-            Assert.NotEmpty(RecompileVerify.CompileHlsl(block.Groups[1].Value, entry, profile));
+            Assert.NotEmpty(UnityShaderDecompiler.Core.DXBC.Compilation.DxbcCompiler.Compile(block.Groups[1].Value, entry, profile));
     }
 }
