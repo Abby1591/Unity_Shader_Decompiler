@@ -41,12 +41,10 @@ Coverage: BilateralBlur **13** programs (5 vertex / 8 fragment), BlitAdd **2** (
 | PR #6 alone, `9677441` | All seven tests pass; all 199 expected DirectX programs are collected |
 | All twelve correction PRs integrated with upstream `417f26b` | All seven tests pass; all 199 expected DirectX programs are collected |
 
-To repeat the comparison without copying or editing fixtures, build the Release CLI in each target checkout, then run this test file with `USD_REPO_ROOT` set to that checkout. For example, in PowerShell from this PR's repository root:
+To repeat the comparison without copying or editing fixtures, build the Release CLI in each target checkout, then run this test file with `USD_REPO_ROOT` set to that checkout. For example, from this PR's repository root:
 
-```powershell
-$env:USD_REPO_ROOT = (Resolve-Path ../decompiler-under-test).Path
-python tests/e2e/test_volumetric_lights.py
-Remove-Item Env:USD_REPO_ROOT
+```bash
+USD_REPO_ROOT=../decompiler-under-test python tests/e2e/test_volumetric_lights.py
 ```
 
 Keep #14 in draft until #6 is integrated into its base. Passing this corpus does not independently prove the necessity or correctness of the other correction PRs.
