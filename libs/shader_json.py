@@ -1,8 +1,10 @@
+# Normalizes supported shader JSON export schemas.
 """Normalize the serialized field names used by AssetStudio and AssetRipper."""
 
 import json
 
 
+# Reads a byte offset from either supported parameter schema.
 def parameter_offset(parameter):
     # Unity renamed this field; AssetRipper also normalizes older exports.
     field = "m_OffsetInConstantBuffer" if "m_OffsetInConstantBuffer" in parameter else "m_Index"
@@ -13,6 +15,7 @@ def parameter_offset(parameter):
     return offset
 
 
+# Resolves equivalent field names and rejects conflicting values.
 def _alias(data, canonical, legacy):
     if legacy not in data:
         return
@@ -22,6 +25,7 @@ def _alias(data, canonical, legacy):
     data[canonical] = value
 
 
+# Normalizes dictionary and serialized key/value map encodings.
 def _mapping(value, label):
     if isinstance(value, dict):
         return value
@@ -38,6 +42,7 @@ def _mapping(value, label):
     return result
 
 
+# Normalizes serialized shader tags.
 def _tags(owner):
     tags = owner.get("m_Tags")
     if isinstance(tags, dict):
@@ -46,6 +51,7 @@ def _tags(owner):
             tags["m_Tags"] = _mapping(tags["m_Tags"], "tag")
 
 
+# Unwraps serialized state values without inventing defaults.
 def _wrapped(value, integer=False):
     if not isinstance(value, dict):
         return value
@@ -60,6 +66,7 @@ def _wrapped(value, integer=False):
     return value
 
 
+# Normalizes render-state fields from both exporter schemas.
 def _render_state(state):
     for name in ("zClip", "zTest", "zWrite", "culling", "conservative", "alphaToMask",
                  "stencilReadMask", "stencilWriteMask", "stencilRef", "offsetFactor",
@@ -92,6 +99,7 @@ def _render_state(state):
     _tags(state)
 
 
+# Loads and normalizes an AssetStudio or AssetRipper shader export.
 def load_shader_json(path):
     with open(path, encoding="utf-8-sig") as stream:
         data = json.load(stream)

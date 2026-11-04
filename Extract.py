@@ -1,4 +1,4 @@
-﻿"""
+"""
 Stage 0 â€” Frontend / Preprocessing orchestrator.
 
 For a given shader JSON export, produces the three inputs Program.cs (C#)

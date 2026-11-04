@@ -1,3 +1,4 @@
+# Checks shader extraction and decompilation behavior.
 import base64
 import copy
 import json
@@ -12,7 +13,9 @@ from libs.metadata import ShaderMetadata
 from libs.shader_json import load_shader_json
 
 
+# Covers shader metadata regression cases.
 class ExporterSchemaTests(unittest.TestCase):
+    # Builds an AssetStudio fixture with compressed bytecode and metadata.
     def studio(self):
         payload = b"generic serialized shader data"
         compressed = lz4.block.compress(payload, store_size=False)
@@ -42,27 +45,35 @@ class ExporterSchemaTests(unittest.TestCase):
                                     "m_VectorParams": [{"m_NameIndex": 2, "m_Index": 16, "m_Dim": 4}]}],
                             },
                         },
-                        "m_State": {
-                            "m_Tags": {"tags": [{"Key": "LIGHTMODE", "Value": "FORWARDBASE"}]},
-                            "culling": {"name": "<noninit>", "val": 2.0},
-                            "zTest": {"val": 4.0}, "zWrite": {"val": 1.0},
-                            "offsetFactor": {"val": 0.125},
-                            "rtBlend0": {"srcBlend": {"val": 5.0}, "destBlend": {"val": 10.0},
-                                         "colMask": {"val": 14.0}},
-                            "stencilOpFront": {"comp": {"val": 8.0}, "pass": {"val": 2.0}},
-                        },
+                        "m_State": self.render_state(),
                     }],
                 }],
             },
         }
         return shader, payload
 
+
+    # Builds serialized render-state values for the exporter fixture.
+    def render_state(self):
+        return {
+            "m_Tags": {"tags": [{"Key": "LIGHTMODE", "Value": "FORWARDBASE"}]},
+            "culling": {"name": "<noninit>", "val": 2.0},
+            "zTest": {"val": 4.0}, "zWrite": {"val": 1.0},
+            "offsetFactor": {"val": 0.125},
+            "rtBlend0": {"srcBlend": {"val": 5.0}, "destBlend": {"val": 10.0},
+                         "colMask": {"val": 14.0}},
+            "stencilOpFront": {"comp": {"val": 8.0}, "pass": {"val": 2.0}},
+        }
+
+
+    # Loads one fixture through the JSON, metadata and blob readers.
     def load(self, shader):
         with tempfile.TemporaryDirectory() as folder:
             path = Path(folder) / "shader.json"
             path.write_text(json.dumps(shader), encoding="utf-8")
             return load_shader_json(path), ShaderMetadata(path).build(), ShaderBlob(path).get_blob()
 
+    # Checks assetstudio fields keep values and bindings.
     def test_assetstudio_fields_keep_values_and_bindings(self):
         shader, payload = self.studio()
         normalized, metadata, blob = self.load(shader)
@@ -80,6 +91,7 @@ class ExporterSchemaTests(unittest.TestCase):
         self.assertEqual((state["blend"]["srcBlend"], state["blend"]["dstBlend"], state["blend"]["colorMask"]), (5, 10, 14))
         self.assertIs(type(state["stencilOpFront"]["m_Comp"]["m_Value"]), int)
 
+    # Checks assetripper fields produce identical inputs.
     def test_assetripper_fields_produce_identical_inputs(self):
         studio, payload = self.studio()
         # Construct the alternative schema explicitly, independently of the loader.
@@ -112,12 +124,14 @@ class ExporterSchemaTests(unittest.TestCase):
         self.assertEqual(actual, expected)
         self.assertEqual(blob, payload)
 
+    # Checks conflicting aliases fail.
     def test_conflicting_aliases_fail(self):
         shader, _ = self.studio()
         shader["m_CompressedLengths"] = [[1]]
         with self.assertRaisesRegex(ValueError, "Conflicting shader fields"):
             self.load(shader)
 
+    # Checks duplicate serialized names fail.
     def test_duplicate_serialized_names_fail(self):
         shader, _ = self.studio()
         names = shader["m_ParsedForm"]["m_SubShaders"][0]["m_Passes"][0]["m_NameIndices"]
@@ -125,6 +139,7 @@ class ExporterSchemaTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "duplicate"):
             self.load(shader)
 
+    # Checks fractional render state enum fails.
     def test_fractional_render_state_enum_fails(self):
         shader, _ = self.studio()
         shader["m_ParsedForm"]["m_SubShaders"][0]["m_Passes"][0]["m_State"]["culling"]["val"] = 1.5

@@ -1,3 +1,4 @@
+# Checks shader extraction and decompilation behavior.
 import json
 import tempfile
 import unittest
@@ -6,7 +7,9 @@ from pathlib import Path
 from libs.metadata import ShaderMetadata
 
 
+# Covers shader metadata regression cases.
 class MetadataOffsetTests(unittest.TestCase):
+    # Builds normalized metadata from a temporary JSON fixture.
     def extract(self, vector, matrix):
         shader_pass = {
             "m_NameIndices": {"Globals": 1, "Tint": 2, "Transform": 3},
@@ -36,28 +39,33 @@ class MetadataOffsetTests(unittest.TestCase):
         self.assertEqual(shared, local[0]["variables"])
         return [(entry["name"], entry["offset"]) for entry in shared]
 
+    # Checks both serialized names preserve byte offsets.
     def test_both_serialized_names_preserve_byte_offsets(self):
         for field in ("m_Index", "m_OffsetInConstantBuffer"):
             with self.subTest(field=field):
                 self.assertEqual(self.extract({field: 20}, {field: 48}),
                                  [("Tint", 20), ("Transform", 48)])
 
+    # Checks explicit offset takes precedence.
     def test_explicit_offset_takes_precedence(self):
         self.assertEqual(self.extract(
             {"m_Index": 0, "m_OffsetInConstantBuffer": 20},
             {"m_Index": 0, "m_OffsetInConstantBuffer": 48}),
             [("Tint", 20), ("Transform", 48)])
 
+    # Checks zero is a valid offset.
     def test_zero_is_a_valid_offset(self):
         self.assertEqual(self.extract({"m_Index": 0}, {"m_OffsetInConstantBuffer": 0}),
                          [("Tint", 0), ("Transform", 0)])
 
+    # Checks missing offsets fail in both readers.
     def test_missing_offsets_fail_in_both_readers(self):
         for vector, matrix in (({}, {"m_Index": 48}), ({"m_Index": 20}, {})):
             with self.subTest(vector=vector, matrix=matrix):
                 with self.assertRaisesRegex(ValueError, "byte offset"):
                     self.extract(vector, matrix)
 
+    # Checks invalid offsets are not replaced by legacy values.
     def test_invalid_offsets_are_not_replaced_by_legacy_values(self):
         for value in (None, True, -4, 2, 1.5, "16"):
             for field in ("m_Index", "m_OffsetInConstantBuffer"):
