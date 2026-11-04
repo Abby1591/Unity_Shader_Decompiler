@@ -196,6 +196,7 @@ public static class HlslPrettyPrinter
         // in the function body are redirected.
         var cbufferRenames = BuildCbufferRenameMap(pass);
 
+        EnsureUniqueTextureNames(pass.Resources);
         foreach (HlslResourceNode res in pass.Resources)
             PrintResource(sb, res, stripRegisterBindings, cbufferRenames);
 
@@ -272,6 +273,27 @@ public static class HlslPrettyPrinter
     };
 
     // ---------- Stage 7: Resources ----------
+
+    // Gives textures on different slots distinct HLSL identifiers in one pass.
+    private static void EnsureUniqueTextureNames(List<HlslResourceNode> resources)
+    {
+        HashSet<string> used = new HashSet<string>(StringComparer.Ordinal);
+        foreach (HlslResourceNode resource in resources)
+        {
+            if (resource.Kind != HlslResourceKind.Texture || used.Add(resource.Name))
+            {
+                continue;
+            }
+            string stem = $"{resource.Name}_t{resource.Slot}";
+            string name = stem;
+            int suffix = 1;
+            while (!used.Add(name) || resources.Any(other => !ReferenceEquals(other, resource) && other.Name == name))
+            {
+                name = $"{stem}_{suffix++}";
+            }
+            resource.Name = name;
+        }
+    }
 
     // When vert and frag have different variables at the same byte offset
     // within a merged cbuffer, one must be declared and the other's
@@ -1624,6 +1646,11 @@ public static class HlslPrettyPrinter
 
     private static string BaseIdentifier(IRRegister reg, PrintContext ctx)
     {
+        if (reg.RegisterType == RegisterType.Resource
+            && ctx.TextureNameBySlot.TryGetValue((int)reg.Index, out string? textureName))
+        {
+            return textureName;
+        }
         if (reg.SymbolicName is not null)
             return reg.SymbolicName;
 

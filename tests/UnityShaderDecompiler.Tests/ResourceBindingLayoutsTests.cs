@@ -24,14 +24,41 @@ public sealed class ResourceBindingLayoutsTests
         Assert.DoesNotContain("NamedValue", source);
     }
 
-    // Wraps the fixture function in a shader and emits its HLSL.
-    private static string Print(HlslFunctionNode function)
+    // Keeps declarations and reads distinct when two texture slots share a name.
+    [Fact]
+    public void DuplicateTextureNamesUseDistinctIdentifiers()
     {
-        HlslShaderNode shader = new HlslShaderNode { Name = "Test/Scope" };
+        HlslShaderNode shader = new HlslShaderNode { Name = "Test/TextureSlots" };
         HlslSubShaderNode subShader = new HlslSubShaderNode();
-        subShader.Passes.Add(new HlslPassNode { FragmentFunction = function });
+        HlslPassNode pass = new HlslPassNode();
+        pass.Resources.Add(new HlslResourceNode { Name = "_Tex", Kind = HlslResourceKind.Texture, Slot = 0 });
+        pass.Resources.Add(new HlslResourceNode { Name = "_Tex", Kind = HlslResourceKind.Texture, Slot = 1 });
+        IRRegister resource = new IRRegister
+        {
+            RegisterType = RegisterType.Resource, Index = 1, SymbolicName = "_Tex",
+        };
+        HlslFunctionNode function = new HlslFunctionNode { Name = "frag", Stage = HlslShaderStage.Fragment };
+        function.Statements.Statements.Add(new HlslAssignmentStatement
+        {
+            Destination = Temp(0, 15),
+            Expression = new IRExpression.TextureOperationExpression
+            {
+                Operation = IRExpression.TextureOperation.Load,
+                Resource = resource,
+                Coordinates = new IRExpression.ConstantExpression
+                {
+                    Kind = IRExpression.ConstantExpression.ConstantKind.Int,
+                    RawValues = new uint[] { 0, 0, 0 },
+                },
+            },
+        });
+        pass.FragmentFunction = function;
+        subShader.Passes.Add(pass);
         shader.SubShaders.Add(subShader);
-        return HlslPrettyPrinter.Print(shader, fuseTemps: false);
+        string source = HlslPrettyPrinter.Print(shader, fuseTemps: false);
+        Assert.Contains("Texture2D _Tex : register(t0);", source);
+        Assert.Contains("Texture2D _Tex_t1 : register(t1);", source);
+        Assert.Contains("_Tex_t1.Load", source);
     }
 
     // Creates a temporary register with the requested index and lane mask.
@@ -54,12 +81,6 @@ public sealed class ResourceBindingLayoutsTests
         }
         return register;
     }
-
-    // Creates a scalar floating-point constant for the fixture.
-    private static IRExpression.ConstantExpression Float(float value) => new()
-    {
-        RawValues = new[] { unchecked((uint)BitConverter.SingleToInt32Bits(value)) },
-    };
 
     // Builds a shader that reads raw storage from a partially described buffer.
     private static HlslShaderNode CreatePartialShader()
