@@ -242,7 +242,8 @@ Each subprogram goes through `IRPipeline` (`DXBC/IR/IRPipeline.cs`):
     marks a pass boundary. Vertex and fragment variants are paired by
     interpolator hand-off signature, and byte-identical pairs are deduplicated.
 13. **Pretty print** — emit properties, tags, LOD, render state,
-    `HLSLPROGRAM` blocks, structs, resources, and function bodies.
+    `HLSLPROGRAM` blocks, structs, resources, and function bodies. Numeric literals
+    use a decimal point regardless of system locale (for example, `0.5`, not `0,5`).
 14. **Surface-shader recognition** — rewrite a pass to `#pragma surface` form
     when it carries the compiled signature of a surface shader.
 
