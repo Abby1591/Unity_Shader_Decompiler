@@ -19,6 +19,7 @@ public sealed class ShaderMetadata
     public string Fallback { get; init; } = "";
     public string CustomEditor { get; init; } = "";
     public List<string> Keywords { get; init; } = new();
+    public Dictionary<string, int> KeywordFlags { get; } = new(StringComparer.Ordinal);
     public List<string> Dependencies { get; init; } = new();
     public JsonElement Raw { get; init; }
 
@@ -42,6 +43,10 @@ public sealed class ShaderMetadata
                 if (k.ValueKind == JsonValueKind.String)
                     meta.Keywords.Add(k.GetString() ?? "");
         }
+
+        if (root.TryGetProperty("keywordFlags", out JsonElement keywordFlags))
+            foreach (JsonProperty keyword in keywordFlags.EnumerateObject())
+                meta.KeywordFlags.Add(keyword.Name, keyword.Value.GetInt32());
 
         if (root.TryGetProperty("properties", out var props) && props.ValueKind == JsonValueKind.Array)
         {

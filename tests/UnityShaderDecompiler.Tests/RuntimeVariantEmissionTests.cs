@@ -1,0 +1,115 @@
+using System.Text;
+using System.Text.Json;
+using System.Text.RegularExpressions;
+using AssetStudio;
+using Parser;
+
+namespace UnityShaderDecompiler.Tests;
+
+public sealed class RuntimeVariantEmissionTests
+{
+    [Fact]
+    [Trait("Category", "D3D")]
+    public void NativeProgramsKeepTheirPassesAndSelectByKeywords()
+    {
+        if (!OperatingSystem.IsWindows()) return;
+        using TempDirectory folder = new TempDirectory();
+        List<(ShaderGpuProgramType Stage, byte[] Code)> programs = new List<(ShaderGpuProgramType, byte[])>();
+        const string varying = "struct Varyings { float4 position:SV_POSITION; float4 marker:TEXCOORD0; }; ";
+        foreach (string value in new[] { "0.25", "0.75" })
+            programs.Add((ShaderGpuProgramType.DX11VertexSM40, RecompileVerify.CompileHlsl(
+                varying + $"Varyings main(float4 p:POSITION) {{ Varyings o; o.marker=float4({value},0,0,1); o.position=p; return o; }}", "main", "vs_4_0")));
+        foreach (string blue in new[] { "0.5", "1.0" })
+            foreach (string green in new[] { "0.25", "0.75" })
+                programs.Add((ShaderGpuProgramType.DX11PixelSM40, RecompileVerify.CompileHlsl(
+                    varying + $"float4 main(Varyings i):SV_Target {{ return float4(i.marker.x,{green},{blue},1); }}", "main", "ps_4_0")));
+        File.WriteAllBytes(Path.Combine(folder.Path, "blob.bin"), BuildBlob(programs));
+        List<object> passes = new List<object>();
+        for (int pass = 0; pass < 2; pass++)
+            passes.Add(new
+            {
+                name = "Pass" + pass,
+                renderState = new { cull = 0, zTest = 8, zWrite = false },
+                directXPrograms = new object[]
+                {
+                    new { blobIndex = 0, stage = "Vertex", keywords = Array.Empty<string>(), keywordMask = new[] { "MODE" } },
+                    new { blobIndex = 1, stage = "Vertex", keywords = new[] { "MODE" }, keywordMask = new[] { "MODE" } },
+                    new { blobIndex = 2 + 2 * pass, stage = "Fragment", keywords = Array.Empty<string>(), keywordMask = new[] { "DETAIL" } },
+                    new { blobIndex = 3 + 2 * pass, stage = "Fragment", keywords = new[] { "DETAIL" }, keywordMask = new[] { "DETAIL" } },
+                },
+            });
+        string metadata = JsonSerializer.Serialize(new
+        {
+            name = "Test/RuntimeKeywords", keywordFlags = new { MODE = 0, DETAIL = 1 },
+            subShaders = new[] { new { passes } },
+        });
+        File.WriteAllText(Path.Combine(folder.Path, "metadata.json"), metadata);
+        DecompilationResult result = Decompiler.DecompileFolder(folder.Path, new DecompileOptions
+        {
+            RestoreKeywordVariants = true, ReconstructSurfaceShaders = false, FuseTemps = false, Verbose = false,
+            OutRoot = Path.Combine(folder.Path, "generated"),
+        });
+        Assert.Equal(2, result.Passes.Count);
+        Assert.Equal(2, Regex.Matches(result.ShaderText, @"\bHLSLPROGRAM\b").Count);
+        Assert.All(result.Passes, pass => Assert.Equal(4, pass.VariantPrograms.Count));
+        Assert.Contains("#pragma multi_compile_local __ DETAIL", result.ShaderText);
+        Assert.Contains("#pragma multi_compile __ MODE", result.ShaderText);
+        Assert.Contains("#error No serialized program matches", result.ShaderText);
+        string shaderPath = Path.Combine(folder.Path, "generated", "Test_RuntimeKeywords.shader");
+        List<RuntimeCompilationCase> cases = RuntimeVariantManifest.Read(shaderPath);
+        Assert.Equal(8, cases.Count);
+        Assert.All(cases, item => Assert.Equal("vs_4_0", item.VertexProfile));
+        RuntimeVariantManifest.VerifyCompilation(shaderPath);
+        File.AppendAllText(shaderPath, "\n// Changed shader\n");
+        Assert.Throws<InvalidDataException>(() => RuntimeVariantManifest.Read(shaderPath));
+
+        foreach (Match match in Regex.Matches(result.ShaderText, @"HLSLPROGRAM(.*?)ENDHLSL", RegexOptions.Singleline))
+            for (int state = 0; state < 4; state++)
+            {
+                string definitions = ((state & 1) != 0 ? "#define MODE 1\n" : "")
+                    + ((state & 2) != 0 ? "#define DETAIL 1\n" : "");
+                Assert.NotEmpty(RecompileVerify.CompileHlsl(definitions + match.Groups[1].Value, "vert", "vs_4_0"));
+                Assert.NotEmpty(RecompileVerify.CompileHlsl(definitions + match.Groups[1].Value, "frag", "ps_4_0"));
+            }
+
+        // Optional artifact export lets the Unity GPU test consume this exact generated shader.
+        string? output = Environment.GetEnvironmentVariable("SHADER_RUNTIME_TEST_OUTPUT");
+        if (!string.IsNullOrEmpty(output))
+        {
+            Directory.CreateDirectory(output);
+            File.WriteAllText(Path.Combine(output, "RuntimeKeywords.shader"), result.ShaderText);
+        }
+    }
+
+    private static byte[] BuildBlob(List<(ShaderGpuProgramType Stage, byte[] Code)> programs)
+    {
+        List<byte[]> payloads = new List<byte[]>();
+        foreach ((ShaderGpuProgramType stage, byte[] code) in programs)
+        {
+            using MemoryStream payload = new MemoryStream();
+            using BinaryWriter writer = new BinaryWriter(payload, Encoding.UTF8, true);
+            writer.Write(202012090);
+            writer.Write((int)stage);
+            writer.Write(new byte[16]);
+            writer.Write(0);
+            writer.Write(code.Length + 1);
+            writer.Write((byte)0); // Raw Unity variant wrapper.
+            writer.Write(code);
+            while (payload.Length % 4 != 0) writer.Write((byte)0);
+            payloads.Add(payload.ToArray());
+        }
+        using MemoryStream blob = new MemoryStream();
+        using BinaryWriter table = new BinaryWriter(blob, Encoding.UTF8, true);
+        table.Write(payloads.Count);
+        int offset = 4 + 12 * payloads.Count;
+        foreach (byte[] payload in payloads)
+        {
+            table.Write(offset);
+            table.Write(payload.Length);
+            table.Write(0);
+            offset += payload.Length;
+        }
+        foreach (byte[] payload in payloads) table.Write(payload);
+        return blob.ToArray();
+    }
+}

@@ -146,6 +146,7 @@ internal class Program
             DumpStages = args.Contains("--dump-stages"),
             DumpKeywords = args.Contains("--dump-keywords"),
             SaveSubprograms = args.Contains("--save-subprograms"),
+            RestoreKeywordVariants = args.Contains("--restore-keyword-variants"),
             FuseTemps = !args.Contains("--no-fuse-temps"),
             ReconstructSurfaceShaders = !args.Contains("--no-surface-shaders"),
             KeepPasses = args.Contains("--keep-passes"),
@@ -189,7 +190,8 @@ internal class Program
             result = Decompiler.Decompile(project, new DecompileOptions
             {
                 OutRoot = outRoot,
-                FuseTemps = !args.Contains("--no-fuse-temps"),
+                RestoreKeywordVariants = args.Contains("--restore-keyword-variants"),
+            FuseTemps = !args.Contains("--no-fuse-temps"),
                 ReconstructSurfaceShaders = !args.Contains("--no-surface-shaders"),
                 KeepPasses = args.Contains("--keep-passes"),
                 Verbose = false,

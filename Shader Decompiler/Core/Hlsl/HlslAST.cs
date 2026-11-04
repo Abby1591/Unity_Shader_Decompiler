@@ -176,6 +176,9 @@ public sealed class HlslRenderState
 
 public sealed class HlslPassNode
 {
+    internal RuntimeVariantPlan? RuntimeVariants { get; set; }
+    internal List<HlslPassNode> VariantPrograms { get; } = new();
+    internal string ShaderTarget { get; set; } = "4.0";
     public List<ProgramVariantMetadata> DirectXPrograms { get; } = new();
     public string Name { get; init; } = "";
     public Dictionary<string, string> Tags { get; } = new();

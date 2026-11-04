@@ -8,6 +8,7 @@ This does NOT touch m_CompressedBlob — that stays in blob.py/ShaderBlob.
 """
 
 import json
+import base64
 
 
 class ShaderMetadata:
@@ -27,6 +28,7 @@ class ShaderMetadata:
             "fallback": self._get(parsed, "m_FallbackName", ""),
             "customEditor": self._get(parsed, "m_CustomEditorName", ""),
             "keywords": self._get(parsed, "m_KeywordNames", []),
+            "keywordFlags": self._keyword_flags(parsed),
             "dependencies": self._get(parsed, "m_Dependencies", []),
             "disableNoSubshadersMessage": self._get(
                 parsed, "m_DisableNoSubshadersMessage", False
@@ -160,6 +162,20 @@ class ShaderMetadata:
             "samplers": p.get("m_SerializedProgram", {}).get("m_SamplerParameters", []),
             "keywords": p.get("m_NameIndices", []),
         }
+
+    @staticmethod
+    def _keyword_flags(parsed):
+        flags = parsed.get("m_KeywordFlags")
+        if flags is None:
+            return {}
+        if isinstance(flags, str):
+            flags = list(base64.b64decode(flags, validate=True))
+        names = parsed.get("m_KeywordNames", [])
+        if (not isinstance(flags, list) or len(flags) != len(names)
+                or len(set(names)) != len(names)
+                or any(type(flag) is not int or not 0 <= flag <= 255 for flag in flags)):
+            raise ValueError("Invalid serialized shader keyword flags")
+        return dict(zip(names, flags))
 
     @staticmethod
     def _directx_programs(shader_pass, keyword_names):

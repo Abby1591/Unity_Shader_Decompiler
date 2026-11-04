@@ -26,6 +26,11 @@ public static class RecompileVerify
     public static void Run(string shaderFile)
     {
         string text = File.ReadAllText(shaderFile);
+        if (text.Contains(RuntimeVariantManifest.Marker, StringComparison.Ordinal))
+        {
+            RuntimeVariantManifest.VerifyCompilation(shaderFile);
+            return;
+        }
         string dir = Path.GetDirectoryName(shaderFile) ?? ".";
         // The .shader is written to the Output ROOT while its blob.bin lives
         // in the per-name subfolder (Output\{name}\blob.bin); the folder
