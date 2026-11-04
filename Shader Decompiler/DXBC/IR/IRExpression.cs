@@ -1,4 +1,5 @@
 using System;
+using System.Globalization;
 using System.Linq;
 using System.Collections.Generic;
 
@@ -55,8 +56,8 @@ public abstract class IRExpression
             if (Kind == ConstantKind.Double)
             {
                 return DoubleValues.Length == 1
-                    ? DoubleValues[0].ToString()
-                    : $"double{DoubleValues.Length}({string.Join(", ", DoubleValues)})";
+                    ? DoubleValues[0].ToString("R", CultureInfo.InvariantCulture)
+                    : $"double{DoubleValues.Length}({string.Join(", ", DoubleValues.Select(v => v.ToString("R", CultureInfo.InvariantCulture)))})";
             }
 
             string Format(uint value)
@@ -64,13 +65,13 @@ public abstract class IRExpression
                 return Kind switch
                 {
                     ConstantKind.Float =>
-                        BitConverter.Int32BitsToSingle((int)value).ToString(),
+                        BitConverter.Int32BitsToSingle((int)value).ToString("R", CultureInfo.InvariantCulture),
 
                     ConstantKind.Int =>
-                        unchecked((int)value).ToString(),
+                        unchecked((int)value).ToString(CultureInfo.InvariantCulture),
 
                     ConstantKind.UInt =>
-                        value.ToString(),
+                        value.ToString(CultureInfo.InvariantCulture),
 
                     _ => "?"
                 };

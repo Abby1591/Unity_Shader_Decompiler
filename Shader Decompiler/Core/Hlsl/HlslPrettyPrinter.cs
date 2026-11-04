@@ -1,3 +1,4 @@
+using System.Globalization;
 using System.Text;
 using System.Text.Json;
 using System.Text.RegularExpressions;
@@ -87,7 +88,7 @@ public static class HlslPrettyPrinter
         HlslPropertyKind.Color => "Color",
         HlslPropertyKind.Vector => "Vector",
         HlslPropertyKind.Float => "Float",
-        HlslPropertyKind.Range when p.Range is { } r => $"Range({r.Min}, {r.Max})",
+        HlslPropertyKind.Range when p.Range is { } r => FormattableString.Invariant($"Range({r.Min}, {r.Max})"),
         // Range with no recovered bounds (metadata carried no default value,
         // so min/max slots are absent) — emit as Float rather than
         // fabricate a (0,1) that might be wrong.
@@ -115,8 +116,8 @@ public static class HlslPrettyPrinter
             float x = p.DefaultComponents[0], y = p.DefaultComponents[1],
                   z = p.DefaultComponents[2], w = p.DefaultComponents[3];
             return p.Kind is HlslPropertyKind.Color or HlslPropertyKind.Vector
-                ? $"({x},{y},{z},{w})"
-                : x.ToString();
+                ? FormattableString.Invariant($"({x},{y},{z},{w})")
+                : x.ToString("R", CultureInfo.InvariantCulture);
         }
 
         if (p.DefaultValue is not { } dv || dv.ValueKind != JsonValueKind.Object)
@@ -128,8 +129,8 @@ public static class HlslPrettyPrinter
         double W() => dv.TryGetProperty("w", out var w) ? w.GetDouble() : 0;
 
         return p.Kind is HlslPropertyKind.Color or HlslPropertyKind.Vector
-            ? $"({X()},{Y()},{Z()},{W()})"
-            : X().ToString();
+            ? FormattableString.Invariant($"({X()},{Y()},{Z()},{W()})")
+            : X().ToString("R", CultureInfo.InvariantCulture);
     }
 
     // ---------- Stage 5: SubShader ----------
@@ -233,7 +234,7 @@ public static class HlslPrettyPrinter
             sb.Append("            AlphaToMask On\n");
 
         if (s.OffsetFactor != 0 || s.OffsetUnits != 0)
-            sb.Append("            Offset ").Append(s.OffsetFactor).Append(", ").Append(s.OffsetUnits).Append('\n');
+            sb.Append("            Offset ").Append(s.OffsetFactor.ToString("R", CultureInfo.InvariantCulture)).Append(", ").Append(s.OffsetUnits.ToString("R", CultureInfo.InvariantCulture)).Append('\n');
 
         if (!(s.Blend.SrcBlend == HlslBlendMode.One && s.Blend.DstBlend == HlslBlendMode.Zero))
         {
