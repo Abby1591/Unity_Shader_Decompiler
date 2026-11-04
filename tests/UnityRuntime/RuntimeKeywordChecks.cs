@@ -9,6 +9,7 @@ public static class RuntimeKeywordChecks
 {
     public static void Run()
     {
+        File.WriteAllText("runtime-keyword-results.json", "{\"passed\":false}");
         if (Application.unityVersion != "6000.0.75f1")
             throw new InvalidOperationException("Runtime shader checks target Unity 6000.0.75f1.");
         if (SystemInfo.graphicsDeviceType != GraphicsDeviceType.Direct3D11)

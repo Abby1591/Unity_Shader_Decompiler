@@ -24,6 +24,7 @@ public static class ShaderVariantChecks
 
     public static void Run()
     {
+        File.WriteAllText("shader-variant-results.json", "{\"passed\":false}");
         if (Application.unityVersion != "6000.0.75f1" || SystemInfo.graphicsDeviceType != GraphicsDeviceType.Direct3D11)
             throw new InvalidOperationException("Variant checks require Unity 6000.0.75f1 and Direct3D 11.");
         string folder = Environment.GetEnvironmentVariable("SHADER_VARIANT_DIRECTORY");
@@ -68,6 +69,7 @@ public static class ShaderVariantChecks
                                     + string.Join("; ", result.Messages.Select(message => message.message)));
                             compiled++;
                         }
+                    Debug.Log($"Compiled {path} pass {flatPass}: {entry.variants.Length} variants.");
                 }
             }
             if (flatPass != manifest.passes.Length || ShaderUtil.ShaderHasError(shader))
