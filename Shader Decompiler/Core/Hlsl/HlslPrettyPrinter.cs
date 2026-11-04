@@ -506,7 +506,15 @@ public static class HlslPrettyPrinter
                 break;
 
             case HlslResourceKind.Texture:
-                sb.Append("            ").Append(res.TypeHint ?? "Texture2D").Append(' ').Append(res.Name).Append(regSuffix).Append(";\n");
+                if (res.StructureStride > 0)
+                {
+                    sb.Append("            struct ").Append(res.Name).Append("_element { uint value[")
+                      .Append(res.StructureStride / 4).Append("]; };\n");
+                    sb.Append("            StructuredBuffer<").Append(res.Name).Append("_element> ")
+                      .Append(res.Name).Append(regSuffix).Append(";\n");
+                }
+                else
+                    sb.Append("            ").Append(res.TypeHint ?? "Texture2D").Append(' ').Append(res.Name).Append(regSuffix).Append(";\n");
                 break;
 
             case HlslResourceKind.Sampler:
@@ -2281,7 +2289,9 @@ public static class HlslPrettyPrinter
         IRExpression.DotProductExpression => 1,
         IRExpression.SwizzleExpression s => Math.Max(1, s.Components.Count),
         IRExpression.MatrixVectorMultiplyExpression mv => Math.Max(1, mv.Rows.Count),
-        IRExpression.TextureOperationExpression tex => TextureOpWidth(tex.Operation),
+        IRExpression.TextureOperationExpression tex => tex.Operation == IRExpression.TextureOperation.LoadStructured
+            ? Math.Max(1, MaskIndices(tex.DestinationMask).Count)
+            : TextureOpWidth(tex.Operation),
         _ => 1,
     };
 
@@ -2691,6 +2701,9 @@ public static class HlslPrettyPrinter
     // needed fixing up from the debug ToString().
     private static string RenderTextureOp(IRExpression.TextureOperationExpression tex, PrintContext ctx)
     {
+        if (tex.Operation == IRExpression.TextureOperation.LoadStructured)
+            return RenderStructuredLoad(tex, ctx);
+
         string resource = RenderRegisterRead(tex.Resource, ctx);
         string? sampler = tex.Sampler is null ? null : RenderRegisterRead(tex.Sampler, ctx);
         string? coord = tex.Coordinates is null ? null : RenderExpression(tex.Coordinates, ctx);
@@ -2742,5 +2755,30 @@ public static class HlslPrettyPrinter
             _ =>
                 $"/* TODO: no confirmed HLSL mapping for {tex.Operation} */ {resource}.{tex.Operation}({Args(sampler, coord)})",
         };
+    }
+
+    private static string RenderStructuredLoad(IRExpression.TextureOperationExpression tex, PrintContext ctx)
+    {
+        if (tex.Coordinates is null || tex.Offset is not IRExpression.ConstantExpression { RawValues.Length: 1 } offset)
+            throw new InvalidDataException("Structured load requires an element index and a constant byte offset.");
+        uint byteOffset = offset.RawValues[0];
+        if (byteOffset % 4 != 0)
+            throw new InvalidDataException($"Unaligned structured load offset {byteOffset}.");
+
+        List<int> lanes = MaskIndices(tex.DestinationMask);
+        if (lanes.Count == 0)
+            throw new InvalidDataException("Structured load has no destination lanes.");
+        List<int> swizzle = ActiveComponents(tex.Resource);
+        List<string> values = new List<string>();
+        foreach (int lane in lanes)
+        {
+            uint word = byteOffset / 4 + (uint)swizzle[lane];
+            if (word >= tex.StructuredStride / 4)
+                throw new InvalidDataException($"Structured load exceeds element stride at t{tex.Resource.Index}.");
+            values.Add($"t{tex.Resource.Index}[{RenderExpression(tex.Coordinates, ctx)}].value[{word}]");
+        }
+        return lanes.Count == 1
+            ? $"asfloat({values[0]})"
+            : $"asfloat(uint{lanes.Count}({string.Join(", ", values)}))";
     }
 }

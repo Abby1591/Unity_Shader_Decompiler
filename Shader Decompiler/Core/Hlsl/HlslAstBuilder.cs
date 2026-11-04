@@ -318,6 +318,19 @@ public static class HlslAstBuilder
                     };
                     break;
 
+                case IRDeclaration.IRResourceStructuredDeclaration structured:
+                    if (structured.StructureStride == 0 || structured.StructureStride % 4 != 0)
+                        throw new InvalidDataException($"Invalid structured resource stride {structured.StructureStride} at t{structured.Slot}.");
+                    yield return new HlslResourceNode
+                    {
+                        Name = $"t{structured.Slot}",
+                        Kind = HlslResourceKind.Texture,
+                        Slot = structured.Slot,
+                        TypeHint = "StructuredBuffer",
+                        StructureStride = structured.StructureStride,
+                    };
+                    break;
+
                 case IRDeclaration.IRSamplerDeclaration samp:
                     bool isComparison = ComparisonSamplers(blocks).Contains(samp.Slot);
                     // Unity pairs samplers with textures by naming convention:

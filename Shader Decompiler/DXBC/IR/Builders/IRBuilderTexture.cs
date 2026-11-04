@@ -40,6 +40,7 @@ public partial class IRBuilder
                 Sampler = sampler,
                 Coordinates = coordinates,
                 Offset = offset,
+                DestinationMask = destination.Mask,
                 LOD = lod,
                 Bias = bias,
                 CompareValue = compareValue,
@@ -96,19 +97,21 @@ public partial class IRBuilder
     // ld_structured: operand 1 = element index, operand 2 = byte offset within element
     private void BuildLdStructured(IRProgram program, Instruction instruction)
     {
-        IRExpression address =
-            new IRExpression.BinaryExpression
-            {
-                Operation = IRExpression.BinaryOperation.Add,
-                Left = BuildUIntExpression(instruction.Operands[1]),
-                Right = BuildUIntExpression(instruction.Operands[2])
-            };
-
-        BuildTextureOp(
-            program, instruction, IRExpression.TextureOperation.Load,
-            destination: BuildRegister(instruction.Operands[0]),
-            resource: BuildRegister(instruction.Operands[3]),
-            coordinates: address);
+        IRRegister destination = BuildRegister(instruction.Operands[0]);
+        IRRegister resource = BuildRegister(instruction.Operands[3]);
+        uint stride = program.Declarations.OfType<IRDeclaration.IRResourceStructuredDeclaration>()
+            .Single(d => d.Slot == resource.Index).StructureStride;
+        if (stride == 0 || stride % 4 != 0)
+            throw new InvalidDataException($"Invalid structured resource stride {stride} at t{resource.Index}.");
+        AddAssignment(program, destination, new IRExpression.TextureOperationExpression
+        {
+            Operation = IRExpression.TextureOperation.LoadStructured,
+            Resource = resource,
+            Coordinates = BuildUIntExpression(instruction.Operands[1]),
+            Offset = BuildUIntExpression(instruction.Operands[2]),
+            StructuredStride = stride,
+            DestinationMask = destination.Mask,
+        });
     }
 
     // ============================================================

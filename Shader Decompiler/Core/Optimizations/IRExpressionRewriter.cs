@@ -105,6 +105,8 @@ public static class IRExpressionRewriter
                 Sampler = tex.Sampler,
                 Coordinates = Rewrite(tex.Coordinates, transform),
                 Offset = Rewrite(tex.Offset, transform),
+                StructuredStride = tex.StructuredStride,
+                DestinationMask = tex.DestinationMask,
                 LOD = Rewrite(tex.LOD, transform),
                 Bias = Rewrite(tex.Bias, transform),
                 CompareValue = Rewrite(tex.CompareValue, transform),

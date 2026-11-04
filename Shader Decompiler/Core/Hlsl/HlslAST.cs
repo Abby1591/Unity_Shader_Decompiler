@@ -299,6 +299,8 @@ public sealed class HlslResourceNode
     // otherwise rather than guessing.
     public string? TypeHint { get; init; }
 
+    public uint StructureStride { get; init; }
+
     // Only populated for Kind == ConstantBuffer, from RDEF (the actual
     // member layout Unity's compiler produced) — empty if no RDEF match
     // was found, not an error, just means Stage 7's CBUFFER_START/END

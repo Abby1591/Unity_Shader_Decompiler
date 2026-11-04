@@ -517,6 +517,7 @@ public abstract class IRExpression
         SampleCompare,
         SampleCompareLevelZero,
         Load,
+        LoadStructured,
         Gather,
         GatherCompare,
         Lod,
@@ -538,6 +539,10 @@ public abstract class IRExpression
         public IRExpression? Coordinates { get; init; }
 
         public IRExpression? Offset { get; init; }
+
+        public uint StructuredStride { get; init; }
+
+        public byte DestinationMask { get; init; }
 
         public IRExpression? LOD { get; init; }
 
