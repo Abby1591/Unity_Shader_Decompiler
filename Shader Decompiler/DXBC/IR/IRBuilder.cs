@@ -6,7 +6,9 @@ public partial class IRBuilder
 {
     private readonly bool _preserveRegisterBits;
 
-    public IRBuilder(bool preserveRegisterBits = false) => _preserveRegisterBits = preserveRegisterBits;
+    public IRBuilder() : this(false) { }
+
+    public IRBuilder(bool preserveRegisterBits) => _preserveRegisterBits = preserveRegisterBits;
     private readonly Dictionary<(RegisterType Type, uint Index), IRValueType> _registerTypes = new();
     
     public IRProgram Build(ShdrParser parser)

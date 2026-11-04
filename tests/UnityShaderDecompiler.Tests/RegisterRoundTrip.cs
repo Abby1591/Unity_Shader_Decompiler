@@ -24,12 +24,12 @@ internal static class RegisterRoundTrip
 
     internal static DxbcFile Recompile(DxbcFile original, bool fuseTemps = false)
     {
-        IRPipeline.Result pipeline = IRPipeline.Run(original, preserveArithmetic: !fuseTemps);
+        IRPipeline.Result pipeline = IRPipeline.Run(original, dumpStages: false, preserveArithmetic: !fuseTemps);
         Assert.True(pipeline.SsaVerification.IsValid);
         HlslFunctionNode function = HlslAstBuilder.BuildFunction("RoundTrip",
             ShaderGpuProgramType.DX11PixelSM50, pipeline.Program.Declarations,
             pipeline.Blocks, original.InputSignature, original.OutputSignature)!;
-        function.RawTemporaryStorage = !fuseTemps;
+        function.RawTemporaryStorage = pipeline.PreserveRegisterBits;
         HlslPassNode pass = new HlslPassNode { FragmentFunction = function };
         pass.Structs.Add(function.InputStruct!);
         pass.Structs.Add(function.OutputStruct!);
@@ -41,7 +41,8 @@ internal static class RegisterRoundTrip
         shader.SubShaders.Add(subShader);
         string shaderText = HlslPrettyPrinter.Print(shader, fuseTemps: fuseTemps);
         string hlsl = Regex.Match(shaderText, @"HLSLPROGRAM(.*?)ENDHLSL", RegexOptions.Singleline).Groups[1].Value;
-        return Compile(hlsl, function.Name);
+        try { return Compile(hlsl, function.Name); }
+        catch (InvalidOperationException error) { throw new InvalidOperationException(hlsl, error); }
     }
 
     // Deliberately limited to the bit-copy fixtures below; unexpected arithmetic fails.
@@ -56,7 +57,8 @@ internal static class RegisterRoundTrip
             if (instruction.Opcode.ToString().StartsWith("Dcl", StringComparison.Ordinal)) continue;
             if (instruction.Opcode == Opcode.Ret) return registers[(RegisterType.Output, 0)];
             Assert.True(instruction.Opcode is Opcode.Mov or Opcode.MovC or Opcode.INe or Opcode.IEq
-                or Opcode.And or Opcode.LdStructured, $"Unexpected opcode: {instruction.Opcode}");
+                or Opcode.And or Opcode.LdStructured or Opcode.IAdd or Opcode.Ishl or Opcode.Ushr or Opcode.Bfi,
+                $"Unexpected opcode: {instruction.Opcode}");
             Operand destination = instruction.Operands[0];
             uint[] result = new uint[4];
             for (int lane = 0; lane < 4; lane++)
@@ -66,6 +68,15 @@ internal static class RegisterRoundTrip
                 if (instruction.Opcode == Opcode.Mov) result[lane] = first;
                 else if (instruction.Opcode == Opcode.MovC)
                     result[lane] = Read(instruction.Operands[first != 0 ? 2 : 3], lane, registers);
+                else if (instruction.Opcode == Opcode.Bfi)
+                {
+                    int width = (int)(first & 31);
+                    int offset = (int)(Read(instruction.Operands[2], lane, registers) & 31);
+                    uint mask = unchecked(((1u << width) - 1u) << offset);
+                    uint insert = Read(instruction.Operands[3], lane, registers);
+                    uint original = Read(instruction.Operands[4], lane, registers);
+                    result[lane] = ((insert << offset) & mask) | (original & ~mask);
+                }
                 else if (instruction.Opcode == Opcode.LdStructured)
                 {
                     Assert.NotNull(structuredWords);
@@ -86,6 +97,9 @@ internal static class RegisterRoundTrip
                         Opcode.INe => first != second ? uint.MaxValue : 0u,
                         Opcode.IEq => first == second ? uint.MaxValue : 0u,
                         Opcode.And => first & second,
+                        Opcode.IAdd => unchecked(first + second),
+                        Opcode.Ishl => first << (int)(second & 31),
+                        Opcode.Ushr => first >> (int)(second & 31),
                         _ => throw new InvalidOperationException(),
                     };
                 }

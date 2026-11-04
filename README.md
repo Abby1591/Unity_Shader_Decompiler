@@ -320,9 +320,11 @@ storing raw bits. Integer reads remain in integer storage, preserving low-bit
 conditions that fxc can otherwise fold away through a float round trip.
 
 - Targets Unity 2022.3 D3D11 shader blobs.
-- Structured-buffer loads require `--no-fuse-temps`. Element stride, constant
-  byte offsets and swizzles are preserved; fused mode, dynamic offsets and
-  unaligned or out-of-range accesses fail explicitly.
+- Structured-buffer loads work with the default options and `--no-fuse-temps`.
+  Their functions automatically retain raw register storage and skip unsafe
+  temporary fusion. Strides, constant/dynamic byte offsets and swizzles are
+  preserved; invalid constant offsets fail explicitly. Existing public IR
+  entry points and texture-operation enum values are retained.
 - Vertex and fragment stages are fully reconstructed. Hull, geometry, domain,
   and compute programs are parsed and IR-built, but the AST/emit path mainly
   targets vertex/fragment; other stages attach by serialization order.

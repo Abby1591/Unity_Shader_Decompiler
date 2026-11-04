@@ -27,9 +27,7 @@ public sealed class StructuredBufferLoadsTests
             "{ return data[index].value.zxyw; }";
         Parser.DXBC.DxbcFile original = RegisterRoundTrip.Compile(source);
         Assert.Contains(original.Shader!.Instructions, instruction => instruction.Opcode == Opcode.LdStructured);
-        System.IO.InvalidDataException error = Assert.Throws<System.IO.InvalidDataException>(
-            () => RegisterRoundTrip.Recompile(original, fuseTemps: true));
-        Assert.Contains("--no-fuse-temps", error.Message);
+        Parser.DXBC.DxbcFile defaultRebuilt = RegisterRoundTrip.Recompile(original, fuseTemps: true);
         Parser.DXBC.DxbcFile rebuilt = RegisterRoundTrip.Recompile(original);
         Assert.Equal(original.OutputSignature!.Elements[0].ComponentType,
             rebuilt.OutputSignature!.Elements[0].ComponentType);
@@ -44,6 +42,7 @@ public sealed class StructuredBufferLoadsTests
             uint[] expected = { words[offset + 2], words[offset], words[offset + 1], words[offset + 3] };
             Assert.Equal(expected, RegisterRoundTrip.Evaluate(original, input, words));
             Assert.Equal(expected, RegisterRoundTrip.Evaluate(rebuilt, input, words));
+            Assert.Equal(expected, RegisterRoundTrip.Evaluate(defaultRebuilt, input, words));
         }
     }
 

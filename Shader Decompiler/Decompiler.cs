@@ -314,7 +314,7 @@ public static class Decompiler
                 }
                 else
                 {
-                    function.RawTemporaryStorage = !options.FuseTemps;
+                    function.RawTemporaryStorage = pipelineResult.PreserveRegisterBits;
                     candidates.Add(new DecompiledSubprogram
                     {
                         Index = i,

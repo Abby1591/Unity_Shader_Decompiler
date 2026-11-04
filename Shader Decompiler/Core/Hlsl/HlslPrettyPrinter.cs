@@ -659,7 +659,7 @@ public static class HlslPrettyPrinter
         {
             Cbuffers = cbuffers,
             Stage = fn.Stage,
-            PreserveArithmetic = !fuseTemps,
+            PreserveArithmetic = !fuseTemps || fn.RawTemporaryStorage,
             RawTemporaryStorage = fn.RawTemporaryStorage,
             InputElements = fn.InputElementsByRegister,
             OutputElements = fn.OutputElementsByRegister,
@@ -684,7 +684,7 @@ public static class HlslPrettyPrinter
 
         HlslSemanticNaming.Apply(fn.Statements, cbuffers, stageInputs, stageOutputs);
 
-        if (fuseTemps)
+        if (fuseTemps && !fn.RawTemporaryStorage)
             HlslFuseTemps.Apply(fn.Statements, MaxFuseNodes);
 
         // Buffer the body so the Unity macro defines collected during
@@ -2495,6 +2495,7 @@ public static class HlslPrettyPrinter
 
     private static string RenderExpression(IRExpression expr, PrintContext ctx) => expr switch
     {
+        IRExpression.BitFieldInsertExpression insert => RenderBitFieldInsert(insert, ctx),
         IRExpression.IntrinsicExpression i => RenderIntrinsic(i, ctx),
         IRExpression.FusedMultiplyAddExpression f => $"mad({RenderExpression(f.A, ctx)}, {RenderExpression(f.B, ctx)}, {RenderExpression(f.C, ctx)})",
         IRExpression.MatrixVectorMultiplyExpression mv => RenderMatrixMultiply(mv, ctx),
@@ -2752,6 +2753,15 @@ public static class HlslPrettyPrinter
     // Load/Sample/SampleLevel/SampleBias/SampleGrad/Gather keep the same
     // name DXBC uses, only the Compare variants and argument order/style
     // needed fixing up from the debug ToString().
+    private static string RenderBitFieldInsert(IRExpression.BitFieldInsertExpression insert, PrintContext ctx)
+    {
+        // DXBC masks both counts to five bits; no shift by 32 is emitted.
+        string width = $"({RenderExpression(insert.Width, ctx)} & 31u)";
+        string offset = $"({RenderExpression(insert.Offset, ctx)} & 31u)";
+        string mask = $"(((1u << {width}) - 1u) << {offset})";
+        return $"((({RenderExpression(insert.Insert, ctx)} << {offset}) & {mask}) | ({RenderExpression(insert.Base, ctx)} & ~{mask}))";
+    }
+
     private static string RenderTextureOp(IRExpression.TextureOperationExpression tex, PrintContext ctx)
     {
         if (tex.Operation == IRExpression.TextureOperation.LoadStructured)
@@ -2814,13 +2824,14 @@ public static class HlslPrettyPrinter
     {
         // Float temporaries can numerically convert integer outputs and lose payload bits.
         if (!ctx.RawTemporaryStorage)
-            throw new InvalidDataException("Structured loads require --no-fuse-temps to preserve register bits.");
+            throw new InvalidDataException("Structured loads require raw register storage in the HLSL function.");
 
-        if (tex.Coordinates is null || tex.Offset is not IRExpression.ConstantExpression { RawValues.Length: 1 } offset)
-            throw new InvalidDataException("Structured load requires an element index and a constant byte offset.");
-        uint byteOffset = offset.RawValues[0];
-        if (byteOffset % 4 != 0)
-            throw new InvalidDataException($"Unaligned structured load offset {byteOffset}.");
+        if (tex.Coordinates is null || tex.Offset is null)
+            throw new InvalidDataException("Structured load requires an element index and a byte offset.");
+        uint? byteOffset = tex.Offset is IRExpression.ConstantExpression { RawValues.Length: 1 } offset
+            ? offset.RawValues[0] : null;
+        if (byteOffset.HasValue && byteOffset.Value % 4 != 0)
+            throw new InvalidDataException($"Unaligned structured load offset {byteOffset.Value}.");
 
         List<int> lanes = MaskIndices(tex.DestinationMask);
         if (lanes.Count == 0)
@@ -2829,9 +2840,18 @@ public static class HlslPrettyPrinter
         List<string> values = new List<string>();
         foreach (int lane in lanes)
         {
-            uint word = byteOffset / 4 + (uint)swizzle[lane];
-            if (word >= tex.StructuredStride / 4)
-                throw new InvalidDataException($"Structured load exceeds element stride at t{tex.Resource.Index}.");
+            string word;
+            if (byteOffset.HasValue)
+            {
+                uint index = byteOffset.Value / 4 + (uint)swizzle[lane];
+                if (index >= tex.StructuredStride / 4)
+                    throw new InvalidDataException($"Structured load exceeds element stride at t{tex.Resource.Index}.");
+                word = index.ToString(System.Globalization.CultureInfo.InvariantCulture);
+            }
+            else
+            {
+                word = $"(({RenderExpression(tex.Offset, ctx)}) >> 2) + {swizzle[lane]}u";
+            }
             values.Add($"t{tex.Resource.Index}[{RenderExpression(tex.Coordinates, ctx)}].value[{word}]");
         }
         return lanes.Count == 1
