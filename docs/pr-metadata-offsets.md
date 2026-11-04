@@ -5,3 +5,5 @@ Extraction fails when an export uses legacy `m_Index` offsets or different field
 Reproducible validation: ten generic Python tests, 51 baseline C# tests and all four checked-in PicaVoxel extraction/decompilation cases pass. The isolated C# suite uses en-US; upstream's fr-FR golden-output failure is addressed separately in #5. No existing assertions or generated references are changed.
 
 Additional local validation used two external shaders exported from the same bundle with AssetStudioMod CLI v0.20.0 and AssetRipper. Their normalized metadata and decompressed blobs match. With the separate emitter fixes combined, all four exports also produced identical artifacts across exporters and passed native recompilation and finite interpreter comparisons with serialized constants. Those external fixtures are not distributed, so this additional check is not reproducible from the PR alone and does not prove GPU equivalence.
+
+Upstream sync: merged `417f26b` (Core/Cli split and namespace rename). Adapted regression tests to the new layout and shared DXBC compiler; no test assertions were relaxed.

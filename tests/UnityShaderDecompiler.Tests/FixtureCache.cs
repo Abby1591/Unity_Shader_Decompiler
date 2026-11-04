@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Concurrent;
 using System.Threading;
-using Parser;
+using UnityShaderDecompiler.Core;
 
 namespace UnityShaderDecompiler.Tests;
 
@@ -18,7 +18,7 @@ internal static class FixtureCache
         Cache.GetOrAdd(
             fixture,
             f => new Lazy<DecompilationResult>(
-                () => Parser.Decompiler.DecompileFolder(
+                () => UnityShaderDecompiler.Core.Decompiler.DecompileFolder(
                     TestPaths.FixtureFolder(f),
                     new DecompileOptions { Verbose = false }),
                 LazyThreadSafetyMode.ExecutionAndPublication)).Value;
