@@ -25,6 +25,9 @@ public sealed class ExplicitTextureLodTests
         IRBlock block = new IRBlock();
         block.Statements.Add(new IRStatement.IRAssignment { Destination = Temp(0), Expression = sample });
 
+        Assert.False(IRTexturePatternRecognition.Run(new List<IRBlock> { block }));
+        Assert.Same(sample, Assert.IsType<IRStatement.IRAssignment>(block.Statements[0]).Expression);
+
         IRShaderPatternRecognition.Run(new() { block });
 
         IRStatement.IRAssignment assignment = Assert.IsType<IRStatement.IRAssignment>(block.Statements[0]);
