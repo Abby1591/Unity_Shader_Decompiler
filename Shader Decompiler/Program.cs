@@ -191,7 +191,7 @@ internal class Program
             {
                 OutRoot = outRoot,
                 RestoreKeywordVariants = args.Contains("--restore-keyword-variants"),
-            FuseTemps = !args.Contains("--no-fuse-temps"),
+                FuseTemps = !args.Contains("--no-fuse-temps"),
                 ReconstructSurfaceShaders = !args.Contains("--no-surface-shaders"),
                 KeepPasses = args.Contains("--keep-passes"),
                 Verbose = false,

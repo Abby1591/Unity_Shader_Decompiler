@@ -37,16 +37,20 @@ internal static class VariantPairing
             if (stage.Any(p => !p.KeywordMask.ToHashSet(StringComparer.Ordinal).SetEquals(stage[0].KeywordMask)))
                 throw new InvalidDataException("Shader variants have inconsistent keyword masks within a stage.");
         List<(int Vertex, int Fragment)> pairs = new List<(int Vertex, int Fragment)>();
+        HashSet<ProgramVariantMetadata> matched = new HashSet<ProgramVariantMetadata>();
         foreach (ProgramVariantMetadata vertex in vertices)
             foreach (ProgramVariantMetadata fragment in fragments)
             {
                 HashSet<string> shared = vertex.KeywordMask.Intersect(fragment.KeywordMask).ToHashSet();
                 if (vertex.Keywords.Where(shared.Contains).ToHashSet().SetEquals(fragment.Keywords.Where(shared.Contains)))
+                {
                     pairs.Add((vertex.BlobIndex, fragment.BlobIndex));
+                    matched.Add(vertex);
+                    matched.Add(fragment);
+                }
             }
         // A fragment-only keyword can reuse a vertex program; pairing is not 1:1.
-        if (vertices.Any(v => !pairs.Any(p => p.Vertex == v.BlobIndex)) ||
-            fragments.Any(f => !pairs.Any(p => p.Fragment == f.BlobIndex)) || pairs.Count == 0)
+        if (programs.Any(program => !matched.Contains(program)) || pairs.Count == 0)
             throw new InvalidDataException("Serialized shader variants contain an unmatched stage.");
         return pairs.Distinct().ToList();
     }

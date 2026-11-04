@@ -44,6 +44,15 @@ public sealed class RuntimeVariantPlanTests
         Assert.Equal(2, plan.States.Count);
     }
 
+    [Fact]
+    public void ReusedBlobDoesNotHideAnUnmatchedKeywordState()
+    {
+        ProgramVariantMetadata[] programs = [new(0, "Vertex", [], ["MODE"]), new(0, "Vertex", ["MODE"], ["MODE"]),
+            new(1, "Fragment", [], ["MODE"])];
+        Assert.Throws<InvalidDataException>(() => RuntimeVariantPlan.Build(programs,
+            new Dictionary<string, int> { ["MODE"] = 0 }));
+    }
+
     [Theory]
     [InlineData("BAD NAME")]
     [InlineData("NAME\n#error injected")]

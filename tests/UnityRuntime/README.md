@@ -20,3 +20,11 @@ Require a successful CLI exit and `runtime-keyword-results.json` with
 `passed: true` and `cases: 9` in the project directory. These checks validate
 keyword selection, pass order and scope; they do not prove arbitrary shader
 arithmetic or resource bindings equivalent to an original application.
+
+To compile every combination of other generated shaders, copy each `.shader`
+and matching `.variants.json` under a project asset folder, copy
+`ShaderVariantChecks.cs` into `Assets/Editor`, and set
+`SHADER_VARIANT_DIRECTORY` to that folder (for example `Assets/Generated`).
+Run the same CLI command with `-executeMethod ShaderVariantChecks.Run`.
+It checks the shader hash, pass count and nonempty compiled bytecode for both
+stages of every manifest entry. Results go to `shader-variant-results.json`.
