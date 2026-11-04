@@ -316,6 +316,9 @@ root, prefixing each with
 ## Limitations
 
 - Targets Unity 2022.3 D3D11 shader blobs.
+- Structured-buffer loads require `--no-fuse-temps`. Element stride, constant
+  byte offsets and swizzles are preserved; fused mode, dynamic offsets and
+  unaligned or out-of-range accesses fail explicitly.
 - Vertex and fragment stages are fully reconstructed. Hull, geometry, domain,
   and compute programs are parsed and IR-built, but the AST/emit path mainly
   targets vertex/fragment; other stages attach by serialization order.
