@@ -4,8 +4,10 @@ using UnityShaderDecompiler.Core.Hlsl.Ast;
 
 namespace UnityShaderDecompiler.Tests;
 
+// Covers sampler binding tests.
 public class SamplerBindingTests
 {
+    // Verifies that same recovered name does not merge different sampler slots.
     [Fact]
     public void SameRecoveredNameDoesNotMergeDifferentSamplerSlots()
     {

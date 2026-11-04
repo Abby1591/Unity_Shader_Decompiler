@@ -659,7 +659,9 @@ public static class Decompiler
             HlslCBufferVariable? raw = buffer.Variables.FirstOrDefault(
                 v => v.Name == $"cb{buffer.Slot}_values" && v.ArraySize is not null);
             if (raw is null)
+                {
                 continue;
+            }
             int metadataRegisters = pass.Cbuffers
                 .Where(entry => entry.Key.Slot == (int)buffer.Slot)
                 .Select(entry => (entry.Value.Size + 15) / 16)

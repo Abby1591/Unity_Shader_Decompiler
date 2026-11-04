@@ -672,7 +672,9 @@ public static class HlslPrettyPrinter
             {
                 if (res.Kind == HlslResourceKind.ConstantBuffer
                     && res.Variables.Any(v => v.Name == $"cb{res.Slot}_values" && v.ArraySize is not null))
+                    {
                     ctx.RawCbufferSlots.Add((int)res.Slot);
+                }
                 if (res.Kind == HlslResourceKind.Texture)
                 {
                     ctx.TextureTypeBySlot[(int)res.Slot] = res.TypeHint ?? "Texture2D";
@@ -1668,7 +1670,9 @@ public static class HlslPrettyPrinter
     private static string RenderCbufferRead(IRRegister reg, PrintContext ctx)
     {
         if (reg.Indices.Count >= 2 && ctx.RawCbufferSlots.Contains((int)reg.Indices[0]))
+            {
             return CbufferElementName(reg, ctx) + MaskOrSwizzleSuffix(reg);
+        }
         if (reg.SymbolicName is not null)
         {
             string name = reg.SymbolicName;

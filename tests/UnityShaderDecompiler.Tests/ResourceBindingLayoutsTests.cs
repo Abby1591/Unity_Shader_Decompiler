@@ -10,26 +10,64 @@ using Xunit;
 
 namespace UnityShaderDecompiler.Tests;
 
+// Covers resource binding layouts tests.
 public sealed class ResourceBindingLayoutsTests
 {
+    // Verifies that partial cbuffer metadata keeps raw register offsets.
     [Fact]
     public void PartialCbufferMetadataKeepsRawRegisterOffsets()
+    {
+        HlslShaderNode shader = CreatePartialShader();
+        string source = HlslPrettyPrinter.Print(shader, fuseTemps: false);
+        Assert.Contains("cbuffer NamedBuffer : register(b1) { float4 cb1_values[2]; };", source);
+        Assert.Contains("cb1_values[0]", source);
+        Assert.DoesNotContain("NamedValue", source);
+    }
+
+    // Wraps the fixture function in a shader and emits its HLSL.
+    private static string Print(HlslFunctionNode function)
+    {
+        HlslShaderNode shader = new HlslShaderNode { Name = "Test/Scope" };
+        HlslSubShaderNode subShader = new HlslSubShaderNode();
+        subShader.Passes.Add(new HlslPassNode { FragmentFunction = function });
+        shader.SubShaders.Add(subShader);
+        return HlslPrettyPrinter.Print(shader, fuseTemps: false);
+    }
+
+    // Creates a temporary register with the requested index and lane mask.
+    private static IRRegister Temp(uint index, byte mask = 1)
+    {
+        IRRegister register = new IRRegister
+        {
+            RegisterType = RegisterType.Temp,
+            Index = index,
+            Type = IRValueType.Float,
+            Mask = mask,
+            ComponentMode = Operand.OperandComponentMode.Mask,
+        };
+        for (int component = 0; component < 4; component++)
+        {
+            if ((mask & (1 << component)) != 0)
+            {
+                register.SsaVersion[component] = 1;
+            }
+        }
+        return register;
+    }
+
+    // Creates a scalar floating-point constant for the fixture.
+    private static IRExpression.ConstantExpression Float(float value) => new()
+    {
+        RawValues = new[] { unchecked((uint)BitConverter.SingleToInt32Bits(value)) },
+    };
+
+    // Builds a shader that reads raw storage from a partially described buffer.
+    private static HlslShaderNode CreatePartialShader()
     {
         HlslShaderNode shader = new HlslShaderNode { Name = "Test/CbufferLayout" };
         HlslSubShaderNode subShader = new HlslSubShaderNode();
         HlslPassNode pass = new HlslPassNode();
-        HlslResourceNode resource = new HlslResourceNode
-        {
-            Name = "NamedBuffer", Kind = HlslResourceKind.ConstantBuffer, Slot = 1,
-        };
-        resource.Variables.Add(new HlslCBufferVariable
-        {
-            Name = "NamedValue", TypeName = "float4", Offset = 0, Size = 16,
-        });
-        resource.Variables.Add(new HlslCBufferVariable
-        {
-            Name = "cb1_values", TypeName = "float4", Offset = 0, Size = 32, ArraySize = 2,
-        });
+        HlslResourceNode resource = CreatePartialBuffer();
         pass.Resources.Add(resource);
         IRRegister read = new IRRegister
         {
@@ -49,40 +87,33 @@ public sealed class ResourceBindingLayoutsTests
         pass.FragmentFunction = function;
         subShader.Passes.Add(pass);
         shader.SubShaders.Add(subShader);
-
-        string source = HlslPrettyPrinter.Print(shader, fuseTemps: false);
-        Assert.Contains("cbuffer NamedBuffer : register(b1) { float4 cb1_values[2]; };", source);
-        Assert.Contains("cb1_values[0]", source);
-        Assert.DoesNotContain("NamedValue", source);
+        return shader;
     }
 
-    private static string Print(HlslFunctionNode function)
+    // Creates overlapping named and raw entries for a partial buffer.
+    private static HlslResourceNode CreatePartialBuffer()
     {
-        HlslShaderNode shader = new HlslShaderNode { Name = "Test/Scope" };
-        HlslSubShaderNode subShader = new HlslSubShaderNode();
-        subShader.Passes.Add(new HlslPassNode { FragmentFunction = function });
-        shader.SubShaders.Add(subShader);
-        return HlslPrettyPrinter.Print(shader, fuseTemps: false);
-    }
-
-    private static IRRegister Temp(uint index, byte mask = 1)
-    {
-        IRRegister register = new IRRegister
+        HlslResourceNode resource = new HlslResourceNode
         {
-            RegisterType = RegisterType.Temp,
-            Index = index,
-            Type = IRValueType.Float,
-            Mask = mask,
-            ComponentMode = Operand.OperandComponentMode.Mask,
+            Name = "NamedBuffer",
+            Kind = HlslResourceKind.ConstantBuffer,
+            Slot = 1,
         };
-        for (int component = 0; component < 4; component++)
-            if ((mask & (1 << component)) != 0)
-                register.SsaVersion[component] = 1;
-        return register;
+        resource.Variables.Add(new HlslCBufferVariable
+        {
+            Name = "NamedValue",
+            TypeName = "float4",
+            Offset = 0,
+            Size = 16,
+        });
+        resource.Variables.Add(new HlslCBufferVariable
+        {
+            Name = "cb1_values",
+            TypeName = "float4",
+            Offset = 0,
+            Size = 32,
+            ArraySize = 2,
+        });
+        return resource;
     }
-
-    private static IRExpression.ConstantExpression Float(float value) => new()
-    {
-        RawValues = new[] { unchecked((uint)BitConverter.SingleToInt32Bits(value)) },
-    };
 }
