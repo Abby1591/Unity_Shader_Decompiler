@@ -116,7 +116,9 @@ public static class HlslPrettyPrinter
                 : p.DefaultValue is { } integerDefault && integerDefault.TryGetProperty("x", out JsonElement x)
                     ? x.GetSingle() : throw new InvalidDataException("Integer property has no serialized default.");
             if (!float.IsFinite(value))
+                {
                 throw new InvalidDataException("Integer property bits cannot be recovered from a non-finite JSON float.");
+            }
             return BitConverter.SingleToInt32Bits(value).ToString(System.Globalization.CultureInfo.InvariantCulture);
         }
 
