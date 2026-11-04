@@ -163,6 +163,7 @@ class ShaderMetadata:
             "keywords": p.get("m_NameIndices", []),
         }
 
+    # Preserves local/global keyword scope from serialized flags.
     @staticmethod
     def _keyword_flags(parsed):
         flags = parsed.get("m_KeywordFlags")
@@ -177,6 +178,7 @@ class ShaderMetadata:
             raise ValueError("Invalid serialized shader keyword flags")
         return dict(zip(names, flags))
 
+    # Extracts DirectX stage references and keyword masks.
     @staticmethod
     def _directx_programs(shader_pass, keyword_names):
         result = []

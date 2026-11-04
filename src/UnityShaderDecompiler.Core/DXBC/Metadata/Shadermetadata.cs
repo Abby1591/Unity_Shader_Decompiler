@@ -45,8 +45,12 @@ public sealed class ShaderMetadata
         }
 
         if (root.TryGetProperty("keywordFlags", out JsonElement keywordFlags))
+            {
             foreach (JsonProperty keyword in keywordFlags.EnumerateObject())
+                {
                 meta.KeywordFlags.Add(keyword.Name, keyword.Value.GetInt32());
+            }
+        }
 
         if (root.TryGetProperty("properties", out var props) && props.ValueKind == JsonValueKind.Array)
         {
@@ -196,18 +200,22 @@ public sealed class PassMetadata
                 result.ConstantBuffers.Add(CbufferMetadata.From(cb));
 
         if (el.TryGetProperty("directXPrograms", out JsonElement programs))
+            {
             foreach (JsonElement program in programs.EnumerateArray())
+                {
                 result.DirectXPrograms.Add(new ProgramVariantMetadata(
                     program.GetProperty("blobIndex").GetInt32(),
                     program.GetProperty("stage").GetString()!,
                     program.GetProperty("keywords").EnumerateArray().Select(k => k.GetString()!).ToArray(),
                     program.GetProperty("keywordMask").EnumerateArray().Select(k => k.GetString()!).ToArray()));
+            }
+        }
 
         return result;
     }
 }
 
-public sealed record ProgramVariantMetadata(int BlobIndex, string Stage, string[] Keywords, string[] KeywordMask);
+
 
 /// <summary>One cbuffer in a pass: register slot -> name + variables.</summary>
 public sealed class CbufferMetadata

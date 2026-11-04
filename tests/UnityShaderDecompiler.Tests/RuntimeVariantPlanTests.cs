@@ -3,12 +3,14 @@ using UnityShaderDecompiler.Core.DXBC.Metadata;
 
 namespace UnityShaderDecompiler.Tests;
 
+// Covers runtime variant plan tests.
 public sealed class RuntimeVariantPlanTests
 {
+    // Verifies that independent and exclusive keywords reconstruct exactly the serialized states.
     [Fact]
     public void IndependentAndExclusiveKeywordsReconstructExactlyTheSerializedStates()
     {
-        string[][] states = [ ["RED"], ["BLUE"], ["RED", "DETAIL"], ["BLUE", "DETAIL"] ];
+        string[][] states = [["RED"], ["BLUE"], ["RED", "DETAIL"], ["BLUE", "DETAIL"]];
         RuntimeVariantPlan plan = Plan(states, ["RED", "BLUE", "DETAIL", "STRIPPED"]);
         Assert.Equal(4, plan.States.Count);
         Assert.Contains(plan.Groups, group => group.Keywords.SequenceEqual(new[] { "BLUE", "RED" }) && !group.AllowsDisabled);
@@ -16,18 +18,21 @@ public sealed class RuntimeVariantPlanTests
         Assert.Equal(new[] { "STRIPPED" }, plan.StrippedKeywords);
     }
 
+    // Verifies that correlated keywords are rejected instead of inventing combinations.
     [Fact]
     public void CorrelatedKeywordsAreRejectedInsteadOfInventingCombinations()
     {
         Assert.Throws<InvalidDataException>(() => Plan([[], ["A", "B"]], ["A", "B"]));
     }
 
+    // Verifies that incomplete exclusive sets are rejected.
     [Fact]
     public void IncompleteExclusiveSetsAreRejected()
     {
         Assert.Throws<InvalidDataException>(() => Plan([[], ["A"], ["B"], ["A", "C"]], ["A", "B", "C"]));
     }
 
+    // Verifies that duplicate state with different programs is ambiguous.
     [Fact]
     public void DuplicateStateWithDifferentProgramsIsAmbiguous()
     {
@@ -35,6 +40,7 @@ public sealed class RuntimeVariantPlanTests
         Assert.Throws<InvalidDataException>(() => RuntimeVariantPlan.Build(programs, new Dictionary<string, int>()));
     }
 
+    // Verifies that one program can serve multiple keyword states.
     [Fact]
     public void OneProgramCanServeMultipleKeywordStates()
     {
@@ -44,6 +50,7 @@ public sealed class RuntimeVariantPlanTests
         Assert.Equal(2, plan.States.Count);
     }
 
+    // Verifies that reused blob does not hide an unmatched keyword state.
     [Fact]
     public void ReusedBlobDoesNotHideAnUnmatchedKeywordState()
     {
@@ -53,6 +60,7 @@ public sealed class RuntimeVariantPlanTests
             new Dictionary<string, int> { ["MODE"] = 0 }));
     }
 
+    // Verifies that keywords must be preprocessor identifiers.
     [Theory]
     [InlineData("BAD NAME")]
     [InlineData("NAME\n#error injected")]
@@ -62,6 +70,7 @@ public sealed class RuntimeVariantPlanTests
         Assert.Throws<InvalidDataException>(() => Plan([[], [keyword]], [keyword]));
     }
 
+    // Verifies that missing scope metadata is not guessed.
     [Fact]
     public void MissingScopeMetadataIsNotGuessed()
     {
@@ -69,6 +78,7 @@ public sealed class RuntimeVariantPlanTests
         Assert.Throws<InvalidDataException>(() => RuntimeVariantPlan.Build(programs, new Dictionary<string, int>()));
     }
 
+    // Verifies that masks must be consistent within each stage.
     [Fact]
     public void MasksMustBeConsistentWithinEachStage()
     {
@@ -76,6 +86,7 @@ public sealed class RuntimeVariantPlanTests
         Assert.Throws<InvalidDataException>(() => VariantPairing.Pair(programs));
     }
 
+    // Verifies that unknown scope flags are rejected.
     [Theory]
     [InlineData(2)]
     [InlineData(255)]
@@ -86,6 +97,7 @@ public sealed class RuntimeVariantPlanTests
             new Dictionary<string, int> { ["MODE"] = flags }));
     }
 
+    // Verifies that exclusive groups cannot mix local and global keywords.
     [Fact]
     public void ExclusiveGroupsCannotMixLocalAndGlobalKeywords()
     {
@@ -95,6 +107,7 @@ public sealed class RuntimeVariantPlanTests
             new Dictionary<string, int> { ["A"] = 0, ["B"] = 1 }));
     }
 
+    // Verifies that disabled local keywords retain their scope.
     [Fact]
     public void DisabledLocalKeywordsRetainTheirScope()
     {
@@ -104,6 +117,7 @@ public sealed class RuntimeVariantPlanTests
         Assert.Contains("MODE", plan.LocalKeywords);
     }
 
+    // Builds a keyword plan from the supplied fixture metadata.
     private static RuntimeVariantPlan Plan(string[][] states, string[] mask)
     {
         List<ProgramVariantMetadata> programs = new List<ProgramVariantMetadata>();

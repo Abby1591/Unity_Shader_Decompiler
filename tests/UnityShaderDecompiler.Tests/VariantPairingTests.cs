@@ -3,8 +3,10 @@ using UnityShaderDecompiler.Core.DXBC.Metadata;
 
 namespace UnityShaderDecompiler.Tests;
 
+// Covers variant pairing tests.
 public class VariantPairingTests
 {
+    // Verifies that expanded variants preserve geometry and tessellation stages.
     [Fact]
     public void ExpandedVariantsPreserveGeometryAndTessellationStages()
     {
@@ -24,6 +26,7 @@ public class VariantPairingTests
             group.Select(program => program.Stage)));
     }
 
+    // Verifies that expanded variants reject unmatched intermediate stages.
     [Fact]
     public void ExpandedVariantsRejectUnmatchedIntermediateStages()
     {
@@ -31,6 +34,7 @@ public class VariantPairingTests
         Assert.Throws<System.IO.InvalidDataException>(() => VariantPairing.Group(programs));
     }
 
+    // Verifies that fragment only keyword reuses the vertex program.
     [Fact]
     public void FragmentOnlyKeywordReusesTheVertexProgram()
     {
@@ -43,6 +47,7 @@ public class VariantPairingTests
         Assert.Equal(new[] { (1, 2), (1, 3) }, VariantPairing.Pair(programs));
     }
 
+    // Verifies that shared keyword matches by state instead of serialized order.
     [Fact]
     public void SharedKeywordMatchesByStateInsteadOfSerializedOrder()
     {
@@ -56,6 +61,7 @@ public class VariantPairingTests
         Assert.Equal(new[] { (1, 4), (2, 3) }, VariantPairing.Pair(programs));
     }
 
+    // Verifies that missing variant fails even when its keyword is never enabled in the other stage.
     [Fact]
     public void MissingVariantFailsEvenWhenItsKeywordIsNeverEnabledInTheOtherStage()
     {

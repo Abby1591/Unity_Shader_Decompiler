@@ -1,3 +1,4 @@
+# Checks shader extraction and decompilation behavior.
 import json
 import tempfile
 import unittest
@@ -6,7 +7,9 @@ from pathlib import Path
 from libs.metadata import ShaderMetadata
 
 
+# Covers shader metadata regression cases.
 class ShaderMetadataTests(unittest.TestCase):
+    # Checks constant buffer sizes survive serialization.
     def test_constant_buffer_sizes_survive_serialization(self):
         shader_pass = {
             "m_NameIndices": {"Parameters": 0},
@@ -39,6 +42,7 @@ class ShaderMetadataTests(unittest.TestCase):
             "size": 0, "variables": [],
         })
 
+    # Checks variant references keep stage keyword masks.
     def test_variant_references_keep_stage_keyword_masks(self):
         shader_pass = {"m_ProgFragment": {
             "m_SerializedKeywordStateMask": [0, 1],
