@@ -27,6 +27,26 @@ dotnet build src/UnityShaderDecompiler.Cli/UnityShaderDecompiler.Cli.csproj -c R
 python tests/e2e/test_volumetric_lights.py
 ```
 
-The test checks fixture integrity, D3D11-only inputs, extraction, CLI completion, absence of swallowed blob errors, and output shader identity/stages. It does **not** establish GPU rendering equivalence, complete runtime keyword selection, or successful recompilation of the generated HLSL.
+The tests read expected vertex/fragment code indices directly from the original JSON, require a collected function with the matching stage for every index, and verify each saved DXBC artifact. Parameter-record indices are not code references: interpreting them as program headers can print misleading GLES labels and `No DXBC:` diagnostics. Such diagnostics alone do not establish a lost DirectX program. A missing expected program always fails.
 
-On upstream `417f26b`, all three extraction cases fail because the JSON contains `compressedBlob`, while the extractor requires `m_CompressedBlob`. PR #6 addresses schema compatibility. A diagnostic run using the compatible extractor also exposes `No DXBC: Unknown shader blob format` on upstream's Unity 6 blob reader. These failures are intentional regression signals, not skipped tests. Keep this PR in draft until the production fixes are available and the full cases pass.
+Coverage: BilateralBlur **13** programs (5 vertex / 8 fragment), BlitAdd **2** (1 / 1), and VolumetricLight **184** (76 / 108): **199 unique programs across the three fixtures**. These checks establish extraction and per-program decompilation coverage, not successful recompilation of generated HLSL, complete runtime keyword selection, or GPU rendering equivalence.
+
+## Dependency and before/after validation
+
+**Merge [PR #6](https://github.com/Abby1591/Unity_Shader_Decompiler/pull/6) before [PR #14](https://github.com/Abby1591/Unity_Shader_Decompiler/pull/14).** No other PR is required for these assertions.
+
+| Implementation tested with the same corpus/tests | Result |
+| --- | --- |
+| Upstream `417f26b` | Three shader tests fail at extraction (`m_CompressedBlob`); four integrity/guard tests pass |
+| PR #6 alone, `9677441` | All seven tests pass; all 199 expected DirectX programs are collected |
+| All twelve correction PRs integrated with upstream `417f26b` | All seven tests pass; all 199 expected DirectX programs are collected |
+
+To repeat the comparison without copying or editing fixtures, build the Release CLI in each target checkout, then run this test file with `USD_REPO_ROOT` set to that checkout. For example, in PowerShell from this PR's repository root:
+
+```powershell
+$env:USD_REPO_ROOT = (Resolve-Path ../decompiler-under-test).Path
+python tests/e2e/test_volumetric_lights.py
+Remove-Item Env:USD_REPO_ROOT
+```
+
+Keep #14 in draft until #6 is integrated into its base. Passing this corpus does not independently prove the necessity or correctness of the other correction PRs.

@@ -411,7 +411,7 @@ If you change the pretty printer or surface-shader recognition, keep
 
 ## VolumetricLights regression corpus
 
-The [VolumetricLights fixtures](tests/Fixtures/VolumetricLights/README.md) add three BSD-licensed shaders compiled with Unity 6000.0.75f1 / D3D11. Run `python tests/e2e/test_volumetric_lights.py` after building the Release CLI. This draft corpus currently exposes upstream JSON-schema and Unity 6 blob-reading failures; it does not claim rendering equivalence.
+The [VolumetricLights fixtures](tests/Fixtures/VolumetricLights/README.md) add three BSD-licensed shaders compiled with Unity 6000.0.75f1 / D3D11. Run `python tests/e2e/test_volumetric_lights.py` after building the Release CLI. It checks all 199 expected DirectX programs and requires [PR #6](https://github.com/Abby1591/Unity_Shader_Decompiler/pull/6): the three shader cases fail before that schema fix and pass afterward. It does not claim generated-HLSL compilation or rendering equivalence.
 
 ## License
 
