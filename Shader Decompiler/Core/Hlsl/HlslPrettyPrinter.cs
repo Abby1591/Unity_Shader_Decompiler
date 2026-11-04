@@ -1475,12 +1475,7 @@ public static class HlslPrettyPrinter
         {
             case HlslIfStatement iff:
             {
-                // Cross-branch phi copies (IRLeaveSsa writes the same
-                // post-merge name at the top level of BOTH arms) must have
-                // their declaration hoisted above the if. Declared per-arm,
-                // the name is scoped to that arm's braces and dies at the
-                // `}` — the sibling arm's write and any post-merge read
-                // would then reference an identifier never in scope.
+                // Declare branch-written values outside the if so later reads remain in scope.
                 foreach ((string name, int comps) in CrossBranchMergeNames(iff, ctx))
                 {
                     if (!ctx.Declared.Add(name))
@@ -2355,20 +2350,42 @@ public static class HlslPrettyPrinter
     // HlslIfStatement print case). Returns (rendered name, component count
     // for the declaration type), mirroring the exact naming/typing
     // RenderAssignmentLines will produce when it prints those same writes.
-    private static List<(string Name, int Components)> CrossBranchMergeNames(HlslIfStatement iff, PrintContext ctx)
+    private static Dictionary<string, int> CrossBranchMergeNames(HlslIfStatement iff, PrintContext ctx)
     {
-        var result = new List<(string, int)>();
+        Dictionary<string, int> result = new Dictionary<string, int>();
         if (iff.Else is null)
             return result;
-
-        Dictionary<string, int> thenNames = WrittenDeclNames(iff.Then.Statements, ctx);
-        Dictionary<string, int> elseNames = WrittenDeclNames(iff.Else.Statements, ctx);
-
+        Dictionary<string, int> thenNames = new Dictionary<string, int>();
+        Dictionary<string, int> elseNames = new Dictionary<string, int>();
+        AddNames(iff.Then, thenNames, ctx);
+        AddNames(iff.Else, elseNames, ctx);
         foreach ((string name, int comps) in thenNames)
-            if (elseNames.TryGetValue(name, out int elseComps))
-                result.Add((name, Math.Max(comps, elseComps)));
-
+            result[name] = comps;
+        foreach ((string name, int comps) in elseNames)
+            result[name] = Math.Max(result.GetValueOrDefault(name), comps);
         return result;
+    }
+
+    private static void AddNames(HlslBlockStatement block, Dictionary<string, int> names, PrintContext ctx)
+    {
+        foreach ((string name, int comps) in WrittenDeclNames(block.Statements, ctx))
+            if (!names.TryGetValue(name, out int prev) || comps > prev)
+                names[name] = comps;
+
+        foreach (HlslStatementNode stmt in block.Statements)
+            switch (stmt)
+            {
+                case HlslIfStatement nested:
+                    AddNames(nested.Then, names, ctx);
+                    if (nested.Else is not null) AddNames(nested.Else, names, ctx);
+                    break;
+                case HlslLoopStatement loop:
+                    AddNames(loop.Body, names, ctx);
+                    break;
+                case HlslSwitchStatement sw:
+                    foreach (HlslSwitchCase c in sw.Cases) AddNames(c.Body, names, ctx);
+                    break;
+            }
     }
 
     // Names first written at the top level of a loop body that are not yet

@@ -29,7 +29,7 @@ public static class IRLeaveSsa
                 foreach (IRStatement.IRPhi phi in phis)
                 {
                     if (p >= phi.Operands.Count)
-                        continue; // malformed phi (IRSsaVerifier would've flagged it) — skip rather than crash
+                        throw new InvalidDataException("Phi has fewer operands than predecessors.");
 
                     copies.Add(new IRStatement.IRAssignment
                     {
@@ -71,6 +71,10 @@ public static class IRLeaveSsa
     {
         while (pred.Statements.Count == 1 && IsMarker(pred.Statements[0]))
         {
+            // Closing a conditional joins both paths. Copies appended here
+            // must stay after the marker, rather than move into one branch.
+            if (pred.Statements[0] is IRStatement.IREndIf or IRStatement.IREndSwitch)
+                break;
             if (pred.Predecessors.Count == 0)
                 break; // nothing real to redirect to (entry block) — leave as-is
 

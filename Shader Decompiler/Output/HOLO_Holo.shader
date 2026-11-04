@@ -269,11 +269,13 @@ Shader "HOLO/Holo"
                 float4 r0_xyzw_5 = (_OriginalUVSwitch.xxxx == float4(0, 0, 0, 1));
                 float r0_y_5 = r0_xyzw_5.y;
                 float r0_w_3 = r0_xyzw_5.w;
+                float2 uvDiffuse_yz_3;
+                float4 sampleDiffuse_xyzw_2;
                 float4 sampleDiffuse_xyzw_3;
                 if (r0_y_5)
                 {
-                    float2 uvDiffuse_yz_3 = (mad(i.texcoord2.xxyx, _Diffuse_ST.yyyy, _Diffuse_ST.wwww)).yz;
-                    float4 sampleDiffuse_xyzw_2 = _Diffuse.Sample(sampler_Diffuse, (uvDiffuse_yz_3.xyxx).xy);
+                    uvDiffuse_yz_3 = (mad(i.texcoord2.xxyx, _Diffuse_ST.yyyy, _Diffuse_ST.wwww)).yz;
+                    sampleDiffuse_xyzw_2 = _Diffuse.Sample(sampler_Diffuse, (uvDiffuse_yz_3.xyxx).xy);
                     sampleDiffuse_xyzw_3 = sampleDiffuse_xyzw_2;
                 }
                 else
