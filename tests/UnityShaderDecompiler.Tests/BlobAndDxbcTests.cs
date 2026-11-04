@@ -211,20 +211,24 @@ public class BlobAndDxbcTests
     // ── SFI0 / PCON / compute blob ────────────────────────────────────
 
     [Fact]
-    public void Sfi0Chunk_ExposesTempAndThreadCounts()
+    public void Sfi0Chunk_ExposesFeatureFlags()
     {
         var dxbc = SpecBlobs.DxbcWithChunk(
-            "SFI0", SpecBlobs.Sfi0ChunkBytes(cTemps: 12, tgx: 8, tgy: 4, tgz: 1));
+            "SFI0", SpecBlobs.Sfi0ChunkBytes(2UL));
         var file = new DxbcFile();
         file.Load(dxbc);
 
         Assert.NotNull(file.ShaderInfo);
         var s = file.ShaderInfo!;
-        Assert.Equal(12u, s.CTemps);
-        Assert.Equal(8u, s.CNumThreadsX);
-        Assert.Equal(4u, s.CNumThreadsY);
-        Assert.Equal(1u, s.CNumThreadsZ);
+        Assert.Equal(2UL, s.FeatureFlags);
         Assert.Empty(file.UnknownChunks);
+    }
+
+    [Fact]
+    public void Sfi0Chunk_RejectsInvalidLength()
+    {
+        byte[] dxbc = SpecBlobs.DxbcWithChunk("SFI0", new byte[4]);
+        Assert.Throws<InvalidDataException>(() => new DxbcFile().Load(dxbc));
     }
 
     [Fact]

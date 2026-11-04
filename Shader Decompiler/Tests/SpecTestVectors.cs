@@ -192,7 +192,7 @@ public static class SpecTestVectors
             Throws(() => new DxbcFile().Load(lying), "lying TotalLength rejected");
         });
 
-        // ---- SFI0 (shader info; cTemps + cNumThreads carriers, spec §8) ----
+        // ---- SFI0 (shader feature flags) ----
         Case("SFI0 chunk", TestSfi0);
 
         // ---- PCON (patch-constant signature) ----
@@ -207,19 +207,17 @@ public static class SpecTestVectors
             : $"{s_failures} spec vector(s) FAILED.");
     }
 
-    // ---- SFI0 (spec §8 carrier for cTemps / cNumThreads) ----
+    // ---- SFI0 (shader feature flags) ----
     private static void TestSfi0()
     {
-        var dxbc = DxbcWithChunk("SFI0", Sfi0ChunkBytes(cTemps: 12, tgx: 8, tgy: 4, tgz: 1));
+        byte[] dxbc = DxbcWithChunk("SFI0", Sfi0ChunkBytes(2UL));
         var file = new DxbcFile();
         file.Load(dxbc);
 
         Check(file.ShaderInfo is not null, "SFI0 parsed");
         if (file.ShaderInfo is { } s)
         {
-            Check(s.CTemps == 12, "SFI0 cTemps=12");
-            Check(s.CNumThreadsX == 8 && s.CNumThreadsY == 4 && s.CNumThreadsZ == 1,
-                "SFI0 cNumThreads=(8,4,1)");
+            Check(s.FeatureFlags == 2UL, "SFI0 feature flags=2");
             Check(file.UnknownChunks.Count == 0, "SFI0 not treated as unknown");
         }
     }
@@ -378,18 +376,8 @@ public static class SpecTestVectors
         return blob;
     }
 
-    // SFI0 chunk payload: 35 u32 fields. CTemps at index 7, cNumThreads X/Y/Z
-    // at indices 17/18/19.
-    private static byte[] Sfi0ChunkBytes(uint cTemps, uint tgx, uint tgy, uint tgz)
-    {
-        var buf = new byte[35 * 4];
-        void Set(int idx, uint v) => Array.Copy(BitConverter.GetBytes(v), 0, buf, idx * 4, 4);
-        Set(7, cTemps);
-        Set(17, tgx);
-        Set(18, tgy);
-        Set(19, tgz);
-        return buf;
-    }
+    // SFI0 chunk payload: one 64-bit shader feature flag mask.
+    private static byte[] Sfi0ChunkBytes(ulong featureFlags) => BitConverter.GetBytes(featureFlags);
 
     // PCON patch-constant signature payload (OSGN element layout).
     private static byte[] PconChunkBytes()

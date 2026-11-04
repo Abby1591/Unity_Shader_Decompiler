@@ -69,20 +69,8 @@ internal static class SpecBlobs
         return blob;
     }
 
-    /// <summary>
-    /// SFI0 chunk payload: 35 u32 fields. CTemps at index 7, cNumThreads
-    /// X/Y/Z at indices 17/18/19.
-    /// </summary>
-    public static byte[] Sfi0ChunkBytes(uint cTemps, uint tgx, uint tgy, uint tgz)
-    {
-        var buf = new byte[35 * 4];
-        void Set(int idx, uint v) => Array.Copy(BitConverter.GetBytes(v), 0, buf, idx * 4, 4);
-        Set(7, cTemps);
-        Set(17, tgx);
-        Set(18, tgy);
-        Set(19, tgz);
-        return buf;
-    }
+    /// <summary>SFI0 chunk payload: one 64-bit shader feature flag mask.</summary>
+    public static byte[] Sfi0ChunkBytes(ulong featureFlags) => BitConverter.GetBytes(featureFlags);
 
     /// <summary>PCON patch-constant signature payload (OSGN element layout).</summary>
     public static byte[] PconChunkBytes()
