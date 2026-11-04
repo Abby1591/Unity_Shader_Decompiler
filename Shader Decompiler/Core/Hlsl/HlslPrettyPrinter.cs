@@ -1607,7 +1607,12 @@ public static class HlslPrettyPrinter
     private static string BaseIdentifier(IRRegister reg, PrintContext ctx)
     {
         if (reg.SymbolicName is not null)
-            return reg.SymbolicName;
+            return reg.RegisterType switch
+            {
+                RegisterType.Temp => $"{reg.SymbolicName}_r{reg.Index}",
+                RegisterType.IndexableTemp => $"{reg.SymbolicName}_x{reg.Index}",
+                _ => reg.SymbolicName,
+            };
 
         return reg.RegisterType switch
         {
