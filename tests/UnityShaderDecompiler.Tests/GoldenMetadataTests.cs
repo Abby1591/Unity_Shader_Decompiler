@@ -1,8 +1,8 @@
 using System;
 using System.Linq;
 using System.Text.RegularExpressions;
-using Parser;
-using Parser.DXBC.Metadata;
+using UnityShaderDecompiler.Core;
+using UnityShaderDecompiler.Core.DXBC.Metadata;
 
 namespace UnityShaderDecompiler.Tests;
 
@@ -63,7 +63,7 @@ public class GoldenMetadataTests
     [Fact]
     public void PicaVoxel_WithKeepRegisterBindings_RetainsSamplerRegisters()
     {
-        var kept = Parser.Decompiler.DecompileFolder(
+        var kept = UnityShaderDecompiler.Core.Decompiler.DecompileFolder(
             TestPaths.FixtureFolder("PicaVoxel_PicaVoxel Diffuse"),
             new DecompileOptions { Verbose = false, KeepRegisterBindings = true });
 
@@ -81,7 +81,7 @@ public class GoldenMetadataTests
     {
         var result = FixtureCache.Decompile("HOLO_Holo");
         string golden = System.IO.Path.Combine(
-            TestPaths.RepoRoot, "Shader Decompiler", "Output", "HOLO_Holo.shader");
+            TestPaths.RepoRoot, "samples", "HOLO_Holo.shader");
 
         if (!System.IO.File.Exists(golden))
             return; // generated examples are optional in a source-only checkout

@@ -10,3 +10,5 @@ Compatibility: default expanded passes also retain Geometry, Hull and Domain pro
 `--restore-keyword-variants` retains the original passes and emits keyword-controlled program branches, including local/global scope. Reconstruct only exact, complete combinations of independent or exclusive keyword sets; missing scope flags, ambiguous mappings and unsupported correlations fail explicitly. The default expanded-pass mode remains available. A hash-bound manifest lets native compilation check every recovered combination.
 
 Validation: 78 C# tests, six Python tests and all four PicaVoxel cases pass in isolation. The prior runtime validation under Unity CLI with Editor 6000.0.75f1 and D3D11 passed nine GPU readbacks; the compatibility changes leave that opt-in path unchanged. These tests do not establish full application rendering or resource-binding equivalence. Isolated C# tests use en-US; the existing fr-FR golden issue is addressed separately in #5.
+
+Upstream sync: merged `417f26b` (Core/Cli split and namespace rename). Adapted regression tests to the new layout and shared DXBC compiler; no test assertions were relaxed.

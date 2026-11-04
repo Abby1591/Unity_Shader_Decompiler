@@ -1,5 +1,5 @@
-using Parser;
-using Parser.DXBC.Chunks;
+using UnityShaderDecompiler.Core;
+using UnityShaderDecompiler.Core.DXBC.Chunks;
 
 namespace UnityShaderDecompiler.Tests;
 

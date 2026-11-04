@@ -2,7 +2,7 @@ using System.Text;
 using System.Text.Json;
 using System.Text.RegularExpressions;
 using AssetStudio;
-using Parser;
+using UnityShaderDecompiler.Core;
 
 namespace UnityShaderDecompiler.Tests;
 
@@ -17,7 +17,7 @@ public sealed class RuntimeVariantEmissionTests
         List<(ShaderGpuProgramType Stage, byte[] Code)> programs = new List<(ShaderGpuProgramType, byte[])>
         {
             (ShaderGpuProgramType.DX11VertexSM40, "DXBC"u8.ToArray()),
-            (ShaderGpuProgramType.DX11PixelSM40, RecompileVerify.CompileHlsl("float4 main():SV_Target { return 1; }", "main", "ps_4_0")),
+            (ShaderGpuProgramType.DX11PixelSM40, UnityShaderDecompiler.Core.DXBC.Compilation.DxbcCompiler.Compile("float4 main():SV_Target { return 1; }", "main", "ps_4_0")),
         };
         File.WriteAllBytes(Path.Combine(folder.Path, "blob.bin"), BuildBlob(programs));
         File.WriteAllText(Path.Combine(folder.Path, "metadata.json"), JsonSerializer.Serialize(new
@@ -46,11 +46,11 @@ public sealed class RuntimeVariantEmissionTests
         const string varying = "struct V { float4 position:SV_POSITION; float marker:TEXCOORD0; }; ";
         List<(ShaderGpuProgramType Stage, byte[] Code)> programs = new List<(ShaderGpuProgramType, byte[])>
         {
-            (ShaderGpuProgramType.DX11VertexSM40, RecompileVerify.CompileHlsl(varying
+            (ShaderGpuProgramType.DX11VertexSM40, UnityShaderDecompiler.Core.DXBC.Compilation.DxbcCompiler.Compile(varying
                 + "V main(float4 p:POSITION) { V o; o.position=p; o.marker=p.x; return o; }", "main", "vs_4_0")),
-            (ShaderGpuProgramType.DX11GeometrySM40, RecompileVerify.CompileHlsl(varying
+            (ShaderGpuProgramType.DX11GeometrySM40, UnityShaderDecompiler.Core.DXBC.Compilation.DxbcCompiler.Compile(varying
                 + "[maxvertexcount(1)] void main(point V input[1], inout PointStream<V> output) { output.Append(input[0]); }", "main", "gs_4_0")),
-            (ShaderGpuProgramType.DX11PixelSM40, RecompileVerify.CompileHlsl(varying
+            (ShaderGpuProgramType.DX11PixelSM40, UnityShaderDecompiler.Core.DXBC.Compilation.DxbcCompiler.Compile(varying
                 + "float4 main(V i):SV_Target { return i.marker; }", "main", "ps_4_0")),
         };
         File.WriteAllBytes(Path.Combine(folder.Path, "blob.bin"), BuildBlob(programs));
@@ -83,11 +83,11 @@ public sealed class RuntimeVariantEmissionTests
         List<(ShaderGpuProgramType Stage, byte[] Code)> programs = new List<(ShaderGpuProgramType, byte[])>();
         const string varying = "struct Varyings { float4 position:SV_POSITION; float4 marker:TEXCOORD0; }; ";
         foreach (string value in new[] { "0.25", "0.75" })
-            programs.Add((ShaderGpuProgramType.DX11VertexSM40, RecompileVerify.CompileHlsl(
+            programs.Add((ShaderGpuProgramType.DX11VertexSM40, UnityShaderDecompiler.Core.DXBC.Compilation.DxbcCompiler.Compile(
                 varying + $"Varyings main(float4 p:POSITION) {{ Varyings o; o.marker=float4({value},0,0,1); o.position=p; return o; }}", "main", "vs_4_0")));
         foreach (string blue in new[] { "0.5", "1.0" })
             foreach (string green in new[] { "0.25", "0.75" })
-                programs.Add((ShaderGpuProgramType.DX11PixelSM40, RecompileVerify.CompileHlsl(
+                programs.Add((ShaderGpuProgramType.DX11PixelSM40, UnityShaderDecompiler.Core.DXBC.Compilation.DxbcCompiler.Compile(
                     varying + $"float4 main(Varyings i):SV_Target {{ return float4(i.marker.x,{green},{blue},1); }}", "main", "ps_4_0")));
         File.WriteAllBytes(Path.Combine(folder.Path, "blob.bin"), BuildBlob(programs));
         List<object> passes = new List<object>();
@@ -134,8 +134,8 @@ public sealed class RuntimeVariantEmissionTests
             {
                 string definitions = ((state & 1) != 0 ? "#define MODE 1\n" : "")
                     + ((state & 2) != 0 ? "#define DETAIL 1\n" : "");
-                Assert.NotEmpty(RecompileVerify.CompileHlsl(definitions + match.Groups[1].Value, "vert", "vs_4_0"));
-                Assert.NotEmpty(RecompileVerify.CompileHlsl(definitions + match.Groups[1].Value, "frag", "ps_4_0"));
+                Assert.NotEmpty(UnityShaderDecompiler.Core.DXBC.Compilation.DxbcCompiler.Compile(definitions + match.Groups[1].Value, "vert", "vs_4_0"));
+                Assert.NotEmpty(UnityShaderDecompiler.Core.DXBC.Compilation.DxbcCompiler.Compile(definitions + match.Groups[1].Value, "frag", "ps_4_0"));
             }
 
         // Optional artifact export lets the Unity GPU test consume this exact generated shader.

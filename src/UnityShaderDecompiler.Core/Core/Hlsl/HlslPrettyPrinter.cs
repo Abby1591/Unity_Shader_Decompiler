@@ -1,0 +1,2785 @@
+using System.Text;
+using System.Text.Json;
+using System.Text.RegularExpressions;
+using UnityShaderDecompiler.Core.DXBC.Chunks;
+using UnityShaderDecompiler.Core.DXBC.Instructions;
+using UnityShaderDecompiler.Core.DXBC.IR;
+using UnityShaderDecompiler.Core.Analysis;
+using UnityShaderDecompiler.Core.DXBC.Metadata;
+
+namespace UnityShaderDecompiler.Core.Hlsl.Ast;
+
+// Stage 13 (statement/expression -> text formatting) + Stage 14 (ShaderLab
+// wrapper) together — splitting them into separate files would mean
+// threading a StringBuilder/indent state back and forth between two
+// classes for no real benefit, since "print the pass" and "wrap the pass
+// in Pass{HLSLPROGRAM...ENDHLSL}" are the same recursive walk.
+//
+// IMPORTANT — things this printer does NOT invent, and instead flags
+// with a `/* TODO ... */` comment in the emitted text so it's visible
+// in the output, not just buried in source comments:
+//   - Range property bounds when the metadata carried no default value
+//     (no slots → no min/max to recover; falls back to Float)
+//   - The handful of TextureOperation kinds without a confirmed 1:1 HLSL
+//     method mapping (Lod, ResInfo, SampleInfo, SamplePos, BufInfo)
+//   - DistanceVector / MaskedSumOfAbsoluteDifferences intrinsics (no
+//     standard HLSL builtin — DXBC-specific)
+//
+// SSA note: DXBC's SSA form means the same logical register (e.g. r0)
+// can hold several genuinely different values across a function. HLSL
+// has no SSA, so each distinct SSA "version" is emitted as its own
+// declared local (name carries the version suffix, e.g. `r0_1`, or
+// `worldPos_2` if Stage 12 recovered a name) rather than collapsing them
+// onto one mutable variable — collapsing them would be a real semantic
+// bug (later reads would see the wrong generation's value), not just a
+// cosmetic one.
+public static class HlslPrettyPrinter
+{
+    // Cap for Stage 13.5 temp fusion: a def is only inlined into its one
+    // consumer when the resulting expression stays under this many IR
+    // nodes. Keeps long transform chains readable instead of collapsing
+    // into one giant nested expression.
+    private const int MaxFuseNodes = 16;
+
+    public static string Print(HlslShaderNode shader, bool fuseTemps = true, bool stripRegisterBindings = false)
+    {
+        var sb = new StringBuilder();
+        sb.Append("Shader \"").Append(shader.Name).Append("\"\n{\n");
+
+        PrintProperties(sb, shader.Properties);
+
+        foreach (HlslSubShaderNode ss in shader.SubShaders)
+            PrintSubShader(sb, ss, fuseTemps, stripRegisterBindings);
+
+        if (!string.IsNullOrEmpty(shader.Fallback))
+            sb.Append("    Fallback \"").Append(shader.Fallback).Append("\"\n");
+
+        if (!string.IsNullOrEmpty(shader.CustomEditor))
+            sb.Append("    CustomEditor \"").Append(shader.CustomEditor).Append("\"\n");
+
+        foreach (string dep in shader.Dependencies)
+            sb.Append("    Dependency \"").Append(dep).Append("\"\n");
+
+        sb.Append("}\n");
+        return sb.ToString();
+    }
+
+    // ---------- Stage 4: Properties ----------
+
+    private static void PrintProperties(StringBuilder sb, List<HlslPropertyNode> props)
+    {
+        sb.Append("    Properties\n    {\n");
+        foreach (HlslPropertyNode p in props)
+        {
+            foreach (string attr in p.Attributes)
+                sb.Append("        [").Append(attr).Append("]\n");
+
+            sb.Append("        ").Append(p.Name).Append(" (\"")
+              .Append(p.Description ?? p.Name).Append("\", ")
+              .Append(PropertyTypeText(p)).Append(") = ")
+              .Append(PropertyDefaultText(p)).Append('\n');
+        }
+        sb.Append("    }\n");
+    }
+
+    private static string PropertyTypeText(HlslPropertyNode p) => p.Kind switch
+    {
+        HlslPropertyKind.Color => "Color",
+        HlslPropertyKind.Vector => "Vector",
+        HlslPropertyKind.Float => "Float",
+        HlslPropertyKind.Range when p.Range is { } r => $"Range({r.Min}, {r.Max})",
+        // Range with no recovered bounds (metadata carried no default value,
+        // so min/max slots are absent) — emit as Float rather than
+        // fabricate a (0,1) that might be wrong.
+        HlslPropertyKind.Range => "Float /* TODO: Range bounds not recovered */",
+        HlslPropertyKind.Texture => p.TextureDimension switch
+        {
+            HlslTextureDimension.Tex3D => "3D",
+            HlslTextureDimension.Cube => "Cube",
+            HlslTextureDimension.Tex2DArray => "2DArray",
+            HlslTextureDimension.CubeArray => "CubeArray",
+            _ => "2D",
+        },
+        _ => "Float /* TODO: unknown property kind */",
+    };
+
+    private static string PropertyDefaultText(HlslPropertyNode p)
+    {
+        if (p.Kind == HlslPropertyKind.Texture)
+            return "\"\" {}";
+
+        // Typed default (Metadata layer, float[4] — the same {x,y,z,w} the
+        // printer used to read out of the raw JsonElement below).
+        if (p.DefaultComponents.Length == 4)
+        {
+            float x = p.DefaultComponents[0], y = p.DefaultComponents[1],
+                  z = p.DefaultComponents[2], w = p.DefaultComponents[3];
+            return p.Kind is HlslPropertyKind.Color or HlslPropertyKind.Vector
+                ? $"({x},{y},{z},{w})"
+                : x.ToString();
+        }
+
+        if (p.DefaultValue is not { } dv || dv.ValueKind != JsonValueKind.Object)
+            return "0";
+
+        double X() => dv.TryGetProperty("x", out var x) ? x.GetDouble() : 0;
+        double Y() => dv.TryGetProperty("y", out var y) ? y.GetDouble() : 0;
+        double Z() => dv.TryGetProperty("z", out var z) ? z.GetDouble() : 0;
+        double W() => dv.TryGetProperty("w", out var w) ? w.GetDouble() : 0;
+
+        return p.Kind is HlslPropertyKind.Color or HlslPropertyKind.Vector
+            ? $"({X()},{Y()},{Z()},{W()})"
+            : X().ToString();
+    }
+
+    // ---------- Stage 5: SubShader ----------
+
+    private static void PrintSubShader(StringBuilder sb, HlslSubShaderNode ss, bool fuseTemps, bool stripRegisterBindings)
+    {
+        sb.Append("    SubShader\n    {\n");
+        PrintTags(sb, ss.Tags, indent: "        ");
+        if (ss.Lod is { } lod)
+            sb.Append("        LOD ").Append(lod).Append('\n');
+
+        foreach (HlslPassNode pass in ss.Passes)
+            PrintPass(sb, pass, fuseTemps, stripRegisterBindings);
+
+        sb.Append("    }\n");
+    }
+
+    private static void PrintTags(StringBuilder sb, Dictionary<string, string> tags, string indent)
+    {
+        if (tags.Count == 0) return;
+        sb.Append(indent).Append("Tags { ");
+        foreach (var (k, v) in tags)
+            sb.Append('"').Append(k).Append("\"=\"").Append(v).Append("\" ");
+        sb.Append("}\n");
+    }
+
+    // ---------- Stage 6/14: Pass ----------
+
+    private static void PrintPass(StringBuilder sb, HlslPassNode pass, bool fuseTemps, bool stripRegisterBindings)
+    {
+        sb.Append("        Pass\n        {\n");
+        if (!string.IsNullOrEmpty(pass.Name))
+            sb.Append("            Name \"").Append(pass.Name).Append("\"\n");
+
+        PrintTags(sb, pass.Tags, indent: "            ");
+        PrintRenderState(sb, pass.State);
+
+        sb.Append("            HLSLPROGRAM\n");
+        if (pass.RuntimeVariants is RuntimeVariantPlan plan)
+        {
+            sb.Append("            #pragma only_renderers d3d11\n");
+            sb.Append($"            #pragma target {pass.ShaderTarget}\n");
+            sb.Append("            #pragma vertex vert\n");
+            sb.Append("            #pragma fragment frag\n");
+            foreach (RuntimeKeywordGroup group in plan.Groups)
+            {
+                string directive = group.Local ? "multi_compile_local" : "multi_compile";
+                string choices = (group.AllowsDisabled ? "__ " : "") + string.Join(" ", group.Keywords);
+                sb.Append($"            #pragma {directive} {choices}\n");
+            }
+            foreach (string keyword in plan.StrippedKeywords)
+            {
+                string directive = plan.LocalKeywords.Contains(keyword) ? "multi_compile_local" : "multi_compile";
+                sb.Append($"            #pragma {directive} __ {keyword}\n");
+                sb.Append($"            #pragma skip_variants {keyword}\n");
+            }
+            for (int index = 0; index < plan.States.Count; index++)
+            {
+                HashSet<string> enabled = plan.States[index].Keywords.ToHashSet(StringComparer.Ordinal);
+                string condition = string.Join(" && ", plan.Mask.Select(keyword =>
+                    (enabled.Contains(keyword) ? "" : "!") + $"defined({keyword})"));
+                if (condition.Length == 0) condition = "1";
+                sb.Append($"            #{(index == 0 ? "if" : "elif")} {condition}\n");
+                PrintPassProgram(sb, pass.VariantPrograms[index], fuseTemps, stripRegisterBindings, false);
+            }
+            sb.Append("            #else\n");
+            sb.Append("            #error No serialized program matches this shader keyword state\n");
+            sb.Append("            #endif\n");
+        }
+        else
+        {
+            PrintPassProgram(sb, pass, fuseTemps, stripRegisterBindings, true);
+        }
+        sb.Append("            ENDHLSL\n");
+        sb.Append("        }\n");
+    }
+
+    private static void PrintPassProgram(StringBuilder sb, HlslPassNode pass, bool fuseTemps,
+        bool stripRegisterBindings, bool entryPragmas)
+    {
+        // Empty pass (no decompiled functions) — emit a valid stub so
+        // pass indices stay stable for Graphics.Blit(material, passIndex).
+        bool hasAnyFunction = pass.VertexFunction is not null || pass.FragmentFunction is not null
+            || pass.GeometryFunction is not null || pass.HullFunction is not null
+            || pass.DomainFunction is not null || pass.ComputeFunction is not null;
+
+        if (!hasAnyFunction)
+        {
+            sb.AppendLine("            #pragma vertex vert");
+            sb.AppendLine("            #pragma fragment frag");
+            sb.AppendLine("            cbuffer _StubCB : register(b1) { float4x4 unity_MatrixVP; };");
+            sb.AppendLine("            struct v2f { float4 pos : SV_POSITION; };");
+            sb.AppendLine("            v2f vert(float4 v : POSITION) { v2f o; o.pos = mul(unity_MatrixVP, v); return o; }");
+            sb.AppendLine("            float4 frag(v2f i) : SV_Target { return 0; }");
+        }
+
+        // Interpolator hand-off map: the vertex stage records which semantic
+        // fields carry named values (worldPos, worldNormal, ...) so the
+        // fragment stage can seed the matching input registers.
+        Dictionary<string, string> stageInterpolators = new Dictionary<string, string>();
+
+        // Build cross-stage cbuffer variable rename mapping: when vert and
+        // frag have different variables at the same byte offset within a
+        // merged cbuffer, one variable is declared and the other's references
+        // in the function body are redirected.
+        Dictionary<string, string> cbufferRenames = BuildCbufferRenameMap(pass);
+
+        foreach (HlslResourceNode res in pass.Resources)
+            PrintResource(sb, res, stripRegisterBindings, cbufferRenames);
+
+        foreach (HlslStructNode s in pass.Structs)
+            PrintStruct(sb, s);
+
+        if (pass.VertexFunction is not null)
+        {
+            if (entryPragmas) sb.Append("            #pragma vertex vert\n");
+            PrintFunction(sb, pass.VertexFunction, pass.Cbuffers, fuseTemps, stageOutputs: stageInterpolators, resources: pass.Resources, cbufferRenames: cbufferRenames);
+        }
+        if (pass.FragmentFunction is not null)
+        {
+            if (entryPragmas) sb.Append("            #pragma fragment frag\n");
+            PrintFunction(sb, pass.FragmentFunction, pass.Cbuffers, fuseTemps, stageInputs: stageInterpolators, resources: pass.Resources, cbufferRenames: cbufferRenames);
+        }
+        foreach (HlslFunctionNode? f in new[] { pass.GeometryFunction, pass.HullFunction, pass.DomainFunction, pass.ComputeFunction })
+            if (f is not null)
+                PrintFunction(sb, f, pass.Cbuffers, fuseTemps, resources: pass.Resources, cbufferRenames: cbufferRenames);
+
+    }
+
+    private static void PrintRenderState(StringBuilder sb, HlslRenderState s)
+    {
+        sb.Append("            Cull ").Append(s.Cull).Append('\n');
+        sb.Append("            ZTest ").Append(ZTestText(s.ZTest)).Append('\n');
+        sb.Append("            ZWrite ").Append(s.ZWrite ? "On" : "Off").Append('\n');
+
+        if (s.Lighting)
+            sb.Append("            Lighting On\n");
+
+        if (s.AlphaToMask)
+            sb.Append("            AlphaToMask On\n");
+
+        if (s.OffsetFactor != 0 || s.OffsetUnits != 0)
+            sb.Append("            Offset ").Append(s.OffsetFactor).Append(", ").Append(s.OffsetUnits).Append('\n');
+
+        if (!(s.Blend.SrcBlend == HlslBlendMode.One && s.Blend.DstBlend == HlslBlendMode.Zero))
+        {
+            sb.Append("            Blend ").Append(s.Blend.SrcBlend).Append(' ').Append(s.Blend.DstBlend);
+            if (s.Blend.SrcBlendAlpha != s.Blend.SrcBlend || s.Blend.DstBlendAlpha != s.Blend.DstBlend)
+                sb.Append(", ").Append(s.Blend.SrcBlendAlpha).Append(' ').Append(s.Blend.DstBlendAlpha);
+            sb.Append('\n');
+        }
+
+        if (s.Blend.BlendOp != HlslBlendOp.Add)
+            sb.Append("            BlendOp ").Append(s.Blend.BlendOp).Append('\n');
+
+        if (s.StencilRef != 0 || s.StencilReadMask != 255 || s.StencilWriteMask != 255)
+        {
+            sb.Append("            Stencil\n            {\n");
+            sb.Append("                Ref ").Append(s.StencilRef).Append('\n');
+            sb.Append("                ReadMask ").Append(s.StencilReadMask).Append('\n');
+            sb.Append("                WriteMask ").Append(s.StencilWriteMask).Append('\n');
+            sb.Append("                Comp ").Append(ZTestText(s.StencilFront.Comp)).Append('\n');
+            sb.Append("                Pass ").Append(s.StencilFront.Pass).Append('\n');
+            sb.Append("                Fail ").Append(s.StencilFront.Fail).Append('\n');
+            sb.Append("                ZFail ").Append(s.StencilFront.ZFail).Append('\n');
+            sb.Append("            }\n");
+        }
+    }
+
+    // Unity's ShaderLab spells the "always pass" compare function
+    // "Always" like the others, but LessEqual is written "LEqual" and
+    // GreaterEqual is "GEqual" — the one irregularity in an otherwise
+    // 1:1 name mapping.
+    private static string ZTestText(HlslCompareFunction f) => f switch
+    {
+        HlslCompareFunction.LessEqual => "LEqual",
+        HlslCompareFunction.GreaterEqual => "GEqual",
+        _ => f.ToString(),
+    };
+
+    // ---------- Stage 7: Resources ----------
+
+    // When vert and frag have different variables at the same byte offset
+    // within a merged cbuffer, one must be declared and the other's
+    // references redirected.  Returns a map from the dropped variable name
+    // to the declared variable name (possibly with an array index for
+    // matrix-row renames).
+    private static Dictionary<string, string> BuildCbufferRenameMap(HlslPassNode pass)
+    {
+        var renames = new Dictionary<string, string>();
+
+        // Collect all variables per slot with their full metadata.
+        // key = slot, value = list of (name, offset, sizeBytes, stage, isMatrix)
+        var bySlot = new Dictionary<int, List<(string Name, int Offset, int SizeBytes, string Stage, bool IsMatrix)>>();
+        foreach (var (key, cb) in pass.Cbuffers)
+        {
+            if (!bySlot.TryGetValue(key.Slot, out var list))
+            {
+                list = new List<(string, int, int, string, bool)>();
+                bySlot[key.Slot] = list;
+            }
+            foreach (var v in cb.Variables)
+                list.Add((v.Name, v.Offset, v.SizeBytes, key.Stage, v.IsMatrix));
+        }
+
+        bool IsMatrixName(string name) =>
+            name.Contains("ObjectToWorld") || name.Contains("WorldToObject") ||
+            name.Contains("MatrixVP") || name.Contains("MatrixV") ||
+            name.Contains("MatrixMVP");
+
+        foreach (var (_, vars) in bySlot)
+        {
+            // ---- Pass 1: exact-offset collisions (two names at same offset) ----
+            var byOffset = vars.GroupBy(v => v.Offset);
+            foreach (var og in byOffset)
+            {
+                var uniqueNames = og.Select(v => v.Name).Distinct().ToList();
+                if (uniqueNames.Count <= 1) continue;
+
+                bool hasMatrix = og.Any(v => v.IsMatrix || IsMatrixName(v.Name));
+                string kept;
+                if (hasMatrix)
+                    kept = og.First(v => v.IsMatrix || IsMatrixName(v.Name)).Name;
+                else if (og.Any(v => v.Stage == "Fragment"))
+                    kept = og.First(v => v.Stage == "Fragment").Name;
+                else
+                    kept = uniqueNames[0];
+
+                foreach (string removed in uniqueNames.Where(n => n != kept))
+                {
+                    bool keptIsMatrix = og.First(v => v.Name == kept).IsMatrix || IsMatrixName(kept);
+                    string target = keptIsMatrix ? $"{kept}[0]" : kept;
+                    renames[removed] = target;
+                }
+            }
+
+            // ---- Pass 2: range overlaps (non-matrix var inside matrix span) ----
+            var matrices = vars.Where(v => v.IsMatrix || IsMatrixName(v.Name))
+                               .GroupBy(v => v.Name)
+                               .Select(g => g.First())
+                               .ToList();
+            var nonMatrices = vars.Where(v => !(v.IsMatrix || IsMatrixName(v.Name))).ToList();
+
+            foreach (var nv in nonMatrices)
+            {
+                if (renames.ContainsKey(nv.Name)) continue; // already handled
+                foreach (var mv in matrices)
+                {
+                    if (nv.Offset >= mv.Offset && nv.Offset < mv.Offset + mv.SizeBytes)
+                    {
+                        int row = (nv.Offset - mv.Offset) / 16;
+                        renames[nv.Name] = $"{mv.Name}[{row}]";
+                        break;
+                    }
+                }
+            }
+        }
+
+        return renames;
+    }
+
+    private static void PrintResource(StringBuilder sb, HlslResourceNode res, bool stripRegisterBindings, Dictionary<string, string>? cbufferRenames = null)
+    {
+        // Unity standard cbuffers are assigned to per-stage slots by Unity's
+        // compiler from the cbuffer NAME alone — an explicit register binding
+        // would conflict when vertex and fragment map the same name to
+        // different slots (e.g. UnityPerCamera at b0 in vertex, b1 in
+        // fragment).  Only emit register(bN) for non-Unity cbuffers.
+        string reg = stripRegisterBindings && res.Kind is HlslResourceKind.Texture or HlslResourceKind.Sampler
+            ? ""
+            : (res.Kind == HlslResourceKind.ConstantBuffer && IsUnityCbuffer(res.Name))
+                ? ""
+                : RegisterBinding(res);
+        string regSuffix = string.IsNullOrEmpty(reg) ? "" : " : " + reg;
+
+        switch (res.Kind)
+        {
+            case HlslResourceKind.ConstantBuffer:
+                // Unity's shader compilation pipeline auto-injects standard
+                // cbuffers (UnityPerDraw, UnityPerFrame, UnityPerCamera, etc.)
+                // before our HLSLPROGRAM code runs. Re-declaring them with the
+                // same name causes "Duplicate constant buffer declaration".
+                // Rename them while keeping ALL variables and the register
+                // binding so the bytecode still reads from the correct slot.
+                string cbufferName = IsUnityCbuffer(res.Name)
+                    ? $"_{res.Name.TrimStart('_')}CB_b{res.Slot}"
+                    : res.Name;
+
+                sb.Append("            cbuffer ").Append(cbufferName);
+                if (!string.IsNullOrEmpty(reg))
+                    sb.Append(" : ").Append(reg);
+                sb.Append("\n            {\n");
+                // Emit packoffset for all non-synthetic variables.  When two
+                // variables from different stages collide at the same register,
+                // keep only the one that IS the rename target (the other stage's
+                // references are redirected via CbufferVarRenames).
+                var orderedAll = res.Variables
+                    .OrderBy(v => v.Name == $"cb{res.Slot}_values" ? 1 : 0)
+                    .ThenBy(v => v.Offset)
+                    .ToList();
+
+                bool hasSynthetic = orderedAll.Any(v =>
+                    v.Name.StartsWith("cb") && v.Name.Contains("_values"));
+
+                // Collect the set of names that are rename TARGETS — these
+                // are the ones we keep when a collision happens.
+                var renameTargets = new HashSet<string>();
+                if (cbufferRenames is not null)
+                    foreach (string target in cbufferRenames.Values)
+                        renameTargets.Add(target);
+
+                // Build the set of variable names to SKIP (the ones that
+                // were renamed away).  A variable is skipped when:
+                //  (a) it appears as a KEY in the rename map, AND
+                //  (b) its target is also declared in this cbuffer.
+                var skipNames = new HashSet<string>();
+                if (cbufferRenames is not null)
+                {
+                    var declaredNames = new HashSet<string>(orderedAll.Select(v => v.Name));
+                    foreach (var (old, target) in cbufferRenames)
+                    {
+                        string bareTarget = target.Contains('[') ? target[..target.IndexOf('[')] : target;
+                        if (declaredNames.Contains(old) && declaredNames.Contains(bareTarget))
+                            skipNames.Add(old);
+                    }
+                }
+
+                // Emit packoffset for all non-synthetic cbuffers so each
+                // variable lands at the byte offset the DXBC expects.
+                // The overlap check below disables it when variables from
+                // different physical cbuffers would collide (e.g. PicaVoxel
+                // $Globals merged with UnityPerDraw at the same slot).
+                bool needPackoffset = !hasSynthetic;
+                if (needPackoffset)
+                {
+                    // Check for overlapping packoffset ranges among the
+                    // non-skipped, non-synthetic variables.
+                    var poRanges = new List<(uint start, uint end, string name)>();
+                    foreach (HlslCBufferVariable v in orderedAll)
+                    {
+                        if (skipNames.Contains(v.Name) || (v.Name.StartsWith("cb") && v.Name.Contains("_values")))
+                            continue;
+                        bool isScalar = (v.TypeName == "float" || v.TypeName == "int" || v.TypeName == "uint")
+                                        && v.Size <= 4 && v.ArraySize is null;
+                        uint vSize = isScalar ? 4u : v.Size;
+                        if (vSize == 0) vSize = 16;
+                        uint start = v.Offset;
+                        uint end = start + vSize;
+                        foreach (var (ps, pe, pn) in poRanges)
+                        {
+                            if (start < pe && end > ps)
+                            {
+                                needPackoffset = false;
+                                break;
+                            }
+                        }
+                        if (!needPackoffset) break;
+                        poRanges.Add((start, end, v.Name));
+                    }
+                }
+
+                // Track which packoffset values are already taken to avoid
+                // duplicate packoffset annotations.
+                var usedPackOffsets = new HashSet<string>();
+
+                foreach (HlslCBufferVariable v in orderedAll)
+                {
+                    if (skipNames.Contains(v.Name))
+                        continue;
+                    if (v.Name.StartsWith("cb") && v.Name.Contains("_values"))
+                    {
+                        // Synthetic fallback — no packoffset.
+                        sb.Append("                ").Append(v.TypeName).Append(' ').Append(v.Name);
+                        if (v.ArraySize is { } n)
+                            sb.Append('[').Append(n).Append(']');
+                        sb.Append(";\n");
+                        continue;
+                    }
+
+                    sb.Append("                ").Append(v.TypeName).Append(' ').Append(v.Name);
+                    if (v.ArraySize is { } arrLen)
+                        sb.Append('[').Append(arrLen).Append(']');
+
+                    if (needPackoffset)
+                    {
+                        uint cReg = v.Offset / 16;
+                        uint withinReg = v.Offset % 16;
+                        bool isScalar = (v.TypeName == "float" || v.TypeName == "int" || v.TypeName == "uint")
+                                        && v.Size <= 4 && v.ArraySize is null;
+                        string po;
+                        if (withinReg > 0 || isScalar)
+                        {
+                            string comp = (withinReg / 4) switch
+                            {
+                                1 => ".y",
+                                2 => ".z",
+                                3 => ".w",
+                                _ => ".x"
+                            };
+                            po = $"c{cReg}{comp}";
+                        }
+                        else
+                        {
+                            po = $"c{cReg}";
+                        }
+
+                        if (usedPackOffsets.Add(po))
+                            sb.Append(" : packoffset(").Append(po).Append(')');
+                    }
+                    sb.Append(";\n");
+                }
+                sb.Append("            };\n");
+                break;
+
+            case HlslResourceKind.Texture:
+                sb.Append("            ").Append(res.TypeHint ?? "Texture2D").Append(' ').Append(res.Name).Append(regSuffix).Append(";\n");
+                break;
+
+            case HlslResourceKind.Sampler:
+                // TypeHint distinguishes a comparison sampler (used by
+                // SampleCmp/GatherCmp) from a regular one.
+                sb.Append("            ").Append(res.TypeHint ?? "SamplerState").Append(' ').Append(res.Name).Append(regSuffix).Append(";\n");
+                break;
+
+            case HlslResourceKind.Uav:
+                sb.Append("            ").Append(res.TypeHint ?? "RWTexture2D").Append(' ').Append(res.Name).Append(" : ").Append(reg).Append(";\n");
+                break;
+        }
+    }
+
+    // Explicit register slot for a resource, recovered from the bytecode's
+    // dcl_constantbuffer/dcl_resource/dcl_sampler (or the metadata slot map
+    // for cbuffers): register(b0), register(t1), register(s2), ...
+    private static string RegisterBinding(HlslResourceNode res) => res.Kind switch
+    {
+        HlslResourceKind.ConstantBuffer => $"register(b{res.Slot})",
+        HlslResourceKind.Texture => $"register(t{res.Slot})",
+        HlslResourceKind.Sampler => $"register(s{res.Slot})",
+        HlslResourceKind.Uav => $"register(u{res.Slot})",
+        _ => "",
+    };
+
+    // Unity auto-injects these standard cbuffers into HLSLPROGRAM blocks.
+    // Re-declaring them causes "Duplicate constant buffer declaration".
+    // $Globals (sanitized to _Globals) is Unity's per-material block that
+    // is also auto-injected.
+    private static bool IsUnityCbuffer(string name) =>
+        name.StartsWith("Unity", StringComparison.Ordinal) || name == "_Globals";
+
+    // ---------- Stage 8: Structs ----------
+
+    private static void PrintStruct(StringBuilder sb, HlslStructNode s)
+    {
+        sb.Append("            struct ").Append(s.Name).Append("\n            {\n");
+        foreach (HlslFieldNode f in s.Fields)
+            sb.Append("                ").Append(f.TypeHint).Append(' ').Append(f.Name)
+              .Append(" : ").Append(f.Semantic).Append(";\n");
+        sb.Append("            };\n");
+    }
+
+    // ---------- Stage 9/10/11: Functions, statements, expressions ----------
+
+    // Per-function mutable state the printer threads through recursion:
+    // which (identifier) names have already been declared (so re-writes
+    // to the same SSA generation don't re-declare).
+    private sealed class PrintContext
+    {
+        public HashSet<string> Declared { get; } = new();
+
+        // Cbuffer layout from the ShaderLab metadata (slot -> buffer),
+        // used to render RDEF-less cbN[slot] reads as real variable names.
+        public Dictionary<int, CbufferMetadata> Cbuffers { get; set; } = new();
+
+        // Identifier each defining instruction actually declared for a
+        // value, keyed by the value's structural identity (storage location
+        // + SSA version), NOT by its rendered name string. Reads resolve
+        // against this so a component that was written as part of a vector
+        // renders as a swizzle off the DECLARED vector name (r0_xyz_5.x),
+        // never as a view string that was never declared. Keying by
+        // location rather than BaseIdentifier is essential: synthesized
+        // registers (phi operands/destinations from IRStorageLocation
+        // .ToRegister()) carry no SymbolicName, and name recovery can name
+        // one instance differently from another — a string key would miss
+        // and emit the raw temp name as a phantom identifier. "Same version
+        // number" is NOT enough to infer co-write either: versions are
+        // per-component counters (see IRSsaRenaming), so x and y can
+        // independently reach the same version via separate writes.
+        public Dictionary<(IRStorageLocation Location, int Version), (string Name, List<int> ActiveComponents)> DeclaredViews { get; } = new();
+
+        // Shader stage of the function being printed — needed for
+        // stage-sensitive HLSL (e.g. implicit-LOD Sample is invalid in a
+        // vertex shader, which must use SampleLevel(..., 0)).
+        public HlslShaderStage Stage { get; init; }
+
+        // ISGN/OSGN elements grouped by register index, used to route
+        // input/output component accesses to the correct struct field when
+        // a register is packed with multiple disjoint-mask elements.
+        public Dictionary<uint, List<SignatureElement>> InputElements { get; init; } = new();
+        public Dictionary<uint, List<SignatureElement>> OutputElements { get; init; } = new();
+
+        // Unity source macros whose recognized bytecode idioms were reverted
+        // to macro calls (e.g. UnityObjectToClipPos). The printer emits a
+        // #define for each before the function body so the pass still
+        // compiles standalone. The define body is chosen to reproduce the
+        // bytecode exactly, not a convenience approximation.
+        public HashSet<string> Macros { get; } = new();
+
+        // Texture resource type by register slot (e.g. "Texture2D",
+        // "TextureCube"), so a texture op can render its coordinate with the
+        // component count the intrinsic demands.
+        public Dictionary<int, string> TextureTypeBySlot { get; } = new();
+
+        // Sampler variable name by register slot — used so RenderRegisterRead
+        // emits the same name the declaration used (Unity-recognised inline
+        // names like "sampler_linear_clamp" instead of bare "s0").
+        public Dictionary<int, string> SamplerNameBySlot { get; } = new();
+
+        // Texture variable name by register slot — used so RenderRegisterRead
+        // emits the Property-matched name (e.g. "_MainTex") instead of "t0".
+        public Dictionary<int, string> TextureNameBySlot { get; } = new();
+
+        // Cross-stage cbuffer variable renames: when vert and frag have
+        // different variables at the same packoffset within a merged
+        // cbuffer, one variable is declared and the other's references in
+        // the function body are redirected here.
+        public Dictionary<string, string> CbufferVarRenames { get; } = new();
+    }
+
+    private static void PrintFunction(
+        StringBuilder sb,
+        HlslFunctionNode fn,
+        Dictionary<(int Slot, string Stage), CbufferMetadata> allCbuffers,
+        bool fuseTemps,
+        Dictionary<string, string>? stageInputs = null,
+        Dictionary<string, string>? stageOutputs = null,
+        List<HlslResourceNode>? resources = null,
+        Dictionary<string, string>? cbufferRenames = null)
+    {
+        string outType = fn.OutputStruct?.Name ?? "void";
+        string inType = fn.InputStruct?.Name ?? "";
+        string inParam = fn.InputStruct is null ? "" : $"{inType} i";
+
+        sb.Append("            ").Append(outType).Append(' ').Append(fn.Name).Append('(').Append(inParam).Append(")\n            {\n");
+
+        // Filter the pass-wide cbuffer table down to the ones this stage
+        // actually binds (its own stage, plus any shared "" entries) —
+        // different stages can bind different buffers to the same slot.
+        string stage = fn.Stage.ToString();
+        var cbuffers = new Dictionary<int, CbufferMetadata>();
+        foreach (var (key, cb) in allCbuffers)
+            if (key.Stage == stage || key.Stage == "")
+                cbuffers[key.Slot] = cb;
+
+        var ctx = new PrintContext
+        {
+            Cbuffers = cbuffers,
+            Stage = fn.Stage,
+            InputElements = fn.InputElementsByRegister,
+            OutputElements = fn.OutputElementsByRegister,
+        };
+        if (cbufferRenames is not null)
+            foreach (var (old, fresh) in cbufferRenames)
+                ctx.CbufferVarRenames[old] = fresh;
+        if (resources is not null)
+            foreach (HlslResourceNode res in resources)
+            {
+                if (res.Kind == HlslResourceKind.Texture)
+                {
+                    ctx.TextureTypeBySlot[(int)res.Slot] = res.TypeHint ?? "Texture2D";
+                    ctx.TextureNameBySlot[(int)res.Slot] = res.Name;
+                }
+                if (res.Kind == HlslResourceKind.Sampler)
+                    ctx.SamplerNameBySlot[(int)res.Slot] = res.Name;
+            }
+
+        if (fn.OutputStruct is not null)
+            sb.Append("                ").Append(outType).Append(" o = (").Append(outType).Append(")0;\n");
+
+        HlslSemanticNaming.Apply(fn.Statements, cbuffers, stageInputs, stageOutputs);
+
+        if (fuseTemps)
+            HlslFuseTemps.Apply(fn.Statements, MaxFuseNodes);
+
+        // Buffer the body so the Unity macro defines collected during
+        // printing (ctx.Macros) can be emitted ahead of the statements that
+        // use them. Preprocessor directives are legal anywhere in a
+        // function body, so the standalone-compile contract is preserved.
+        var body = new StringBuilder();
+        PrintBlock(body, fn.Statements, indent: 4, ctx);
+
+        foreach (string name in ctx.Macros.OrderBy(n => n))
+            sb.Append("                ").Append(MacroDefine(name)).Append('\n');
+
+        // Whole-function passes. First scalar lane splits whose uses are all
+        // clean collapse back into vector swizzle uses (CollapseScalarLanes),
+        // then 4x4 outer-product accumulation blocks rebuild into matrix
+        // multiplies (CollapseMatrixMul), then common math idioms (normalize,
+        // dot, lerp, vector-by-matrix mul) simplify. Must run after
+        // PrintBlock so every use in the body is visible.
+        sb.Append(HlslMathSimplify.Simplify(body.ToString()));
+        sb.Append("            }\n");
+    }
+
+    // The #define for a recognized source macro. The body is the bytecode's
+    // exact computation — UnityObjectToClipPos expands to mul(UNITY_MATRIX_MVP,
+    // v), and the shipped D3D bytecode (and this decompiled output) uses
+    // unity_MatrixVP, so mul(unity_MatrixVP, v) reproduces the instructions.
+    // UnityObjectToWorldPos appends w=1, which is exactly what the bytecode's
+    // bare `+ unity_ObjectToWorld[3]` translation tail implies.
+    private static string MacroDefine(string name) => name switch
+    {
+        "UnityObjectToClipPos" => "#define UnityObjectToClipPos(v) mul(unity_MatrixVP, v)",
+        "UnityObjectToWorldPos" => "#define UnityObjectToWorldPos(v) mul(unity_ObjectToWorld, float4(v, 1.0))",
+        "LinearEyeDepth" => "#define LinearEyeDepth(d) (1.0 / (_ZBufferParams.z * (d) + _ZBufferParams.w))",
+        "Linear01Depth" => "#define Linear01Depth(d) (1.0 / (_ZBufferParams.x * (d) + _ZBufferParams.y))",
+        _ => $"#define {name}(v) /* TODO: unrecognized macro {name} */ (v)",
+    };
+
+    private static void PrintBlock(StringBuilder sb, HlslBlockStatement block, int indent, PrintContext ctx)
+    {
+        string pad = new(' ', indent * 4);
+        List<HlslStatementNode> stmts = block.Statements;
+        int i = 0;
+        while (i < stmts.Count)
+        {
+            // Runs of consecutive assignment statements are rendered together
+            // so consecutive single-component extracts off the same full
+            // expression can be collapsed into one vector temp (see
+            // CollapseExtractChains) — the bytecode computes the value once
+            // into a register, and re-rendering the RHS per lane multiplies
+            // both the fetch cost and the output size.
+            if (stmts[i] is HlslAssignmentStatement or HlslMultiAssignmentStatement)
+            {
+                int j = i;
+                while (j < stmts.Count && stmts[j] is HlslAssignmentStatement or HlslMultiAssignmentStatement)
+                    j++;
+
+                var lines = new List<string>();
+                for (int k = i; k < j; k++)
+                    lines.AddRange(RenderStatementLines(stmts[k], ctx));
+
+                foreach (string line in CollapseExtractChains(RevertUnityMacros(lines, ctx), ctx))
+                    sb.Append(pad).Append(line).Append('\n');
+                i = j;
+            }
+            else
+            {
+                PrintStatement(sb, stmts[i], indent, ctx);
+                i++;
+            }
+        }
+    }
+
+    private static IEnumerable<string> RenderStatementLines(HlslStatementNode stmt, PrintContext ctx) => stmt switch
+    {
+        HlslAssignmentStatement a => RenderAssignmentLines(a.Destination, a.Expression, ctx),
+        HlslMultiAssignmentStatement ma => ma.Destinations
+            .Zip(ma.Expressions)
+            .Where(p => p.First is not null)
+            .SelectMany(p => RenderAssignmentLines(p.First!, p.Second, ctx)),
+        _ => throw new InvalidOperationException($"not an assignment: {stmt.GetType().Name}"),
+    };
+
+    // Collapses runs of consecutive single-component extracts that render the
+    // SAME full-width RHS, e.g.
+    //
+    //     float r1_x_9 = (t2.Sample(s0, float4(...))).x;
+    //     float r1_y_10 = (t2.Sample(s0, float4(...))).y;
+    //     float r1_z_9 = (t2.Sample(s0, float4(...))).z;
+    //     float r1_w_3 = (t2.Sample(s0, float4(...))).w;
+    //
+    // into
+    //
+    //     float4 r1_xyzw_9 = t2.Sample(s0, float4(...));
+    //     float r1_x_9 = r1_xyzw_9.x;
+    //     float r1_y_10 = r1_xyzw_9.y;
+    //     float r1_z_9 = r1_xyzw_9.z;
+    //     float r1_w_3 = r1_xyzw_9.w;
+    //
+    // This is strictly faithful: every extract computed the identical value
+    // (the rendered RHS is textually the same), the lanes are the destination
+    // register's own lanes (same base name), and the bytecode holds the value
+    // in one register — one materialization + lane reads is what the source
+    // instructions actually did. The temp is named after the destination
+    // register's first lane version (r1_xyzw_9); a name collision with a real
+    // co-write of the same register is impossible going forward (versions only
+    // increase, and a shared co-write version exceeds every lane's) and is
+    // skipped if an earlier declaration already owns it.
+    private static readonly System.Text.RegularExpressions.Regex ExtractChainPattern =
+        new(@"^(?<decl>float )?(?<dest>[A-Za-z_][A-Za-z0-9_]*_[xyzw](?:_[0-9]+)?) = \((?<expr>.+)\)\.(?<comp>[xyzw]);$");
+
+    private static List<string> CollapseExtractChains(List<string> lines, PrintContext ctx)
+    {
+        var result = new List<string>(lines.Count);
+        int i = 0;
+        while (i < lines.Count)
+        {
+            System.Text.RegularExpressions.Match m = ExtractChainPattern.Match(lines[i]);
+            // A chain-eligible line must re-render a "heavy" RHS (a call or
+            // constructor) — a bare register read extract (E = "r4_xyzw_5")
+            // has no `(` and is left alone (it is already as compact as the
+            // direct resolve would be).
+            if (!m.Success || !m.Groups["expr"].Value.Contains('('))
+            {
+                result.Add(lines[i]);
+                i++;
+                continue;
+            }
+
+            int j = i + 1;
+            while (j < lines.Count)
+            {
+                System.Text.RegularExpressions.Match m2 = ExtractChainPattern.Match(lines[j]);
+                if (!m2.Success || m2.Groups["expr"].Value != m.Groups["expr"].Value)
+                    break;
+                j++;
+            }
+
+            if (j - i < 2)
+            {
+                result.Add(lines[i]);
+                i++;
+                continue;
+            }
+
+            // Only collapse when every lane writes the same base register
+            // (r1_x_9, r1_y_10, ... all from r1) so the temp name is the
+            // register's own and the reads are plain lane swizzles.
+            string baseName = ExtractChainPattern.Match(lines[i]).Groups["dest"].Value;
+            bool sameBase = true;
+            for (int k = i + 1; k < j; k++)
+            {
+                string other = ExtractChainPattern.Match(lines[k]).Groups["dest"].Value;
+                if (LaneBaseName(other) != LaneBaseName(baseName))
+                {
+                    sameBase = false;
+                    break;
+                }
+            }
+            if (!sameBase)
+            {
+                result.Add(lines[i]);
+                i++;
+                continue;
+            }
+
+            string temp = TempName(baseName, ctx);
+            if (temp is null)
+            {
+                result.Add(lines[i]);
+                i++;
+                continue;
+            }
+            ctx.Declared.Add(temp);
+
+            result.Add($"float4 {temp} = {m.Groups["expr"].Value};");
+            for (int k = i; k < j; k++)
+            {
+                System.Text.RegularExpressions.Match mk = ExtractChainPattern.Match(lines[k]);
+                string decl = mk.Groups["decl"].Success ? "float " : "";
+                result.Add($"{decl}{mk.Groups["dest"].Value} = {temp}.{mk.Groups["comp"].Value};");
+            }
+            i = j;
+        }
+
+        return result;
+    }
+
+    private static string LaneBaseName(string laneName) =>
+        System.Text.RegularExpressions.Regex.Replace(laneName, @"_[xyzw](?:_[0-9]+)?$", "");
+
+    private static string? TempName(string dest, PrintContext ctx)
+    {
+        // dest is a single-lane name like "r1_x_9" or "r1_x".
+        string bare = LaneBaseName(dest);
+        string version = System.Text.RegularExpressions.Regex.Match(dest, @"_([xyzw])_([0-9]+)$") is { Success: true } m
+            ? m.Groups[2].Value
+            : "";
+        string candidate = version.Length > 0 ? $"{bare}_xyzw_{version}" : $"{bare}_xyzw";
+        return ctx.Declared.Contains(candidate) ? null : candidate;
+    }
+
+    // ---------- Unity source-macro reversion ----------
+    //
+    // The Unity `UnityObjectToClipPos(v)` idiom is `mul(UNITY_MATRIX_MVP, v)`,
+    // which the D3D compiler emits as a row-by-row mad chain:
+    //
+    //     float4 clipPos_xyzw_2 = mad(unity_MatrixVP[0], X.xxxx, (X.yyyy * unity_MatrixVP[1]));
+    //     float4 clipPos_xyzw_3 = mad(unity_MatrixVP[2], X.zzzz, clipPos_xyzw_2);
+    //     o.sv_Position0.xyzw = mad(unity_MatrixVP[3], X.wwww, clipPos_xyzw_3);
+    //
+    // (or fully inlined into one line, or ending in a temp that is copied to
+    // the output). Recognized and reverted to:
+    //
+    //     o.sv_Position0.xyzw = UnityObjectToClipPos(X);
+    //
+    // with `#define UnityObjectToClipPos(v) mul(unity_MatrixVP, v)` emitted
+    // ahead of the body, so the reversion reproduces the bytecode's matrix
+    // multiply exactly. Guards are strict — every row {0,1,2,3} used exactly
+    // once, each multiplied by the matching single lane of the SAME source
+    // register, all chain temps single-use, nothing else in the expression —
+    // and any doubt leaves the statements untouched.
+    private static readonly System.Text.RegularExpressions.Regex ClipPosOutLine =
+        new(@"^o\.sv_Position0\.xyzw = (.+);$");
+    private static readonly System.Text.RegularExpressions.Regex TempDefLine =
+        new(@"^float4 (\w+) = (.+);$");
+    private static readonly System.Text.RegularExpressions.Regex RowRead =
+        new(@"^([A-Za-z_][A-Za-z0-9_]*)\[([0-9]+)\](\.[xyzw]+)?$");
+    private static readonly System.Text.RegularExpressions.Regex ObjectToWorldRowRead =
+        new(@"^unity_ObjectToWorld\[([0-9]+)\]$");
+    private static readonly System.Text.RegularExpressions.Regex LaneSplat =
+        new(@"^([A-Za-z_][A-Za-z0-9_]*(\.[A-Za-z_][A-Za-z0-9_]*)?)\.([xyzw])\3\3\3$");
+    private static readonly System.Text.RegularExpressions.Regex SimpleIdentifier =
+        new(@"^[A-Za-z_][A-Za-z0-9_]*$");
+    private static readonly System.Text.RegularExpressions.Regex SimpleSource =
+        new(@"^[A-Za-z_][A-Za-z0-9_]*(\.[A-Za-z_][A-Za-z0-9_]*)?$");
+    // `LHS = (mad(unity_ObjectToWorld[3].xyzx, SRC.wwww, T.xyzx)).xyz;` — a
+    // re-derivation of the translation-add tail. Since the chain's final add is
+    // bare (SRC.w folded to 1), this equals `LHS = <final>.xyz;`.
+    private static readonly System.Text.RegularExpressions.Regex RecomputeLine =
+        new(@"^(?<lhs>[^=]+?) = \(mad\(unity_ObjectToWorld\[3\]\.xyzx, (?<src>[^,]+?)\.wwww, (?<t>[^,]+?)\.xyzx\)\)\.xyz;$");
+    // `float r0_y_20 = ((float4(1, 1, 1, 1) / r0_y_19)).y;` — a scalar
+    // reciprocal. When the denominator is `mad(_ZBufferParams.*, z,
+    // _ZBufferParams.*)` the pair is exactly Unity's LinearEyeDepth(z) =
+    // 1/(_ZBufferParams.z*z + _ZBufferParams.w) or Linear01Depth(z) =
+    // 1/(_ZBufferParams.x*z + _ZBufferParams.y).
+    private static readonly System.Text.RegularExpressions.Regex ScalarTempDefLine =
+        new(@"^float (\w+) = (.+);$");
+    private static readonly System.Text.RegularExpressions.Regex ScalarReciprocalLine =
+        new(@"^float (?<dst>\w+) = \(\(float4\(1, 1, 1, 1\) / (?<den>.+)\)\)\.(?<lane>[xyzw]);$");
+    private static readonly System.Text.RegularExpressions.Regex DepthZBufParam =
+        new(@"^_ZBufferParams\.(?<c>[xyzw])$");
+
+    private static List<string> RevertUnityMacros(List<string> lines, PrintContext ctx)
+    {
+        if (lines.Count < 2)
+            return lines;
+
+        var result = new List<string>(lines.Count);
+        var rewrites = new Dictionary<string, string>();
+        int i = 0;
+        while (i < lines.Count)
+        {
+            // A translation-tail re-derivation flagged by an earlier worldPos
+            // collapse: `LHS = ... T.xyzx ... .xyz` → `LHS = final.xyz`.
+            if (rewrites.TryGetValue(lines[i], out var rewrite))
+            {
+                result.Add(rewrite);
+                i++;
+                continue;
+            }
+
+            var outMatch = ClipPosOutLine.Match(lines[i]);
+            if (outMatch.Success && TryCollapseClipTransform(lines, outMatch.Groups[1].Value, i, out var clipReplacement, out var usedTemps, out var canDeleteTemps))
+            {
+                if (clipReplacement is not null)
+                {
+                    if (clipReplacement.Contains("UnityObjectToClipPos", StringComparison.Ordinal))
+                        ctx.Macros.Add("UnityObjectToClipPos");
+
+                    // Chain temps that are single-use are now dead — remove their
+                    // def lines from the tail of the run. Shared temps stay (their
+                    // other consumers still need them).
+                    if (canDeleteTemps)
+                    {
+                        for (int k = result.Count - 1; k >= 0; k--)
+                        {
+                            var t = TempDefLine.Match(result[k]);
+                            if (!t.Success || !usedTemps.Contains(t.Groups[1].Value))
+                                break;
+                            result.RemoveAt(k);
+                        }
+                    }
+                    result.Add(clipReplacement);
+                    i++;
+                    continue;
+                }
+            }
+
+            // LinearEyeDepth / Linear01Depth: `float D = 1/(_ZBufferParams.* z
+            // + _ZBufferParams.*);`. The denominator is either the mad inline or
+            // a temp whose def sits directly above.
+            var recipMatch = ScalarReciprocalLine.Match(lines[i]);
+            if (recipMatch.Success)
+            {
+                string dst = recipMatch.Groups["dst"].Value;
+                string den = recipMatch.Groups["den"].Value.Trim();
+                if (TryParseDepthDenominator(den, out var depthSrc, out var depthMacro))
+                {
+                    result.Add($"float {dst} = {depthMacro}({depthSrc});");
+                    ctx.Macros.Add(depthMacro);
+                    i++;
+                    continue;
+                }
+                if (SimpleIdentifier.IsMatch(den) && result.Count > 0)
+                {
+                    var defMatch = ScalarTempDefLine.Match(result[^1]);
+                    if (defMatch.Success
+                        && defMatch.Groups[1].Value == den
+                        && TryParseDepthDenominator(defMatch.Groups[2].Value, out depthSrc, out depthMacro))
+                    {
+                        // Safe to drop the temp def only when it feeds nothing
+                        // else in the run; shared temps stay for their other
+                        // consumers and the reciprocal alone is rewritten.
+                        if (CountTokenOccurrences(lines, den) <= 2)
+                            result.RemoveAt(result.Count - 1);
+                        result.Add($"float {dst} = {depthMacro}({depthSrc});");
+                        ctx.Macros.Add(depthMacro);
+                        i++;
+                        continue;
+                    }
+                }
+            }
+
+            // UnityObjectToWorldPos: `float4 W = <mul chain over xyz> + unity_ObjectToWorld[3];`
+            var worldMatch = TempDefLine.Match(lines[i]);
+            if (worldMatch.Success && TryCollapseObjectToWorldPos(lines, worldMatch.Groups[2].Value, i, worldMatch.Groups[1].Value, out var worldSrc, out var worldTemps, out var worldRewrites))
+            {
+                ctx.Macros.Add("UnityObjectToWorldPos");
+                foreach (var kv in worldRewrites)
+                    rewrites[kv.Key] = kv.Value;
+                for (int k = result.Count - 1; k >= 0; k--)
+                {
+                    var t = TempDefLine.Match(result[k]);
+                    if (!t.Success || !worldTemps.Contains(t.Groups[1].Value))
+                        break;
+                    result.RemoveAt(k);
+                }
+                result.Add($"float4 {worldMatch.Groups[1].Value} = UnityObjectToWorldPos({worldSrc}.xyz);");
+                i++;
+                continue;
+            }
+
+            result.Add(lines[i]);
+            i++;
+        }
+        return result;
+    }
+
+    // Returns true and sets replacement (plus whether its chain temps may be
+    // deleted) when lines[i] (o.sv_Position0.xyzw = E;) is a pure 4x4
+    // matrix·vector row-sum over the SAME vector register X:
+    //
+    //     Σ row[k] * X.<lane of (k - base)>   (rows consecutive, one per lane)
+    //
+    // where row[k] is a whole cbuffer row read — unity_MatrixVP[k] or a
+    // synthesized cbN_values[k] (the RDEF-less fallback that names rows only
+    // by slot). When the matrix is unity_MatrixVP and every chain temp is
+    // single-use, the chain reverts to UnityObjectToClipPos(X) exactly as the
+    // original Unity source wrote it. Any other cbuffer name, or a shared
+    // chain temp, still collapses to the plain mul(float4x4(rows), X) — the
+    // same math regrouped, keeping the chain statements for their other
+    // consumers. Guards are strict — every row {base..base+3} used exactly
+    // once, each multiplied by the matching single lane of the SAME source
+    // register, all rows from the SAME cbuffer array, nothing else in the
+    // expression — and any doubt leaves the statements untouched.
+    private static bool TryCollapseClipTransform(List<string> lines, string rhs, int i, out string? replacement, out HashSet<string> usedTemps, out bool canDelete)
+    {
+        replacement = null;
+        usedTemps = new HashSet<string>();
+        canDelete = false;
+
+        // Build the map of float4 temp defs directly above the final line.
+        var temps = new Dictionary<string, (string Expr, int Line)>();
+        for (int k = i - 1; k >= 0; k--)
+        {
+            var td = TempDefLine.Match(lines[k]);
+            if (!td.Success)
+                break;
+            temps[td.Groups[1].Value] = (td.Groups[2].Value, k);
+        }
+
+        var terms = new List<(string Name, int Row, string Src, char Lane)>();
+        if (!ParseRowSum(rhs, temps, usedTemps, i, terms))
+        {
+            return false;
+        }
+        if (terms.Count != 4)
+            return false;
+
+        int baseRow = terms.Min(t => t.Row);
+        string name = terms[0].Name;
+        int[] rows = new int[4];
+        string src = "";
+        foreach (var (n, row, s, lane) in terms)
+        {
+            if (n != name)
+                return false; // rows of different cbuffer arrays — skip
+            int rel = row - baseRow;
+            if (rel < 0 || rel > 3)
+                return false;
+            rows[rel]++;
+            // lane letter must match the relative row index (row i * lane i).
+            if (lane != "xyzw"[rel])
+                return false;
+            if (src.Length == 0)
+                src = s;
+            else if (src != s)
+                return false; // lanes of different registers — skip
+        }
+        if (rows.Any(r => r != 1))
+            return false;
+        if (!SimpleIdentifier.IsMatch(src))
+            return false;
+
+        // Chain temps must be single-use: each must not appear anywhere in the
+        // run outside its own definition and the consumed chain lines. When any
+        // is shared (e.g. the final clip-position temp also feeding texcoord
+        // outputs), the statements stay and only the output line is rewritten.
+        canDelete = true;
+        foreach (string t in usedTemps)
+        {
+            if (!temps.TryGetValue(t, out var td))
+                return false;
+            int total = CountTokenOccurrences(lines, t);
+            int inChain = CountTokenOccurrences(lines, td.Line, i, t);
+            if (total != inChain)
+                canDelete = false;
+        }
+
+        string matrix = $"float4x4({name}[{baseRow}], {name}[{baseRow + 1}], {name}[{baseRow + 2}], {name}[{baseRow + 3}])";
+        replacement = name == "unity_MatrixVP"
+            ? $"o.sv_Position0.xyzw = UnityObjectToClipPos({src});"
+            : $"o.sv_Position0.xyzw = mul({matrix}, {src});";
+        return true;
+    }
+
+    // Parses the denominator of a depth reciprocal. Recognizes Unity's
+    // LinearEyeDepth / Linear01Depth expansions in either operand order:
+    // mad(_ZBufferParams.z, z, _ZBufferParams.w) == mad(z, _ZBufferParams.z,
+    // _ZBufferParams.w). Any other shape — a different cbuffer name, a
+    // mismatched pair, extra terms — is left untouched.
+    private static bool TryParseDepthDenominator(string den, out string src, out string macroName)
+    {
+        src = "";
+        macroName = "";
+        den = den.Trim();
+        while (den.StartsWith('(') && den.EndsWith(')'))
+            den = den[1..^1].Trim();
+        if (!den.StartsWith("mad(") || !den.EndsWith(')'))
+            return false;
+        List<string> args = SplitTopLevelArgs(den[4..^1]);
+        if (args.Count != 3)
+            return false;
+
+        int scale = -1, bias = -1;
+        string zsrc = "";
+        for (int k = 0; k < 3; k++)
+        {
+            var m = DepthZBufParam.Match(args[k].Trim());
+            if (m.Success)
+            {
+                char c = m.Groups["c"].Value[0];
+                if (c is 'x' or 'z') scale = k;
+                else bias = k;
+            }
+            else if (SimpleSource.IsMatch(args[k].Trim()))
+                zsrc = args[k].Trim();
+            else
+                return false;
+        }
+        if (scale < 0 || bias < 0 || zsrc.Length == 0)
+            return false;
+
+        char sc = DepthZBufParam.Match(args[scale].Trim()).Groups["c"].Value[0];
+        char bc = DepthZBufParam.Match(args[bias].Trim()).Groups["c"].Value[0];
+        if (sc == 'x' && bc == 'y')
+            macroName = "Linear01Depth";
+        else if (sc == 'z' && bc == 'w')
+            macroName = "LinearEyeDepth";
+        else
+            return false;
+        src = zsrc;
+        return true;
+    }
+
+    // Recursively decomposes a rendered RHS into the set of matrix row terms it
+    // adds. Temp reads are inlined from their definitions.
+    private static bool ParseRowSum(
+        string expr,
+        Dictionary<string, (string Expr, int Line)> temps,
+        HashSet<string> usedTemps,
+        int finalLine,
+        List<(string Name, int Row, string Src, char Lane)> terms)
+    {
+        expr = expr.Trim();
+        while (expr.StartsWith('(') && expr.EndsWith(')'))
+            expr = expr[1..^1].Trim();
+
+        // A temp accumulation read → inline its definition.
+        if (SimpleIdentifier.IsMatch(expr) && temps.TryGetValue(expr, out var td))
+        {
+            usedTemps.Add(expr);
+            return ParseRowSum(td.Expr, temps, usedTemps, finalLine, terms);
+        }
+
+        if (expr.StartsWith("mad(") && expr.EndsWith(')'))
+        {
+            List<string> args = SplitTopLevelArgs(expr[4..^1]);
+            if (args.Count != 3)
+                return false;
+            if (!TryRowTerm(args[0], args[1], out var term))
+                return false;
+            terms.Add(term);
+            return ParseRowSum(args[2], temps, usedTemps, finalLine, terms);
+        }
+
+        // A top-level mul is the base row term; a top-level add joins two
+        // sub-sums. After paren-stripping the expr is already unparenthesized.
+        int op = FindTopLevelOperator(expr);
+        if (op < 0)
+            return false;
+        string left = expr[..op].Trim();
+        string right = expr[(op + 1)..].Trim();
+        if (expr[op] == '*')
+            return TryRowTerm(left, right, out var mulTerm) && AddFinalTerm(mulTerm, terms);
+        if (expr[op] == '+')
+            return ParseRowSum(left, temps, usedTemps, finalLine, terms)
+                && ParseRowSum(right, temps, usedTemps, finalLine, terms);
+        return false;
+    }
+
+    private static bool AddFinalTerm((string Name, int Row, string Src, char Lane) term, List<(string Name, int Row, string Src, char Lane)> terms)
+    {
+        terms.Add(term);
+        return true;
+    }
+
+    private static bool AddObjectToWorldTerm((int Row, string Src, char Lane) term, List<(int Row, string Src, char Lane)> terms)
+    {
+        terms.Add(term);
+        return true;
+    }
+
+    // One operand must be a cbuffer row read (unity_MatrixVP[N], cbN_values[N],
+    // with an optional full .xyzw suffix) and the other a single-lane splat of a
+    // register (X.xxxx) — the row term of a matrix multiply. A partial row
+    // swizzle (`.xyz` etc.) means a 3xN product that is not a plain 4x4
+    // matrix·vector multiply, so it is rejected here.
+    private static bool TryRowTerm(string a, string b, out (string Name, int Row, string Src, char Lane) term)
+    {
+        term = default;
+        if (AsRowTerm(a, b, out term))
+            return true;
+        return AsRowTerm(b, a, out term);
+    }
+
+    private static bool AsRowTerm(string candidate, string other, out (string Name, int Row, string Src, char Lane) term)
+    {
+        term = default;
+        var rowMatch = RowRead.Match(candidate.Trim());
+        var laneMatch = LaneSplat.Match(other.Trim());
+        if (!rowMatch.Success || !laneMatch.Success)
+            return false;
+
+        string swz = rowMatch.Groups[3].Value;
+        if (swz.Length > 0 && swz != ".xyzw")
+            return false;
+
+        term = (
+            rowMatch.Groups[1].Value,
+            int.Parse(rowMatch.Groups[2].Value),
+            laneMatch.Groups[1].Value,
+            laneMatch.Groups[3].Value[0]);
+        return true;
+    }
+
+    private static List<string> SplitTopLevelArgs(string s)
+    {
+        var parts = new List<string>();
+        int depth = 0;
+        var sb = new System.Text.StringBuilder();
+        foreach (char c in s)
+        {
+            if (c is '(' or '[') depth++;
+            else if (c is ')' or ']') depth--;
+            if (c == ',' && depth == 0) { parts.Add(sb.ToString()); sb.Clear(); }
+            else sb.Append(c);
+        }
+        if (sb.Length > 0) parts.Add(sb.ToString());
+        return parts;
+    }
+
+    // Index of the top-level '*' or '+' operator in an unparenthesized
+    // expression (bracket depth tracked so unity_MatrixVP[1] doesn't count).
+    private static int FindTopLevelOperator(string expr)
+    {
+        int depth = 0;
+        for (int k = 0; k < expr.Length; k++)
+        {
+            char c = expr[k];
+            if (c is '(' or '[') depth++;
+            else if (c is ')' or ']') depth--;
+            else if (depth == 0 && (c is '*' or '+')) return k;
+        }
+        return -1;
+    }
+
+    // Returns true and sets srcName when lines[i] (`float4 NAME = E;`) computes
+    // mul(unity_ObjectToWorld, SRC) over lanes x,y,z plus the translation row —
+    // Unity's UnityObjectToWorldPos. The bare `+ unity_ObjectToWorld[3]` tail
+    // proves the w multiplier folded to the constant 1, so the macro's appended
+    // 1.0 reproduces the bytecode exactly.
+    private static bool TryCollapseObjectToWorldPos(List<string> lines, string rhs, int i, string finalName, out string srcName, out HashSet<string> usedTemps, out Dictionary<string, string> rewrites)
+    {
+        srcName = "";
+        usedTemps = new HashSet<string>();
+        rewrites = new Dictionary<string, string>();
+
+        // Build the map of float4 temp defs directly above the final line.
+        var temps = new Dictionary<string, (string Expr, int Line)>();
+        for (int k = i - 1; k >= 0; k--)
+        {
+            var td = TempDefLine.Match(lines[k]);
+            if (!td.Success)
+                break;
+            temps[td.Groups[1].Value] = (td.Groups[2].Value, k);
+        }
+
+        var terms = new List<(int Row, string Src, char Lane)>();
+        bool hasTranslation = false;
+        if (!ParseObjectToWorldSum(rhs, temps, usedTemps, terms, ref hasTranslation))
+            return false;
+        if (!hasTranslation || terms.Count != 3)
+            return false;
+
+        int[] rows = new int[3];
+        string src = "";
+        foreach (var (row, s, lane) in terms)
+        {
+            if (row < 0 || row > 2)
+                return false;
+            rows[row]++;
+            // lane letter must match the row index (row i * lane i), and only
+            // lanes x,y,z appear — the w row is the folded translation.
+            if (lane != "xyz"[row])
+                return false;
+            if (src.Length == 0)
+                src = s;
+            else if (src != s)
+                return false; // lanes of different registers — skip
+        }
+        if (rows.Any(r => r != 1))
+            return false;
+        if (!SimpleSource.IsMatch(src))
+            return false;
+
+        // Chain temps must be single-use: each must not appear anywhere in the
+        // run outside its own definition and the consumed chain lines — except
+        // for a re-derivation of the translation tail (`LHS = ... T.xyzx ...
+        // .xyz`), which is equal to `LHS = finalName.xyz` and gets rewritten.
+        foreach (string t in usedTemps)
+        {
+            if (!temps.TryGetValue(t, out var td))
+                return false;
+            int total = CountTokenOccurrences(lines, t);
+            int inChain = CountTokenOccurrences(lines, td.Line, i, t);
+            if (total < inChain)
+                return false;
+            for (int k = 0; k < lines.Count; k++)
+            {
+                if (k >= td.Line && k <= i)
+                    continue;
+                int occ = CountTokenOccurrences(lines, k, k, t);
+                if (occ == 0)
+                    continue;
+                if (occ != 1 || !TryParseRecompute(lines[k], t, src, finalName, out var rep))
+                    return false;
+                rewrites[lines[k]] = rep;
+            }
+        }
+
+        srcName = src;
+        return true;
+    }
+
+    // Recognizes a translation-tail re-derivation `LHS = (mad(unity_ObjectToWorld
+    // [3].xyzx, SRC.wwww, T.xyzx)).xyz;` and rewrites it to `LHS = <final>.xyz;`.
+    private static bool TryParseRecompute(string line, string t, string src, string finalName, out string replacement)
+    {
+        replacement = "";
+        var m = RecomputeLine.Match(line);
+        if (!m.Success || m.Groups["t"].Value != t || m.Groups["src"].Value != src)
+            return false;
+        replacement = $"{m.Groups["lhs"].Value} = {finalName}.xyz;";
+        return true;
+    }
+
+    // Recursively decomposes a rendered RHS into the set of unity_ObjectToWorld
+    // row terms it sums (rows 0..2, lanes x..z) plus the translation tail
+    // `+ unity_ObjectToWorld[3]`. Temp reads are inlined from their definitions.
+    private static bool ParseObjectToWorldSum(
+        string expr,
+        Dictionary<string, (string Expr, int Line)> temps,
+        HashSet<string> usedTemps,
+        List<(int Row, string Src, char Lane)> terms,
+        ref bool hasTranslation)
+    {
+        expr = expr.Trim();
+        while (expr.StartsWith('(') && expr.EndsWith(')'))
+            expr = expr[1..^1].Trim();
+
+        // A temp accumulation read → inline its definition.
+        if (SimpleIdentifier.IsMatch(expr) && temps.TryGetValue(expr, out var td))
+        {
+            usedTemps.Add(expr);
+            return ParseObjectToWorldSum(td.Expr, temps, usedTemps, terms, ref hasTranslation);
+        }
+
+        if (expr.StartsWith("mad(") && expr.EndsWith(')'))
+        {
+            List<string> args = SplitTopLevelArgs(expr[4..^1]);
+            if (args.Count != 3)
+                return false;
+            if (!TryObjectToWorldRowTerm(args[0], args[1], out var term))
+                return false;
+            terms.Add(term);
+            return ParseObjectToWorldSum(args[2], temps, usedTemps, terms, ref hasTranslation);
+        }
+
+        // After paren-stripping the expr is already unparenthesized.
+        int op = FindTopLevelOperator(expr);
+        if (op < 0)
+            return false;
+        string left = expr[..op].Trim();
+        string right = expr[(op + 1)..].Trim();
+        if (expr[op] == '*')
+            return TryObjectToWorldRowTerm(left, right, out var mulTerm) && AddObjectToWorldTerm(mulTerm, terms);
+        if (expr[op] == '+')
+        {
+            // The translation tail: `... + unity_ObjectToWorld[3]`. A bare add
+            // (no w-lane multiplier) is the proof w folded to the constant 1.
+            if (right == "unity_ObjectToWorld[3]")
+            {
+                hasTranslation = true;
+                return ParseObjectToWorldSum(left, temps, usedTemps, terms, ref hasTranslation);
+            }
+            return ParseObjectToWorldSum(left, temps, usedTemps, terms, ref hasTranslation)
+                && ParseObjectToWorldSum(right, temps, usedTemps, terms, ref hasTranslation);
+        }
+        return false;
+    }
+
+    // One operand must be a unity_ObjectToWorld row read and the other a
+    // single-lane splat of a register (X.xxxx) — the row term of the multiply.
+    private static bool TryObjectToWorldRowTerm(string a, string b, out (int Row, string Src, char Lane) term)
+    {
+        term = default;
+        var rowMatch = ObjectToWorldRowRead.Match(a.Trim());
+        var laneMatch = LaneSplat.Match(b.Trim());
+        if (rowMatch.Success && laneMatch.Success)
+        {
+            term = (int.Parse(rowMatch.Groups[1].Value), laneMatch.Groups[1].Value, laneMatch.Groups[3].Value[0]);
+            return true;
+        }
+        rowMatch = ObjectToWorldRowRead.Match(b.Trim());
+        laneMatch = LaneSplat.Match(a.Trim());
+        if (rowMatch.Success && laneMatch.Success)
+        {
+            term = (int.Parse(rowMatch.Groups[1].Value), laneMatch.Groups[1].Value, laneMatch.Groups[3].Value[0]);
+            return true;
+        }
+        return false;
+    }
+
+    private static int CountTokenOccurrences(List<string> lines, string token) =>
+        CountTokenOccurrences(lines, 0, lines.Count - 1, token);
+
+    private static int CountTokenOccurrences(List<string> lines, int lo, int hi, string token)
+    {
+        int count = 0;
+        for (int k = lo; k <= hi; k++)
+            count += System.Text.RegularExpressions.Regex.Matches(lines[k], $"\\b{token}\\b").Count;
+        return count;
+    }
+
+    private static void PrintStatement(StringBuilder sb, HlslStatementNode stmt, int indent, PrintContext ctx)
+    {
+        string pad = new(' ', indent * 4);
+
+        switch (stmt)
+        {
+            case HlslIfStatement iff:
+            {
+                // Cross-branch phi copies (IRLeaveSsa writes the same
+                // post-merge name at the top level of BOTH arms) must have
+                // their declaration hoisted above the if. Declared per-arm,
+                // the name is scoped to that arm's braces and dies at the
+                // `}` — the sibling arm's write and any post-merge read
+                // would then reference an identifier never in scope.
+                foreach ((string name, int comps) in CrossBranchMergeNames(iff, ctx))
+                {
+                    if (!ctx.Declared.Add(name))
+                        continue; // already in scope — don't redeclare
+                    sb.Append(pad).Append(DeclType(comps)).Append(' ').Append(name).Append(";\n");
+                }
+
+                sb.Append(pad).Append("if (").Append(RenderExpression(iff.Condition, ctx)).Append(")\n");
+                sb.Append(pad).Append("{\n");
+                PrintBlock(sb, iff.Then, indent + 1, ctx);
+                sb.Append(pad).Append("}\n");
+                if (iff.Else is not null)
+                {
+                    sb.Append(pad).Append("else\n").Append(pad).Append("{\n");
+                    PrintBlock(sb, iff.Else, indent + 1, ctx);
+                    sb.Append(pad).Append("}\n");
+                }
+                break;
+            }
+
+            case HlslLoopStatement loop:
+            {
+                // Names first written at the loop body's top level. A
+                // declaration that lands inside the loop's braces is scoped
+                // to the loop; a name that is also live out of the loop
+                // (read or written after it) then references an identifier
+                // that never comes back into scope. Hoist the declaration
+                // above the loop. Hoisting loop-local names too is harmless
+                // (they are always written in the body, never unused) and
+                // is the only way to catch loop-carried names without a
+                // full dataflow pass.
+                foreach ((string name, int comps) in LoopCarriedDeclNames(loop, ctx))
+                {
+                    if (!ctx.Declared.Add(name))
+                        continue; // already in scope — don't redeclare
+                    sb.Append(pad).Append(DeclType(comps)).Append(' ').Append(name).Append(";\n");
+                }
+
+                sb.Append(pad).Append("[loop]\n").Append(pad).Append("while (true)\n").Append(pad).Append("{\n");
+                PrintBlock(sb, loop.Body, indent + 1, ctx);
+                sb.Append(pad).Append("}\n");
+                break;
+            }
+
+            case HlslSwitchStatement sw:
+                sb.Append(pad).Append("switch (").Append(RenderExpression(sw.Selector, ctx)).Append(")\n").Append(pad).Append("{\n");
+                foreach (HlslSwitchCase c in sw.Cases)
+                {
+                    sb.Append(pad).Append(c.Value is null ? "default:\n" : $"case {RenderExpression(c.Value, ctx)}:\n");
+                    PrintBlock(sb, c.Body, indent + 1, ctx);
+                }
+                sb.Append(pad).Append("}\n");
+                break;
+
+            case HlslBreakStatement b:
+                sb.Append(pad).Append(b.Condition is null ? "break;" : $"if ({RenderExpression(b.Condition, ctx)}) break;").Append('\n');
+                break;
+
+            case HlslContinueStatement c:
+                sb.Append(pad).Append(c.Condition is null ? "continue;" : $"if ({RenderExpression(c.Condition, ctx)}) continue;").Append('\n');
+                break;
+
+            case HlslReturnStatement r:
+                sb.Append(pad).Append(r.Condition is null
+                    ? "return o;"
+                    : $"if ({RenderExpression(r.Condition, ctx)}) return o;").Append('\n');
+                break;
+
+            case HlslDiscardStatement d:
+                sb.Append(pad).Append("if (").Append(RenderExpression(d.Condition, ctx)).Append(") discard;\n");
+                break;
+
+            case HlslMemoryStoreStatement ms:
+                sb.Append(pad).Append(RenderRegisterRead(ms.Resource, ctx))
+                  .Append('[').Append(RenderExpression(ms.Address, ctx)).Append("] = ")
+                  .Append(RenderExpression(ms.Value, ctx)).Append(";\n");
+                break;
+
+            case HlslRawStatement raw:
+                sb.Append(pad).Append("// TODO: unhandled IR node — ").Append(raw.Source).Append('\n');
+                break;
+        }
+    }
+
+    // ---------- register/identifier rendering (the actual fix) ----------
+    //
+    // IRRegister.ToStringAs() is documented as debug-display only — its
+    // SSA suffix comma-joins per-component version numbers and keeps the
+    // ".xyz" dot-swizzle, neither of which is a legal HLSL identifier
+    // ("r0.xyz_1,1,1" doesn't compile). Each vector component is actually
+    // an independently-versioned scalar SSA value (see IRRegister's own
+    // SsaVersion doc comment), so real HLSL needs one legal identifier
+    // per (register, component, version) — this section builds those
+    // instead of reusing the debug string.
+
+    private const string ComponentLetters = "xyzw";
+
+    // Which source-register component each active "slot" reads, in
+    // output order. Mirrors IRRegister's private Mask/Swizzle/Select1
+    // logic (duplicated here since that logic is private to IRRegister —
+    // it only needs the public Mask/Swizzle/Component/ComponentMode
+    // fields, so this is a small, safe duplication, not a guess).
+    private static List<int> ActiveComponents(IRRegister reg) => reg.ComponentMode switch
+    {
+        Operand.OperandComponentMode.Mask => MaskIndices(reg.Mask),
+        Operand.OperandComponentMode.Swizzle => new List<int>
+        {
+            reg.Swizzle & 3, (reg.Swizzle >> 2) & 3, (reg.Swizzle >> 4) & 3, (reg.Swizzle >> 6) & 3,
+        },
+        Operand.OperandComponentMode.Select1 => new List<int> { reg.Component },
+        _ => new List<int> { 0, 1, 2, 3 }, // no mask/swizzle info — assume all 4 live
+    };
+
+    private static List<int> MaskIndices(byte mask)
+    {
+        var result = new List<int>();
+        if ((mask & 1) != 0) result.Add(0);
+        if ((mask & 2) != 0) result.Add(1);
+        if ((mask & 4) != 0) result.Add(2);
+        if ((mask & 8) != 0) result.Add(3);
+        return result;
+    }
+
+    private static string BaseIdentifier(IRRegister reg, PrintContext ctx)
+    {
+        if (reg.SymbolicName is not null)
+            return reg.SymbolicName;
+
+        return reg.RegisterType switch
+        {
+            RegisterType.Temp => $"r{reg.Index}",
+            RegisterType.IndexableTemp => IndexedName("x", reg, ctx),
+            RegisterType.Input => $"v{reg.Index}",
+            RegisterType.Output => $"o{reg.Index}",
+            RegisterType.Resource => ctx.TextureNameBySlot.TryGetValue((int)reg.Index, out string? tName)
+                ? tName
+                : $"t{reg.Index}",
+            RegisterType.Sampler => ctx.SamplerNameBySlot.TryGetValue((int)reg.Index, out string? sName)
+                ? sName
+                : $"s{reg.Index}",
+            RegisterType.ConstantBuffer => CbufferElementName(reg, ctx),
+            _ => $"{reg.RegisterType.ToString().ToLowerInvariant()}{reg.Index}",
+        };
+    }
+
+    // RDEF-less cbuffer reads: HlslAstBuilder declares a synthesized
+    // `float4 cbN_values[K]` (one element per accessed 16-byte slot), so a
+    // read of register `cbN[elem]` renders as cbN_values[elem]. With RDEF,
+    // BaseIdentifier returns the bound SymbolicName instead and this is
+    // never reached.
+    private static string CbufferElementName(IRRegister reg, PrintContext ctx)
+    {
+        if (reg.Indices.Count < 2)
+            return IndexedName("cb", reg, ctx);
+
+        IRExpression? relative = reg.RelativeIndices.Length > 1 ? reg.RelativeIndices[1] : null;
+        string elem = relative is not null
+            ? (reg.Indices[1] != 0 ? $"{RenderExpression(relative, ctx)} + {reg.Indices[1]}" : RenderExpression(relative, ctx))
+            : reg.Indices[1].ToString();
+
+        return $"cb{reg.Indices[0]}_values[{elem}]";
+    }
+
+    // The full cbuffer read, in priority order:
+    //   1. RDEF/Stage-1 bound names (SymbolicName) — real identifier + swizzle;
+    //   2. ShaderLab-metadata layout — cbN[slot] resolves to the variable
+    //      whose byte range covers the read (unity_ObjectToWorld[0], _M_map_ST);
+    //   3. synthesized cbN_values[slot] fallback array.
+    private static string RenderCbufferRead(IRRegister reg, PrintContext ctx)
+    {
+        if (reg.SymbolicName is not null)
+        {
+            string name = reg.SymbolicName;
+            if (ctx.CbufferVarRenames.TryGetValue(name, out string? renamed))
+                name = renamed;
+            return name + MaskOrSwizzleSuffix(reg);
+        }
+
+        if (reg.Indices.Count >= 2
+            && ctx.Cbuffers.TryGetValue((int)reg.Indices[0], out CbufferMetadata? cb)
+            && ResolveCbufferRead(cb, reg) is { } named)
+        {
+            // Try exact match first.
+            if (ctx.CbufferVarRenames.TryGetValue(named, out string? renamed))
+                return renamed;
+
+            // Try prefix match: ResolveCbufferRead may return
+            // "varName.swizzle" but the rename map stores bare "varName".
+            foreach (var (old, fresh) in ctx.CbufferVarRenames)
+            {
+                if (named == old || named.StartsWith(old + ".") || named.StartsWith(old + "["))
+                    return named.Replace(old, fresh);
+            }
+
+            return named;
+        }
+
+        return CbufferElementName(reg, ctx) + MaskOrSwizzleSuffix(reg);
+    }
+
+    // Maps a cbN[reg] register read (plus its component swizzle) onto a
+    // metadata variable by byte range, producing the HLSL identifier:
+    //   - whole-variable read            -> bare name (_M_map_ST)
+    //   - partial vector read            -> name + relative swizzle (_Color.xz)
+    //   - matrix row read                -> name[row] (+ swizzle)
+    // Array variables defer to the cbN_values fallback.
+    // Returns null when no listed variable covers the read (partial layout).
+    internal static string? ResolveCbufferRead(CbufferMetadata cb, IRRegister reg)
+    {
+        int[] comps = ReadComponentIndices(reg).ToArray();
+        if (comps.Length == 0)
+            return null;
+
+        var distinct = comps.Distinct().OrderBy(c => c).ToArray();
+        uint elem = reg.Indices[1];
+        uint byteStart = elem * 16 + (uint)distinct[0] * 4;
+        uint byteEnd = elem * 16 + (uint)distinct[^1] * 4 + 4;
+
+        CbufferVariableMetadata? best = null;
+        int bestSize = int.MaxValue;
+        foreach (CbufferVariableMetadata v in cb.Variables)
+        {
+            if ((long)v.Offset <= byteStart && (long)v.Offset + v.SizeBytes >= byteEnd && v.SizeBytes < bestSize)
+            {
+                best = v;
+                bestSize = v.SizeBytes;
+            }
+        }
+
+        if (best is null)
+            return null;
+
+        uint rel = byteStart - (uint)best.Offset;
+        string letters = string.Concat(comps.Select(c => ComponentLetters[c]));
+        string swizzle = distinct.Length == 4 && distinct[0] == 0 && distinct[^1] == 3
+            ? ""
+            : "." + letters;
+
+        if (best.IsMatrix || best.RowCount > 0)
+        {
+            if (best.ArraySize > 0)
+                return null; // array-of-matrices: defer to cbN_values fallback
+
+            uint row = rel / 16;
+            return $"{best.Name}[{row}]{swizzle}";
+        }
+
+        if (best.ArraySize > 0)
+            return null; // array reads: defer to cbN_values fallback
+
+        // Read covers the whole variable — but only when the read is NOT a
+        // broadcast (repeated components). A swizzle like .xxyz on a float3
+        // ADDS a component and must keep its suffix; dropping it narrows the
+        // expression (float3) so a later .w read on the result breaks.
+        if (comps.Length == distinct.Length && bestSize == distinct.Length * 4 && rel == 0)
+            return best.Name;
+
+        int vsc = (int)(rel / 4);
+        string letters2 = string.Concat(comps.Select(c => ComponentLetters[vsc + (c - distinct[0])]));
+        return best.Name + "." + letters2;
+    }
+
+    // Component indices the read touches, in order (with repeats for a
+    // swizzle). Mirrors MaskOrSwizzleSuffix's mode dispatch.
+    private static List<int> ReadComponentIndices(IRRegister reg) => reg.ComponentMode switch
+    {
+        Operand.OperandComponentMode.Mask when reg.Mask != 0 => MaskIndices(reg.Mask),
+        Operand.OperandComponentMode.Swizzle => ActiveComponents(reg),
+        Operand.OperandComponentMode.Select1 => new List<int> { reg.Component },
+        _ => new List<int> { 0 },
+    };
+
+    // cbuffer/indexable-temp registers carry TWO index slots (buffer/array
+    // number, then element offset) in reg.Indices/RelativeIndices, not
+    // just reg.Index — reg.Index alone would silently drop the element
+    // offset (e.g. render "cb0" instead of "cb0[8]" for an unbound
+    // constant-buffer read). Mirrors IRRegister.IndexToString's handling
+    // of dynamic/relative indices (cb0[r2.x + 4]) via the same public
+    // fields, since that logic is private to IRRegister.
+    private static string IndexedName(string prefix, IRRegister reg, PrintContext ctx)
+    {
+        if (reg.Indices.Count == 0)
+            return $"{prefix}{reg.Index}";
+
+        string Slot(int i)
+        {
+            IRExpression? relative = i < reg.RelativeIndices.Length ? reg.RelativeIndices[i] : null;
+            if (relative is not null)
+            {
+                uint constOffset = reg.Indices.Count > i ? reg.Indices[i] : 0;
+                return constOffset != 0 ? $"{RenderExpression(relative, ctx)} + {constOffset}" : RenderExpression(relative, ctx);
+            }
+            return reg.Indices.Count > i ? reg.Indices[i].ToString() : "0";
+        }
+
+        return reg.Indices.Count >= 2
+            ? $"{prefix}{Slot(0)}[{Slot(1)}]"
+            : $"{prefix}{Slot(0)}";
+    }
+
+    // Scalar per-(register,component,version) identifier — always a
+    // legal, unique C-style identifier. A versionless result is NOT an
+    // implicit input (real function inputs are RegisterType.Input and
+    // render via i.field in RenderRegisterRead, never here); for a temp it
+    // means the register was never written on this reaching path — a
+    // don't-care the phi-fallback guard in RenderAssignmentLines handles
+    // by either dropping the copy or declaring the scalar uninitialized.
+    private static string ScalarIdentifier(IRRegister reg, int component, PrintContext ctx)
+    {
+        string bare = BaseIdentifier(reg, ctx);
+        int? version = reg.SsaVersion[component];
+        return version is { } v
+            ? $"{bare}_{ComponentLetters[component]}_{v}"
+            : $"{bare}_{ComponentLetters[component]}";
+    }
+
+    // Reads a Temp/IndexableTemp register for use on the RHS of an
+    // expression. Every active component is resolved to the identifier its
+    // defining instruction actually declared (see PrintContext.DeclaredViews):
+    //   - components co-written by one instruction share a vector name and
+    //     read as a swizzle off it (r0.xyz -> r0_xyz_5, r0.x -> r0_xyz_5.x);
+    //   - components written separately — even ones that coincidentally
+    //     share a version number, since versions are per-component counters —
+    //     build a constructor from their own declared names
+    //     (float2(r0_xy_5.x, r0_w_2)).
+    // The old heuristic (collapse whenever versions match) emitted view
+    // strings like r0_x_1 that were never declared anywhere.
+    private static string RenderTempRead(IRRegister reg, PrintContext ctx)
+    {
+        List<int> active = ActiveComponents(reg);
+        if (active.Count == 0)
+            return BaseIdentifier(reg, ctx);
+
+        if (active.Count == 1)
+            return ResolveComponent(reg, active[0], ctx);
+
+        var resolved = active.Select(c =>
+        {
+            int? version = reg.SsaVersion[c];
+            if (version is { } v
+                && ctx.DeclaredViews.TryGetValue((LocationOf(reg, c), v), out (string Name, List<int> Active) entry))
+                return (Comp: c, Name: entry.Name, Active: entry.Active);
+            return (Comp: c, Name: ScalarIdentifier(reg, c, ctx), Active: new List<int> { c });
+        }).ToList();
+
+        string firstName = resolved[0].Name;
+        List<int> declared = resolved[0].Active;
+        if (resolved.All(r => r.Name == firstName))
+        {
+            // A scalar declared name (one active component) broadcasts one
+            // value into every slot — HLSL scalars only permit .x repeats,
+            // so the swizzle must be all 'x' no matter which logical
+            // component (y/z/w) the scalar originally came from. Vector
+            // names swizzle positionally: each read component's slot in
+            // the declared vector comes from IndexOf, not its original
+            // register letter (a float2 declared from components y,z reads
+            // its z-slot as ".y", not ".z").
+            string readLetters = declared.Count == 1
+                ? new string('x', active.Count)
+                : string.Concat(active.Select(c => ComponentLetters[declared.IndexOf(c)]));
+            string declaredLetters = string.Concat(declared.Select(c => ComponentLetters[c]));
+            return declaredLetters == readLetters
+                ? firstName
+                : $"{firstName}.{readLetters}";
+        }
+
+        return $"float{active.Count}({string.Join(", ", resolved.Select(r => ComponentView(r.Name, r.Active, r.Comp)))})";
+    }
+
+    // Renders one component of a declared name: a scalar declaration
+    // stands alone, a vector declaration needs the component's POSITION
+    // within the declared vector (IndexOf in the active-component list),
+    // not the source register's original component letter — the swizzle
+    // chars must index the declared variable's own slots.
+    private static string ComponentView(string name, List<int> activeComponents, int component)
+    {
+        if (activeComponents.Count <= 1) return name;
+        int pos = activeComponents.IndexOf(component);
+        return $"{name}.{ComponentLetters[pos]}";
+    }
+
+    // Resolves a single-component read to the identifier its defining
+    // instruction declared (swizzle off the vector if it was co-written),
+    // falling back to the synthetic scalar name when nothing was recorded
+    // (a versionless temp — a value never written on this reaching path).
+    private static string ResolveComponent(IRRegister reg, int component, PrintContext ctx)
+    {
+        int? version = reg.SsaVersion[component];
+
+        if (version is { } v
+            && ctx.DeclaredViews.TryGetValue((LocationOf(reg, component), v), out (string Name, List<int> Active) entry))
+            return ComponentView(entry.Name, entry.Active, component);
+
+        return ScalarIdentifier(reg, component, ctx);
+    }
+
+    // Structural storage identity for (reg, component) — mirrors
+    // IRStorageLocation.Of exactly (bank/slot from Indices, dynamic when a
+    // relative index is present). This is the value-identity key for
+    // DeclaredViews: it must NOT involve SymbolicName or the rendered name,
+    // because synthesized registers (phi operands etc.) don't carry the
+    // same names as the instruction that declared the value.
+    private static IRStorageLocation LocationOf(IRRegister reg, int component)
+    {
+        uint bank = reg.Indices.Count > 0 ? reg.Indices[0] : reg.Index;
+        uint slot = reg.Indices.Count > 1 ? reg.Indices[1] : 0;
+
+        bool dynamic = reg.RelativeIndices[0] is not null
+            || (reg.Indices.Count > 1 && reg.RelativeIndices[1] is not null);
+
+        return new IRStorageLocation(reg.RegisterType, bank, dynamic ? 0 : slot, dynamic, ComponentLetters[component]);
+    }
+
+    private static string MaskOrSwizzleSuffix(IRRegister reg) => reg.ComponentMode switch
+    {
+        Operand.OperandComponentMode.Mask when reg.Mask != 0 =>
+            "." + string.Concat(MaskIndices(reg.Mask).Select(c => ComponentLetters[c])),
+        Operand.OperandComponentMode.Swizzle =>
+            "." + string.Concat(ActiveComponents(reg).Select(c => ComponentLetters[c])),
+        Operand.OperandComponentMode.Select1 => "." + ComponentLetters[reg.Component],
+        _ => "",
+    };
+
+    // Central dispatch for reading ANY register on the RHS of an
+    // expression — routes to struct-field access for input/output,
+    // direct (already-valid) bound names for cbuffer/resource/sampler,
+    // and the scalar-SSA machinery above for temps.
+    private static string RenderRegisterRead(IRRegister reg, PrintContext ctx)
+    {
+        string rendered = reg.RegisterType switch
+        {
+            RegisterType.Temp or RegisterType.IndexableTemp =>
+                RenderTempRead(reg, ctx),
+
+            RegisterType.Input =>
+                RenderSignatureField(reg, "i", ctx.InputElements, ctx),
+
+            RegisterType.Output =>
+                RenderSignatureField(reg, "o", ctx.OutputElements, ctx),
+
+            RegisterType.ConstantBuffer =>
+                RenderCbufferRead(reg, ctx),
+
+            RegisterType.Resource or RegisterType.Sampler or RegisterType.Uav =>
+                // Texture/sampler/UAV objects are not vector values — the
+                // DXBC operand swizzle on a resource handle is meaningless
+                // (and t0.xyzw.Sample would never compile).
+                BaseIdentifier(reg, ctx),
+
+            _ =>
+                BaseIdentifier(reg, ctx) + MaskOrSwizzleSuffix(reg),
+        };
+
+        return ApplyRegisterModifier(reg.Modifier, rendered);
+    }
+
+    // A DXBC source modifier (negate/abs/absneg) that is dropped here would
+    // silently change the shader's math — e.g. `1.0 - i.vertexColor.a`
+    // decompiling as `(i.cOLOR0.w + 1)`. The modifier lives on the IR register
+    // itself, so it is applied once, in this central read dispatch.
+    private static string ApplyRegisterModifier(ShdrParser.OperandModifier modifier, string rendered)
+    {
+        return modifier switch
+        {
+            ShdrParser.OperandModifier.Neg => $"-{rendered}",
+            ShdrParser.OperandModifier.Abs => $"abs({rendered})",
+            ShdrParser.OperandModifier.AbsNeg => $"-abs({rendered})",
+            _ => rendered,
+        };
+    }
+
+    private static string FieldNameFor(IRRegister reg, PrintContext ctx)
+    {
+        string semantic = reg.SymbolicName ?? BaseIdentifier(reg, ctx);
+        return HlslAstBuilder.ToFieldName(semantic);
+    }
+
+    private static string ElementFieldName(SignatureElement el)
+        => HlslAstBuilder.ToFieldName($"{el.SemanticName}{el.SemanticIndex}");
+
+    // Component letter a register position maps to WITHIN a signature
+    // element: the number of element-owned register components below it.
+    // A write of register position z owned by TEXCOORD1 (mask 0xC = zw) is
+    // TEXCOORD1's local x, since TEXCOORD1 only occupies two lanes.
+    private static char ElementLocalLetter(SignatureElement el, int registerPosition)
+    {
+        int below = System.Numerics.BitOperations.PopCount((uint)(el.Mask & ((1 << registerPosition) - 1)));
+        return ComponentLetters[below];
+    }
+
+    private static string ElementLocalSuffix(SignatureElement el, List<int> positions)
+        => "." + string.Concat(positions.Select(p => ElementLocalLetter(el, p)));
+
+    // Renders an input/output register access as a struct-field reference
+    // (i.field.swizzle / o.field.swizzle). A register PACKED across multiple
+    // signature elements with disjoint masks has each component routed to
+    // the element whose mask covers it, with letters remapped into that
+    // element's own component space. Multi-element reads build a
+    // constructor; multi-element writes are split by RenderOutputWrite.
+    private static string RenderSignatureField(IRRegister reg, string prefix, Dictionary<uint, List<SignatureElement>> byRegister, PrintContext ctx)
+    {
+        List<int> positions = ActiveComponents(reg);
+        if (byRegister.TryGetValue(reg.Index, out List<SignatureElement>? elements) && elements.Count > 1)
+        {
+            if (TryCoveringElement(elements, positions) is { } cover)
+                return $"{prefix}.{ElementFieldName(cover)}{ElementLocalSuffix(cover, positions)}";
+
+            // Positions span multiple elements — build a constructor whose
+            // lanes are the per-position field reads, in output order.
+            return $"float{positions.Count}({string.Join(", ", positions.Select(p => RoutePosition(reg, elements, p, prefix, ctx)))})";
+        }
+
+        return prefix + "." + FieldNameFor(reg, ctx) + MaskOrSwizzleSuffix(reg);
+    }
+
+    private static string RoutePosition(IRRegister reg, List<SignatureElement> elements, int position, string prefix, PrintContext ctx)
+    {
+        foreach (SignatureElement el in elements)
+            if ((el.Mask & (1 << position)) != 0)
+                return $"{prefix}.{ElementFieldName(el)}{ElementLocalSuffix(el, new List<int> { position })}";
+        return $"{prefix}.{FieldNameFor(reg, ctx)}.{ComponentLetters[position]}";
+    }
+
+    private static SignatureElement? TryCoveringElement(List<SignatureElement> elements, List<int> positions)
+    {
+        foreach (SignatureElement el in elements)
+        {
+            bool all = positions.Count > 0;
+            foreach (int p in positions)
+                all &= (el.Mask & (1 << p)) != 0;
+            if (all)
+                return el;
+        }
+        return null;
+    }
+
+    // (element, register positions it owns) groups for an output write's
+    // active positions, preserving position order.
+    private static List<(SignatureElement Element, List<int> Positions)> GroupOutputPositions(List<SignatureElement> elements, List<int> active)
+    {
+        var groups = new List<(SignatureElement, List<int>)>();
+        foreach (int p in active)
+        {
+            SignatureElement? el = elements.FirstOrDefault(e => (e.Mask & (1 << p)) != 0);
+            if (el is null)
+                continue;
+            var group = groups.FirstOrDefault(g => g.Item1 == el);
+            if (group.Item1 is null)
+            {
+                group = (el, new List<int>());
+                groups.Add(group);
+            }
+            group.Item2.Add(p);
+        }
+        return groups;
+    }
+
+    // Emits an output-register write, routing each written component to the
+    // struct field whose signature element owns it (packed registers split
+    // into one statement per element). The RHS is the trimmed-to-width value
+    // when a single element covers everything; a split takes its per-group
+    // lanes straight off the full-width expression.
+    private static IEnumerable<string> RenderOutputWrite(IRRegister dest, string rhs, string rawRhs, PrintContext ctx)
+    {
+        List<int> active = MaskIndices(dest.Mask);
+        if (active.Count == 0)
+            active = new List<int> { 0 };
+
+        if (ctx.OutputElements.TryGetValue(dest.Index, out List<SignatureElement>? elements) && elements.Count > 1)
+        {
+            List<(SignatureElement Element, List<int> Positions)> groups = GroupOutputPositions(elements, active);
+            if (groups.Count == 1 && groups[0].Positions.Count == active.Count)
+            {
+                var (el, pos) = groups[0];
+                yield return $"o.{ElementFieldName(el)}{ElementLocalSuffix(el, pos)} = {rhs};";
+            }
+            else if (groups.Count > 1)
+            {
+                foreach ((SignatureElement el, List<int> pos) in groups)
+                {
+                    string slice = string.Concat(pos.Select(p => ComponentLetters[p]));
+                    yield return $"o.{ElementFieldName(el)}{ElementLocalSuffix(el, pos)} = ({rawRhs}).{slice};";
+                }
+            }
+            else
+            {
+                yield return $"o.{FieldNameFor(dest, ctx)}{MaskOrSwizzleSuffix(dest)} = {rhs};";
+            }
+            yield break;
+        }
+
+        yield return $"o.{FieldNameFor(dest, ctx)}{MaskOrSwizzleSuffix(dest)} = {rhs};";
+    }
+
+    // Emits one or more statement lines for a single destination write.
+    // Multiple lines only happen when the written components have
+    // diverged to different SSA versions (see below) — the common case
+    // is exactly one line.
+    // The single identifier an assignment to `dest` would declare (vector
+    // name when components share a version, scalar name for one component),
+    // or null when the write splits into per-component names. Used by the
+    // phi-fallback-copy guard to check whether the destination is already
+    // in scope before deciding to drop the copy.
+    private static string? SingleDestName(IRRegister dest, List<int> active, PrintContext ctx)
+    {
+        if (dest.RegisterType == RegisterType.Output)
+            return null;
+
+        bool sameVersion = active.All(c => dest.SsaVersion[c] == dest.SsaVersion[active[0]]);
+        if (active.Count > 1 && !sameVersion)
+            return null;
+
+        string letters = string.Concat(active.Select(c => ComponentLetters[c]));
+        string bare = BaseIdentifier(dest, ctx);
+        int? version = dest.SsaVersion[active[0]];
+        return version is { } v ? $"{bare}_{letters}_{v}" : $"{bare}_{letters}";
+    }
+
+    private static IEnumerable<string> RenderAssignmentLines(IRRegister dest, IRExpression expr, PrintContext ctx)
+    {
+        List<int> active = MaskIndices(dest.Mask); // destinations are always write-masks, never swizzles
+        if (active.Count == 0)
+            active = new List<int> { 0 };
+
+        // Phi-fallback copies (IRLeaveSsa): when the source register was
+        // never written on this path, its SSA version is null. DXBC leaves
+        // such values as don't-care, so emitting the read would produce
+        // phantom identifiers (r8_x) that no instruction declares. If the
+        // destination is already in scope (a hoisted cross-branch merge
+        // name), drop the copy entirely — the variable stays
+        // declared-but-uninitialized on this path, matching DXBC. Otherwise
+        // declare the unversioned source scalars so the assignment still
+        // compiles (it reads garbage, which is the same semantics).
+        if (expr is IRExpression.RegisterExpression { Register: { } src }
+            && src.RegisterType is RegisterType.Temp or RegisterType.IndexableTemp)
+        {
+            List<int> srcActive = ActiveComponents(src);
+            if (srcActive.Count > 0 && srcActive.Any(c => src.SsaVersion[c] is null))
+            {
+                bool allUnversioned = srcActive.All(c => src.SsaVersion[c] is null);
+                if (allUnversioned && dest.RegisterType != RegisterType.Output
+                    && SingleDestName(dest, active, ctx) is { } destName
+                    && ctx.Declared.Contains(destName))
+                {
+                    yield break;
+                }
+                foreach (int c in srcActive)
+                {
+                    if (src.SsaVersion[c] is not null)
+                        continue;
+                    string scalar = ScalarIdentifier(src, c, ctx);
+                    if (ctx.Declared.Add(scalar))
+                        yield return $"float {scalar};";
+                }
+            }
+        }
+
+        string rawRhs = RenderExpression(expr, ctx);
+
+        // DXBC computes full-lane expressions (the source operand's 4-wide
+        // swizzle) regardless of how many components the destination
+        // write-mask actually consumes, so the rendered RHS is naturally
+        // wider than the destination far more often than not. HLSL rejects
+        // a wide RHS assigned into a narrow L-value, so narrow it to the
+        // destination width with a trailing trim swizzle — the source
+        // lane's first N components are exactly what the positional mask
+        // semantics assign.
+        string rhs = TrimToWidth(rawRhs, active, expr, ctx);
+
+        if (dest.RegisterType == RegisterType.Output)
+        {
+            foreach (string line in RenderOutputWrite(dest, rhs, rawRhs, ctx))
+                yield return line;
+            yield break;
+        }
+
+        bool sameVersion = active.All(c => dest.SsaVersion[c] == dest.SsaVersion[active[0]]);
+
+        if (active.Count == 1 || sameVersion)
+        {
+            string letters = string.Concat(active.Select(c => ComponentLetters[c]));
+            string bare = BaseIdentifier(dest, ctx);
+            int? version = dest.SsaVersion[active[0]];
+            string name = version is { } v ? $"{bare}_{letters}_{v}" : $"{bare}_{letters}";
+
+            // Register the identifier this write declares for each written
+            // component so later reads reference this same name (swizzling
+            // off it) instead of synthesizing a view that was never
+            // declared. A single instruction co-writes these components,
+            // so recording the shared vector name is sound here — the
+            // version-coincidence hazard only affects the read side.
+            if (version is { } vv)
+                foreach (int c in active)
+                    ctx.DeclaredViews[(LocationOf(dest, c), vv)] = (name, active);
+
+            yield return ctx.Declared.Add(name)
+                ? $"{DeclType(active.Count)} {name} = {rhs};"
+                : $"{name} = {rhs};";
+            yield break;
+        }
+
+        // Components diverged to different versions in one instruction.
+        // Split each component directly off the RHS expression rather than
+        // routing through a synthetic vector temp — the RHS is pure (texture
+        // Samples included), so each extract re-reads the same lane the temp
+        // would have held, and each scalar still records its own
+        // correctly-versioned identifier so later reads resolve it.
+        for (int i = 0; i < active.Count; i++)
+        {
+            int c = active[i];
+            string scalarName = ScalarIdentifier(dest, c, ctx);
+            if (dest.SsaVersion[c] is { } v)
+                ctx.DeclaredViews[(LocationOf(dest, c), v)] = (scalarName, new List<int> { c });
+            string line = $"{scalarName} = {ExtractComponent(expr, c, ctx)};";
+            yield return ctx.Declared.Add(scalarName) ? $"float {line}" : line;
+        }
+    }
+
+    // Renders a single ORIGINAL-register-position component of an
+    // expression's value. Temp register reads compact sparse lanes into
+    // fewer-wide constructors (float2 holding positions z,w), so swizzling
+    // the rendered value by the original letter (.z) would be invalid —
+    // extract through the register's own declared names instead, which
+    // resolve the position regardless of the lane count. Non-temp renders
+    // (fields, cbuffers, intrinsics) are always full-width, so a plain
+    // letter swizzle on the rendered value is correct there.
+    private static string ExtractComponent(IRExpression expr, int component, PrintContext ctx)
+    {
+        IRExpression inner = expr;
+        int pos = component;
+        while (inner is IRExpression.SwizzleExpression sw)
+        {
+            pos = sw.Components[pos];
+            inner = sw.Value;
+        }
+        if (inner is IRExpression.RegisterExpression { Register: { } r }
+            && r.RegisterType is RegisterType.Temp or RegisterType.IndexableTemp)
+        {
+            // A swizzle-mode source reads components by output position
+            // (ActiveComponents[p]); a Select1 source is one fixed
+            // component; a mask source is position-aligned.
+            int source = r.ComponentMode switch
+            {
+                Operand.OperandComponentMode.Swizzle => ActiveComponents(r)[pos],
+                Operand.OperandComponentMode.Select1 => r.Component,
+                _ => pos,
+            };
+            return ResolveComponent(r, source, ctx);
+        }
+        return $"({RenderExpression(expr, ctx)}).{ComponentLetters[component]}";
+    }
+
+    private static string DeclType(int componentCount) => componentCount == 1 ? "float" : $"float{componentCount}";
+
+    // HLSL (like C) won't assign a wide vector into a narrower L-value, but
+    // DXBC's per-lane semantics mean the RHS expression naturally renders at
+    // its full width (usually float4, via the source swizzle) even when the
+    // destination write-mask only consumes two or three components. If the
+    // RHS is genuinely wider than the destination, append a trailing swizzle
+    // that selects the source components by DESTINATION position.
+    //
+    // A leading-N trim would be wrong: the destination's active components
+    // are its mask positions (e.g. .zw -> [2,3]), and DXBC consumes source
+    // lane values at exactly those positions, so `o.field.zw = r0.zzzw`
+    // needs `r0.zzzw.zw` (z,w) — trimming to `.xy` would silently write
+    // (z,z) into z,w. The `.xyz` masks everyone sees are only correct by
+    // coincidence (their positions are the leading ones).
+    //
+    // Parenthesized so the swizzle binds at the top level regardless of the
+    // expression's own structure (casts, ternaries, unary prefixes).
+    private static string TrimToWidth(string rhs, List<int> active, IRExpression expr, PrintContext ctx)
+    {
+        int width = ExpressionWidth(expr, ctx);
+        if (width <= active.Count)
+            return rhs;
+        return $"({rhs}).{string.Concat(active.Select(c => ComponentLetters[c]))}";
+    }
+
+    // Natural component width of a rendered expression — mirrors the width
+    // each render path actually produces (register read width, constant
+    // arity, the scalar-collapsing intrinsics, texture samples as float4).
+    // Only used to decide whether TrimToWidth must narrow the RHS; when the
+    // width is unknowable (a bare field read with no swizzle info) it
+    // returns 1 so no invalid trim is ever emitted.
+    private static int ExpressionWidth(IRExpression expr, PrintContext ctx) => expr switch
+    {
+        IRExpression.RegisterExpression r => RegisterReadWidth(r.Register, ctx),
+        IRExpression.ConstantExpression c => Math.Max(1, Math.Max(c.RawValues.Length, c.DoubleValues.Length)),
+        IRExpression.BinaryExpression b => Math.Max(ExpressionWidth(b.Left, ctx), ExpressionWidth(b.Right, ctx)),
+        IRExpression.UnaryExpression u => ExpressionWidth(u.Operand, ctx),
+        IRExpression.IntrinsicExpression i => IntrinsicWidth(i, ctx),
+        IRExpression.FusedMultiplyAddExpression f => Math.Max(Math.Max(ExpressionWidth(f.A, ctx), ExpressionWidth(f.B, ctx)), ExpressionWidth(f.C, ctx)),
+        IRExpression.MultiplyHighExpression => 1,
+        IRExpression.Multiply64Expression => 1,
+        IRExpression.BitFieldInsertExpression => 1,
+        IRExpression.BitFieldExtractExpression => 1,
+        IRExpression.ConditionalExpression c => Math.Max(ExpressionWidth(c.TrueExpression, ctx), ExpressionWidth(c.FalseExpression, ctx)),
+        IRExpression.DotProductExpression => 1,
+        IRExpression.SwizzleExpression s => Math.Max(1, s.Components.Count),
+        IRExpression.MatrixVectorMultiplyExpression mv => Math.Max(1, mv.Rows.Count),
+        IRExpression.TextureOperationExpression tex => TextureOpWidth(tex.Operation),
+        _ => 1,
+    };
+
+    // How many components a register read renders as. Temps render via the
+    // active-component machinery (swizzle/mask/select1 — exact). Inputs,
+    // outputs and cbuffer reads render as `name` + a swizzle suffix, so the
+    // suffix's length is the true width; a bare read (no suffix) has an
+    // unknown width and is left untrimmed rather than guessed at.
+    private static int RegisterReadWidth(IRRegister reg, PrintContext ctx)
+    {
+        if (reg.RegisterType is RegisterType.Temp or RegisterType.IndexableTemp)
+        {
+            List<int> active = ActiveComponents(reg);
+            return active.Count == 0 ? 1 : active.Count;
+        }
+
+        string suffix = MaskOrSwizzleSuffix(reg);
+        return suffix.Length > 1 ? suffix.Length - 1 : 1;
+    }
+
+    // Element-wise intrinsics keep their argument's width; a handful
+    // collapse their result to a scalar; Cross produces a float3.
+    private static int IntrinsicWidth(IRExpression.IntrinsicExpression expr, PrintContext ctx)
+    {
+        switch (expr.Intrinsic)
+        {
+            case IRExpression.IRIntrinsic.Dot:
+            case IRExpression.IRIntrinsic.Length:
+            case IRExpression.IRIntrinsic.Distance:
+            case IRExpression.IRIntrinsic.Determinant:
+            case IRExpression.IRIntrinsic.Any:
+            case IRExpression.IRIntrinsic.All:
+            case IRExpression.IRIntrinsic.CountBits:
+            case IRExpression.IRIntrinsic.ReverseBits:
+            case IRExpression.IRIntrinsic.FirstBitHigh:
+            case IRExpression.IRIntrinsic.FirstBitLow:
+            case IRExpression.IRIntrinsic.CheckAccessFullyMapped:
+                return 1;
+            case IRExpression.IRIntrinsic.Cross:
+                return 3;
+            default:
+                int w = 1;
+                foreach (IRExpression arg in expr.Arguments)
+                    w = Math.Max(w, ExpressionWidth(arg, ctx));
+                return w;
+        }
+    }
+
+    // Texture samples/loads/gathers return float4 in HLSL; the info-style
+    // queries return scalars.
+    private static int TextureOpWidth(IRExpression.TextureOperation op) => op switch
+    {
+        IRExpression.TextureOperation.Sample
+            or IRExpression.TextureOperation.SampleLevel
+            or IRExpression.TextureOperation.SampleGrad
+            or IRExpression.TextureOperation.SampleBias
+            or IRExpression.TextureOperation.Load
+            or IRExpression.TextureOperation.Gather => 4,
+        // Comparison ops return a single scalar in HLSL (the bytecode writes
+        // one lane of the dest register; any single-lane read of it is that
+        // same scalar).
+        IRExpression.TextureOperation.SampleCompare
+            or IRExpression.TextureOperation.SampleCompareLevelZero
+            or IRExpression.TextureOperation.GatherCompare => 1,
+        _ => 1,
+    };
+
+    // Names written at the top level of BOTH of an if's arms — the
+    // IRLeaveSsa phi copies that merge a value at this if. These are the
+    // identifiers whose declarations must be hoisted above the if (see the
+    // HlslIfStatement print case). Returns (rendered name, component count
+    // for the declaration type), mirroring the exact naming/typing
+    // RenderAssignmentLines will produce when it prints those same writes.
+    private static List<(string Name, int Components)> CrossBranchMergeNames(HlslIfStatement iff, PrintContext ctx)
+    {
+        var result = new List<(string, int)>();
+        if (iff.Else is null)
+            return result;
+
+        Dictionary<string, int> thenNames = WrittenDeclNames(iff.Then.Statements, ctx);
+        Dictionary<string, int> elseNames = WrittenDeclNames(iff.Else.Statements, ctx);
+
+        foreach ((string name, int comps) in thenNames)
+            if (elseNames.TryGetValue(name, out int elseComps))
+                result.Add((name, Math.Max(comps, elseComps)));
+
+        return result;
+    }
+
+    // Names first written at the top level of a loop body that are not yet
+    // in scope (see the HlslLoopStatement print case). Only names not
+    // already declared are candidates — an existing declaration is already
+    // visible inside the loop.
+    private static Dictionary<string, int> LoopCarriedDeclNames(HlslLoopStatement loop, PrintContext ctx)
+    {
+        var names = new Dictionary<string, int>();
+        foreach ((string name, int comps) in WrittenDeclNames(loop.Body.Statements, ctx))
+        {
+            if (ctx.Declared.Contains(name))
+                continue;
+            if (!names.TryGetValue(name, out int prev) || comps > prev)
+                names[name] = comps;
+        }
+        return names;
+    }
+
+    // Top-level destination names a block's statements declare, mapped to
+    // the component count (declaration type) of the write. Only direct
+    // assignments matter — nested ifs/loops handle their own merges when
+    // they get printed.
+    private static Dictionary<string, int> WrittenDeclNames(List<HlslStatementNode> statements, PrintContext ctx)
+    {
+        var names = new Dictionary<string, int>();
+        foreach (HlslStatementNode stmt in statements)
+        {
+            IEnumerable<IRRegister> dests = stmt switch
+            {
+                HlslAssignmentStatement a => new[] { a.Destination },
+                HlslMultiAssignmentStatement ma => ma.Destinations.Where(d => d is not null).Cast<IRRegister>(),
+                _ => Array.Empty<IRRegister>(),
+            };
+
+            foreach (IRRegister dest in dests)
+                foreach ((string name, int comps) in DestinationDeclNames(dest, ctx))
+                    if (!names.TryGetValue(name, out int prev) || comps > prev)
+                        names[name] = comps;
+        }
+        return names;
+    }
+
+    // The exact identifier(s) and width RenderAssignmentLines would declare
+    // for a destination — shared so the hoisting pre-pass and the emit
+    // path agree on names and types.
+    private static List<(string Name, int Components)> DestinationDeclNames(IRRegister dest, PrintContext ctx)
+    {
+        var result = new List<(string, int)>();
+        if (dest.RegisterType == RegisterType.Output)
+            return result; // outputs are `o.field = rhs`, never locals
+
+        List<int> active = MaskIndices(dest.Mask);
+        if (active.Count == 0)
+            active = new List<int> { 0 };
+
+        bool sameVersion = active.All(c => dest.SsaVersion[c] == dest.SsaVersion[active[0]]);
+
+        if (active.Count == 1 || sameVersion)
+        {
+            string letters = string.Concat(active.Select(c => ComponentLetters[c]));
+            string bare = BaseIdentifier(dest, ctx);
+            int? version = dest.SsaVersion[active[0]];
+            string name = version is { } v ? $"{bare}_{letters}_{v}" : $"{bare}_{letters}";
+            result.Add((name, active.Count));
+        }
+        else
+        {
+            // Divergent component versions — RenderAssignmentLines splits
+            // into one scalar per component, each declared individually.
+            foreach (int c in active)
+                result.Add((ScalarIdentifier(dest, c, ctx), 1));
+        }
+
+        return result;
+    }
+
+    // ---------- expressions ----------
+
+    private static string RenderExpression(IRExpression expr, PrintContext ctx) => expr switch
+    {
+        IRExpression.IntrinsicExpression i => RenderIntrinsic(i, ctx),
+        IRExpression.FusedMultiplyAddExpression f => $"mad({RenderExpression(f.A, ctx)}, {RenderExpression(f.B, ctx)}, {RenderExpression(f.C, ctx)})",
+        IRExpression.MatrixVectorMultiplyExpression mv => RenderMatrixMultiply(mv, ctx),
+        IRExpression.TextureOperationExpression tex => RenderTextureOp(tex, ctx),
+        IRExpression.BinaryExpression b when IsBitwise(b.Operation) => RenderBitwise(b, ctx),
+        IRExpression.BinaryExpression b => $"({RenderExpression(b.Left, ctx)} {BinaryOpText(b.Operation)} {RenderExpression(b.Right, ctx)})",
+        IRExpression.UnaryExpression u => RenderUnary(u, ctx),
+        IRExpression.ConditionalExpression c => $"({RenderExpression(c.Condition, ctx)} ? {RenderExpression(c.TrueExpression, ctx)} : {RenderExpression(c.FalseExpression, ctx)})",
+        IRExpression.DotProductExpression d => $"dot({RenderExpression(d.Left, ctx)}, {RenderExpression(d.Right, ctx)})",
+        IRExpression.SwizzleExpression s => RenderSwizzle(s, ctx),
+        IRExpression.RegisterExpression r => RenderRegisterRead(r.Register, ctx),
+        IRExpression.ConstantExpression => expr.ToString()!,
+        _ => expr.ToString()!, // no dedicated renderer yet — fall back to IR debug text rather than crash
+    };
+
+    // Lane selection for an inlined single-use temp. Components are source
+    // register component indices relative to the value's own lanes, so a
+    // width-1 value (a scalar def) broadcasts via a scalar swizzle — HLSL
+    // scalars only permit .x repeats, no matter which register lane the
+    // scalar originally came from — and a wider value swizzles positionally.
+    // A `.xxxx` broadcast, not a `float4(x)` constructor, so a scalar bool
+    // (a comparison result) stays a bool4 and never hits the single-
+    // initializer constructor that HLSL rejects.
+    private static string RenderSwizzle(IRExpression.SwizzleExpression s, PrintContext ctx)
+    {
+        string inner = RenderExpression(s.Value, ctx);
+        if (ExpressionWidth(s.Value, ctx) <= 1)
+            return s.Components.Count <= 1
+                ? $"({inner})"
+                : $"({inner}).{new string('x', s.Components.Count)}";
+
+        // A temp read compacts sparse lanes (float2 holding original
+        // positions z,w), so the requested ORIGINAL positions must be mapped
+        // into the compacted lanes (IndexOf) — swizzling the compacted value
+        // by the original letters (.z) would be an invalid subscript. Only a
+        // direct MASK-mode register read can compact: swizzle-mode reads
+        // render the full 4-wide value (r0_w_7.xxxx), and a nested swizzle's
+        // output is already leading-positioned.
+        if (s.Value is IRExpression.RegisterExpression { Register: { } r }
+            && r.RegisterType is RegisterType.Temp or RegisterType.IndexableTemp
+            && r.ComponentMode == Operand.OperandComponentMode.Mask
+            && MaskIndices(r.Mask) is { } active
+            && !IsLeading(active))
+        {
+            string letters = string.Concat(s.Components.Select(p => ComponentLetters[active.IndexOf(p)]));
+            return $"({inner}).{letters}";
+        }
+
+        return $"({inner}).{string.Concat(s.Components.Select(i => ComponentLetters[i]))}";
+    }
+
+    private static bool IsLeading(List<int> components)
+    {
+        for (int i = 0; i < components.Count; i++)
+            if (components[i] != i)
+                return false;
+        return true;
+    }
+
+    private static string RenderUnary(IRExpression.UnaryExpression u, PrintContext ctx) => u.Operation switch
+    {
+        IRExpression.UnaryExpression.UnaryOperation.Negate => $"-{RenderExpression(u.Operand, ctx)}",
+        IRExpression.UnaryExpression.UnaryOperation.LogicalNot => $"!{RenderExpression(u.Operand, ctx)}",
+        IRExpression.UnaryExpression.UnaryOperation.BitwiseNot => $"~{RenderExpression(u.Operand, ctx)}",
+        IRExpression.UnaryExpression.UnaryOperation.Absolute => $"abs({RenderExpression(u.Operand, ctx)})",
+        _ => RenderExpression(u.Operand, ctx),
+    };
+
+    private static bool IsBitwise(IRExpression.BinaryOperation op) => op switch
+    {
+        IRExpression.BinaryOperation.BitwiseAnd
+            or IRExpression.BinaryOperation.BitwiseOr
+            or IRExpression.BinaryOperation.BitwiseXor
+            or IRExpression.BinaryOperation.LeftShift
+            or IRExpression.BinaryOperation.SignedRightShift
+            or IRExpression.BinaryOperation.UnsignedRightShift => true,
+        _ => false,
+    };
+
+    // True when the expression renders as an HLSL bool (a comparison or a
+    // swizzle/negation of one). Bitwise ops in DXBC operate on raw float
+    // register bits (the `and r0, r0, l(0x3f800000)` boolean-mask trick),
+    // and HLSL rejects `&`/`|` on floats — so we reinterpret both sides as
+    // ints, bitwise-op them, and reinterpret back. Comparisons must first
+    // be cast to float (asint() does not accept bool).
+    private static bool IsComparisonish(IRExpression e) => e switch
+    {
+        IRExpression.BinaryExpression b => b.Operation is IRExpression.BinaryOperation.Equal
+            or IRExpression.BinaryOperation.NotEqual
+            or IRExpression.BinaryOperation.GreaterEqual
+            or IRExpression.BinaryOperation.GreaterThan
+            or IRExpression.BinaryOperation.LessThan
+            or IRExpression.BinaryOperation.LessEqual,
+        IRExpression.UnaryExpression u => u.Operation == IRExpression.UnaryExpression.UnaryOperation.LogicalNot,
+        IRExpression.SwizzleExpression s => IsComparisonish(s.Value),
+        _ => false,
+    };
+
+    private static string RenderBitwise(IRExpression.BinaryExpression b, PrintContext ctx)
+    {
+        string Op(IRExpression side)
+        {
+            string s = RenderExpression(side, ctx);
+            return IsComparisonish(side) ? $"(float)({s})" : s;
+        }
+        return $"asfloat(asint({Op(b.Left)}) {BinaryOpText(b.Operation)} asint({Op(b.Right)}))";
+    }
+
+    private static string BinaryOpText(IRExpression.BinaryOperation op) => op switch
+    {
+        IRExpression.BinaryOperation.Add => "+",
+        IRExpression.BinaryOperation.Subtract => "-",
+        IRExpression.BinaryOperation.Multiply => "*",
+        IRExpression.BinaryOperation.Divide => "/",
+        IRExpression.BinaryOperation.UnsignedDivide => "/",
+        IRExpression.BinaryOperation.Modulo => "%",
+        IRExpression.BinaryOperation.Equal => "==",
+        IRExpression.BinaryOperation.NotEqual => "!=",
+        IRExpression.BinaryOperation.GreaterEqual => ">=",
+        IRExpression.BinaryOperation.GreaterThan => ">",
+        IRExpression.BinaryOperation.LessThan => "<",
+        IRExpression.BinaryOperation.LessEqual => "<=",
+        IRExpression.BinaryOperation.LogicalAnd => "&&",
+        IRExpression.BinaryOperation.LogicalOr => "||",
+        IRExpression.BinaryOperation.BitwiseAnd => "&",
+        IRExpression.BinaryOperation.BitwiseOr => "|",
+        IRExpression.BinaryOperation.BitwiseXor => "^",
+        IRExpression.BinaryOperation.LeftShift => "<<",
+        IRExpression.BinaryOperation.SignedRightShift => ">>",
+        IRExpression.BinaryOperation.UnsignedRightShift => ">>",
+        _ => "?",
+    };
+
+    // DXBC/HLSL-specific spelling deliberately lives here, not in the IR
+    // (see the IRIntrinsic enum's own doc comment) — this is the mapping
+    // it was asking for.
+    private static string RenderIntrinsic(IRExpression.IntrinsicExpression expr, PrintContext ctx)
+    {
+        string Arg(int n) => RenderExpression(expr.Arguments[n], ctx);
+        string AllArgs() => string.Join(", ", expr.Arguments.Select(a => RenderExpression(a, ctx)));
+
+        // Casts use C-style cast syntax, not a function call.
+        switch (expr.Intrinsic)
+        {
+            case IRExpression.IRIntrinsic.CastFloat: return $"(float)({Arg(0)})";
+            case IRExpression.IRIntrinsic.CastInt: return $"(int)({Arg(0)})";
+            case IRExpression.IRIntrinsic.CastUInt: return $"(uint)({Arg(0)})";
+            case IRExpression.IRIntrinsic.CastDouble: return $"(double)({Arg(0)})";
+            case IRExpression.IRIntrinsic.CastBool: return $"(bool)({Arg(0)})";
+        }
+
+        string? name = expr.Intrinsic switch
+        {
+            IRExpression.IRIntrinsic.AsFloat => "asfloat",
+            IRExpression.IRIntrinsic.AsInt => "asint",
+            IRExpression.IRIntrinsic.AsUInt => "asuint",
+            IRExpression.IRIntrinsic.F16ToF32 => "f16tof32",
+            IRExpression.IRIntrinsic.F32ToF16 => "f32tof16",
+            IRExpression.IRIntrinsic.Sqrt => "sqrt",
+            IRExpression.IRIntrinsic.Rsqrt => "rsqrt",
+            IRExpression.IRIntrinsic.Min => "min",
+            IRExpression.IRIntrinsic.Max => "max",
+            IRExpression.IRIntrinsic.Pow => "pow",
+            IRExpression.IRIntrinsic.Exp2 => "exp2",
+            IRExpression.IRIntrinsic.Log2 => "log2",
+            IRExpression.IRIntrinsic.Reciprocal => "rcp",
+            IRExpression.IRIntrinsic.Clamp01 => "saturate",
+            IRExpression.IRIntrinsic.FractionalPart => "frac",
+            IRExpression.IRIntrinsic.RoundNearestEven => "round",
+            IRExpression.IRIntrinsic.Floor => "floor",
+            IRExpression.IRIntrinsic.Ceiling => "ceil",
+            IRExpression.IRIntrinsic.Truncate => "trunc",
+            IRExpression.IRIntrinsic.Sin => "sin",
+            IRExpression.IRIntrinsic.Cos => "cos",
+            IRExpression.IRIntrinsic.Tan => "tan",
+            IRExpression.IRIntrinsic.Asin => "asin",
+            IRExpression.IRIntrinsic.Acos => "acos",
+            IRExpression.IRIntrinsic.Atan => "atan",
+            IRExpression.IRIntrinsic.Atan2 => "atan2",
+            IRExpression.IRIntrinsic.Normalize => "normalize",
+            IRExpression.IRIntrinsic.Length => "length",
+            IRExpression.IRIntrinsic.Distance => "distance",
+            IRExpression.IRIntrinsic.Reflect => "reflect",
+            IRExpression.IRIntrinsic.Refract => "refract",
+            IRExpression.IRIntrinsic.FaceForward => "faceforward",
+            IRExpression.IRIntrinsic.Cross => "cross",
+            IRExpression.IRIntrinsic.Dot => "dot",
+            IRExpression.IRIntrinsic.Transpose => "transpose",
+            IRExpression.IRIntrinsic.Determinant => "determinant",
+            IRExpression.IRIntrinsic.Noise => "noise",
+            IRExpression.IRIntrinsic.CountBits => "countbits",
+            IRExpression.IRIntrinsic.ReverseBits => "reversebits",
+            IRExpression.IRIntrinsic.FirstBitHigh => "firstbithigh",
+            IRExpression.IRIntrinsic.FirstBitLow => "firstbitlow",
+            IRExpression.IRIntrinsic.Lerp => "lerp",
+            IRExpression.IRIntrinsic.Fmod => "fmod",
+            IRExpression.IRIntrinsic.Modf => "modf",
+            IRExpression.IRIntrinsic.Ldexp => "ldexp",
+            IRExpression.IRIntrinsic.Frexp => "frexp",
+            IRExpression.IRIntrinsic.DerivativeX => "ddx",
+            IRExpression.IRIntrinsic.DerivativeXCoarse => "ddx_coarse",
+            IRExpression.IRIntrinsic.DerivativeXFine => "ddx_fine",
+            IRExpression.IRIntrinsic.DerivativeY => "ddy",
+            IRExpression.IRIntrinsic.DerivativeYCoarse => "ddy_coarse",
+            IRExpression.IRIntrinsic.DerivativeYFine => "ddy_fine",
+            IRExpression.IRIntrinsic.Any => "any",
+            IRExpression.IRIntrinsic.All => "all",
+            IRExpression.IRIntrinsic.CheckAccessFullyMapped => "CheckAccessFullyMapped",
+            _ => null, // DistanceVector, MaskedSumOfAbsoluteDifferences, Eval* — no confirmed HLSL builtin
+        };
+
+        return name is not null
+            ? $"{name}({AllArgs()})"
+            : $"/* TODO: no HLSL mapping for {expr.Intrinsic} */ {expr.Intrinsic}({AllArgs()})";
+    }
+
+    private static string RenderMatrixMultiply(IRExpression.MatrixVectorMultiplyExpression mv, PrintContext ctx)
+    {
+        if (mv.Rows.Count == 0)
+            return $"/* TODO: empty matrix */ {RenderExpression(mv.Vector, ctx)}";
+
+        string rows = string.Join(", ", mv.Rows.Select(r => RenderRegisterRead(r, ctx)));
+        return $"mul(float{mv.Rows.Count}x4({rows}), {RenderExpression(mv.Vector, ctx)})";
+    }
+
+    // The location arity a comparison intrinsic wants for a given texture
+    // type: TextureCube/3D/2D-array take float3, Texture2D takes float2.
+    private static string CompareCoordinateSwizzle(string textureType) => textureType switch
+    {
+        "Texture1D" => ".x",
+        "Texture2D" or "Texture2DMS" => ".xy",
+        "TextureCubeArray" => ".xyzw",
+        _ => ".xyz",
+    };
+
+    // Confirmed 1:1 against real Texture2D/TextureCube method names;
+    // Load/Sample/SampleLevel/SampleBias/SampleGrad/Gather keep the same
+    // name DXBC uses, only the Compare variants and argument order/style
+    // needed fixing up from the debug ToString().
+    private static string RenderTextureOp(IRExpression.TextureOperationExpression tex, PrintContext ctx)
+    {
+        string resource = RenderRegisterRead(tex.Resource, ctx);
+        string? sampler = tex.Sampler is null ? null : RenderRegisterRead(tex.Sampler, ctx);
+        string? coord = tex.Coordinates is null ? null : RenderExpression(tex.Coordinates, ctx);
+        string? offset = tex.Offset is null ? null : RenderExpression(tex.Offset, ctx);
+
+        // The bytecode's coordinate operand is always a full 4-component
+        // register read.  HLSL's Sample/SampleLevel/SampleBias/SampleGrad/
+        // Gather intrinsics accept exactly the component count the texture
+        // dimension demands (.xy for 2D, .xyz for cube/3D/array, .xyzw for
+        // cube array).  Trimming avoids implicit-truncation warnings and
+        // matches what the original author would have written.
+        // Load() is excluded — it takes int3 where .z is the mip level.
+        if (tex.Operation is not IRExpression.TextureOperation.Load
+            && tex.Coordinates is not null && coord is not null)
+        {
+            string type = tex.Resource is { } rr
+                ? ctx.TextureTypeBySlot.GetValueOrDefault((int)rr.Index, "Texture2D")
+                : "Texture2D";
+            coord = $"({coord}){CompareCoordinateSwizzle(type)}";
+        }
+
+        string Args(params string?[] parts) => string.Join(", ", parts.Where(p => p is not null));
+
+        return tex.Operation switch
+        {
+            IRExpression.TextureOperation.Sample when ctx.Stage == HlslShaderStage.Vertex =>
+                // Implicit-LOD Sample does not exist in a vertex shader —
+                // the bytecode's `sample` is sample_l(implicit 0), which is
+                // SampleLevel(..., 0) and is valid in both vs_4_0 and vs_5_0.
+                $"{resource}.SampleLevel({Args(sampler, coord, "0", offset)})",
+            IRExpression.TextureOperation.Sample =>
+                $"{resource}.Sample({Args(sampler, coord, offset)})",
+            IRExpression.TextureOperation.SampleLevel =>
+                $"{resource}.SampleLevel({Args(sampler, coord, tex.LOD is null ? null : RenderExpression(tex.LOD, ctx), offset)})",
+            IRExpression.TextureOperation.SampleBias =>
+                $"{resource}.SampleBias({Args(sampler, coord, tex.Bias is null ? null : RenderExpression(tex.Bias, ctx), offset)})",
+            IRExpression.TextureOperation.SampleGrad =>
+                $"{resource}.SampleGrad({Args(sampler, coord, tex.GradX is null ? null : RenderExpression(tex.GradX, ctx), tex.GradY is null ? null : RenderExpression(tex.GradY, ctx), offset)})",
+            IRExpression.TextureOperation.SampleCompare =>
+                $"{resource}.SampleCmp({Args(sampler, coord, tex.CompareValue is null ? null : RenderExpression(tex.CompareValue, ctx), offset)})",
+            IRExpression.TextureOperation.SampleCompareLevelZero =>
+                $"{resource}.SampleCmpLevelZero({Args(sampler, coord, tex.CompareValue is null ? null : RenderExpression(tex.CompareValue, ctx), offset)})",
+            IRExpression.TextureOperation.Load =>
+                $"{resource}.Load({Args(coord, offset)})", // no sampler — Load reads texels directly
+            IRExpression.TextureOperation.Gather =>
+                $"{resource}.Gather({Args(sampler, coord, offset)})",
+            IRExpression.TextureOperation.GatherCompare =>
+                $"{resource}.GatherCmp({Args(sampler, coord, tex.CompareValue is null ? null : RenderExpression(tex.CompareValue, ctx), offset)})",
+            _ =>
+                $"/* TODO: no confirmed HLSL mapping for {tex.Operation} */ {resource}.{tex.Operation}({Args(sampler, coord)})",
+        };
+    }
+}

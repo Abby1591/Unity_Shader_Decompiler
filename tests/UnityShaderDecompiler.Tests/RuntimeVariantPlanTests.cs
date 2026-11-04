@@ -1,5 +1,5 @@
-using Parser;
-using Parser.DXBC.Metadata;
+using UnityShaderDecompiler.Core;
+using UnityShaderDecompiler.Core.DXBC.Metadata;
 
 namespace UnityShaderDecompiler.Tests;
 
