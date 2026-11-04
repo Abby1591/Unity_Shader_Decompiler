@@ -341,6 +341,12 @@ public static class Decompiler
             }
             catch (Exception ex)
             {
+                if (sp.m_ProgramType is >= ShaderGpuProgramType.DX11VertexSM40
+                    and <= ShaderGpuProgramType.DX11DomainSM50)
+                {
+                    throw new InvalidDataException(
+                        $"Failed to decompile DirectX subprogram {i} ({sp.m_ProgramType}): {ex.Message}", ex);
+                }
                 log.WriteLine($"No DXBC: {ex.Message}");
             }
 
