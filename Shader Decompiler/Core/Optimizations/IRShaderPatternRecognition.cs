@@ -12,9 +12,8 @@ namespace Parser.Core.Optimizations;
 // Order matters: vector recognition folds row·vector dot-product chains
 // (and, separately, normalize()) first, which is what gives matrix
 // recognition the DotProductExpression nodes it groups into
-// MatrixVectorMultiplyExpression. Texture recognition is independent of
-// both and just tags along in the same fixed-point sweep. Loops to a
-// fixed point because folding a row can occasionally simplify a
+// MatrixVectorMultiplyExpression. Loops to a fixed point because folding
+// a row can occasionally simplify a
 // neighboring statement enough to unblock the next match (e.g. once dead
 // partial-sum temporaries drop out, two previously non-adjacent
 // statements become adjacent).
@@ -37,7 +36,6 @@ public static class IRShaderPatternRecognition
             changed = false;
             changed |= IRVectorPatternRecognition.Run(blocks);
             changed |= IRMatrixPatternRecognition.Run(blocks);
-            changed |= IRTexturePatternRecognition.Run(blocks);
             changedOverall |= changed;
         }
 
