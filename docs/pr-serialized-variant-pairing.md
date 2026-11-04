@@ -1,4 +1,7 @@
-﻿# Restore runtime keyword selection from serialized variants
+# Restore runtime keyword selection from serialized variants
+
+- **Bug fix:** Match serialized stage references and keyword states, retain all graphics stages in expanded mode, and preserve constant-buffer sizes.
+- **Improvement:** Add opt-in runtime keyword selection with local/global scope and an exhaustive compilation manifest.
 
 Use serialized program references and stage keyword masks to pair vertex/fragment programs. Preserve stage-only keywords and reject missing programs, unmatched states and incompatible interfaces. Keep constant-buffer sizes in extracted metadata.
 
