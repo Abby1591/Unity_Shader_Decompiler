@@ -2801,6 +2801,10 @@ public static class HlslPrettyPrinter
 
     private static string RenderStructuredLoad(IRExpression.TextureOperationExpression tex, PrintContext ctx)
     {
+        // Float temporaries can numerically convert integer outputs and lose payload bits.
+        if (!ctx.RawTemporaryStorage)
+            throw new InvalidDataException("Structured loads require --no-fuse-temps to preserve register bits.");
+
         if (tex.Coordinates is null || tex.Offset is not IRExpression.ConstantExpression { RawValues.Length: 1 } offset)
             throw new InvalidDataException("Structured load requires an element index and a constant byte offset.");
         uint byteOffset = offset.RawValues[0];

@@ -27,6 +27,9 @@ public sealed class StructuredBufferLoadsTests
             "{ return data[index].value.zxyw; }";
         Parser.DXBC.DxbcFile original = RegisterRoundTrip.Compile(source);
         Assert.Contains(original.Shader!.Instructions, instruction => instruction.Opcode == Opcode.LdStructured);
+        System.IO.InvalidDataException error = Assert.Throws<System.IO.InvalidDataException>(
+            () => RegisterRoundTrip.Recompile(original, fuseTemps: true));
+        Assert.Contains("--no-fuse-temps", error.Message);
         Parser.DXBC.DxbcFile rebuilt = RegisterRoundTrip.Recompile(original);
         Assert.Equal(original.OutputSignature!.Elements[0].ComponentType,
             rebuilt.OutputSignature!.Elements[0].ComponentType);
@@ -106,6 +109,7 @@ public sealed class StructuredBufferLoadsTests
 
     private static string Print(HlslFunctionNode function)
     {
+        function.RawTemporaryStorage = true;
         HlslShaderNode shader = new HlslShaderNode { Name = "Test/Scope" };
         HlslSubShaderNode subShader = new HlslSubShaderNode();
         subShader.Passes.Add(new HlslPassNode { FragmentFunction = function });

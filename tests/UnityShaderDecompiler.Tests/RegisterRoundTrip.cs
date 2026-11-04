@@ -22,14 +22,14 @@ internal static class RegisterRoundTrip
         return file;
     }
 
-    internal static DxbcFile Recompile(DxbcFile original)
+    internal static DxbcFile Recompile(DxbcFile original, bool fuseTemps = false)
     {
-        IRPipeline.Result pipeline = IRPipeline.Run(original, preserveArithmetic: true);
+        IRPipeline.Result pipeline = IRPipeline.Run(original, preserveArithmetic: !fuseTemps);
         Assert.True(pipeline.SsaVerification.IsValid);
         HlslFunctionNode function = HlslAstBuilder.BuildFunction("RoundTrip",
             ShaderGpuProgramType.DX11PixelSM50, pipeline.Program.Declarations,
             pipeline.Blocks, original.InputSignature, original.OutputSignature)!;
-        function.RawTemporaryStorage = true;
+        function.RawTemporaryStorage = !fuseTemps;
         HlslPassNode pass = new HlslPassNode { FragmentFunction = function };
         pass.Structs.Add(function.InputStruct!);
         pass.Structs.Add(function.OutputStruct!);
@@ -39,7 +39,7 @@ internal static class RegisterRoundTrip
         subShader.Passes.Add(pass);
         HlslShaderNode shader = new HlslShaderNode { Name = "Test/RegisterRoundTrip" };
         shader.SubShaders.Add(subShader);
-        string shaderText = HlslPrettyPrinter.Print(shader, fuseTemps: false);
+        string shaderText = HlslPrettyPrinter.Print(shader, fuseTemps: fuseTemps);
         string hlsl = Regex.Match(shaderText, @"HLSLPROGRAM(.*?)ENDHLSL", RegexOptions.Singleline).Groups[1].Value;
         return Compile(hlsl, function.Name);
     }
