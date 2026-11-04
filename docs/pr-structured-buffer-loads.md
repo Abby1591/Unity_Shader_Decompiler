@@ -1,7 +1,9 @@
 # Preserve structured resource strides and load offsets
 
-Represent structured resources with their declared stride and lower structured loads using the element index, byte offset and resource swizzle. Reject invalid strides and offsets instead of guessing a layout.
+Structured loads previously combined the element index with a byte offset and assumed a fixed element layout. Preserve the declared stride, the byte offset and the resource swizzle independently; reject unaligned or out-of-range accesses.
 
-Validation: 55 C# tests and all four existing PicaVoxel extraction/decompilation tests pass. C# tests use an en-US default culture; the upstream fr-FR golden-output failure is addressed independently by the numeric-formatting PR.
+Depends on #7 (`fix/raw-register-semantics`), now included in this branch. Native tests exposed numeric float-to-integer conversions in the standalone version: raw register transport is required to preserve integer output bits. Review the structured-load changes against that branch, and merge #7 first.
 
-This branch is based directly on upstream `1850608`; it does not include the other review branches. No proprietary fixtures or machine-specific paths are added.
+Three native round trips cover float, uint and int outputs, a 32-byte stride, a nonzero member offset, swizzling and two elements. A restricted bytecode evaluator checks exact words, including NaN payloads, subnormals and signed zero; unexpected conversions fail. The integer cases fail without #7 and pass with it. These checks use `fuseTemps: false`; they do not establish fused-mode or GPU execution equivalence.
+
+Validation: 65 C# tests and all four PicaVoxel end-to-end cases pass on Windows. The isolated suite uses en-US because upstream's fr-FR golden-output failure is addressed separately in #5.

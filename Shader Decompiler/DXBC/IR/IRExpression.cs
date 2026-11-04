@@ -317,6 +317,9 @@ public abstract class IRExpression
                 IRIntrinsic.CastUInt  => IRValueType.UInt,
                 IRIntrinsic.CastDouble => IRValueType.Double,
                 IRIntrinsic.CastBool  => IRValueType.Bool,
+                IRIntrinsic.AsFloat => IRValueType.Float,
+                IRIntrinsic.AsInt => IRValueType.Int,
+                IRIntrinsic.AsUInt => IRValueType.UInt,
 
                 IRIntrinsic.Any => IRValueType.Bool,
                 IRIntrinsic.All => IRValueType.Bool,

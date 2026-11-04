@@ -24,7 +24,7 @@ public static class IRPipeline
         public List<(string Phase, string Text)> StageDumps { get; } = new();
     }
 
-    public static Result Run(DxbcFile file, bool dumpStages = false)
+    public static Result Run(DxbcFile file, bool dumpStages = false, bool preserveArithmetic = false)
     {
         var stageDumps = new List<(string Phase, string Text)>();
 
@@ -42,7 +42,7 @@ public static class IRPipeline
         }
 
         // 1. Decode -> flat IR (no control flow structure yet)
-        var builder = new IRBuilder();
+        IRBuilder builder = new IRBuilder(preserveRegisterBits: preserveArithmetic);
         IRProgram program = builder.Build(file.Shader!);
 
         // 2. Split into basic blocks and wire up predecessors/successors
@@ -77,7 +77,8 @@ public static class IRPipeline
         //    is read-only so it doesn't matter when it runs relative to
         //    the others, but doing it here means it sees the same
         //    simplified shape as everything else.
-            IRShaderPatternRecognition.Run(blocks);
+            if (!preserveArithmetic)
+                IRShaderPatternRecognition.Run(blocks);
             Snapshot("05-pattern-recognized", blocks);
             List<IRLoopPatternRecognition.LoopInfo> loops = IRShaderPatternRecognition.DetectLoops(blocks);
 

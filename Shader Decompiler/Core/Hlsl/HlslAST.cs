@@ -231,6 +231,7 @@ public enum HlslShaderStage
 
 public sealed class HlslFunctionNode
 {
+    public bool RawTemporaryStorage { get; set; }
     // Canonical per-stage name (Stage 9): vert/frag/geom/hull/domain/comp.
     // No collision risk between passes — each Pass has its own function
     // slots, so every pass's vertex function is just called "vert".

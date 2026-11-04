@@ -13,6 +13,38 @@ namespace UnityShaderDecompiler.Tests;
 public sealed class StructuredBufferLoadsTests
 {
     [Theory]
+    [InlineData("float")]
+    [InlineData("uint")]
+    [InlineData("int")]
+    [Trait("Category", "D3D")]
+    public void StructuredLoadPreservesWordsThroughNativeRoundTrip(string type)
+    {
+        if (!OperatingSystem.IsWindows()) return;
+
+        string source = $"struct Element {{ uint4 padding; {type}4 value; }}; " +
+            $"StructuredBuffer<Element> data : register(t7); " +
+            $"{type}4 main(nointerpolation uint index : TEXCOORD0) : SV_Target " +
+            "{ return data[index].value.zxyw; }";
+        Parser.DXBC.DxbcFile original = RegisterRoundTrip.Compile(source);
+        Assert.Contains(original.Shader!.Instructions, instruction => instruction.Opcode == Opcode.LdStructured);
+        Parser.DXBC.DxbcFile rebuilt = RegisterRoundTrip.Recompile(original);
+        Assert.Equal(original.OutputSignature!.Elements[0].ComponentType,
+            rebuilt.OutputSignature!.Elements[0].ComponentType);
+        uint[] words = {
+            11, 12, 13, 14, 0xffffffffu, 0x7fc12345u, 1, 0x80000000u,
+            21, 22, 23, 24, 0x01000001u, 0xffc54321u, 0x7fffffffu, 0x80000001u,
+        };
+        for (uint index = 0; index < 2; index++)
+        {
+            uint[] input = { index, 0, 0, 0 };
+            int offset = checked((int)index * 8 + 4);
+            uint[] expected = { words[offset + 2], words[offset], words[offset + 1], words[offset + 3] };
+            Assert.Equal(expected, RegisterRoundTrip.Evaluate(original, input, words));
+            Assert.Equal(expected, RegisterRoundTrip.Evaluate(rebuilt, input, words));
+        }
+    }
+
+    [Theory]
     [InlineData(4u, 32u, true)]
     [InlineData(2u, 32u, false)]
     [InlineData(32u, 32u, false)]
