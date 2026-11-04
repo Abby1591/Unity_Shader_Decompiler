@@ -1,4 +1,4 @@
-namespace Parser.DXBC.Instructions;
+namespace UnityShaderDecompiler.Core.DXBC.Instructions;
 
 // Mirrors D3D10_SB_RESOURCE_DIMENSION. ShdrParser already captures the raw
 // resourceDim bits from dcl_resource into instruction.ExtraData[0] — this is

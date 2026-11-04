@@ -1,7 +1,7 @@
-﻿using System;
+using System;
 using System.Text;
-using Parser;
-using Parser.DXBC.Compilation;
+using UnityShaderDecompiler.Core;
+using UnityShaderDecompiler.Core.DXBC.Compilation;
 
 namespace UnityShaderDecompiler.Tests;
 

@@ -1,6 +1,6 @@
-using Parser.DXBC.IR;
+using UnityShaderDecompiler.Core.DXBC.IR;
 
-namespace Parser.Core.Optimizations;
+namespace UnityShaderDecompiler.Core.Optimizations;
 
 // Phase 9.7: replaces a multiply by a compile-time-constant power of two
 // with a cheaper equivalent — a left shift for Int/UInt, or a self-add

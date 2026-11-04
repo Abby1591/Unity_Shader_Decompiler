@@ -1,6 +1,6 @@
-using Parser.DXBC.IR;
+using UnityShaderDecompiler.Core.DXBC.IR;
 
-namespace Parser.DXBC.Instructions;
+namespace UnityShaderDecompiler.Core.DXBC.Instructions;
 
 // D3D10_SB_TOKENIZED_PROGRAM_TYPE - decoded from bits 16-31 of the
 // shader version token.

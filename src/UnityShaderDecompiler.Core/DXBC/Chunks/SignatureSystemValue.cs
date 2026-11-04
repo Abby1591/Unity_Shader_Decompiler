@@ -1,4 +1,4 @@
-namespace Parser.DXBC.Chunks;
+namespace UnityShaderDecompiler.Core.DXBC.Chunks;
 
 // The D3D_NAME (d3dcommon.h) numbering that signature chunks (ISGN/OSGN)
 // use for SystemValue fields — distinct from the D3D10_SB_NAME numbering

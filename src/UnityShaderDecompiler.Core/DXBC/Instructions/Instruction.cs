@@ -1,4 +1,4 @@
-namespace Parser.DXBC.Instructions;
+namespace UnityShaderDecompiler.Core.DXBC.Instructions;
 
 public enum InstructionTestBoolean
 {

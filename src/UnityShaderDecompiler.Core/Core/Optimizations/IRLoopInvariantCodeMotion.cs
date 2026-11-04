@@ -1,7 +1,7 @@
-using Parser.DXBC.IR;
-using Parser.Core.Analysis;
+using UnityShaderDecompiler.Core.DXBC.IR;
+using UnityShaderDecompiler.Core.Analysis;
 
-namespace Parser.Core.Optimizations;
+namespace UnityShaderDecompiler.Core.Optimizations;
 
 // Phase 9.8: hoists computations out of loops when every value they read
 // is defined outside the loop body. Loop bodies are identified

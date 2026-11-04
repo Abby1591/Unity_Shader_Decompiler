@@ -1,6 +1,6 @@
-namespace Parser.DXBC.IR;
+namespace UnityShaderDecompiler.Core.DXBC.IR;
 
-using Parser.DXBC.Instructions;
+using UnityShaderDecompiler.Core.DXBC.Instructions;
 
 public abstract class IRDeclaration
 {

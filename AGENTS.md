@@ -32,7 +32,7 @@ dotnet test UnityShaderDecompiler.sln --filter "Category!=D3D"
 # Native d3dcompiler round-trips (Windows):
 dotnet test UnityShaderDecompiler.sln --filter "Category=D3D"
 ```
-The suite lives in `tests/UnityShaderDecompiler.Tests` and uses checked-in fixtures under `tests/Fixtures/` (blob.bin + metadata.json), so it needs no Python or network access. It ports the old spec vectors into individual xUnit cases and covers the whole in-process pipeline via `Parser.Decompiler`.
+The suite lives in `tests/UnityShaderDecompiler.Tests` and uses checked-in fixtures under `tests/Fixtures/` (blob.bin + metadata.json), so it needs no Python or network access. It ports the old spec vectors into individual xUnit cases and covers the whole in-process pipeline via `UnityShaderDecompiler.Core.Decompiler`.
 
 ### Golden tests (Python, end-to-end)
 ```bash
@@ -69,7 +69,7 @@ Decompiles the blob, recompiles every HLSLPROGRAM block with d3dcompiler, compar
 - CI (`.github/workflows/ci-build-info.yml`) builds every push/PR on Windows, Linux, and macOS, runs `dotnet test --filter "Category!=D3D"`, and smoke-tests `--run-spec-tests`; nightly (`.github/workflows/nightly.yml`) publishes artifacts at 03:00 UTC only when `master` has commits in the previous 24h, then runs the full test tier plus the Windows golden e2e suite.
 - `Program.cs` is only CLI dispatch. The pipeline lives in `src/UnityShaderDecompiler.Core/Decompiler.cs` (`Decompiler.Decompile` / `DecompileFolder`) and is the entry point tests should use.
 - `AllowUnsafeBlocks` is enabled in both C# projects (pinned-buffer D3D calls).
-- C# namespace is `Parser`, not `ShaderDecompiler`.
+- C# namespaces are `UnityShaderDecompiler.Core` (library) and `UnityShaderDecompiler.Cli` (executable); the vendored blob reader keeps `AssetStudio`.
 - Folder names are sanitized on Windows (`/` `\` → `_`, trailing dots/spaces stripped).
 - With no arguments the CLI looks for `Output/HOLO_Holo` in the working directory, then one level up.
 - Output location: `.shader` files go to `src/UnityShaderDecompiler.Cli/Output/` (the project's `ProjectOutputRoot`), not the repo-root `Output/`.

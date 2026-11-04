@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -6,13 +6,14 @@ using System.Text;
 using System.Text.Json;
 using System.Text.RegularExpressions;
 using AssetStudio;
-using Parser.DXBC;
-using Parser.DXBC.Chunks;
-using Parser.DXBC.Compilation;
-using Parser.DXBC.Extraction;
-using Parser.DXBC.Metadata;
+using UnityShaderDecompiler.Core.DXBC;
+using UnityShaderDecompiler.Core.DXBC.Chunks;
+using UnityShaderDecompiler.Core.DXBC.Compilation;
+using UnityShaderDecompiler.Core.DXBC.Extraction;
+using UnityShaderDecompiler.Core.DXBC.Metadata;
+using UnityShaderDecompiler.Core;
 
-namespace Parser;
+namespace UnityShaderDecompiler.Cli;
 
 // Unified faithfulness test: runs the full decompilation pipeline on a
 // blob folder, then verifies the output .shader against the original DXBC

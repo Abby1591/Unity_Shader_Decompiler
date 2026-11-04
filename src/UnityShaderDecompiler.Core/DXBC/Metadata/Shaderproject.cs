@@ -1,6 +1,6 @@
 using System.IO;
 
-namespace Parser.DXBC.Metadata;
+namespace UnityShaderDecompiler.Core.DXBC.Metadata;
 
 /// <summary>
 /// Stage 0.4 — everything downstream (Stage 1+) reads from this instead of

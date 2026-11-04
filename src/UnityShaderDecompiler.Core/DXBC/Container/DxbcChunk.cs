@@ -1,6 +1,6 @@
-using Parser.DXBC.Container;
+using UnityShaderDecompiler.Core.DXBC.Container;
 
-namespace Parser.DXBC;
+namespace UnityShaderDecompiler.Core.DXBC;
 
 public class DxbcChunk
 {

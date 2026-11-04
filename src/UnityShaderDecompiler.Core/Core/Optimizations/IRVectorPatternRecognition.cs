@@ -1,7 +1,7 @@
-using Parser.DXBC.Instructions;
+using UnityShaderDecompiler.Core.DXBC.Instructions;
 
-using Parser.DXBC.IR;
-namespace Parser.Core.Optimizations;
+using UnityShaderDecompiler.Core.DXBC.IR;
+namespace UnityShaderDecompiler.Core.Optimizations;
 
 // Post-SSA, pre-HLSL-generation pass (roadmap: "Vector pattern recognition").
 // Runs in two passes, bottom-up like every other expression rewrite:

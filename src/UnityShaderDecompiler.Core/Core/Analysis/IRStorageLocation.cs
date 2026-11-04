@@ -1,7 +1,7 @@
-using Parser.DXBC.Instructions;
-using Parser.DXBC.IR;
+using UnityShaderDecompiler.Core.DXBC.Instructions;
+using UnityShaderDecompiler.Core.DXBC.IR;
 
-namespace Parser.Core.Analysis;
+namespace UnityShaderDecompiler.Core.Analysis;
 
 // Identifies a single scalar component of a register (e.g. "r0.x") by
 // value rather than by object identity. Two IRRegister instances that

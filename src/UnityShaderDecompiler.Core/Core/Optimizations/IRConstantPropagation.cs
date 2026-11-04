@@ -1,7 +1,7 @@
-using Parser.DXBC.IR;
-using Parser.Core.Analysis;
+using UnityShaderDecompiler.Core.DXBC.IR;
+using UnityShaderDecompiler.Core.Analysis;
 
-namespace Parser.Core.Optimizations;
+namespace UnityShaderDecompiler.Core.Optimizations;
 
 // Phase 9.2: for every SSA value whose sole definition is a plain
 // constant (r0.x_3 = 5), replaces every read of it with that constant

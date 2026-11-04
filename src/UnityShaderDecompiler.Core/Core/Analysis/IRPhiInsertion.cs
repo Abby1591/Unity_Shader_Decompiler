@@ -1,6 +1,6 @@
-using Parser.DXBC.IR;
+using UnityShaderDecompiler.Core.DXBC.IR;
 
-namespace Parser.Core.Analysis;
+namespace UnityShaderDecompiler.Core.Analysis;
 
 // Phase 6: classic Cytron et al. PHI placement. For every storage
 // location defined in more than one block, walk the iterated dominance

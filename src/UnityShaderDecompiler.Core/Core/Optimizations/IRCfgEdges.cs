@@ -1,6 +1,6 @@
-using Parser.DXBC.IR;
+using UnityShaderDecompiler.Core.DXBC.IR;
 
-namespace Parser.Core.Optimizations;
+namespace UnityShaderDecompiler.Core.Optimizations;
 
 // Shared plumbing for anything that deletes a CFG edge (branch
 // simplification pruning a proven-dead successor, CFG cleanup dropping an

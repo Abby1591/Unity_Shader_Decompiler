@@ -1,4 +1,4 @@
-namespace Parser.DXBC.Chunks;
+namespace UnityShaderDecompiler.Core.DXBC.Chunks;
 
 public class SignatureElement
 {

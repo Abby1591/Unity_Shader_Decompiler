@@ -1,6 +1,7 @@
-using Parser.DXBC;
+using UnityShaderDecompiler.Core.DXBC;
+using UnityShaderDecompiler.Core;
 
-namespace Parser;
+namespace UnityShaderDecompiler.Cli;
 
 public static class DxbcTest
 {

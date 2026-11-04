@@ -1,4 +1,4 @@
-namespace Parser.DXBC.IR;
+namespace UnityShaderDecompiler.Core.DXBC.IR;
 
 // A maximal straight-line run of statements with a single entry (nothing
 // branches into the middle of it) and a single exit (nothing branches out

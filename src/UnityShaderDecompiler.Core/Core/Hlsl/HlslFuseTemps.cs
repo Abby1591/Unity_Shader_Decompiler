@@ -1,23 +1,23 @@
-using Parser.DXBC.IR;
-using Parser.Core.Analysis;
-using Parser.Core.Optimizations;
-using RegisterExpression = Parser.DXBC.IR.IRExpression.RegisterExpression;
-using ConstantExpression = Parser.DXBC.IR.IRExpression.ConstantExpression;
-using BinaryExpression = Parser.DXBC.IR.IRExpression.BinaryExpression;
-using UnaryExpression = Parser.DXBC.IR.IRExpression.UnaryExpression;
-using IntrinsicExpression = Parser.DXBC.IR.IRExpression.IntrinsicExpression;
-using FusedMultiplyAddExpression = Parser.DXBC.IR.IRExpression.FusedMultiplyAddExpression;
-using MultiplyHighExpression = Parser.DXBC.IR.IRExpression.MultiplyHighExpression;
-using Multiply64Expression = Parser.DXBC.IR.IRExpression.Multiply64Expression;
-using BitFieldInsertExpression = Parser.DXBC.IR.IRExpression.BitFieldInsertExpression;
-using BitFieldExtractExpression = Parser.DXBC.IR.IRExpression.BitFieldExtractExpression;
-using ConditionalExpression = Parser.DXBC.IR.IRExpression.ConditionalExpression;
-using DotProductExpression = Parser.DXBC.IR.IRExpression.DotProductExpression;
-using SwizzleExpression = Parser.DXBC.IR.IRExpression.SwizzleExpression;
-using MatrixVectorMultiplyExpression = Parser.DXBC.IR.IRExpression.MatrixVectorMultiplyExpression;
-using TextureOperationExpression = Parser.DXBC.IR.IRExpression.TextureOperationExpression;
+using UnityShaderDecompiler.Core.DXBC.IR;
+using UnityShaderDecompiler.Core.Analysis;
+using UnityShaderDecompiler.Core.Optimizations;
+using RegisterExpression = UnityShaderDecompiler.Core.DXBC.IR.IRExpression.RegisterExpression;
+using ConstantExpression = UnityShaderDecompiler.Core.DXBC.IR.IRExpression.ConstantExpression;
+using BinaryExpression = UnityShaderDecompiler.Core.DXBC.IR.IRExpression.BinaryExpression;
+using UnaryExpression = UnityShaderDecompiler.Core.DXBC.IR.IRExpression.UnaryExpression;
+using IntrinsicExpression = UnityShaderDecompiler.Core.DXBC.IR.IRExpression.IntrinsicExpression;
+using FusedMultiplyAddExpression = UnityShaderDecompiler.Core.DXBC.IR.IRExpression.FusedMultiplyAddExpression;
+using MultiplyHighExpression = UnityShaderDecompiler.Core.DXBC.IR.IRExpression.MultiplyHighExpression;
+using Multiply64Expression = UnityShaderDecompiler.Core.DXBC.IR.IRExpression.Multiply64Expression;
+using BitFieldInsertExpression = UnityShaderDecompiler.Core.DXBC.IR.IRExpression.BitFieldInsertExpression;
+using BitFieldExtractExpression = UnityShaderDecompiler.Core.DXBC.IR.IRExpression.BitFieldExtractExpression;
+using ConditionalExpression = UnityShaderDecompiler.Core.DXBC.IR.IRExpression.ConditionalExpression;
+using DotProductExpression = UnityShaderDecompiler.Core.DXBC.IR.IRExpression.DotProductExpression;
+using SwizzleExpression = UnityShaderDecompiler.Core.DXBC.IR.IRExpression.SwizzleExpression;
+using MatrixVectorMultiplyExpression = UnityShaderDecompiler.Core.DXBC.IR.IRExpression.MatrixVectorMultiplyExpression;
+using TextureOperationExpression = UnityShaderDecompiler.Core.DXBC.IR.IRExpression.TextureOperationExpression;
 
-namespace Parser.Core.Hlsl.Ast;
+namespace UnityShaderDecompiler.Core.Hlsl.Ast;
 
 // Stage 13.5 — single-use temp fusion (opt-out via --no-fuse-temps).
 //

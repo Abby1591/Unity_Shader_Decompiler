@@ -1,7 +1,7 @@
-using Parser.DXBC.IR;
-using Parser.Core.Analysis;
+using UnityShaderDecompiler.Core.DXBC.IR;
+using UnityShaderDecompiler.Core.Analysis;
 
-namespace Parser.Core.Optimizations;
+namespace UnityShaderDecompiler.Core.Optimizations;
 
 // Phase 9.4: removes IRAssignment/IRPhi statements whose result is never
 // read anywhere. Only ever touches pure statement types — anything that

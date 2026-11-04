@@ -1,6 +1,6 @@
-using Parser.DXBC.IR;
+using UnityShaderDecompiler.Core.DXBC.IR;
 
-namespace Parser.Core.Analysis;
+namespace UnityShaderDecompiler.Core.Analysis;
 
 // Phase 10 ("leave SSA" only — not full deconstruction into a
 // register-allocated form): replaces every PHI with an equivalent copy

@@ -1,7 +1,7 @@
-using Parser.DXBC.IR;
-using Parser.Core.Analysis;
+using UnityShaderDecompiler.Core.DXBC.IR;
+using UnityShaderDecompiler.Core.Analysis;
 
-namespace Parser.Core.Optimizations;
+namespace UnityShaderDecompiler.Core.Optimizations;
 
 // Phase 9.14: collapses a phi whose operands don't actually merge more than
 // one distinct value — either every operand is literally the same register

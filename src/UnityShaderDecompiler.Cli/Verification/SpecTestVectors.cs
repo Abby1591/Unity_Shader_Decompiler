@@ -2,10 +2,11 @@ using System;
 using System.IO;
 using System.Linq;
 using System.Text;
-using Parser.DXBC;
-using Parser.DXBC.Extraction;
+using UnityShaderDecompiler.Core.DXBC;
+using UnityShaderDecompiler.Core.DXBC.Extraction;
+using UnityShaderDecompiler.Core;
 
-namespace Parser;
+namespace UnityShaderDecompiler.Cli;
 
 // Automated rendering of spec §15 test vectors (shader_parser_spec.md) and
 // the §14 classifier branches. Fully offline: every payload is synthesized.

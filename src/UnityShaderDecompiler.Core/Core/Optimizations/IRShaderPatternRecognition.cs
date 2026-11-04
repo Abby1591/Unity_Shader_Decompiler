@@ -1,7 +1,7 @@
-using Parser.DXBC;
-using Parser.DXBC.IR;
+using UnityShaderDecompiler.Core.DXBC;
+using UnityShaderDecompiler.Core.DXBC.IR;
 
-namespace Parser.Core.Optimizations;
+namespace UnityShaderDecompiler.Core.Optimizations;
 
 // Roadmap position: "After SSA but before HLSL generation" — run this
 // once IROptimizationPipeline.Run has reached its fixed point (so the

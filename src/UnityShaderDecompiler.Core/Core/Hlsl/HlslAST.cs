@@ -1,8 +1,8 @@
 using System.Text.Json;
-using Parser.DXBC.Metadata;
+using UnityShaderDecompiler.Core.DXBC.Metadata;
 
-using Parser.DXBC.IR;
-namespace Parser.Core.Hlsl.Ast;
+using UnityShaderDecompiler.Core.DXBC.IR;
+namespace UnityShaderDecompiler.Core.Hlsl.Ast;
 
 // Stage 2 — Build HLSL AST.
 //
@@ -252,15 +252,15 @@ public sealed class HlslFunctionNode
     // already declares one field per element. The printer consults this map
     // to route a component write/read to the element whose mask covers it,
     // so `o1.zw` becomes `o.texcoord1.xy`, not the invalid `o.texcoord0.zw`.
-    public Dictionary<uint, List<Parser.DXBC.Chunks.SignatureElement>> InputElementsByRegister { get; } = new();
-    public Dictionary<uint, List<Parser.DXBC.Chunks.SignatureElement>> OutputElementsByRegister { get; } = new();
+    public Dictionary<uint, List<UnityShaderDecompiler.Core.DXBC.Chunks.SignatureElement>> InputElementsByRegister { get; } = new();
+    public Dictionary<uint, List<UnityShaderDecompiler.Core.DXBC.Chunks.SignatureElement>> OutputElementsByRegister { get; } = new();
 
     // Populated verbatim from the IR pipeline's output for this
     // subprogram — kept for anything that wants the flat original-order
     // list (debug dumps, cross-checking). Statements below (Stage 10) is
     // the real structured tree; prefer that for anything doing actual
     // codegen.
-    public List<Parser.DXBC.IR.IRStatement> Body { get; } = new();
+    public List<UnityShaderDecompiler.Core.DXBC.IR.IRStatement> Body { get; } = new();
 
     // Stage 10 — If/Loop/Switch/etc as real nested nodes instead of a
     // flat list with begin/end markers you have to track by hand.

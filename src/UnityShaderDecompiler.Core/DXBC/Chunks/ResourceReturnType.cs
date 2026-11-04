@@ -1,4 +1,4 @@
-namespace Parser.DXBC.Chunks;
+namespace UnityShaderDecompiler.Core.DXBC.Chunks;
 
 // Mirrors D3D_RESOURCE_RETURN_TYPE (d3dcommon.h). Values verified against
 // Microsoft's published enumeration.

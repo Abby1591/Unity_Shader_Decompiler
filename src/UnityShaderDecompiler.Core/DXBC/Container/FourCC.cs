@@ -1,4 +1,4 @@
-namespace Parser.DXBC.Container;
+namespace UnityShaderDecompiler.Core.DXBC.Container;
 
 public readonly struct FourCC : IEquatable<FourCC>
 {

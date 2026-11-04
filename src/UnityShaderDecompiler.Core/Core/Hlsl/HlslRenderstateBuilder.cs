@@ -1,7 +1,7 @@
 using System.Text.Json;
 
-using Parser.DXBC.IR;
-namespace Parser.Core.Hlsl.Ast;
+using UnityShaderDecompiler.Core.DXBC.IR;
+namespace UnityShaderDecompiler.Core.Hlsl.Ast;
 
 // Stage 6 — Pass Generation.
 //

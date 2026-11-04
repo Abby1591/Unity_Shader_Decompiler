@@ -1,4 +1,4 @@
-namespace Parser.DXBC.Chunks;
+namespace UnityShaderDecompiler.Core.DXBC.Chunks;
 
 // D3D11_SHADER_STATS-style layout (SM4/SM5). Field order matches the well-known
 // reverse-engineered layout used by SharpDX / SlimDX / Wine's d3dcompiler_43/47.

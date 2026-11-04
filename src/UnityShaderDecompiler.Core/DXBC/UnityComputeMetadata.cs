@@ -2,7 +2,7 @@ using System;
 using System.IO;
 using System.Text;
 
-namespace Parser.DXBC;
+namespace UnityShaderDecompiler.Core.DXBC;
 
 // §6 compute serialized format (shader_parser_spec.md), PROVEN layouts:
 //

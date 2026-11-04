@@ -1,11 +1,11 @@
 using System.Text.Json;
 using AssetStudio;
-using Parser.DXBC.Chunks;
-using Parser.DXBC.Instructions;
-using Parser.DXBC.IR;
-using Parser.DXBC.Metadata;
+using UnityShaderDecompiler.Core.DXBC.Chunks;
+using UnityShaderDecompiler.Core.DXBC.Instructions;
+using UnityShaderDecompiler.Core.DXBC.IR;
+using UnityShaderDecompiler.Core.DXBC.Metadata;
 
-namespace Parser.Core.Hlsl.Ast;
+namespace UnityShaderDecompiler.Core.Hlsl.Ast;
 
 // Stage 2 — Build HLSL AST.
 //

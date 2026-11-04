@@ -4,14 +4,14 @@ using System.IO;
 using System.Linq;
 using System.Security.Cryptography;
 using AssetStudio;
-using Parser.Core.Hlsl.Ast;
-using Parser.DXBC;
-using Parser.DXBC.Chunks;
-using Parser.DXBC.Extraction;
-using Parser.DXBC.IR;
-using Parser.DXBC.Metadata;
+using UnityShaderDecompiler.Core.Hlsl.Ast;
+using UnityShaderDecompiler.Core.DXBC;
+using UnityShaderDecompiler.Core.DXBC.Chunks;
+using UnityShaderDecompiler.Core.DXBC.Extraction;
+using UnityShaderDecompiler.Core.DXBC.IR;
+using UnityShaderDecompiler.Core.DXBC.Metadata;
 
-namespace Parser;
+namespace UnityShaderDecompiler.Core;
 
 /// <summary>
 /// Options that control a single decompilation run. The defaults match the
@@ -333,7 +333,7 @@ public static class Decompiler
 
                 if (options.SaveSubprograms && options.OutRoot is { } hlslRoot)
                 {
-                    string hlsl = Parser.DXBC.Disassembly.DxbcDisassembler.Disassemble(dxbc);
+                    string hlsl = UnityShaderDecompiler.Core.DXBC.Disassembly.DxbcDisassembler.Disassemble(dxbc);
                     string hlslPath = Path.Combine(hlslRoot, $"program{i}.hlsl");
                     File.WriteAllText(hlslPath, hlsl);
                     log.WriteLine($"Saved: {hlslPath}");

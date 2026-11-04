@@ -1,7 +1,7 @@
-using Parser.DXBC.IR;
-using Parser.Core.Analysis;
+using UnityShaderDecompiler.Core.DXBC.IR;
+using UnityShaderDecompiler.Core.Analysis;
 
-namespace Parser.Core.Optimizations;
+namespace UnityShaderDecompiler.Core.Optimizations;
 
 // Phase 9.3: for every SSA value whose sole definition is a plain copy
 // of another register (a = b), replaces reads of `a` with `b` directly

@@ -1,6 +1,6 @@
-using Parser.DXBC.IR;
+using UnityShaderDecompiler.Core.DXBC.IR;
 
-namespace Parser.Core.Analysis;
+namespace UnityShaderDecompiler.Core.Analysis;
 
 // Phase 7: walks the dominator tree in preorder, maintaining one stack of
 // version numbers per storage location. Every write pushes a fresh

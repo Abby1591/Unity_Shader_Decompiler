@@ -1,13 +1,13 @@
 using System.Text;
 using System.Text.Json;
 using System.Text.RegularExpressions;
-using Parser.DXBC.Chunks;
-using Parser.DXBC.Instructions;
-using Parser.DXBC.IR;
-using Parser.Core.Analysis;
-using Parser.DXBC.Metadata;
+using UnityShaderDecompiler.Core.DXBC.Chunks;
+using UnityShaderDecompiler.Core.DXBC.Instructions;
+using UnityShaderDecompiler.Core.DXBC.IR;
+using UnityShaderDecompiler.Core.Analysis;
+using UnityShaderDecompiler.Core.DXBC.Metadata;
 
-namespace Parser.Core.Hlsl.Ast;
+namespace UnityShaderDecompiler.Core.Hlsl.Ast;
 
 // Stage 13 (statement/expression -> text formatting) + Stage 14 (ShaderLab
 // wrapper) together — splitting them into separate files would mean

@@ -1,4 +1,4 @@
-namespace Parser.DXBC.IR;
+namespace UnityShaderDecompiler.Core.DXBC.IR;
 
 public enum IRValueType
 {

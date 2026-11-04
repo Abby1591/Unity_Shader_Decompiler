@@ -2,15 +2,16 @@ using System;
 using System.IO;
 using System.Runtime.InteropServices;
 using AssetStudio;
-using Parser.DXBC;
-using Parser.DXBC.Chunks;
-using Parser.DXBC.Extraction;
-using Parser.DXBC.Metadata;
+using UnityShaderDecompiler.Core.DXBC;
+using UnityShaderDecompiler.Core.DXBC.Chunks;
+using UnityShaderDecompiler.Core.DXBC.Extraction;
+using UnityShaderDecompiler.Core.DXBC.Metadata;
 using SharpGen.Runtime;
 using Vortice.D3DCompiler;
 using Vortice.Direct3D;
+using UnityShaderDecompiler.Core;
 
-namespace Parser;
+namespace UnityShaderDecompiler.Cli;
 
 // Spec §16.9 required proof, executed on real shipped data: parse the ISGN
 // chunk of every real subprogram with our own IsgnChunk parser, then let

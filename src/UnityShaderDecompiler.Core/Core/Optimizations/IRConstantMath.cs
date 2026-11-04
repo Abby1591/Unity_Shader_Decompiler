@@ -1,6 +1,6 @@
-using Parser.DXBC.IR;
+using UnityShaderDecompiler.Core.DXBC.IR;
 
-namespace Parser.Core.Optimizations;
+namespace UnityShaderDecompiler.Core.Optimizations;
 
 // Bit-level scalar arithmetic on DXBC's raw 32-bit immediate encoding.
 // Doubles go through a separate path (they're already stored as real

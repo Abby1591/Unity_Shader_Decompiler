@@ -1,4 +1,4 @@
-namespace Parser.DXBC.Chunks;
+namespace UnityShaderDecompiler.Core.DXBC.Chunks;
 
 // Shared parser for OSGN (output signature), OSG5 (SM5 output signature w/ stream index),
 // and PSGN (patch-constant signature). All three use the same element layout except

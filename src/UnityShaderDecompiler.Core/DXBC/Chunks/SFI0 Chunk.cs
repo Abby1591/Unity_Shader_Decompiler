@@ -1,4 +1,4 @@
-namespace Parser.DXBC.Chunks;
+namespace UnityShaderDecompiler.Core.DXBC.Chunks;
 
 // D3D11 "SFI0" ShaderInfo0 chunk. Layout matches the well-known
 // reverse-engineered d3dcompiler format (SharpDX / Wine / meson sfi0). It

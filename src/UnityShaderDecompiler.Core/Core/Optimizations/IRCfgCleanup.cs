@@ -1,6 +1,6 @@
-using Parser.DXBC.IR;
+using UnityShaderDecompiler.Core.DXBC.IR;
 
-namespace Parser.Core.Optimizations;
+namespace UnityShaderDecompiler.Core.Optimizations;
 
 // Phase 9.13: cleans up the CFG shape left behind once IRBranchSimplification
 // (or anything else) prunes edges — deletes blocks nothing can reach any

@@ -1,9 +1,10 @@
 using System;
 using System.IO;
 using System.Linq;
-using Parser.DXBC.Metadata;
+using UnityShaderDecompiler.Core.DXBC.Metadata;
+using UnityShaderDecompiler.Core;
 
-namespace Parser;
+namespace UnityShaderDecompiler.Cli;
 
 internal class Program
 {

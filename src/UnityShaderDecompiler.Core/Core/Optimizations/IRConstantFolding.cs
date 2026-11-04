@@ -1,6 +1,6 @@
-using Parser.DXBC.IR;
+using UnityShaderDecompiler.Core.DXBC.IR;
 
-namespace Parser.Core.Optimizations;
+namespace UnityShaderDecompiler.Core.Optimizations;
 
 // Phase 9.1: folds a Binary/Unary node into a single ConstantExpression
 // wherever both (or the one) operand(s) are already constants. Runs as a

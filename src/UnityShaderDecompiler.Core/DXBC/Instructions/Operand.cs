@@ -1,6 +1,6 @@
 using System.Linq;
 
-namespace Parser.DXBC.Instructions;
+namespace UnityShaderDecompiler.Core.DXBC.Instructions;
 
 public class Operand
 {

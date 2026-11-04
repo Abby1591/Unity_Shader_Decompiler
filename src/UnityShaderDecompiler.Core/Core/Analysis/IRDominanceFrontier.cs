@@ -1,6 +1,6 @@
-using Parser.DXBC.IR;
+using UnityShaderDecompiler.Core.DXBC.IR;
 
-namespace Parser.Core.Analysis;
+namespace UnityShaderDecompiler.Core.Analysis;
 
 // Phase 5: DF(n) = every block m where n dominates some predecessor of m
 // but does not strictly dominate m itself — i.e. the first points past

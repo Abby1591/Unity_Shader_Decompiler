@@ -10,7 +10,7 @@
         <!-- Kept as "Shader Decompiler" so existing scripts and docs that
              point at the built executable keep working. -->
         <AssemblyName>Shader Decompiler</AssemblyName>
-        <RootNamespace>Parser</RootNamespace>
+        <RootNamespace>UnityShaderDecompiler.Cli</RootNamespace>
     </PropertyGroup>
 
     <ItemGroup>

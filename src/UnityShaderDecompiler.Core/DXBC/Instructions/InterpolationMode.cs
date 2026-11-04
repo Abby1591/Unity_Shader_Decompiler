@@ -1,4 +1,4 @@
-namespace Parser.DXBC.Instructions;
+namespace UnityShaderDecompiler.Core.DXBC.Instructions;
 
 // Mirrors D3D10_SB_INTERPOLATION_MODE. In real DXBC this is encoded in bits
 // of the dcl_input_ps opcode token itself (NOT a separate trailing DWORD the

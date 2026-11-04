@@ -4,7 +4,7 @@ using System.Text;
 using Vortice.D3DCompiler;
 using Vortice.Direct3D;
 
-namespace Parser.DXBC.Compilation;
+namespace UnityShaderDecompiler.Core.DXBC.Compilation;
 
 /// <summary>
 /// Thin wrapper over the native <c>d3dcompiler_47.dll</c> entry point used by

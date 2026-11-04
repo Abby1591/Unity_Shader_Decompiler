@@ -3,10 +3,10 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
-using Parser.DXBC.Metadata;
+using UnityShaderDecompiler.Core.DXBC.Metadata;
 
-using Parser.DXBC.IR;
-namespace Parser.Core.Hlsl.Ast;
+using UnityShaderDecompiler.Core.DXBC.IR;
+namespace UnityShaderDecompiler.Core.Hlsl.Ast;
 
 // Stage 13.5 — Surface-shader recognition.
 //

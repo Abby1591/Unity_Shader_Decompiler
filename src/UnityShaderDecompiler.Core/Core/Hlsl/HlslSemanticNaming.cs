@@ -1,8 +1,8 @@
-using Parser.DXBC.Instructions;
-using Parser.DXBC.IR;
-using Parser.DXBC.Metadata;
+using UnityShaderDecompiler.Core.DXBC.Instructions;
+using UnityShaderDecompiler.Core.DXBC.IR;
+using UnityShaderDecompiler.Core.DXBC.Metadata;
 
-namespace Parser.Core.Hlsl.Ast;
+namespace UnityShaderDecompiler.Core.Hlsl.Ast;
 
 // Stage 12b — Semantic naming.
 //

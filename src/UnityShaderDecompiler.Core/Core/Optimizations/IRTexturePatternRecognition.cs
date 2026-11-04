@@ -1,6 +1,6 @@
-using Parser.DXBC.IR;
+using UnityShaderDecompiler.Core.DXBC.IR;
 
-namespace Parser.Core.Optimizations;
+namespace UnityShaderDecompiler.Core.Optimizations;
 
 // Post-SSA, pre-HLSL-generation pass (roadmap: "Texture recognition").
 // TextureOperationExpression already models every sample/load/gather

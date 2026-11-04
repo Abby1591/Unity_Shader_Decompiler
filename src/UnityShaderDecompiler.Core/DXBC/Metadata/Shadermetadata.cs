@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Text.Json;
 
-namespace Parser.DXBC.Metadata;
+namespace UnityShaderDecompiler.Core.DXBC.Metadata;
 
 /// <summary>
 /// Deserializes metadata.json produced by Stage 0.2 (libs/metadata.py).

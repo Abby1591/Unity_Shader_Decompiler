@@ -2,10 +2,10 @@ using System;
 using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
-using Parser;
-using Parser.Core.Hlsl.Ast;
-using Parser.DXBC;
-using Parser.DXBC.Extraction;
+using UnityShaderDecompiler.Core;
+using UnityShaderDecompiler.Core.Hlsl.Ast;
+using UnityShaderDecompiler.Core.DXBC;
+using UnityShaderDecompiler.Core.DXBC.Extraction;
 
 namespace UnityShaderDecompiler.Tests;
 
@@ -93,10 +93,10 @@ public class DecompilerIntegrationTests
     public void Decompile_IsDeterministic(string fixture, string _)
     {
         // No OutRoot: pure in-memory run, repeatable.
-        var first = Parser.Decompiler.DecompileFolder(
+        var first = UnityShaderDecompiler.Core.Decompiler.DecompileFolder(
             TestPaths.FixtureFolder(fixture),
             new DecompileOptions { Verbose = false });
-        var second = Parser.Decompiler.DecompileFolder(
+        var second = UnityShaderDecompiler.Core.Decompiler.DecompileFolder(
             TestPaths.FixtureFolder(fixture),
             new DecompileOptions { Verbose = false });
 
@@ -135,7 +135,7 @@ public class DecompilerIntegrationTests
         using var temp = new TempDirectory();
         string log = CaptureConsole(() =>
         {
-            var result = Parser.Decompiler.DecompileFolder(
+            var result = UnityShaderDecompiler.Core.Decompiler.DecompileFolder(
                 TestPaths.FixtureFolder("HOLO_Holo"),
                 new DecompileOptions { OutRoot = temp.Path, Verbose = true });
 
@@ -152,7 +152,7 @@ public class DecompilerIntegrationTests
     {
         foreach (var fixture in new[] { "HOLO_Holo", "Hidden_BrightPassFilter2", "PicaVoxel_PicaVoxel Diffuse" })
         {
-            var project = Parser.DXBC.Metadata.ShaderProject.LoadFromFolder(TestPaths.FixtureFolder(fixture));
+            var project = UnityShaderDecompiler.Core.DXBC.Metadata.ShaderProject.LoadFromFolder(TestPaths.FixtureFolder(fixture));
             using var stream = new MemoryStream(project.Blob);
             using var reader = new BinaryReader(stream);
             var program = new AssetStudio.ShaderProgram(reader, new[] { 2022, 3, 62 });

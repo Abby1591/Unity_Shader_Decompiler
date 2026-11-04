@@ -1,8 +1,8 @@
-using Parser.DXBC;
-using Parser.Core.Analysis;
-using Parser.Core.Optimizations;
+using UnityShaderDecompiler.Core.DXBC;
+using UnityShaderDecompiler.Core.Analysis;
+using UnityShaderDecompiler.Core.Optimizations;
 
-namespace Parser.DXBC.IR;
+namespace UnityShaderDecompiler.Core.DXBC.IR;
 
 // The one place that actually chains every phase together: raw
 // instruction decode -> IR build -> CFG -> SSA -> optimize to a fixed

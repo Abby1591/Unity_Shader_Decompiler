@@ -2,7 +2,7 @@ using System;
 using System.Linq;
 using System.Collections.Generic;
 
-namespace Parser.DXBC.IR;
+namespace UnityShaderDecompiler.Core.DXBC.IR;
 
 public abstract class IRExpression
 {

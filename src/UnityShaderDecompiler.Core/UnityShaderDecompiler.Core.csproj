@@ -6,8 +6,7 @@
         <Nullable>enable</Nullable>
         <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
 
-        <!-- Namespaces still use the historical Parser.* roots. -->
-        <RootNamespace>Parser</RootNamespace>
+        <RootNamespace>UnityShaderDecompiler.Core</RootNamespace>
         <AssemblyName>UnityShaderDecompiler.Core</AssemblyName>
         <GenerateDocumentationFile>false</GenerateDocumentationFile>
     </PropertyGroup>

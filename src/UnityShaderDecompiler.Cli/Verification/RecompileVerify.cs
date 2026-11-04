@@ -1,17 +1,18 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
 using AssetStudio;
-using Parser.DXBC;
-using Parser.DXBC.Chunks;
-using Parser.DXBC.Compilation;
-using Parser.DXBC.Disassembly;
-using Parser.DXBC.Extraction;
-using Parser.DXBC.Metadata;
+using UnityShaderDecompiler.Core.DXBC;
+using UnityShaderDecompiler.Core.DXBC.Chunks;
+using UnityShaderDecompiler.Core.DXBC.Compilation;
+using UnityShaderDecompiler.Core.DXBC.Disassembly;
+using UnityShaderDecompiler.Core.DXBC.Extraction;
+using UnityShaderDecompiler.Core.DXBC.Metadata;
+using UnityShaderDecompiler.Core;
 
-namespace Parser;
+namespace UnityShaderDecompiler.Cli;
 
 // Recompile-verification harness (the gate that --surface-shaders waits on):
 // every HLSLPROGRAM pass in a decompiled .shader is compiled with real

@@ -1,8 +1,8 @@
 using System;
 using System.IO;
-using Parser.DXBC;
+using UnityShaderDecompiler.Core.DXBC;
 
-namespace Parser.DXBC.Extraction;
+namespace UnityShaderDecompiler.Core.DXBC.Extraction;
 
 // §13 Final parser data model (shader_parser_spec.md). Optional fields are
 // nullable and never fabricated. A single magic value is never enough — each

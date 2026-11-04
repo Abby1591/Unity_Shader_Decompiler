@@ -1,7 +1,7 @@
-using Parser.DXBC.Instructions;
+using UnityShaderDecompiler.Core.DXBC.Instructions;
 
-using Parser.DXBC.IR;
-namespace Parser.Core.Optimizations;
+using UnityShaderDecompiler.Core.DXBC.IR;
+namespace UnityShaderDecompiler.Core.Optimizations;
 
 // Post-LeaveSSA pass. IRLeaveSsa lowers every PHI into one scalar copy
 // statement per component (e.g. r4.w_5=r4.w_3, r4.z_5=r4.z_3, r4.y_5=r4.y_3,

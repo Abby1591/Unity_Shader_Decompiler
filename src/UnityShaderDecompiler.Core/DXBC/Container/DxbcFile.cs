@@ -1,9 +1,9 @@
 using System.Text;
-using Parser.DXBC.Chunks;
-using Parser.DXBC.Container;
-using Parser.DXBC.Instructions;
+using UnityShaderDecompiler.Core.DXBC.Chunks;
+using UnityShaderDecompiler.Core.DXBC.Container;
+using UnityShaderDecompiler.Core.DXBC.Instructions;
 
-namespace Parser.DXBC;
+namespace UnityShaderDecompiler.Core.DXBC;
 
 public class DxbcFile
 {

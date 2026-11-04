@@ -1,6 +1,6 @@
-using Parser.DXBC.IR;
+using UnityShaderDecompiler.Core.DXBC.IR;
 
-namespace Parser.Core.Optimizations;
+namespace UnityShaderDecompiler.Core.Optimizations;
 
 // Symmetric counterpart to IRExpressionRewriter: IRStatement subclasses
 // are just as immutable (init-only properties) as IRExpression ones, so

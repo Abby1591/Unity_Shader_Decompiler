@@ -1,6 +1,6 @@
-using Parser.DXBC.IR;
+using UnityShaderDecompiler.Core.DXBC.IR;
 
-namespace Parser.Core.Optimizations;
+namespace UnityShaderDecompiler.Core.Optimizations;
 
 // Phase 9.5: identity/annihilator rewrites — x+0, x*1, x*0, and their
 // mirror images (0+x, 1*x, 0*x since DXBC operands aren't always

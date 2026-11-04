@@ -4,7 +4,7 @@ using SharpGen.Runtime;
 using Vortice.D3DCompiler;
 using Vortice.Direct3D;
 
-namespace Parser.DXBC.Disassembly;
+namespace UnityShaderDecompiler.Core.DXBC.Disassembly;
 
 public static class DxbcDisassembler
 {

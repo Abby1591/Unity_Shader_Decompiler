@@ -1,6 +1,6 @@
 using System;
 
-namespace Parser.DXBC.Extraction;
+namespace UnityShaderDecompiler.Core.DXBC.Extraction;
 
 // The 0x26-byte header UnityShaderCompiler.exe prefixes onto every
 // non-compute D3D11 program payload (PROVEN, see

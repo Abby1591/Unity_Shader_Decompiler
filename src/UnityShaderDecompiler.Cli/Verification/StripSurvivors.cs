@@ -5,14 +5,15 @@ using System.Linq;
 using System.Runtime.InteropServices;
 using System.Text;
 using AssetStudio;
-using Parser.DXBC;
-using Parser.DXBC.Extraction;
-using Parser.DXBC.Metadata;
+using UnityShaderDecompiler.Core.DXBC;
+using UnityShaderDecompiler.Core.DXBC.Extraction;
+using UnityShaderDecompiler.Core.DXBC.Metadata;
 using SharpGen.Runtime;
 using Vortice.D3DCompiler;
 using Vortice.Direct3D;
+using UnityShaderDecompiler.Core;
 
-namespace Parser;
+namespace UnityShaderDecompiler.Cli;
 
 // Spec §16.1 required proof, executed with real d3dcompiler_47: compile a
 // synthetic shader, record its DXBC chunk set, strip it with

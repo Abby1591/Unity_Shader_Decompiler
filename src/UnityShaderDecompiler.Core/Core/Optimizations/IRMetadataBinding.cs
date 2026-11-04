@@ -1,8 +1,8 @@
-using Parser.DXBC;
-using Parser.DXBC.Chunks;
-using Parser.DXBC.IR;
+using UnityShaderDecompiler.Core.DXBC;
+using UnityShaderDecompiler.Core.DXBC.Chunks;
+using UnityShaderDecompiler.Core.DXBC.IR;
 
-namespace Parser.Core.Optimizations;
+namespace UnityShaderDecompiler.Core.Optimizations;
 
 // Runs at the very end of the pipeline — after IROptimizationPipeline and
 // IRShaderPatternRecognition have both reached their fixed point, so the

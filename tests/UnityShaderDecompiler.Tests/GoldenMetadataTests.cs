@@ -1,8 +1,8 @@
 using System;
 using System.Linq;
 using System.Text.RegularExpressions;
-using Parser;
-using Parser.DXBC.Metadata;
+using UnityShaderDecompiler.Core;
+using UnityShaderDecompiler.Core.DXBC.Metadata;
 
 namespace UnityShaderDecompiler.Tests;
 
@@ -63,7 +63,7 @@ public class GoldenMetadataTests
     [Fact]
     public void PicaVoxel_WithKeepRegisterBindings_RetainsSamplerRegisters()
     {
-        var kept = Parser.Decompiler.DecompileFolder(
+        var kept = UnityShaderDecompiler.Core.Decompiler.DecompileFolder(
             TestPaths.FixtureFolder("PicaVoxel_PicaVoxel Diffuse"),
             new DecompileOptions { Verbose = false, KeepRegisterBindings = true });
 
