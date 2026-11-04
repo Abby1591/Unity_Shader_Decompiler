@@ -9,8 +9,8 @@
 **Turn compiled Unity shaders back into readable ShaderLab and HLSL.**
 
 Unity ships shaders as LZ4-compressed blobs of stripped D3D11 DXBC bytecode.
-This project takes the JSON that [AssetStudio](https://github.com/Perfare/AssetStudio)
-exports for a `Shader` asset, recovers the serialized ShaderLab metadata, and
+This project accepts `Shader` JSON exports from [AssetStudio](https://github.com/Perfare/AssetStudio)
+or AssetRipper, recovers the serialized ShaderLab metadata, and
 decompiles every shipped GPU program through a typed SSA IR into per-pass HLSL.
 
 > Not affiliated with, sponsored by, or endorsed by Unity Technologies.
@@ -103,6 +103,9 @@ pip install lz4
 python Extract.py shaders_json/HOLO_Holo.json
 ```
 
+Extraction accepts legacy and current parameter-offset fields without rewriting
+the source JSON. Missing or invalid offsets and conflicting schema aliases fail explicitly.
+
 `Extract.py` writes `Output/HOLO_Holo/`:
 
 | File | Contents |
@@ -159,7 +162,7 @@ the project directory.
 
 | Argument | Default | Effect |
 | --- | --- | --- |
-| `json_path` (positional) | — | AssetStudio JSON export to process |
+| `json_path` (positional) | — | AssetStudio or AssetRipper Shader JSON export to process |
 | `--dummy-dir` | `shaders_dummy` | Directory to search for the matching `.shader` reference |
 | `--out-dir` | `Output` | Root output directory |
 | `--flat` | off | Write the three files directly into `--out-dir` instead of a per-shader subfolder |
@@ -193,7 +196,7 @@ and spaces are stripped).
 ## How it works
 
 ```
-AssetStudio JSON export
+AssetStudio / AssetRipper JSON export
   └─ Stage 0: base64 + LZ4 → blob.bin + metadata.json
        └─ Stage 1: DXBC → typed IR → SSA → optimize → HLSL AST → .shader
 ```
