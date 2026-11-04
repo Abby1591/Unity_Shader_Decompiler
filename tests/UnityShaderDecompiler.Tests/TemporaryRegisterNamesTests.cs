@@ -10,8 +10,10 @@ using Xunit;
 
 namespace UnityShaderDecompiler.Tests;
 
+// Covers temporary register names tests.
 public sealed class TemporaryRegisterNamesTests
 {
+    // Verifies that semantic names do not merge different temporary registers.
     [Fact]
     public void SemanticNamesDoNotMergeDifferentTemporaryRegisters()
     {
@@ -22,11 +24,13 @@ public sealed class TemporaryRegisterNamesTests
         HlslFunctionNode function = new HlslFunctionNode { Name = "frag", Stage = HlslShaderStage.Fragment };
         function.Statements.Statements.Add(new HlslAssignmentStatement
         {
-            Destination = first, Expression = Float(2),
+            Destination = first,
+            Expression = Float(2),
         });
         function.Statements.Statements.Add(new HlslAssignmentStatement
         {
-            Destination = second, Expression = Float(3),
+            Destination = second,
+            Expression = Float(3),
         });
         function.Statements.Statements.Add(new HlslAssignmentStatement
         {
@@ -41,6 +45,7 @@ public sealed class TemporaryRegisterNamesTests
     }
 
 
+    // Wraps the fixture function in a shader and emits its HLSL.
     private static string Print(HlslFunctionNode function)
     {
         HlslShaderNode shader = new HlslShaderNode { Name = "Test/Scope" };
@@ -50,6 +55,7 @@ public sealed class TemporaryRegisterNamesTests
         return HlslPrettyPrinter.Print(shader, fuseTemps: false);
     }
 
+    // Creates a temporary register with the requested index and lane mask.
     private static IRRegister Temp(uint index, byte mask = 1)
     {
         IRRegister register = new IRRegister
@@ -61,11 +67,16 @@ public sealed class TemporaryRegisterNamesTests
             ComponentMode = Operand.OperandComponentMode.Mask,
         };
         for (int component = 0; component < 4; component++)
+        {
             if ((mask & (1 << component)) != 0)
+            {
                 register.SsaVersion[component] = 1;
+            }
+        }
         return register;
     }
 
+    // Creates a scalar floating-point constant for the fixture.
     private static IRExpression.ConstantExpression Float(float value) => new()
     {
         RawValues = new[] { unchecked((uint)BitConverter.SingleToInt32Bits(value)) },
