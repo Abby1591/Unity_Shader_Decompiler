@@ -121,9 +121,6 @@ dotnet run --project "src/UnityShaderDecompiler.Cli/UnityShaderDecompiler.Cli.cs
 
 The result is written to `src/UnityShaderDecompiler.Cli/Output/HOLO_Holo.shader`.
 
-`--fail-on-error` aborts on a DirectX subprogram failure with its index and cause.
-It is off by default, preserving the existing log-and-continue behavior.
-
 ## Usage
 
 `Shader Decompiler` accepts a Stage 0 output folder or a `blob.bin` with a

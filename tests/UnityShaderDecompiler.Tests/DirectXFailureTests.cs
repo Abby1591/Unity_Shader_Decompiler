@@ -4,8 +4,10 @@ using UnityShaderDecompiler.Core;
 
 namespace UnityShaderDecompiler.Tests;
 
+// Covers opt-in DirectX failure handling.
 public class DirectXFailureTests
 {
+    // Verifies that malformed DirectX program honors explicit failure policy.
     [Theory]
     [InlineData(ShaderGpuProgramType.DX11VertexSM40, true)]
     [InlineData(ShaderGpuProgramType.DX11PixelSM50, true)]
@@ -14,6 +16,29 @@ public class DirectXFailureTests
     public void MalformedDirectXProgramHonorsExplicitFailurePolicy(ShaderGpuProgramType stage, bool failOnError)
     {
         using TempDirectory folder = new();
+        WriteInvalidProgram(folder, stage);
+        string output = Path.Combine(folder.Path, "generated");
+
+        if (!failOnError)
+        {
+            Assert.False(new DecompileOptions().FailOnError);
+            Decompiler.DecompileFolder(folder.Path, new DecompileOptions { Verbose = false, OutRoot = output });
+            Assert.Single(Directory.GetFiles(output, "*.shader"));
+            return;
+        }
+
+        InvalidDataException error = Assert.Throws<InvalidDataException>(() =>
+            Decompiler.DecompileFolder(folder.Path, new DecompileOptions { FailOnError = true, Verbose = false, OutRoot = output }));
+
+        Assert.Contains("DirectX subprogram 0", error.Message);
+        Assert.Contains(stage.ToString(), error.Message);
+        Assert.NotNull(error.InnerException);
+        Assert.Empty(Directory.GetFiles(output, "*.shader"));
+    }
+
+    // Writes a deliberately truncated DirectX program for failure-policy checks.
+    private static void WriteInvalidProgram(TempDirectory folder, ShaderGpuProgramType stage)
+    {
         using MemoryStream payload = new();
         using (BinaryWriter writer = new(payload, System.Text.Encoding.UTF8, leaveOpen: true))
         {
@@ -36,22 +61,5 @@ public class DirectXFailureTests
         File.WriteAllBytes(Path.Combine(folder.Path, "blob.bin"), blob.ToArray());
         File.WriteAllText(Path.Combine(folder.Path, "metadata.json"),
             "{\"name\":\"Test/InvalidDxbc\",\"subShaders\":[]}");
-        string output = Path.Combine(folder.Path, "generated");
-
-        if (!failOnError)
-        {
-            Assert.False(new DecompileOptions().FailOnError);
-            Decompiler.DecompileFolder(folder.Path, new DecompileOptions { Verbose = false, OutRoot = output });
-            Assert.Single(Directory.GetFiles(output, "*.shader"));
-            return;
-        }
-
-        InvalidDataException error = Assert.Throws<InvalidDataException>(() =>
-            Decompiler.DecompileFolder(folder.Path, new DecompileOptions { FailOnError = true, Verbose = false, OutRoot = output }));
-
-        Assert.Contains("DirectX subprogram 0", error.Message);
-        Assert.Contains(stage.ToString(), error.Message);
-        Assert.NotNull(error.InnerException);
-        Assert.Empty(Directory.GetFiles(output, "*.shader"));
     }
 }
