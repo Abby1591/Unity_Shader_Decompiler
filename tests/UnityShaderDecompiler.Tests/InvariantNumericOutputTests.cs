@@ -1,11 +1,11 @@
 using System;
 using System.Linq;
-using Parser.Core.Hlsl;
-using Parser.Core.Hlsl.Ast;
-using Parser.Core.Analysis;
-using Parser.Core.Optimizations;
-using Parser.DXBC.Instructions;
-using Parser.DXBC.IR;
+using UnityShaderDecompiler.Core.Hlsl;
+using UnityShaderDecompiler.Core.Hlsl.Ast;
+using UnityShaderDecompiler.Core.Analysis;
+using UnityShaderDecompiler.Core.Optimizations;
+using UnityShaderDecompiler.Core.DXBC.Instructions;
+using UnityShaderDecompiler.Core.DXBC.IR;
 using Xunit;
 
 namespace UnityShaderDecompiler.Tests;
