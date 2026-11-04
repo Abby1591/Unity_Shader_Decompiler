@@ -164,6 +164,7 @@ public sealed class SubShaderMetadata
 
 public sealed class PassMetadata
 {
+    public List<ProgramVariantMetadata> DirectXPrograms { get; } = new();
     public string Name { get; init; } = "";
     public Dictionary<string, string> Tags { get; init; } = new();
     public JsonElement RenderState { get; init; }
@@ -189,9 +190,19 @@ public sealed class PassMetadata
             foreach (var cb in cbs.EnumerateArray())
                 result.ConstantBuffers.Add(CbufferMetadata.From(cb));
 
+        if (el.TryGetProperty("directXPrograms", out JsonElement programs))
+            foreach (JsonElement program in programs.EnumerateArray())
+                result.DirectXPrograms.Add(new ProgramVariantMetadata(
+                    program.GetProperty("blobIndex").GetInt32(),
+                    program.GetProperty("stage").GetString()!,
+                    program.GetProperty("keywords").EnumerateArray().Select(k => k.GetString()!).ToArray(),
+                    program.GetProperty("keywordMask").EnumerateArray().Select(k => k.GetString()!).ToArray()));
+
         return result;
     }
 }
+
+public sealed record ProgramVariantMetadata(int BlobIndex, string Stage, string[] Keywords, string[] KeywordMask);
 
 /// <summary>One cbuffer in a pass: register slot -> name + variables.</summary>
 public sealed class CbufferMetadata

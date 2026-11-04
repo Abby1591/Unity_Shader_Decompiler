@@ -89,6 +89,7 @@ public static class HlslAstBuilder
                 };
                 foreach (var (k, v) in pass.Tags)
                     passNode.Tags[k] = v;
+                passNode.DirectXPrograms.AddRange(pass.DirectXPrograms);
 
                 foreach (CbufferMetadata cb in pass.ConstantBuffers)
                     if (cb.Slot >= 0 && !passNode.Cbuffers.ContainsKey((cb.Slot, cb.Stage)))

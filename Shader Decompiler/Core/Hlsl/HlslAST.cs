@@ -176,6 +176,7 @@ public sealed class HlslRenderState
 
 public sealed class HlslPassNode
 {
+    public List<ProgramVariantMetadata> DirectXPrograms { get; } = new();
     public string Name { get; init; } = "";
     public Dictionary<string, string> Tags { get; } = new();
 

@@ -478,6 +478,12 @@ public static class Decompiler
             if (prop.Kind == HlslPropertyKind.Texture)
                 textureNames[texSlot++] = prop.Name;
 
+        if (allPasses.Any(p => p.DirectXPrograms.Count != 0))
+        {
+            BuildSerializedVariantPasses(astShader, allPasses, candidates, textureNames, log);
+            return;
+        }
+
         foreach (DecompiledSubprogram c in candidates)
             c.Hash = Convert.ToHexString(SHA256.HashData(c.DxbcBytes));
 
@@ -587,6 +593,43 @@ public static class Decompiler
         }
 
         log.WriteLine($"BuildVariantPasses: {groups.Count} pass group(s), {totalPasses} pass(es) emitted total.");
+    }
+
+    private static void BuildSerializedVariantPasses(
+        HlslShaderNode shader, List<HlslPassNode> shells, List<DecompiledSubprogram> candidates,
+        Dictionary<uint, string> textureNames, TextWriter log)
+    {
+        Dictionary<int, DecompiledSubprogram> byIndex = candidates.ToDictionary(c => c.Index);
+        HashSet<int> covered = new HashSet<int>();
+        foreach (HlslPassNode shell in shells)
+        {
+            if (shell.DirectXPrograms.Count == 0) continue;
+            List<(int Vertex, int Fragment)> pairs = VariantPairing.Pair(shell.DirectXPrograms);
+            HlslSubShaderNode parent = shader.SubShaders.Single(ss => ss.Passes.Contains(shell));
+            int insertAt = parent.Passes.IndexOf(shell);
+            foreach ((int vertexIndex, int fragmentIndex) in pairs)
+            {
+                if (!byIndex.TryGetValue(vertexIndex, out DecompiledSubprogram? vertex) ||
+                    !byIndex.TryGetValue(fragmentIndex, out DecompiledSubprogram? fragment))
+                    throw new InvalidDataException("Serialized variant references a missing DXBC program.");
+                if (vertex.Stage != HlslShaderStage.Vertex || fragment.Stage != HlslShaderStage.Fragment)
+                    throw new InvalidDataException("Serialized variant stage does not match its DXBC program.");
+                string[] inputs = fragment.InputInterpolators.Split(';', StringSplitOptions.RemoveEmptyEntries);
+                string[] outputs = vertex.OutputInterpolators.Split(';', StringSplitOptions.RemoveEmptyEntries);
+                if (!inputs.All(outputs.Contains))
+                    throw new InvalidDataException($"Variant {vertexIndex}/{fragmentIndex} has incompatible interpolators.");
+                HlslPassNode pass = insertAt == parent.Passes.IndexOf(shell) ? shell : ClonePass(shell);
+                if (!ReferenceEquals(pass, shell)) parent.Passes.Insert(insertAt, pass);
+                AttachPassProgram(pass, vertex, textureNames, log);
+                AttachPassProgram(pass, fragment, textureNames, log);
+                covered.Add(vertexIndex);
+                covered.Add(fragmentIndex);
+                insertAt++;
+            }
+            log.WriteLine($"Serialized variants: {pairs.Count} stage pairs.");
+        }
+        if (byIndex.Keys.Except(covered).Any())
+            throw new InvalidDataException("DXBC programs are missing from serialized variant coverage.");
     }
 
     // Attaches one candidate's function, resources and structs to a pass,
