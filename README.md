@@ -176,7 +176,7 @@ and spaces are stripped).
 | `--out-root <dir>` | Write `.shader` output and subprogram artifacts to `<dir>` instead of the project-local `Output/` |
 | `--dump-stages` | Print a full IR snapshot after every pipeline phase and every optimization pass |
 | `--dump-keywords` | Print each subprogram's global and local keyword sets |
-| `--fail-on-error` | Abort on DirectX subprogram errors instead of logging and continuing (default: off) |
+| `--fail-on-error` | Stop with a non-zero exit code on subprogram errors, invalid SSA, missing input, or a pass group with no renderable variant (default: off) |
 | `--save-subprograms` | Also write per-subprogram `program{i}.bin`, `program{i}.dxbc`, and `program{i}.hlsl` (disassembly) |
 | `--no-fuse-temps` | Disable temp fusion; keep every SSA copy as a separate statement |
 | `--no-surface-shaders` | Disable surface-shader recognition; emit raw reconstructed HLSLPROGRAM passes |
@@ -189,6 +189,8 @@ and spaces are stripped).
 | `--recompile-verify [file]` | Recompile the HLSLPROGRAM blocks of one `.shader` and match their signatures against shipped bytecode |
 | `--recompile-verify-all [dir]` | Aggregate recompile verification over every decompiled `.shader` in `dir` |
 | `--disasm [dir]` | Dump DXBC disassembly for every non-compute subprogram into sibling `<name>.disasm.txt` files |
+
+`--fail-on-error` is strict: an export containing unsupported non-DXBC programs also fails when the parser cannot read them.
 
 </details>
 

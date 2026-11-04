@@ -20,7 +20,7 @@ namespace UnityShaderDecompiler.Core;
 /// </summary>
 public sealed class DecompileOptions
 {
-    /// <summary>Abort on DirectX subprogram errors instead of logging and continuing.</summary>
+    /// <summary>Abort on decompilation errors instead of logging and continuing.</summary>
     public bool FailOnError { get; init; }
 
     /// <summary>Print the IR after every pipeline phase.</summary>
@@ -248,6 +248,11 @@ public static class Decompiler
 
                 if (!pipelineResult.SsaVerification.IsValid)
                 {
+                    if (options.FailOnError)
+                    {
+                        throw new InvalidDataException(
+                            $"SSA verification failed for subprogram {i}: {string.Join("; ", pipelineResult.SsaVerification.Errors)}");
+                    }
                     log.WriteLine("SSA verification FAILED:");
                     foreach (var error in pipelineResult.SsaVerification.Errors)
                         log.WriteLine($"  {error}");
@@ -344,11 +349,10 @@ public static class Decompiler
             }
             catch (Exception ex)
             {
-                if (options.FailOnError && sp.m_ProgramType is >= ShaderGpuProgramType.DX11VertexSM40
-                    and <= ShaderGpuProgramType.DX11DomainSM50)
+                if (options.FailOnError)
                 {
                     throw new InvalidDataException(
-                        $"Failed to decompile DirectX subprogram {i} ({sp.m_ProgramType}): {ex.Message}", ex);
+                        $"Failed to decompile subprogram {i} ({sp.m_ProgramType}): {ex.Message}", ex);
                 }
                 log.WriteLine($"No DXBC: {ex.Message}");
             }
@@ -361,7 +365,7 @@ public static class Decompiler
         // Stage 2b — recover the pass each candidate belongs to from the
         // serialization order and emit one pass per distinct compiled
         // (vertex, fragment) variant pair.
-        BuildVariantPasses(astShader, allPasses, candidates, log);
+        BuildVariantPasses(astShader, allPasses, candidates, log, options.FailOnError);
 
         log.WriteLine();
         log.WriteLine("HLSL AST (Stage 2)");
@@ -471,10 +475,17 @@ public static class Decompiler
         HlslShaderNode astShader,
         List<HlslPassNode> allPasses,
         List<DecompiledSubprogram> candidates,
-        TextWriter log)
+        TextWriter log,
+        bool failOnError)
     {
         if (candidates.Count == 0)
+        {
+            if (failOnError && allPasses.Count > 0)
+            {
+                throw new InvalidDataException("No renderable subprograms were decompiled.");
+            }
             return;
+        }
 
         // Build texture property name mapping: texture properties (type=4) in
         // declaration order map to t-register slots (0, 1, 2, ...). This lets
@@ -583,6 +594,10 @@ public static class Decompiler
 
             if (pairs.Count == 0 && others.Count == 0)
             {
+                if (failOnError)
+                {
+                    throw new InvalidDataException($"Pass group {gi} has no renderable variant.");
+                }
                 log.WriteLine($"  Pass group {gi}: {verts.Count} verts x {frags.Count} frags produced no renderable variant (skipped).");
             }
             else

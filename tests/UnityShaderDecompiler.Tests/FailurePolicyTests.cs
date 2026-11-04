@@ -4,16 +4,20 @@ using UnityShaderDecompiler.Core;
 
 namespace UnityShaderDecompiler.Tests;
 
-// Covers opt-in DirectX failure handling.
-public class DirectXFailureTests
+// Covers opt-in subprogram failure handling across GPU formats.
+public class FailurePolicyTests
 {
-    // Verifies that malformed DirectX program honors explicit failure policy.
+    // Verifies that malformed programs honor the explicit failure policy.
     [Theory]
     [InlineData(ShaderGpuProgramType.DX11VertexSM40, true)]
     [InlineData(ShaderGpuProgramType.DX11PixelSM50, true)]
+    [InlineData(ShaderGpuProgramType.GLLegacy, true)]
+    [InlineData(ShaderGpuProgramType.SPIRV, true)]
     [InlineData(ShaderGpuProgramType.DX11VertexSM40, false)]
     [InlineData(ShaderGpuProgramType.DX11PixelSM50, false)]
-    public void MalformedDirectXProgramHonorsExplicitFailurePolicy(ShaderGpuProgramType stage, bool failOnError)
+    [InlineData(ShaderGpuProgramType.GLLegacy, false)]
+    [InlineData(ShaderGpuProgramType.SPIRV, false)]
+    public void MalformedProgramHonorsExplicitFailurePolicy(ShaderGpuProgramType stage, bool failOnError)
     {
         using TempDirectory folder = new();
         WriteInvalidProgram(folder, stage);
@@ -30,13 +34,13 @@ public class DirectXFailureTests
         InvalidDataException error = Assert.Throws<InvalidDataException>(() =>
             Decompiler.DecompileFolder(folder.Path, new DecompileOptions { FailOnError = true, Verbose = false, OutRoot = output }));
 
-        Assert.Contains("DirectX subprogram 0", error.Message);
+        Assert.Contains("subprogram 0", error.Message);
         Assert.Contains(stage.ToString(), error.Message);
         Assert.NotNull(error.InnerException);
         Assert.Empty(Directory.GetFiles(output, "*.shader"));
     }
 
-    // Writes a deliberately truncated DirectX program for failure-policy checks.
+    // Writes a deliberately truncated program for failure-policy checks.
     private static void WriteInvalidProgram(TempDirectory folder, ShaderGpuProgramType stage)
     {
         using MemoryStream payload = new();
@@ -63,3 +67,4 @@ public class DirectXFailureTests
             "{\"name\":\"Test/InvalidDxbc\",\"subShaders\":[]}");
     }
 }
+
