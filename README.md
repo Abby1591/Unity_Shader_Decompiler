@@ -120,8 +120,8 @@ dotnet run --project "Shader Decompiler/Shader Decompiler.csproj" -- Output/HOLO
 
 The result is written to `Shader Decompiler/Output/HOLO_Holo.shader`.
 
-A DirectX subprogram failure aborts decompilation with its index and cause,
-instead of silently omitting it from the final shader.
+`--fail-on-error` aborts on a DirectX subprogram failure with its index and cause.
+It is off by default, preserving the existing log-and-continue behavior.
 
 ## Usage
 
@@ -178,6 +178,7 @@ and spaces are stripped).
 | `--out-root <dir>` | Write `.shader` output and subprogram artifacts to `<dir>` instead of the project-local `Output/` |
 | `--dump-stages` | Print a full IR snapshot after every pipeline phase and every optimization pass |
 | `--dump-keywords` | Print each subprogram's global and local keyword sets |
+| `--fail-on-error` | Abort on DirectX subprogram errors instead of logging and continuing (default: off) |
 | `--save-subprograms` | Also write per-subprogram `program{i}.bin`, `program{i}.dxbc`, and `program{i}.hlsl` (disassembly) |
 | `--no-fuse-temps` | Disable temp fusion; keep every SSA copy as a separate statement |
 | `--no-surface-shaders` | Disable surface-shader recognition; emit raw reconstructed HLSLPROGRAM passes |

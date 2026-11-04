@@ -7,9 +7,11 @@ namespace UnityShaderDecompiler.Tests;
 public class DirectXFailureTests
 {
     [Theory]
-    [InlineData(ShaderGpuProgramType.DX11VertexSM40)]
-    [InlineData(ShaderGpuProgramType.DX11PixelSM50)]
-    public void MalformedDirectXProgramStopsBeforeWritingTheShader(ShaderGpuProgramType stage)
+    [InlineData(ShaderGpuProgramType.DX11VertexSM40, true)]
+    [InlineData(ShaderGpuProgramType.DX11PixelSM50, true)]
+    [InlineData(ShaderGpuProgramType.DX11VertexSM40, false)]
+    [InlineData(ShaderGpuProgramType.DX11PixelSM50, false)]
+    public void MalformedDirectXProgramHonorsExplicitFailurePolicy(ShaderGpuProgramType stage, bool failOnError)
     {
         using TempDirectory folder = new();
         using MemoryStream payload = new();
@@ -36,8 +38,16 @@ public class DirectXFailureTests
             "{\"name\":\"Test/InvalidDxbc\",\"subShaders\":[]}");
         string output = Path.Combine(folder.Path, "generated");
 
+        if (!failOnError)
+        {
+            Assert.False(new DecompileOptions().FailOnError);
+            Decompiler.DecompileFolder(folder.Path, new DecompileOptions { Verbose = false, OutRoot = output });
+            Assert.Single(Directory.GetFiles(output, "*.shader"));
+            return;
+        }
+
         InvalidDataException error = Assert.Throws<InvalidDataException>(() =>
-            Decompiler.DecompileFolder(folder.Path, new DecompileOptions { Verbose = false, OutRoot = output }));
+            Decompiler.DecompileFolder(folder.Path, new DecompileOptions { FailOnError = true, Verbose = false, OutRoot = output }));
 
         Assert.Contains("DirectX subprogram 0", error.Message);
         Assert.Contains(stage.ToString(), error.Message);

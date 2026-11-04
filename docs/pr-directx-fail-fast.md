@@ -1,5 +1,5 @@
 # Propagate DirectX subprogram decompilation failures
 
-A corrupt DirectX subprogram was logged and omitted while the export continued. Abort with the subprogram index and original exception, and leave no final shader. This production fix is absent from upstream `1850608`; its presence on a local master branch does not make this PR redundant.
+A corrupt DirectX subprogram is logged and omitted by default. Opt in with `--fail-on-error` (API: `DecompileOptions.FailOnError = true`) to abort with the subprogram index and original exception, before writing the final shader. Existing commands and API calls retain their default behavior.
 
-Validation: 53 C# tests and all four existing PicaVoxel extraction/decompilation tests pass. C# tests use an en-US default culture; the upstream fr-FR golden-output failure is addressed independently by the numeric-formatting PR.
+Validation: 55 C# tests cover both failure policies; all four existing PicaVoxel extraction/decompilation tests pass. Isolated C# tests use en-US; the upstream fr-FR golden-output failure is addressed separately in #5.

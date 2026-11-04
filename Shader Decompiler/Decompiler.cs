@@ -20,6 +20,9 @@ namespace Parser;
 /// </summary>
 public sealed class DecompileOptions
 {
+    /// <summary>Abort on DirectX subprogram errors instead of logging and continuing.</summary>
+    public bool FailOnError { get; init; }
+
     /// <summary>Print the IR after every pipeline phase.</summary>
     public bool DumpStages { get; init; }
 
@@ -341,7 +344,7 @@ public static class Decompiler
             }
             catch (Exception ex)
             {
-                if (sp.m_ProgramType is >= ShaderGpuProgramType.DX11VertexSM40
+                if (options.FailOnError && sp.m_ProgramType is >= ShaderGpuProgramType.DX11VertexSM40
                     and <= ShaderGpuProgramType.DX11DomainSM50)
                 {
                     throw new InvalidDataException(

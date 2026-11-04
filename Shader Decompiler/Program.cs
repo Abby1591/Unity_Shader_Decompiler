@@ -145,6 +145,7 @@ internal class Program
             OutRoot = outRoot,
             DumpStages = args.Contains("--dump-stages"),
             DumpKeywords = args.Contains("--dump-keywords"),
+            FailOnError = args.Contains("--fail-on-error"),
             SaveSubprograms = args.Contains("--save-subprograms"),
             FuseTemps = !args.Contains("--no-fuse-temps"),
             ReconstructSurfaceShaders = !args.Contains("--no-surface-shaders"),
@@ -153,7 +154,12 @@ internal class Program
             Verbose = true,
         };
 
-        Decompiler.Decompile(project, options);
+        try { Decompiler.Decompile(project, options); }
+        catch (Exception error) when (options.FailOnError)
+        {
+            Console.Error.WriteLine(error.Message);
+            Environment.ExitCode = 1;
+        }
     }
 
     // Locate the decompiler Output/ folder regardless of the launch directory.
@@ -189,6 +195,7 @@ internal class Program
             result = Decompiler.Decompile(project, new DecompileOptions
             {
                 OutRoot = outRoot,
+                FailOnError = args.Contains("--fail-on-error"),
                 FuseTemps = !args.Contains("--no-fuse-temps"),
                 ReconstructSurfaceShaders = !args.Contains("--no-surface-shaders"),
                 KeepPasses = args.Contains("--keep-passes"),
