@@ -12,6 +12,38 @@ namespace UnityShaderDecompiler.Tests;
 
 public sealed class RawRegisterSemanticsTests
 {
+    [Theory]
+    [InlineData("uint", false)]
+    [InlineData("int", false)]
+    [InlineData("uint", true)]
+    [InlineData("int", true)]
+    [Trait("Category", "D3D")]
+    public void IntegerMovesPreserveBitsThroughNativeRoundTrip(string type, bool conditional)
+    {
+        if (!OperatingSystem.IsWindows()) return;
+
+        // These integers also encode NaNs, a subnormal and negative zero as floats.
+        uint[] selected = { 0xffffffffu, 0x7fc12345u, 0x00000001u, 0x80000000u };
+        uint[] alternate = { 0x01000001u, 0xffc54321u, 0x7fffffffu, 0x80000001u };
+        string first = $"{type}4(0xffffffffu, 0x7fc12345u, 1u, 0x80000000u)";
+        string second = $"{type}4(0x01000001u, 0xffc54321u, 0x7fffffffu, 0x80000001u)";
+        string value = conditional ? $"condition ? {first} : {second}" : first;
+        Parser.DXBC.DxbcFile original = RegisterRoundTrip.Compile(
+            $"{type}4 main(nointerpolation uint condition : TEXCOORD0) : SV_Target {{ return {value}; }}");
+        Assert.Contains(original.Shader!.Instructions, instruction =>
+            instruction.Opcode == (conditional ? Opcode.MovC : Opcode.Mov));
+        Parser.DXBC.DxbcFile rebuilt = RegisterRoundTrip.Recompile(original);
+        Assert.Equal(original.OutputSignature!.Elements[0].ComponentType,
+            rebuilt.OutputSignature!.Elements[0].ComponentType);
+        foreach (uint condition in new uint[] { 0, 1, 0x80000000u, uint.MaxValue })
+        {
+            uint[] input = { condition, 0, 0, 0 };
+            uint[] expected = conditional && condition == 0 ? alternate : selected;
+            Assert.Equal(expected, RegisterRoundTrip.Evaluate(original, input));
+            Assert.Equal(expected, RegisterRoundTrip.Evaluate(rebuilt, input));
+        }
+    }
+
     [Fact]
     public void IntegerSourceModifierIsAppliedAfterBitInterpretation()
     {

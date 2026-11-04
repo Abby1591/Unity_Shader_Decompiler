@@ -1,7 +1,7 @@
 # Preserve register bits and arithmetic in no-fuse mode
 
-Keep temporary registers as raw uint bits with explicit typed reads, full-bit comparison masks and integer source modifiers applied after interpretation. Disable arithmetic pattern rewrites in no-fuse mode and preserve the addition before fractional-part evaluation under native recompilation.
+With `--no-fuse-temps`, interpreting temporary registers as numeric floats can corrupt integer moves and comparison masks. Preserve raw uint storage with typed reads and outputs; for example, `0x01000001` must remain that exact integer instead of rounding to `0x01000000`. Integer negation applies after bit interpretation, and arithmetic rewrites must not remove the addition before fractional-part evaluation.
 
-Validation: 54 C# tests and all four existing PicaVoxel extraction/decompilation tests pass. C# tests use an en-US default culture; the upstream fr-FR golden-output failure is addressed independently by the numeric-formatting PR.
+Native round-trip tests cover `mov` and `movc` to signed and unsigned outputs, both conditional outcomes, and bit patterns representing NaNs, subnormals and signed zero. A restricted bytecode evaluator compares exact output words against explicit expectations and rejects unexpected operations. Disabling bit preservation makes all four new cases fail. These are compiler/bytecode checks, not GPU execution tests.
 
-This branch is based directly on upstream `1850608`; it does not include the other review branches. No proprietary fixtures or machine-specific paths are added.
+Validation: 58 C# tests and four PicaVoxel end-to-end cases pass on Windows. The isolated suite uses en-US because upstream's fr-FR golden-output failure is fixed separately in #5. Existing upstream assertions are unchanged.
