@@ -252,7 +252,7 @@ public static class HlslAstBuilder
                     {
                         var rdNode = new HlslResourceNode
                         {
-                            Name = cb.SymbolicName ?? $"cb{cb.Slot}",
+                            Name = VerifiedResourceBindings.RequireName(cb.SymbolicName, "constant buffer", cb.Slot),
                             Kind = HlslResourceKind.ConstantBuffer,
                             Slot = cb.Slot,
                         };
@@ -290,25 +290,25 @@ public static class HlslAstBuilder
                         };
                         foreach (CbufferVariableMetadata v in meta.Variables)
                             metaNode.Variables.Add(MakeCbufferVariable(v));
-                        AddCbufferFallback(metaNode, cb.Slot, maxCbufferSlot);
+                        RequireResolvedCbuffer(cb.Slot, maxCbufferSlot);
                         yield return metaNode;
                         break;
                     }
 
                     var cbNode = new HlslResourceNode
                     {
-                        Name = cb.SymbolicName ?? $"cb{cb.Slot}",
+                        Name = VerifiedResourceBindings.RequireName(cb.SymbolicName, "constant buffer", cb.Slot),
                         Kind = HlslResourceKind.ConstantBuffer,
                         Slot = cb.Slot,
                     };
-                    AddCbufferFallback(cbNode, cb.Slot, maxCbufferSlot);
+                    RequireResolvedCbuffer(cb.Slot, maxCbufferSlot);
                     yield return cbNode;
                     break;
 
                 case IRDeclaration.IRResourceDeclaration res:
                     string texName = (textureNames is not null && textureNames.TryGetValue(res.Slot, out string? pname))
                         ? pname
-                        : res.SymbolicName ?? $"t{res.Slot}";
+                        : VerifiedResourceBindings.RequireName(res.SymbolicName, "texture", res.Slot);
                     yield return new HlslResourceNode
                     {
                         Name = texName,
@@ -320,23 +320,7 @@ public static class HlslAstBuilder
 
                 case IRDeclaration.IRSamplerDeclaration samp:
                     bool isComparison = ComparisonSamplers(blocks).Contains(samp.Slot);
-                    // Unity pairs samplers with textures by naming convention:
-                    // "sampler_<TextureName>" must match a Texture2D named
-                    // "<TextureName>".  Build the mapping from the IR's
-                    // Sample() calls to find which texture each sampler serves.
-                    string sampName;
-                    if (textureNames is not null
-                        && SamplerToTextureSlot(blocks, samp.Slot) is uint texSlot
-                        && textureNames.TryGetValue(texSlot, out string? pairedTex))
-                    {
-                        // Unity convention: "sampler_<TextureName>" where
-                        // TextureName has no leading underscore — so
-                        // Texture2D _MainTex pairs with SamplerState sampler_MainTex.
-                        string stripped = pairedTex.StartsWith('_') ? pairedTex[1..] : pairedTex;
-                        sampName = $"sampler_{stripped}";
-                    }
-                    else
-                        sampName = samp.SymbolicName ?? SamplerInlineName(samp.Slot, isComparison);
+                    string sampName = VerifiedResourceBindings.RequireName(samp.SymbolicName, "sampler", samp.Slot);
                     yield return new HlslResourceNode
                     {
                         Name = sampName,
@@ -351,7 +335,7 @@ public static class HlslAstBuilder
                 case IRDeclaration.IRUAVDeclaration uav:
                     yield return new HlslResourceNode
                     {
-                        Name = uav.SymbolicName ?? $"u{uav.Slot}",
+                        Name = VerifiedResourceBindings.RequireName(uav.SymbolicName, "UAV", uav.Slot),
                         Kind = HlslResourceKind.Uav,
                         Slot = uav.Slot,
                         TypeHint = TextureTypeHint(uav.Dimension, uav: true),
@@ -361,17 +345,7 @@ public static class HlslAstBuilder
         }
     }
 
-    // Scans the subprogram's IR for cbuffer reads like cb2[10].yyyy and
-    // returns, per cbuffer slot, the highest register index (element) used.
-    // Used to size the synthesized float4 array for RDEF-less cbuffers.
-    //
-    // `cbuffers`/`stage` are the ShaderLab-metadata layout for the pass
-    // (the substitute for the RDEF Unity strips from shipped bytecode).
-    // A read that the metadata resolves to a named member (HlslPrettyPrinter
-    // resolves the same way) never touches the synthesized cbN_values array,
-    // so it must not count toward the array's size — otherwise the fallback
-    // is declared bigger than needed, or declared at all for a slot whose
-    // every read resolves (a dead declaration).
+    // Finds unresolved reads that must stop reconstruction.
     private static Dictionary<uint, uint> BuildMaxCbufferSlot(
         List<IRBlock>? blocks,
         Dictionary<(int Slot, string Stage), CbufferMetadata>? cbuffers,
@@ -388,23 +362,18 @@ public static class HlslAstBuilder
             {
                 foreach (IRRegister reg in stmt.Uses.Concat(stmt.Defines))
                 {
-                    if (reg.RegisterType != RegisterType.ConstantBuffer || reg.Indices.Count < 2)
+                    if (reg.RegisterType != RegisterType.ConstantBuffer || reg.Indices.Count < 2 || reg.SymbolicName is not null)
                         continue;
 
                     uint slot = reg.Indices[0];
                     uint elem = reg.Indices[1];
 
-                    // Dynamic reads (cb0[r2.x + 4]) can touch any element up
-                    // to the real cbuffer size, which RDEF-less bytecode
-                    // doesn't tell us — reserve a generous range for them.
+                    // Dynamic reads require a resolved array layout.
                     if (reg.RelativeIndices.Length > 1 && reg.RelativeIndices[1] is not null)
                     {
-                        elem = Math.Max(elem, 64);
+                        throw new InvalidDataException($"Unresolved dynamic constant-buffer access at b{slot}; an exact array layout is required.");
                     }
-                    // Reads the ShaderLab metadata resolves to a named member
-                    // (variable name + optional row/component) render as that
-                    // identifier, never as cbN_values[slot], so they impose no
-                    // requirement on the synthesized fallback array.
+                    // Named reads use the serialized layout without replacement storage.
                     else if (ResolvesToNamedMember(reg, cbuffers, stage))
                     {
                         continue;
@@ -462,41 +431,6 @@ public static class HlslAstBuilder
             }
         }
         return result;
-    }
-
-    // Returns the texture register slot used with a given sampler slot
-    // in the first Sample/SampleLevel/SampleBias/SampleGrad/Gather call
-    // found in the IR, or null if the sampler is never used.
-    private static uint? SamplerToTextureSlot(List<IRBlock>? blocks, uint samplerSlot)
-    {
-        if (blocks is null) return null;
-        foreach (IRBlock block in blocks)
-        {
-            foreach (IRStatement stmt in block.Statements)
-            {
-                foreach (IRExpression expr in AllExpressions(stmt))
-                {
-                    if (expr is not IRExpression.TextureOperationExpression tex)
-                        continue;
-                    if (tex.Sampler is { RegisterType: RegisterType.Sampler } s && s.Index == samplerSlot
-                        && tex.Resource is { RegisterType: RegisterType.Resource } r)
-                        return r.Index;
-                }
-            }
-        }
-        return null;
-    }
-
-    // Returns a Unity-recognised inline sampler name for the given slot.
-    // Unity's HLSL compiler rejects bare "SamplerState s0" — the name must
-    // contain filter + wrap modes (e.g. "sampler_linear_clamp").
-    // We use a base name that is always valid HLSL; the slot number is
-    // appended only when needed for uniqueness.
-    private static string SamplerInlineName(uint slot, bool comparison)
-    {
-        if (comparison)
-            return slot == 0 ? "sampler_comparison_linear_clamp" : $"sampler_comparison_linear_clamp{slot}";
-        return slot == 0 ? "sampler_linear_clamp" : $"sampler_linear_clamp{slot}";
     }
 
     // Depth-first walk of every sub-expression in a statement (mirrors
@@ -635,23 +569,15 @@ public static class HlslAstBuilder
         return new string(chars);
     }
 
-    // Safety net: Unity's per-buffer layout is "partial" (some members are
-    // omitted), so a few reads may not resolve to a named variable. Keep a
-    // synthesized float4 array covering every accessed slot so those reads
-    // still compile as cbN_values[slot].
-    private static void AddCbufferFallback(HlslResourceNode node, uint slot, Dictionary<uint, uint> maxCbufferSlot)
+    // Stops when a used register has no named parameter layout.
+    private static void RequireResolvedCbuffer(uint slot, Dictionary<uint, uint> maxCbufferSlot)
     {
         if (!maxCbufferSlot.TryGetValue(slot, out uint maxSlot))
-            return;
-
-        node.Variables.Add(new HlslCBufferVariable
         {
-            Name = $"cb{slot}_values",
-            TypeName = "float4",
-            Offset = 0,
-            Size = (maxSlot + 1) * 16,
-            ArraySize = (int)(maxSlot + 1),
-        });
+            return;
+        }
+
+        throw new InvalidDataException($"Unresolved constant-buffer access at b{slot}[{maxSlot}]; named parameter metadata is required.");
     }
 
     private static HlslStructNode BuildStruct(string name, IEnumerable<(uint Register, string? SymbolicName)> entries)

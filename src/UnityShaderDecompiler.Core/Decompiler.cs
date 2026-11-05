@@ -5,6 +5,7 @@ using System.Linq;
 using System.Security.Cryptography;
 using AssetStudio;
 using UnityShaderDecompiler.Core.Hlsl.Ast;
+using UnityShaderDecompiler.Core.Hlsl;
 using UnityShaderDecompiler.Core.DXBC;
 using UnityShaderDecompiler.Core.DXBC.Chunks;
 using UnityShaderDecompiler.Core.DXBC.Extraction;
@@ -467,16 +468,8 @@ public static class Decompiler
         if (candidates.Count == 0)
             return;
 
-        // Build texture property name mapping: texture properties (type=4) in
-        // declaration order map to t-register slots (0, 1, 2, ...). This lets
-        // the decompiler emit "Texture2D _MainTex : register(t0)" instead of
-        // "Texture2D t0 : register(t0)" — Unity needs variable names matching
-        // the Properties block to bind textures at runtime.
-        var textureNames = new Dictionary<uint, string>();
-        uint texSlot = 0;
-        foreach (HlslPropertyNode prop in astShader.Properties)
-            if (prop.Kind == HlslPropertyKind.Texture)
-                textureNames[texSlot++] = prop.Name;
+        // Property order does not identify compiled resource binding slots.
+        Dictionary<uint, string> textureNames = new Dictionary<uint, string>();
 
         foreach (DecompiledSubprogram c in candidates)
             c.Hash = Convert.ToHexString(SHA256.HashData(c.DxbcBytes));
@@ -607,79 +600,9 @@ public static class Decompiler
             c.Stage.ToString(),
             textureNames).ToList();
 
-        foreach (HlslResourceNode res in resources)
+        foreach (HlslResourceNode resource in resources)
         {
-            // Cbuffers merge by slot: vert and frag subprograms of the same
-            // pass touch the same constant-buffer slots, so union the
-            // members (keeping the largest array size for any fallback).
-            // Equal names do not make resources at different bindings identical.
-            HlslResourceNode? existing = pass.Resources.FirstOrDefault(r =>
-                r.Kind == res.Kind && r.Slot == res.Slot);
-
-            if (existing is null)
-            {
-                // Sampler name collision: two different sampler slots may both
-                // map to the same texture property (e.g. s0 and s2 both serve
-                // _MainTex). Append the slot index to make the name unique.
-                if (res.Kind == HlslResourceKind.Sampler
-                    && pass.Resources.Any(r => r.Kind == HlslResourceKind.Sampler && r.Name == res.Name))
-                {
-                    res.Name = $"{res.Name}{res.Slot}";
-                }
-                pass.Resources.Add(res);
-            }
-            else if (res.Kind == HlslResourceKind.ConstantBuffer)
-            {
-                // vert/frag subprograms of one pass can touch different
-                // slots of the same cbuffer, and each BuildResources call
-                // only sees its own blocks. Union the members, keeping the
-                // largest array size so the RDEF-less float4 fallback
-                // covers every subprogram's accesses.
-                foreach (HlslCBufferVariable v in res.Variables)
-                {
-                    HlslCBufferVariable? match = existing.Variables.FirstOrDefault(x => x.Name == v.Name);
-                    if (match is null)
-                    {
-                        existing.Variables.Add(v);
-                    }
-                    else if (v.ArraySize is { } n && (match.ArraySize is not { } m || n > m))
-                    {
-                        existing.Variables.Remove(match);
-                        existing.Variables.Add(v);
-                    }
-                }
-            }
-        }
-
-        // A fallback array is shared by all stages in the emitted HLSL pass.
-        // Once present, every stage reads raw slots, including stages whose
-        // reads were resolved to named metadata members before the merge.
-        foreach (HlslResourceNode buffer in pass.Resources.Where(r => r.Kind == HlslResourceKind.ConstantBuffer))
-        {
-            HlslCBufferVariable? raw = buffer.Variables.FirstOrDefault(
-                v => v.Name == $"cb{buffer.Slot}_values" && v.ArraySize is not null);
-            if (raw is null)
-                {
-                continue;
-            }
-            int metadataRegisters = pass.Cbuffers
-                .Where(entry => entry.Key.Slot == (int)buffer.Slot)
-                .Select(entry => (entry.Value.Size + 15) / 16)
-                .DefaultIfEmpty(0)
-                .Max();
-            int count = Math.Max(raw.ArraySize!.Value, metadataRegisters);
-            if (count > raw.ArraySize.Value)
-            {
-                buffer.Variables.Remove(raw);
-                buffer.Variables.Add(new HlslCBufferVariable
-                {
-                    Name = raw.Name,
-                    TypeName = raw.TypeName,
-                    Offset = raw.Offset,
-                    Size = (uint)count * 16,
-                    ArraySize = count,
-                });
-            }
+            VerifiedResourceBindings.Attach(pass.Resources, resource, c.Stage.ToString());
         }
 
         if (c.Function.InputStruct is not null) pass.Structs.Add(c.Function.InputStruct);

@@ -1,140 +1,107 @@
-using System;
-using System.Linq;
-using UnityShaderDecompiler.Core.Hlsl;
+﻿using UnityShaderDecompiler.Core.Hlsl;
 using UnityShaderDecompiler.Core.Hlsl.Ast;
-using UnityShaderDecompiler.Core.Analysis;
-using UnityShaderDecompiler.Core.Optimizations;
-using UnityShaderDecompiler.Core.DXBC.Instructions;
 using UnityShaderDecompiler.Core.DXBC.IR;
-using Xunit;
 
 namespace UnityShaderDecompiler.Tests;
 
-// Covers resource binding layouts tests.
+// Verifies that resource reconstruction never invents runtime bindings.
 public sealed class ResourceBindingLayoutsTests
 {
-    // Verifies that partial cbuffer metadata keeps raw register offsets.
+    // Keeps the original member name when the layout is fully identified.
     [Fact]
-    public void PartialCbufferMetadataKeepsRawRegisterOffsets()
+    public void KnownMembersRemainNamed()
     {
-        HlslShaderNode shader = CreatePartialShader();
-        string source = HlslPrettyPrinter.Print(shader, fuseTemps: false);
-        Assert.Contains("cbuffer NamedBuffer : register(b1) { float4 cb1_values[2]; };", source);
-        Assert.Contains("cb1_values[0]", source);
-        Assert.DoesNotContain("NamedValue", source);
+        HlslResourceNode buffer = Buffer("NamedBuffer", "NamedValue");
+        string source = HlslPrettyPrinter.Print(Shader(buffer), fuseTemps: false);
+        Assert.Contains("NamedValue : packoffset(c0)", source);
+        Assert.DoesNotContain("cb0_values", source);
     }
 
-    // Keeps declarations and reads distinct when two texture slots share a name.
+    // Refuses to erase known members when other accesses are unresolved.
     [Fact]
-    public void DuplicateTextureNamesUseDistinctIdentifiers()
+    public void PartialBufferCannotReplaceNamedMembersWithRawStorage()
     {
-        HlslShaderNode shader = new HlslShaderNode { Name = "Test/TextureSlots" };
-        HlslSubShaderNode subShader = new HlslSubShaderNode();
-        HlslPassNode pass = new HlslPassNode();
-        pass.Resources.Add(new HlslResourceNode { Name = "_Tex", Kind = HlslResourceKind.Texture, Slot = 0 });
-        pass.Resources.Add(new HlslResourceNode { Name = "_Tex", Kind = HlslResourceKind.Texture, Slot = 1 });
-        IRRegister resource = new IRRegister
+        HlslResourceNode buffer = Buffer("NamedBuffer", "NamedValue");
+        buffer.Variables.Add(new HlslCBufferVariable
         {
-            RegisterType = RegisterType.Resource, Index = 1, SymbolicName = "_Tex",
-        };
-        HlslFunctionNode function = new HlslFunctionNode { Name = "frag", Stage = HlslShaderStage.Fragment };
-        function.Statements.Statements.Add(new HlslAssignmentStatement
-        {
-            Destination = Temp(0, 15),
-            Expression = new IRExpression.TextureOperationExpression
-            {
-                Operation = IRExpression.TextureOperation.Load,
-                Resource = resource,
-                Coordinates = new IRExpression.ConstantExpression
-                {
-                    Kind = IRExpression.ConstantExpression.ConstantKind.Int,
-                    RawValues = new uint[] { 0, 0, 0 },
-                },
-            },
+            Name = "cb0_values", TypeName = "float4", Offset = 0, Size = 32, ArraySize = 2,
         });
-        pass.FragmentFunction = function;
-        subShader.Passes.Add(pass);
-        shader.SubShaders.Add(subShader);
-        string source = HlslPrettyPrinter.Print(shader, fuseTemps: false);
-        Assert.Contains("Texture2D _Tex : register(t0);", source);
-        Assert.Contains("Texture2D _Tex_t1 : register(t1);", source);
-        Assert.Contains("_Tex_t1.Load", source);
+        InvalidDataException error = Assert.Throws<InvalidDataException>(() => HlslPrettyPrinter.Print(Shader(buffer)));
+        Assert.Contains("Conflicting member layouts", error.Message);
+        Assert.Equal("NamedValue", buffer.Variables[0].Name);
     }
 
-    // Creates a temporary register with the requested index and lane mask.
-    private static IRRegister Temp(uint index, byte mask = 1)
+    // Rejects different buffer identities sharing a slot across stages.
+    [Fact]
+    public void DifferentStageBuffersCannotMergeBySlot()
     {
-        IRRegister register = new IRRegister
-        {
-            RegisterType = RegisterType.Temp,
-            Index = index,
-            Type = IRValueType.Float,
-            Mask = mask,
-            ComponentMode = Operand.OperandComponentMode.Mask,
-        };
-        for (int component = 0; component < 4; component++)
-        {
-            if ((mask & (1 << component)) != 0)
-            {
-                register.SsaVersion[component] = 1;
-            }
-        }
-        return register;
+        List<HlslResourceNode> resources = new List<HlslResourceNode>();
+        VerifiedResourceBindings.Attach(resources, Buffer("PerObject", "ObjectValue"), "Vertex");
+        InvalidDataException error = Assert.Throws<InvalidDataException>(() =>
+            VerifiedResourceBindings.Attach(resources, Buffer("PerCamera", "CameraValue"), "Fragment"));
+        Assert.Contains("Vertex PerObject, Fragment PerCamera", error.Message);
+        Assert.Single(resources);
     }
 
-    // Builds a shader that reads raw storage from a partially described buffer.
-    private static HlslShaderNode CreatePartialShader()
+    // Allows matching identities and layouts to be shared by both stages.
+    [Fact]
+    public void MatchingStageBuffersShareTheirVerifiedLayout()
     {
-        HlslShaderNode shader = new HlslShaderNode { Name = "Test/CbufferLayout" };
-        HlslSubShaderNode subShader = new HlslSubShaderNode();
-        HlslPassNode pass = new HlslPassNode();
-        HlslResourceNode resource = CreatePartialBuffer();
-        pass.Resources.Add(resource);
-        IRRegister read = new IRRegister
+        List<HlslResourceNode> resources = new List<HlslResourceNode>();
+        VerifiedResourceBindings.Attach(resources, Buffer("Shared", "Value"), "Vertex");
+        VerifiedResourceBindings.Attach(resources, Buffer("Shared", "Value"), "Fragment");
+        Assert.Single(Assert.Single(resources).Variables);
+    }
+
+    // Rejects overlapping members instead of redirecting reads to another name.
+    [Fact]
+    public void DifferentMembersAtTheSameOffsetAreRejected()
+    {
+        List<HlslResourceNode> resources = new List<HlslResourceNode>();
+        VerifiedResourceBindings.Attach(resources, Buffer("Shared", "Left"), "Vertex");
+        Assert.Throws<InvalidDataException>(() =>
+            VerifiedResourceBindings.Attach(resources, Buffer("Shared", "Right"), "Fragment"));
+    }
+
+    // Does not rename a duplicate texture into an unbound material property.
+    [Fact]
+    public void DuplicateTextureNamesAreRejectedWithoutMutation()
+    {
+        HlslResourceNode first = new HlslResourceNode { Name = "_Tex", Kind = HlslResourceKind.Texture, Slot = 0 };
+        HlslResourceNode second = new HlslResourceNode { Name = "_Tex", Kind = HlslResourceKind.Texture, Slot = 1 };
+        Assert.Throws<InvalidDataException>(() => HlslPrettyPrinter.Print(Shader(first, second)));
+        Assert.Equal("_Tex", second.Name);
+    }
+
+    // Requires texture metadata instead of inventing t0 or a property name.
+    [Fact]
+    public void MissingTextureNameStopsResourceConstruction()
+    {
+        List<IRDeclaration> declarations = new List<IRDeclaration>
         {
-            RegisterType = RegisterType.ConstantBuffer,
-            Type = IRValueType.Float,
-            Mask = 15,
-            ComponentMode = Operand.OperandComponentMode.Mask,
+            new IRDeclaration.IRResourceDeclaration { Slot = 0 },
         };
-        read.Indices.Add(1);
-        read.Indices.Add(0);
-        HlslFunctionNode function = new HlslFunctionNode { Name = "frag", Stage = HlslShaderStage.Fragment };
-        function.Statements.Statements.Add(new HlslAssignmentStatement
-        {
-            Destination = Temp(0, 15),
-            Expression = new IRExpression.RegisterExpression { Register = read },
-        });
-        pass.FragmentFunction = function;
-        subShader.Passes.Add(pass);
-        shader.SubShaders.Add(subShader);
+        InvalidDataException error = Assert.Throws<InvalidDataException>(() => HlslAstBuilder.BuildResources(declarations).ToList());
+        Assert.Contains("Missing texture binding name", error.Message);
+    }
+
+    // Creates a fully specified buffer for binding checks.
+    private static HlslResourceNode Buffer(string name, string member)
+    {
+        HlslResourceNode buffer = new HlslResourceNode { Name = name, Kind = HlslResourceKind.ConstantBuffer, Slot = 0 };
+        buffer.Variables.Add(new HlslCBufferVariable { Name = member, TypeName = "float4", Offset = 0, Size = 16 });
+        return buffer;
+    }
+
+    // Wraps resources in a pass that the shader printer will process.
+    private static HlslShaderNode Shader(params HlslResourceNode[] resources)
+    {
+        HlslShaderNode shader = new HlslShaderNode { Name = "Test/Bindings" };
+        HlslSubShaderNode subshader = new HlslSubShaderNode();
+        HlslPassNode pass = new HlslPassNode();
+        pass.Resources.AddRange(resources);
+        subshader.Passes.Add(pass);
+        shader.SubShaders.Add(subshader);
         return shader;
-    }
-
-    // Creates overlapping named and raw entries for a partial buffer.
-    private static HlslResourceNode CreatePartialBuffer()
-    {
-        HlslResourceNode resource = new HlslResourceNode
-        {
-            Name = "NamedBuffer",
-            Kind = HlslResourceKind.ConstantBuffer,
-            Slot = 1,
-        };
-        resource.Variables.Add(new HlslCBufferVariable
-        {
-            Name = "NamedValue",
-            TypeName = "float4",
-            Offset = 0,
-            Size = 16,
-        });
-        resource.Variables.Add(new HlslCBufferVariable
-        {
-            Name = "cb1_values",
-            TypeName = "float4",
-            Offset = 0,
-            Size = 32,
-            ArraySize = 2,
-        });
-        return resource;
     }
 }

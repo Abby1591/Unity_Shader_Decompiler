@@ -11,34 +11,16 @@ namespace UnityShaderDecompiler.Tests;
 // Covers cbuffer emission tests.
 public class CbufferEmissionTests
 {
-    // Verifies that partial layout preserves buffer identity and raw byte offsets.
+    // Rejects overlapping raw storage instead of discarding the named member.
     [Theory]
-    [InlineData("MaterialParameters", "MaterialParameters")]
-    [InlineData("_Globals", "_GlobalsCB_b1")]
-    [Trait("Category", "D3D")]
-    public void PartialLayoutPreservesBufferIdentityAndRawByteOffsets(string name, string emittedName)
+    [InlineData("MaterialParameters")]
+    [InlineData("_Globals")]
+    public void PartialLayoutCannotReplaceKnownMembers(string name)
     {
-        if (!OperatingSystem.IsWindows())
-        {
-            return;
-        }
-
         HlslShaderNode shader = CreatePartialShader(name);
-        string text = HlslPrettyPrinter.Print(shader, fuseTemps: false);
-        string declaration = Regex.Match(text, @"cbuffer\b.*?};", RegexOptions.Singleline).Value;
-        Assert.NotEmpty(declaration);
-        string source = declaration + "\nfloat4 main() : SV_Target { return cb1_values[1]; }";
-        DxbcFile compiled = new();
-        compiled.Load(UnityShaderDecompiler.Core.DXBC.Compilation.DxbcCompiler.Compile(source, "main", "ps_5_0"));
-
-        RdefConstantBuffer reflected = Assert.Single(compiled.ResourceDefinition!.ConstantBuffers);
-        Assert.Equal(emittedName, reflected.Name);
-        RdefVariable storage = Assert.Single(reflected.Variables);
-        Assert.Equal("cb1_values", storage.Name);
-        Assert.Equal(0u, storage.Offset);
-        Assert.Equal(32u, storage.Size);
-        Assert.Equal(32u, reflected.Size);
-        Assert.Equal(1u, compiled.ResourceDefinition.ResourceBindings.Single(b => b.Name == emittedName).BindPoint);
+        InvalidDataException error = Assert.Throws<InvalidDataException>(() =>
+            HlslPrettyPrinter.Print(shader, fuseTemps: false));
+        Assert.Contains("Conflicting member layouts", error.Message);
     }
 
     // Builds a shader with overlapping named and raw constant-buffer entries.
