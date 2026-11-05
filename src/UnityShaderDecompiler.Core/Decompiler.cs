@@ -138,7 +138,8 @@ public static class Decompiler
         log.WriteLine("Loading SubPrograms...");
         log.WriteLine();
 
-        program.Read(reader, 0);
+        SerializedProgramReader.Read(program, reader, project.Metadata,
+            options.RestoreKeywordVariants, log);
 
         if (options.OutRoot is { } createRoot)
             Directory.CreateDirectory(createRoot);
@@ -657,14 +658,7 @@ public static class Decompiler
         Dictionary<int, DecompiledSubprogram> byIndex = candidates.ToDictionary(c => c.Index);
         HashSet<int> covered = new HashSet<int>();
         Dictionary<uint, string> textureNames = new Dictionary<uint, string>();
-        uint textureSlot = 0;
-        foreach (HlslPropertyNode property in shader.Properties)
-        {
-            if (property.Kind == HlslPropertyKind.Texture)
-            {
-                textureNames[textureSlot++] = property.Name;
-            }
-        }
+        // Property declaration order is not a per-program texture binding table.
         foreach (HlslPassNode shell in shells)
         {
             if (shell.DirectXPrograms.Count == 0)

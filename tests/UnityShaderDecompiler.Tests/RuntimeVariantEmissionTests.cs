@@ -122,7 +122,7 @@ public sealed class RuntimeVariantEmissionTests
     }
 
     // Serializes compiled fixture programs into a Unity shader blob.
-    private static byte[] BuildBlob(List<(ShaderGpuProgramType Stage, byte[] Code)> programs)
+    internal static byte[] BuildBlob(List<(ShaderGpuProgramType Stage, byte[] Code)> programs)
     {
         List<byte[]> payloads = new List<byte[]>();
         foreach ((ShaderGpuProgramType stage, byte[] code) in programs)

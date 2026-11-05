@@ -28,3 +28,15 @@ and matching `.variants.json` under a project asset folder, copy
 Run the same CLI command with `-executeMethod ShaderVariantChecks.Run`.
 It checks the shader hash, pass count and nonempty compiled bytecode for both
 stages of every manifest entry. Results go to `shader-variant-results.json`.
+
+The native `RuntimeVariantBindingTests` check recompiles two keyword states
+with different reflected textures at the same slot. It verifies texture and
+sampler names/slots and the constant member offset/size. Property declaration
+order must not override reflected bindings. This check needs the arithmetic
+and locale corrections when testing the combined PRs; the isolated branch
+still has those pre-existing compilation failures. Native reflection does not
+validate Unity sampler-state selection or application rendering.
+
+Serialized code indices also restrict which blob records are parsed. Parameter
+records are not shader programs. Invalid referenced records fail in strict mode;
+unreferenced records are never classified by a guessed program header.
