@@ -27,24 +27,46 @@ dotnet build src/UnityShaderDecompiler.Cli/UnityShaderDecompiler.Cli.csproj -c R
 python tests/e2e/test_volumetric_lights.py
 ```
 
-The tests read expected vertex/fragment code indices directly from the original JSON, require a collected function with the matching stage for every index, and verify each saved DXBC artifact. Parameter-record indices are not code references: interpreting them as program headers can print misleading GLES labels and `No DXBC:` diagnostics. Such diagnostics alone do not establish a lost DirectX program. A missing expected program always fails.
+The tests require strict conversion with `--fail-on-error`, `--no-fuse-temps`
+and `--restore-keyword-variants`. They verify:
 
-Coverage: BilateralBlur **13** programs (5 vertex / 8 fragment), BlitAdd **2** (1 / 1), and VolumetricLight **184** (76 / 108): **199 unique programs across the three fixtures**. These checks establish extraction and per-program decompilation coverage, not successful recompilation of generated HLSL, complete runtime keyword selection, or GPU rendering equivalence.
+- Every DirectX vertex/fragment code reference is collected and saved as DXBC.
+- The generated shader preserves the original pass count and order.
+- The hash-bound manifest contains exactly the keyword/program pairs derived
+  independently from the original JSON, without missing or duplicate states.
+- Every manifest variant recompiles through the native D3D compiler.
 
-## Dependency and before/after validation
+Run the independent oracle guards with:
 
-**Merge [PR #6](https://github.com/Abby1591/Unity_Shader_Decompiler/pull/6) before [PR #14](https://github.com/Abby1591/Unity_Shader_Decompiler/pull/14).** No other PR is required for these assertions.
-
-| Implementation tested with the same corpus/tests | Result |
-| --- | --- |
-| Upstream `417f26b` | Three shader tests fail at extraction (`m_CompressedBlob`); four integrity/guard tests pass |
-| PR #6 alone, `9677441` | All seven tests pass; all 199 expected DirectX programs are collected |
-| All twelve correction PRs integrated with upstream `417f26b` | All seven tests pass; all 199 expected DirectX programs are collected |
-
-To repeat the comparison without copying or editing fixtures, build the Release CLI in each target checkout, then run this test file with `USD_REPO_ROOT` set to that checkout. For example, from this PR's repository root:
-
-```bash
-USD_REPO_ROOT=../decompiler-under-test python tests/e2e/test_volumetric_lights.py
+```sh
+python tests/e2e/test_shader_variant_contract.py
 ```
 
-Keep #14 in draft until #6 is integrated into its base. Passing this corpus does not independently prove the necessity or correctness of the other correction PRs.
+Coverage remains 199 unique programs across the three fixtures. Parameter-record
+indices are not code references. Successful extraction alone is insufficient:
+a strict conversion error fails the shader test, even when all programs were found.
+
+## Dependencies and remaining validation
+
+These stronger checks require PR #6 (input schema), PR #9 (runtime variants and
+manifest verification), PR #8 (strict resource validation), and the separate
+code-generation corrections. Keep this PR in draft while its prerequisites
+are missing. The previous seven passing tests checked extraction only; that
+historical result does not apply to this stronger gate.
+
+The current parameter extractor does not recover all resource bindings from
+serialized parameter records. Strict conversion must fail until that extraction
+is implemented. Do not weaken these checks or repair the generated shaders.
+
+Set `USD_REPO_ROOT` to a source checkout under test and build its Release CLI
+before running the corpus. Set `USD_CORPUS_OUTPUT` to a fresh directory outside
+the repository to retain successful artifacts for Unity validation. Existing
+output directories are rejected to avoid reusing stale shaders.
+
+After the offline gate passes, use the `tests/UnityRuntime` import/variant checks
+from PR #9 in a disposable Built-in project with Unity CLI, Editor **6000.0.75f1**,
+and Direct3D 11. Require an error-free import and compilation of every manifest
+entry. Then compare original and regenerated shaders with identical scene,
+material, camera, texture and keyword inputs. The offline checks do not establish
+resource-binding or image equivalence in Unity. That rendering validation remains
+blocked until reconstruction succeeds; no black-screen case is considered fixed.

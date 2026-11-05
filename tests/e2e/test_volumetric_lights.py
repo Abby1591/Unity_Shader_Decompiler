@@ -4,11 +4,13 @@ import hashlib
 import json
 import os
 import re
+import shutil
 import subprocess
 import sys
 import tempfile
 import unittest
 from pathlib import Path
+from shader_variant_contract import verify_manifest
 
 CORPUS_ROOT = Path(__file__).resolve().parents[2]
 ROOT = Path(os.environ.get("USD_REPO_ROOT", CORPUS_ROOT)).resolve()
@@ -70,6 +72,7 @@ class VolumetricLightsTests(unittest.TestCase):
                               "--flat", "--out-dir", str(folder / "input")])
             log = self.run_checked(["dotnet", str(CLI), str(folder / "input"),
                                     "--no-fuse-temps", "--save-subprograms",
+                                    "--restore-keyword-variants", "--fail-on-error",
                                     "--out-root", str(folder / "output")])
             verify_programs(expected, log)
             for index in expected:
@@ -82,6 +85,18 @@ class VolumetricLightsTests(unittest.TestCase):
             self.assertIn('Shader "' + data["m_ParsedForm"]["m_Name"] + '"', text)
             self.assertIn("#pragma vertex", text)
             self.assertIn("#pragma fragment", text)
+            verify_manifest(data, shaders[0])
+            self.run_checked(["dotnet", str(CLI), "--recompile-verify", str(shaders[0])])
+            self.preserve_artifacts(name, folder / "output")
+
+    # Keeps successful output for the separate Unity import and rendering checks.
+    def preserve_artifacts(self, name, output):
+        destination = os.environ.get("USD_CORPUS_OUTPUT")
+        if destination:
+            target = Path(destination).resolve() / name
+            if target.exists():
+                raise AssertionError(f"Output already exists; use a fresh validation directory: {target}")
+            shutil.copytree(output, target)
 
     # Runs a pipeline command and rejects unsuccessful completion.
     def run_checked(self, command):
