@@ -1,4 +1,4 @@
-﻿#!/usr/bin/env python3
+#!/usr/bin/env python3
 """
 Golden tests for the four PicaVoxel shaders whose real source the repo has
 (shaders_dummy/Source/*.shader). For each shader the test:

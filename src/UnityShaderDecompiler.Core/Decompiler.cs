@@ -118,7 +118,7 @@ public static partial class Decompiler
         using var stream = new MemoryStream(bytes);
         using var reader = new BinaryReader(stream);
 
-        // Unity 2022.3.x â€” the serialized shader-blob version this tool targets.
+        // Unity 2022.3.x — the serialized shader-blob version this tool targets.
         int[] version = { 2022, 3, 62 };
         var program = new ShaderProgram(reader, version);
 
@@ -140,7 +140,7 @@ public static partial class Decompiler
         if (options.OutRoot is { } createRoot)
             Directory.CreateDirectory(createRoot);
 
-        // Stage 2 â€” shell (Shader/SubShaders/Passes/Properties) from
+        // Stage 2 — shell (Shader/SubShaders/Passes/Properties) from
         // metadata.json alone. Functions get attached to pass slots below
         // as each subprogram's IR comes back from the pipeline.
         HlslShaderNode astShader = HlslAstBuilder.BuildShell(project.Metadata);
@@ -349,7 +349,7 @@ public static partial class Decompiler
 
         log.WriteLine();
 
-        // Stage 2b â€” recover the pass each candidate belongs to from the
+        // Stage 2b — recover the pass each candidate belongs to from the
         // serialization order and emit one pass per distinct compiled
         // (vertex, fragment) variant pair.
         BuildVariantPasses(astShader, allPasses, candidates, log);
@@ -369,7 +369,7 @@ public static partial class Decompiler
         string text = HlslPrettyPrinter.Print(
             astShader, options.FuseTemps, !options.KeepRegisterBindings);
 
-        // Stage 13.5 â€” surface-shader recognition: when a pass carries the
+        // Stage 13.5 — surface-shader recognition: when a pass carries the
         // compiled signature of a `#pragma surface surf ...` source, rewrite
         // the lit pass back into the canonical CGPROGRAM surface form. The
         // original HLSLPROGRAM passes are kept as a comment only with
@@ -415,7 +415,7 @@ public static partial class Decompiler
 
     // Locate the decompiler Output/ folder regardless of the launch directory.
     // The executable lives under the repo tree, so walk up from it to find the
-    // canonical repo-root Output first (this is deterministic â€” the same
+    // canonical repo-root Output first (this is deterministic — the same
     // folder no matter where the process was launched). Only fall back to
     // <cwd>/Output when the executable is not under the repo at all.
     public static string FindOutputRoot()
@@ -437,7 +437,7 @@ public static partial class Decompiler
     // (the folder that owns the .csproj), found by walking up from the
     // executable. This is where generated .shader files are written so they
     // show up in an IDE whose workspace root is the project itself.
-    // Deterministic regardless of launch directory â€” the exe is always built
+    // Deterministic regardless of launch directory — the exe is always built
     // under <project>/bin/<config>/<tfm>.
     public static string ProjectOutputRoot()
     {

@@ -1,4 +1,4 @@
-﻿name: Nightly Build
+name: Nightly Build
 
 on:
   schedule:
@@ -28,18 +28,18 @@ env:
 
 jobs:
   check:
-    name: ðŸ” Check for Recent Commits
+    name: 🔍 Check for Recent Commits
     runs-on: ubuntu-latest
     outputs:
       should_build: ${{ steps.check.outputs.should_build }}
 
     steps:
-      - name: ðŸ“¥ Checkout Repository
+      - name: 📥 Checkout Repository
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
-      - name: ðŸ” Check the Last 24 Hours
+      - name: 🔍 Check the Last 24 Hours
         id: check
         shell: bash
         run: |
@@ -53,7 +53,7 @@ jobs:
           fi
 
   build:
-    name: ðŸŒ™ ${{ matrix.os }}
+    name: 🌙 ${{ matrix.os }}
     needs: check
     if: needs.check.outputs.should_build == 'true' || github.event.inputs.force == 'true'
     runs-on: ${{ matrix.os }}
@@ -70,15 +70,15 @@ jobs:
       BUILD_DIR: Builds/${{ matrix.os }}
 
     steps:
-      - name: ðŸ“¥ Checkout Repository
+      - name: 📥 Checkout Repository
         uses: actions/checkout@v4
 
-      - name: ðŸ”§ Setup .NET
+      - name: 🔧 Setup .NET
         uses: actions/setup-dotnet@v4
         with:
           dotnet-version: ${{ env.DOTNET_VERSION }}
 
-      - name: ðŸ“‹ Environment Information
+      - name: 📋 Environment Information
         shell: bash
         run: |
           echo "::group::Repository Information"
@@ -96,7 +96,7 @@ jobs:
           dotnet --list-sdks
           echo "::endgroup::"
 
-      - name: ðŸ’¾ Cache NuGet Packages
+      - name: 💾 Cache NuGet Packages
         uses: actions/cache@v4
         with:
           path: ~/.nuget/packages
@@ -104,11 +104,11 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-nuget-
 
-      - name: ðŸ“¥ Restore Packages
+      - name: 📥 Restore Packages
         shell: bash
         run: dotnet restore "$PROJECT"
 
-      - name: ðŸš€ Publish
+      - name: 🚀 Publish
         shell: bash
         run: |
           mkdir -p "$BUILD_DIR/Output" "$BUILD_DIR/Logs"
@@ -128,7 +128,7 @@ jobs:
           echo "::endgroup::"
           echo "Build completed in $((END - START)) seconds."
 
-      - name: ðŸ§ª Offline Spec Tests
+      - name: 🧪 Offline Spec Tests
         shell: bash
         run: |
           echo "::group::Spec Tests"
@@ -136,7 +136,7 @@ jobs:
             2>&1 | tee "$BUILD_DIR/Logs/spec-tests.log"
           echo "::endgroup::"
 
-      - name: ðŸ§ª Full Regression Tests
+      - name: 🧪 Full Regression Tests
         shell: bash
         run: |
           echo "::group::dotnet test (full tier)"
@@ -148,7 +148,7 @@ jobs:
             2>&1 | tee "$BUILD_DIR/Logs/tests.log"
           echo "::endgroup::"
 
-      - name: ðŸ¥‡ Golden End-to-End Tests
+      - name: 🥇 Golden End-to-End Tests
         if: runner.os == 'Windows'
         shell: bash
         run: |
@@ -159,24 +159,24 @@ jobs:
             2>&1 | tee "$BUILD_DIR/Logs/golden-tests.log"
           echo "::endgroup::"
 
-      - name: ðŸ—“ï¸ Get Build Date
+      - name: 🗓️ Get Build Date
         id: date
         shell: bash
         run: echo "value=$(date -u +%Y-%m-%d)" >> "$GITHUB_OUTPUT"
 
-      - name: ðŸ“‚ Published Files
+      - name: 📂 Published Files
         shell: bash
         run: |
           echo "::group::Published Files"
           find "$BUILD_DIR/Output" -type f | sort
           echo "::endgroup::"
 
-      - name: âœ… Build Summary
+      - name: ✅ Build Summary
         if: always()
         shell: bash
         run: |
           {
-            echo "### ðŸŒ™ Nightly Build: ${{ matrix.os }}"
+            echo "### 🌙 Nightly Build: ${{ matrix.os }}"
             echo ""
             echo "| Item | Value |"
             echo "|------|-------|"
@@ -187,7 +187,7 @@ jobs:
             echo "| Logs | \`$BUILD_DIR/Logs\` |"
           } >> "$GITHUB_STEP_SUMMARY"
 
-      - name: ðŸ“¤ Upload Nightly Artifact
+      - name: 📤 Upload Nightly Artifact
         uses: actions/upload-artifact@v4
         with:
           name: UnityShaderDecompiler-nightly-${{ steps.date.outputs.value }}-${{ matrix.os }}
