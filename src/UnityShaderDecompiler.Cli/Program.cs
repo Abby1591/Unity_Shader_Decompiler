@@ -93,6 +93,7 @@ internal class Program
         // resolved from either the working directory or one level up so the
         // app works whether it is launched from the repo root or from src/.
         string inputPath = args.Length > 0 ? args[0] : DefaultInputFolder();
+        bool failOnError = args.Contains("--fail-on-error");
 
         // Output root for the generated .shader (+ opt-in program*.bin/
         // .dxbc/.hlsl artifacts). Defaults to the project-local Output/ so
@@ -118,6 +119,10 @@ internal class Program
                     "`python Extract.py shaders_json/<name>.json --out-dir Output " +
                     "(--flat for a single root-level shader)` first, or pass the " +
                     "path to a folder/blob explicitly.");
+                if (failOnError)
+                {
+                    Environment.ExitCode = 1;
+                }
                 return;
             }
         }
@@ -132,6 +137,10 @@ internal class Program
                 Console.WriteLine(
                     $"metadata.json not found next to {inputPath}. " +
                     "Run Extract.py to produce a proper Stage 0 output folder.");
+                if (failOnError)
+                {
+                    Environment.ExitCode = 1;
+                }
                 return;
             }
 
@@ -140,6 +149,10 @@ internal class Program
         else
         {
             Console.WriteLine($"Input not found: {inputPath}");
+            if (failOnError)
+            {
+                Environment.ExitCode = 1;
+            }
             return;
         }
 
@@ -148,6 +161,7 @@ internal class Program
             OutRoot = outRoot,
             DumpStages = args.Contains("--dump-stages"),
             DumpKeywords = args.Contains("--dump-keywords"),
+            FailOnError = failOnError,
             SaveSubprograms = args.Contains("--save-subprograms"),
             FuseTemps = !args.Contains("--no-fuse-temps"),
             ReconstructSurfaceShaders = !args.Contains("--no-surface-shaders"),
@@ -156,7 +170,12 @@ internal class Program
             Verbose = true,
         };
 
-        Decompiler.Decompile(project, options);
+        try { Decompiler.Decompile(project, options); }
+        catch (Exception error) when (options.FailOnError)
+        {
+            Console.Error.WriteLine(error.Message);
+            Environment.ExitCode = 1;
+        }
     }
 
     // Locate the decompiler Output/ folder regardless of the launch directory.
@@ -207,6 +226,7 @@ internal class Program
             result = Decompiler.Decompile(project, new DecompileOptions
             {
                 OutRoot = outRoot,
+                FailOnError = args.Contains("--fail-on-error"),
                 FuseTemps = !args.Contains("--no-fuse-temps"),
                 ReconstructSurfaceShaders = !args.Contains("--no-surface-shaders"),
                 KeepPasses = args.Contains("--keep-passes"),
