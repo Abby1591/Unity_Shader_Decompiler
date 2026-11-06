@@ -318,5 +318,4 @@ public static partial class Decompiler
             case HlslShaderStage.Compute: pass.ComputeFunction = function; break;
         }
     }
-
 }

@@ -49,7 +49,6 @@ public partial class ShdrParser
     public List<Instruction> Instructions { get; } = new();
     public List<string> Warnings { get; } = new();
 
-
     //------------------------------------------------------------------
     // Extended opcode tokens. For now this just stores the raw DWORD so
     // the parser stays synchronized. Later this should decode aoffimmi,

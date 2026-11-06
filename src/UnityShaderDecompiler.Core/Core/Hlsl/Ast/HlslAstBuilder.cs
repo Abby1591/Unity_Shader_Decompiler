@@ -215,24 +215,8 @@ public static partial class HlslAstBuilder
         return count == 1 ? baseName : $"{baseName}{count}";
     }
 
-    // Resources (cbuffers/textures/samplers/UAVs) are pass-scoped in
-    // ShaderLab, not function-scoped, even though DXBC declares them once
-    // per subprogram — caller merges these into HlslPassNode.Resources
-    // per-pass, deduping by (Kind, Slot, Name).
-    //
-    // `rdef` (Stage 7) is optional: when given, ConstantBuffer resources
-    // get their actual member list populated by name match against
-    // RdefChunk.ConstantBuffers — IRMetadataBinding (Stage 1) already
-    // guarantees a declaration's SymbolicName equals the RDEF cbuffer
-    // name it was bound from, so this is a plain lookup, not a guess.
-    //
-    // `blocks` is used only when a ConstantBuffer has no RDEF match
-    // (Unity strips reflection from shipped bytecode). Without member
-    // names/types, the body's cbN[slot] references can't resolve to real
-    // fields, so we synthesize one float4 per accessed 16-byte slot —
-    // D3D packs cbuffers on 16-byte register boundaries, so every
-    // cbN[slot] reference maps to element `slot` of that array and the
-    // output compiles.
+    // Depth-first walk of every sub-expression in a statement (mirrors
+    // IRExpressionRewriter's traversal so new node types stay in sync).
 
     private static IEnumerable<IRExpression> AllExpressions(IRStatement stmt)
     {

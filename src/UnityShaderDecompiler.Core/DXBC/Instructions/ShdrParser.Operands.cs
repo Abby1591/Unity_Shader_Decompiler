@@ -384,5 +384,4 @@ private RegisterType DecodeRegisterType(uint type)
             _ => RegisterType.Unknown
         };
     }
-
 }

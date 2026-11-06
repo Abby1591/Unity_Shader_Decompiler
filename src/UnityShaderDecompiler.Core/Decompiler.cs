@@ -412,7 +412,6 @@ public static partial class Decompiler
     public static string SafeFileName(string name) =>
         string.Join("_", name.Split(Path.GetInvalidFileNameChars())).TrimEnd(' ', '.');
 
-
     // Locate the decompiler Output/ folder regardless of the launch directory.
     // The executable lives under the repo tree, so walk up from it to find the
     // canonical repo-root Output first (this is deterministic — the same
