@@ -46,6 +46,13 @@ class MetadataOffsetTests(unittest.TestCase):
                 self.assertEqual(self.extract({field: 20}, {field: 48}),
                                  [("Tint", 20), ("Transform", 48)])
 
+    # Checks integral floats are normalized to byte offsets.
+    def test_integral_floats_are_accepted(self):
+        for field in ("m_Index", "m_OffsetInConstantBuffer"):
+            with self.subTest(field=field):
+                self.assertEqual(self.extract({field: 20.0}, {field: 48.0}),
+                                 [("Tint", 20), ("Transform", 48)])
+
     # Checks explicit offset takes precedence.
     def test_explicit_offset_takes_precedence(self):
         self.assertEqual(self.extract(

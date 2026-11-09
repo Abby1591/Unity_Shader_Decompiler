@@ -1,4 +1,3 @@
-# Normalizes supported shader JSON export schemas.
 """Normalize the serialized field names used by AssetStudio and AssetRipper."""
 
 import json
@@ -9,10 +8,18 @@ def parameter_offset(parameter):
     # Unity renamed this field; AssetRipper also normalizes older exports.
     field = "m_OffsetInConstantBuffer" if "m_OffsetInConstantBuffer" in parameter else "m_Index"
     offset = parameter.get(field)
-    if type(offset) is not int or offset < 0 or offset % 4:
+    # Some exporters serialize integer fields as JSON floats, e.g. 16.0.
+    valid = (
+        not isinstance(offset, bool)
+        and isinstance(offset, (int, float))
+        and (not isinstance(offset, float) or offset.is_integer())
+        and offset >= 0
+        and offset % 4 == 0
+    )
+    if not valid:
         raise ValueError(
             f"Invalid or missing constant-buffer byte offset for parameter {parameter.get('m_NameIndex')}: {offset!r}")
-    return offset
+    return int(offset)
 
 
 # Resolves equivalent field names and rejects conflicting values.
