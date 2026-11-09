@@ -30,7 +30,7 @@ def safe_folder_name(name: str) -> str:
 
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument("json_path", help="Path to the AssetStudio shader JSON export")
+    ap.add_argument("json_path", help="Path to an AssetStudio or AssetRipper shader JSON export")
     ap.add_argument("--dummy-dir", default="shaders_dummy",
                      help="Directory of AssetStudio plain-text dummy exports")
     ap.add_argument("--out-dir", default="Output", help="Root output directory")
