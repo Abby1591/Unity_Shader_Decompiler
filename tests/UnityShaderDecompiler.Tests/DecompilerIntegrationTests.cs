@@ -6,6 +6,7 @@ using UnityShaderDecompiler.Core;
 using UnityShaderDecompiler.Core.Hlsl.Ast;
 using UnityShaderDecompiler.Core.DXBC;
 using UnityShaderDecompiler.Core.DXBC.Extraction;
+using UnityShaderDecompiler.Core.DXBC.Metadata;
 
 namespace UnityShaderDecompiler.Tests;
 
@@ -240,6 +241,60 @@ public class DecompilerIntegrationTests
 
             Assert.True(nonCompute > 0, $"{fixture} has no non-compute subprograms");
         }
+    }
+
+    [Fact]
+    public void Decompile_InvalidChunkOffset_WithFailOnError_ThrowsWithoutWritingShader()
+    {
+        ShaderProject project = ShaderProject.LoadFromFolder(TestPaths.FixtureFolder("Corpus_01 Properties"));
+        // This fixture's vertex subprogram is DX11VertexSM50 (index 1).
+        DecompiledSubprogram subprogram = FixtureCache.Decompile("Corpus_01 Properties").Subprograms
+            .Single(sub => sub.Stage == HlslShaderStage.Vertex);
+        int dxbcOffset = project.Blob.AsSpan().IndexOf(subprogram.DxbcBytes);
+        Assert.True(dxbcOffset >= 0);
+        Assert.Equal(-1, project.Blob.AsSpan(dxbcOffset + 1).IndexOf(subprogram.DxbcBytes));
+        Assert.NotEmpty(subprogram.Dxbc.Chunks);
+
+        // Corrupt only the in-memory copy: the first chunk offset (at byte 32) is outside the container.
+        BitConverter.GetBytes(subprogram.Dxbc.TotalLength).CopyTo(project.Blob, dxbcOffset + 32);
+        using TempDirectory temp = new();
+
+        InvalidDataException exception = Assert.Throws<InvalidDataException>(() =>
+            Decompiler.Decompile(project, new DecompileOptions
+            {
+                FailOnError = true, OutRoot = temp.Path, Verbose = false
+            }));
+
+        Assert.Contains("is outside the DXBC container", exception.Message);
+        Assert.Empty(Directory.GetFiles(temp.Path, "*.shader"));
+    }
+
+    [Fact]
+    public void Decompile_InvalidChunkOffset_WithoutFailOnError_KeepsOnlyPixelSubprogram()
+    {
+        ShaderProject project = ShaderProject.LoadFromFolder(TestPaths.FixtureFolder("Corpus_01 Properties"));
+        DecompilationResult original = FixtureCache.Decompile("Corpus_01 Properties");
+        Assert.Equal(2, original.Subprograms.Count);
+        DecompiledSubprogram vertex = original.Subprograms.Single(sub => sub.Stage == HlslShaderStage.Vertex);
+        int dxbcOffset = project.Blob.AsSpan().IndexOf(vertex.DxbcBytes);
+        Assert.True(dxbcOffset >= 0);
+        Assert.Equal(-1, project.Blob.AsSpan(dxbcOffset + 1).IndexOf(vertex.DxbcBytes));
+        Assert.NotEmpty(vertex.Dxbc.Chunks);
+
+        // Corrupt the vertex's first chunk offset; leave the pixel subprogram intact.
+        BitConverter.GetBytes(vertex.Dxbc.TotalLength).CopyTo(project.Blob, dxbcOffset + 32);
+        using TempDirectory temp = new();
+
+        DecompilationResult result = Decompiler.Decompile(project, new DecompileOptions
+        {
+            FailOnError = false, OutRoot = temp.Path, Verbose = false
+        });
+
+        DecompiledSubprogram remaining = Assert.Single(result.Subprograms);
+        Assert.Equal(3, remaining.Index);
+        Assert.Equal(HlslShaderStage.Fragment, remaining.Stage);
+        Assert.NotNull(result.OutputPath);
+        Assert.Equal(result.ShaderText, File.ReadAllText(result.OutputPath));
     }
 
     private static string CaptureConsole(Action action)
