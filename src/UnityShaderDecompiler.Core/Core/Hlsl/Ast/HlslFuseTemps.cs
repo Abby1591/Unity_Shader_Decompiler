@@ -114,8 +114,12 @@ public static class HlslFuseTemps
                 break;
 
             case HlslMultiAssignmentStatement ma:
-                foreach (IRRegister dest in ma.Destinations)
-                    RecordDef(dest, defCounts);
+                // A null destination is a dropped lane (e.g. a multi-result
+                // instruction whose high result is unused); it has no def to
+                // record and the printer skips it.
+                foreach (IRRegister? dest in ma.Destinations)
+                    if (dest is not null)
+                        RecordDef(dest, defCounts);
                 foreach (IRExpression e in ma.Expressions)
                     WalkExpr(e, stmt, block, index, uses);
                 break;
