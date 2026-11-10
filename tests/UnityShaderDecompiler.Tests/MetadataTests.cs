@@ -11,9 +11,9 @@ public class MetadataTests
     public void LoadFromFolder_ReadsNamePropertiesAndSubShaders()
     {
         var project = UnityShaderDecompiler.Core.DXBC.Metadata.ShaderProject.LoadFromFolder(
-            TestPaths.FixtureFolder("HOLO_Holo"));
+            TestPaths.FixtureFolder("Corpus_01 Properties"));
 
-        Assert.Equal("HOLO/Holo", project.Metadata.Name);
+        Assert.Equal("Corpus/01 Properties", project.Metadata.Name);
         Assert.NotEmpty(project.Metadata.Properties);
         Assert.NotEmpty(project.Metadata.SubShaders);
         Assert.NotNull(project.DummyShaderSource);
@@ -30,8 +30,8 @@ public class MetadataTests
     }
 
     [Theory]
-    [InlineData("HOLO/Holo", "HOLO_Holo")]
-    [InlineData("Toon/Basic", "Toon_Basic")]
+    [InlineData("Corpus/01 Properties", "Corpus_01 Properties")]
+    [InlineData("Corpus/16 UsePass Consumer", "Corpus_16 UsePass Consumer")]
     public void SafeFileName_ReplacesDirectorySeparators(string input, string expected)
     {
         Assert.Equal(expected, Decompiler.SafeFileName(input));

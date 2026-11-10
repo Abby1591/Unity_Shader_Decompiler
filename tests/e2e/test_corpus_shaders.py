@@ -1,29 +1,28 @@
 #!/usr/bin/env python3
 """
-Golden tests for the four PicaVoxel shaders whose real source the repo has
-(shaders_dummy/Source/*.shader). For each shader the test:
+Golden end-to-end tests for the checked-in Unity 6 shader corpus.
 
-  1. Runs Stage 0 (Extract.py) on the AssetStudio JSON export to produce
-     Output/<name>/blob.bin + metadata.json.
-  2. Runs the Stage 1+ decompiler (Parser.exe) on that folder.
+For every JSON in shaders_json/ the runner:
+
+  1. Runs Stage 0 (Extract.py) to produce Output/<name>/blob.bin +
+     metadata.json (+ the matching dummy.shader from shaders_dummy/).
+  2. Runs the Stage 1+ decompiler on that folder.
   3. Asserts the decompiled .shader preserves the facts that are derivable
      from the JSON metadata (shader name, properties, fallback, cbuffer
      slots, named cbuffer members) and that the pipeline completed without
      an unhandled exception.
 
-     Cbuffer slots are satisfied either by an explicit `register(bN)` or by
-     a generated name ending in `bN` (e.g. `cbuffer _UnityPerDrawCB_b0`).
-     Metadata lists every member of every cbuffer, while the emitted HLSL
-     only declares members the shipped bytecode actually reads, so the
-     member check requires at least one named member rather than all of
-     them. The detailed per-fixture equivalents live in the C# test suite
-     (`dotnet test`, GoldenMetadataTests).
+Cbuffer slots are satisfied either by an explicit `register(bN)` or by a
+generated name ending in `bN` (e.g. `cbuffer _UnityPerDrawCB_b0`). Metadata
+lists every member of every cbuffer, while the emitted HLSL only declares
+members the shipped bytecode actually reads, so the member check requires at
+least one named member rather than all of them.
 
 Expected values are read from the JSON export itself (the true input), so
 this stays in sync with the corpus rather than hard-coding stale facts.
 
 Usage:
-    python "tests/e2e/test_picavoxel_shaders.py" [--keep] [--parser PATH]
+    python "tests/e2e/test_corpus_shaders.py" [--keep] [--parser PATH]
 """
 
 import argparse
@@ -69,20 +68,12 @@ def find_dotnet():
 
 DOTNET = find_dotnet()
 
-# (json file, friendly test name)
-SHADERS = [
-    ("PicaVoxel_PicaVoxel Diffuse.json", "PicaVoxel Diffuse"),
-    ("PicaVoxel_PicaVoxel PBR.json", "PicaVoxel PBR"),
-    ("PicaVoxel_PicaVoxel PBR OneMinus Alpha Emissive.json", "PicaVoxel PBR OneMinus Alpha Emissive"),
-    ("PicaVoxel_PicaVoxel Unlit.json", "PicaVoxel Unlit"),
-]
-
 
 def safe_folder_name(name: str) -> str:
-    return name.replace("/", "_").replace("\\", "_")
+    return name.replace("/", "_").replace("\\", "_").rstrip(" .")
 
 
-def run(cmd, cwd, timeout=600):
+def run(cmd, cwd, timeout=900):
     env = os.environ.copy()
     # The built apphost only finds the .NET runtime via DOTNET_ROOT when the
     # default install lacks the net10.0 runtime.
@@ -98,10 +89,10 @@ def load_metadata(blob_folder):
 
 
 def output_shader_path(meta, parser_out):
-    # Parser/Program.cs SafeFileName: replaces Path.GetInvalidFileNameChars()
+    # Decompiler.SafeFileName: replaces Path.GetInvalidFileNameChars()
     name = meta["name"]
     invalid = '<>:"/\\|?*'
-    safe = "".join("_" if c in invalid else c for c in name)
+    safe = "".join("_" if c in invalid else c for c in name).rstrip(" .")
     return parser_out / f"{safe}.shader"
 
 
@@ -114,6 +105,8 @@ def main():
                     help="path to the built Shader Decompiler.exe")
     ap.add_argument("--out-root", default=str(OUT_DIR),
                     help="root folder that Extract.py writes into")
+    ap.add_argument("--filter", default=None,
+                    help="only run JSON files whose stem contains this substring")
     args = ap.parse_args()
 
     parser_exe = Path(args.parser)
@@ -128,16 +121,18 @@ def main():
         print(f"Parser.exe not found at {parser_exe}; run 'dotnet build' first.")
         return 2
 
+    json_paths = sorted(JSONS_DIR.glob("*.json"))
+    if args.filter:
+        json_paths = [p for p in json_paths if args.filter in p.stem]
+    if not json_paths:
+        print(f"No shader JSONs found in {JSONS_DIR}")
+        return 2
+
     failures = 0
 
-    for json_name, label in SHADERS:
-        json_path = JSONS_DIR / json_name
-        if not json_path.exists():
-            print(f"[{label}] SKIP: missing {json_path}")
-            failures += 1
-            continue
-
-        blob_folder = out_root / safe_folder_name(json_path.stem)
+    for json_path in json_paths:
+        label = json_path.stem
+        blob_folder = out_root / safe_folder_name(label)
 
         # Stage 0: re-extract so the test is hermetic (blob + metadata).
         r = run([sys.executable, str(EXTRACT), str(json_path), "--out-dir", str(out_root)], REPO_ROOT)
@@ -217,9 +212,9 @@ def main():
 
     print()
     if failures:
-        print(f"{failures} of {len(SHADERS)} tests FAILED")
+        print(f"{failures} of {len(json_paths)} tests FAILED")
         return 1
-    print(f"All {len(SHADERS)} tests PASSED")
+    print(f"All {len(json_paths)} tests PASSED")
     return 0
 
 

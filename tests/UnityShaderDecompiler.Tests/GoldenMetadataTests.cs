@@ -1,4 +1,5 @@
 using System;
+using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
 using UnityShaderDecompiler.Core;
@@ -16,9 +17,13 @@ public class GoldenMetadataTests
 {
     public static TheoryData<string> Fixtures => new()
     {
-        "HOLO_Holo",
-        "Hidden_BrightPassFilter2",
-        "PicaVoxel_PicaVoxel Diffuse",
+        "Corpus_01 Properties",
+        "Corpus_04 Vertex Fragment",
+        "Corpus_05 Surface Standard",
+        "Corpus_14 Shadow Depth Meta Motion",
+        "Corpus_19 Hull Domain",
+        "Corpus_20 Instancing",
+        "Corpus_26 Multiple Render Targets",
     };
 
     [Theory]
@@ -50,45 +55,37 @@ public class GoldenMetadataTests
     }
 
     [Fact]
-    public void PicaVoxel_EmitsLightingMemberThatBytecodeUses()
-    {
-        var text = FixtureCache.Decompile("PicaVoxel_PicaVoxel Diffuse").ShaderText;
-
-        // Metadata lists _LightColor0, but this variant's bytecode never reads
-        // it, so it is intentionally not emitted. _WorldSpaceLightPos0 *is*
-        // read and must survive.
-        Assert.Contains("_WorldSpaceLightPos0", text);
-    }
-
-    [Fact]
-    public void PicaVoxel_WithKeepRegisterBindings_RetainsSamplerRegisters()
+    public void Properties_WithKeepRegisterBindings_RetainsSamplerRegisters()
     {
         var kept = UnityShaderDecompiler.Core.Decompiler.DecompileFolder(
-            TestPaths.FixtureFolder("PicaVoxel_PicaVoxel Diffuse"),
+            TestPaths.FixtureFolder("Corpus_01 Properties"),
             new DecompileOptions { Verbose = false, KeepRegisterBindings = true });
 
         Assert.Contains("register(s0)", kept.ShaderText);
 
         // Default output strips explicit sampler/texture registers; named
         // cbuffers still encode their slot in the name.
-        var stripped = FixtureCache.Decompile("PicaVoxel_PicaVoxel Diffuse");
+        var stripped = FixtureCache.Decompile("Corpus_01 Properties");
         Assert.DoesNotContain("register(s0)", stripped.ShaderText);
-        Assert.Contains("cbuffer cb2 : register(b2)", stripped.ShaderText);
+        Assert.Contains("cbuffer _UnityPerFrameCB_b2", stripped.ShaderText);
     }
 
-    [Fact]
-    public void Holo_MatchesCheckedInGoldenExample()
+    [Theory]
+    [MemberData(nameof(Fixtures))]
+    public void Fixture_MatchesCheckedInSample(string fixture)
     {
-        var result = FixtureCache.Decompile("HOLO_Holo");
-        string golden = System.IO.Path.Combine(
-            TestPaths.RepoRoot, "samples", "HOLO_Holo.shader");
+        var result = FixtureCache.Decompile(fixture);
+        string golden = Path.Combine(TestPaths.RepoRoot, "samples", fixture + ".shader");
 
-        if (!System.IO.File.Exists(golden))
+        if (!File.Exists(golden))
             return; // generated examples are optional in a source-only checkout
 
-        Assert.Equal(
-            Normalize(System.IO.File.ReadAllText(golden)),
-            Normalize(result.ShaderText));
+        string expected = Normalize(File.ReadAllText(golden));
+        string actual = Normalize(result.ShaderText);
+        Assert.True(
+            expected == actual,
+            $"{fixture}: output no longer matches samples/{fixture}.shader\n" +
+            FirstDifference(expected, actual));
     }
 
     private static int[] CbufferSlots(ShaderMetadata metadata) =>
@@ -112,4 +109,25 @@ public class GoldenMetadataTests
             .ToArray();
 
     private static string Normalize(string text) => text.Replace("\r\n", "\n").TrimEnd();
+
+    private static string FirstDifference(string expected, string actual)
+    {
+        string[] expectedLines = expected.Split('\n');
+        string[] actualLines = actual.Split('\n');
+        int count = Math.Max(expectedLines.Length, actualLines.Length);
+
+        for (int i = 0; i < count; i++)
+        {
+            string e = i < expectedLines.Length ? expectedLines[i] : "<end of file>";
+            string a = i < actualLines.Length ? actualLines[i] : "<end of file>";
+            if (e != a)
+            {
+                return $"  first difference at line {i + 1}\n" +
+                       $"  expected: {e}\n" +
+                       $"  actual:   {a}";
+            }
+        }
+
+        return "  files differ only in trailing whitespace";
+    }
 }
