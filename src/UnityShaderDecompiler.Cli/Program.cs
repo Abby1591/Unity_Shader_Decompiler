@@ -94,7 +94,8 @@ internal class Program
         // level up so the app works whether it is launched from the repo root
         // or from src/.
         string inputPath = args.Length > 0 ? args[0] : DefaultInputFolder();
-
+        bool failOnError = args.Contains("--fail-on-error");
+        
         // Output root for the generated .shader (+ opt-in program*.bin/
         // .dxbc/.hlsl artifacts). Defaults to the project-local Output/ so
         // results are visible inside the IDE; --out-root overrides it.
@@ -149,6 +150,7 @@ internal class Program
             OutRoot = outRoot,
             DumpStages = args.Contains("--dump-stages"),
             DumpKeywords = args.Contains("--dump-keywords"),
+            FailOnError = failOnError,
             SaveSubprograms = args.Contains("--save-subprograms"),
             FuseTemps = !args.Contains("--no-fuse-temps"),
             ReconstructSurfaceShaders = !args.Contains("--no-surface-shaders"),

@@ -6,19 +6,19 @@ public partial class IRBuilder
 {
     private readonly Dictionary<(RegisterType Type, uint Index), IRValueType> _registerTypes = new();
     
-    public IRProgram Build(ShdrParser parser)
+    public IRProgram Build(ShdrParser parser, bool failOnError)
     {
         IRProgram program = new();
 
         foreach (Instruction instruction in parser.Instructions)
         {
-            ConvertInstruction(program, instruction);
+            ConvertInstruction(program, instruction, failOnError);
         }
 
         return program;
     }
 
-    private void ConvertInstruction(IRProgram program, Instruction instruction)
+    private void ConvertInstruction(IRProgram program, Instruction instruction, bool failOnError)
     {
         switch (instruction.Opcode)
         {
@@ -468,6 +468,10 @@ public partial class IRBuilder
             
             default:
                 Console.WriteLine($"IR: Unsupported opcode {instruction.Name}");
+                if (failOnError)
+                {
+                    throw new NotSupportedException($"IR: Unsupported opcode {instruction.Name}");
+                }
                 break;
         }
     }
