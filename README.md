@@ -180,7 +180,6 @@ and spaces are stripped).
 | `--out-root <dir>` | Write `.shader` output and subprogram artifacts to `<dir>` instead of the project-local `Output/` |
 | `--dump-stages` | Print a full IR snapshot after every pipeline phase and every optimization pass |
 | `--dump-keywords` | Print each subprogram's global and local keyword sets |
-| `--fail-on-error` | Stop with a non-zero exit code on subprogram errors, invalid SSA, missing input, or a pass group with no renderable variant (default: off) |
 | `--save-subprograms` | Also write per-subprogram `program{i}.bin`, `program{i}.dxbc`, and `program{i}.hlsl` (disassembly) |
 | `--no-fuse-temps` | Disable temp fusion; keep every SSA copy as a separate statement |
 | `--no-surface-shaders` | Disable surface-shader recognition; emit raw reconstructed HLSLPROGRAM passes |
