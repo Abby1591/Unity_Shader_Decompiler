@@ -9,8 +9,8 @@ now expects, all in one per-shader output folder:
     Output/<ShaderName>/dummy.shader   (if a match exists)
 
 Usage:
-    python Extract.py shaders_json/HOLO_Holo.json
-    python Extract.py shaders_json/HOLO_Holo.json --dummy-dir shaders_dummy
+    python Extract.py shaders_json/Corpus_01 Properties.json
+    python Extract.py shaders_json/Corpus_01 Properties.json --dummy-dir shaders_dummy
 """
 
 import argparse

@@ -152,9 +152,9 @@ jobs:
         if: runner.os == 'Windows'
         shell: bash
         run: |
-          echo "::group::PicaVoxel golden tests"
+          echo "::group::Corpus golden tests"
           python -m pip install --quiet lz4
-          python "tests/e2e/test_picavoxel_shaders.py" \
+          python "tests/e2e/test_corpus_shaders.py" \
             --parser "src/UnityShaderDecompiler.Cli/bin/Release/net10.0/Shader Decompiler.exe" \
             2>&1 | tee "$BUILD_DIR/Logs/golden-tests.log"
           echo "::endgroup::"

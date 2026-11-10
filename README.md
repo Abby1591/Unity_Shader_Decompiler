@@ -4,7 +4,7 @@
 [![Nightly](https://github.com/Abby1591/Unity_Shader_Decompiler/actions/workflows/nightly.yml/badge.svg?branch=master)](https://github.com/Abby1591/Unity_Shader_Decompiler/actions/workflows/nightly.yml)
 [![.NET](https://img.shields.io/badge/.NET-10.0-512BD4?logo=dotnet&logoColor=white)](https://dotnet.microsoft.com/download/dotnet/10.0)
 [![Python](https://img.shields.io/badge/Python-3.10%2B-3776AB?logo=python&logoColor=white)](https://www.python.org/)
-[![Unity](https://img.shields.io/badge/Unity-2022.3%20D3D11-black?logo=unity&logoColor=white)](https://unity.com/)
+[![Unity](https://img.shields.io/badge/Unity-6000.3%20D3D11-black?logo=unity&logoColor=white)](https://unity.com/)
 
 **Turn compiled Unity shaders back into readable ShaderLab and HLSL.**
 
@@ -64,8 +64,9 @@ program6Output frag(program6Input i)
 }
 ```
 
-Thirty-nine complete examples are checked in under
-[`samples/`](samples).
+Forty-eight complete examples are checked in under
+[`samples/`](samples). The matching AssetRipper JSON and dummy exports live in
+`shaders_json/` and `shaders_dummy/` (Unity 6000.3.13f1, D3D11).
 
 ## Builds
 
@@ -101,13 +102,13 @@ git clone https://github.com/Abby1591/Unity_Shader_Decompiler.git
 cd Unity_Shader_Decompiler
 
 pip install lz4
-python Extract.py shaders_json/HOLO_Holo.json
+python Extract.py shaders_json/Corpus_01 Properties.json
 ```
 
 Extraction accepts legacy and current parameter-offset fields without rewriting
 the source JSON. Missing or invalid offsets and conflicting schema aliases fail explicitly.
 
-`Extract.py` writes `Output/HOLO_Holo/`:
+`Extract.py` writes `Output/Corpus_01 Properties/`:
 
 | File | Contents |
 | --- | --- |
@@ -119,10 +120,10 @@ Then build and run the decompiler:
 
 ```bash
 dotnet build UnityShaderDecompiler.sln
-dotnet run --project "src/UnityShaderDecompiler.Cli/UnityShaderDecompiler.Cli.csproj" -- Output/HOLO_Holo
+dotnet run --project "src/UnityShaderDecompiler.Cli/UnityShaderDecompiler.Cli.csproj" -- Output/Corpus_01 Properties
 ```
 
-The result is written to `src/UnityShaderDecompiler.Cli/Output/HOLO_Holo.shader`.
+The result is written to `src/UnityShaderDecompiler.Cli/Output/Corpus_01 Properties.shader`.
 
 ## Usage
 
@@ -131,16 +132,16 @@ sibling `metadata.json`:
 
 ```bash
 # Stage 0 output folder
-dotnet run --project "src/UnityShaderDecompiler.Cli/UnityShaderDecompiler.Cli.csproj" -- Output/HOLO_Holo
+dotnet run --project "src/UnityShaderDecompiler.Cli/UnityShaderDecompiler.Cli.csproj" -- Output/Corpus_01 Properties
 
 # Bare blob.bin with metadata.json next to it
 dotnet run --project "src/UnityShaderDecompiler.Cli/UnityShaderDecompiler.Cli.csproj" -- path/to/blob.bin
 
 # Write output somewhere other than the project-local Output/
-dotnet run --project "src/UnityShaderDecompiler.Cli/UnityShaderDecompiler.Cli.csproj" -- Output/HOLO_Holo --out-root ./decompiled
+dotnet run --project "src/UnityShaderDecompiler.Cli/UnityShaderDecompiler.Cli.csproj" -- Output/Corpus_01 Properties --out-root ./decompiled
 ```
 
-With no arguments, the decompiler looks for `Output/HOLO_Holo` in the working
+With no arguments, the decompiler looks for `Output/Corpus_01 Properties` in the working
 directory and then one level up.
 
 ### Common options
@@ -291,14 +292,14 @@ dotnet test UnityShaderDecompiler.sln --filter "Category!=D3D"
 The end-to-end Python runners exercise Stage 0 plus the CLI:
 
 ```bash
-# Four PicaVoxel shaders with real source in shaders_dummy/Source/
-python tests/e2e/test_picavoxel_shaders.py
+# Every shader in the checked-in Unity 6 corpus (Stage 0 + CLI)
+python tests/e2e/test_corpus_shaders.py
 
-# Every shader folder in Output/
+# Every extracted shader folder in Output/ (Windows + d3dcompiler)
 python tests/e2e/test_faithfulness.py
 
 # Narrow the faithfulness suite to one or more shaders
-python tests/e2e/test_faithfulness.py --filter PicaVoxel
+python tests/e2e/test_faithfulness.py --filter Corpus_05
 ```
 
 Both default to
@@ -319,7 +320,8 @@ root, prefixing each with
 
 ## Limitations
 
-- Targets Unity 2022.3 D3D11 shader blobs.
+- Targets Unity 6 (6000.3) D3D11 shader blobs. The vendored blob reader also
+  accepts the older serialized layouts used by earlier Unity releases.
 - Vertex and fragment stages are fully reconstructed. Hull, geometry, domain,
   and compute programs are parsed and IR-built, but the AST/emit path mainly
   targets vertex/fragment; other stages attach by serialization order.

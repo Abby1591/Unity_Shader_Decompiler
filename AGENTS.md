@@ -1,13 +1,13 @@
 # AGENTS.md
 
-Two-stage shader decompiler: Python extracts blobs from AssetStudio JSON exports, C# decompiles DXBC back to ShaderLab/HLSL.
+Two-stage shader decompiler: Python extracts blobs from AssetStudio/AssetRipper JSON exports, C# decompiles DXBC back to ShaderLab/HLSL.
 
 ## Commands
 
 ### Stage 0 — extract blob (Python, requires `lz4`)
 ```bash
 pip install lz4
-python Extract.py shaders_json/HOLO_Holo.json
+python Extract.py shaders_json/Corpus_01 Properties.json
 ```
 Writes `Output/<Name>/{blob.bin, metadata.json, dummy.shader}`.
 
@@ -16,10 +16,10 @@ Writes `Output/<Name>/{blob.bin, metadata.json, dummy.shader}`.
 cd "src/UnityShaderDecompiler.Cli"
 dotnet restore "UnityShaderDecompiler.Cli.csproj"
 dotnet build "UnityShaderDecompiler.Cli.csproj" -c Release
-dotnet run --project "UnityShaderDecompiler.Cli.csproj" -- ../../Output/HOLO_Holo
+dotnet run --project "UnityShaderDecompiler.Cli.csproj" -- ../../Output/Corpus_01 Properties
 ```
 Output goes to `src/UnityShaderDecompiler.Cli/Output/<Name>.shader`. With no
-arguments the CLI looks for `Output/HOLO_Holo` in the working directory, then
+arguments the CLI looks for `Output/Corpus_01 Properties` in the working directory, then
 one level up.
 
 ### Regression tests (C#, xUnit)
@@ -36,20 +36,24 @@ The suite lives in `tests/UnityShaderDecompiler.Tests` and uses checked-in fixtu
 
 ### Golden tests (Python, end-to-end)
 ```bash
-python tests/e2e/test_picavoxel_shaders.py
+python tests/e2e/test_corpus_shaders.py
 ```
-Tests 4 PicaVoxel shaders end-to-end (Stage 0 + Stage 1+). Requires the C# binary to be built first (`dotnet build`). Defaults to `src/UnityShaderDecompiler.Cli/bin/Debug/net10.0/Shader Decompiler.exe`; pass `--parser` to override.
+Tests every shader in `shaders_json/` end-to-end (Stage 0 + Stage 1+), asserting
+name, properties, fallback, cbuffer slots, and named cbuffer members survive.
+Requires the C# binary to be built first (`dotnet build`). Defaults to
+`src/UnityShaderDecompiler.Cli/bin/Debug/net10.0/Shader Decompiler.exe`; pass
+`--parser` to override.
 
 ### Faithfulness tests (C# + Python)
 ```bash
 # Single shader folder:
-dotnet run --project "src/UnityShaderDecompiler.Cli/UnityShaderDecompiler.Cli.csproj" -- --faithfulness-test ../Output/HOLO_Holo
+dotnet run --project "src/UnityShaderDecompiler.Cli/UnityShaderDecompiler.Cli.csproj" -- --faithfulness-test ../Output/Corpus_01 Properties
 
 # All shaders in Output/:
 python tests/e2e/test_faithfulness.py --parser "src/UnityShaderDecompiler.Cli/bin/Debug/net10.0/Shader Decompiler.exe"
 
 # Filter to specific shaders:
-python tests/e2e/test_faithfulness.py --filter PicaVoxel
+python tests/e2e/test_faithfulness.py --filter Corpus_05
 ```
 Decompiles the blob, recompiles every HLSLPROGRAM block with d3dcompiler, compares input/output signatures against the shipped subprograms, and checks metadata fidelity (properties, fallback, cbuffer bindings). Reports PASS/FAIL per shader. Requires Windows + d3dcompiler_47.dll.
 
@@ -71,9 +75,9 @@ Decompiles the blob, recompiles every HLSLPROGRAM block with d3dcompiler, compar
 - `AllowUnsafeBlocks` is enabled in both C# projects (pinned-buffer D3D calls).
 - C# namespaces are `UnityShaderDecompiler.Core` (library) and `UnityShaderDecompiler.Cli` (executable); the vendored blob reader keeps `AssetStudio`.
 - Folder names are sanitized on Windows (`/` `\` → `_`, trailing dots/spaces stripped).
-- With no arguments the CLI looks for `Output/HOLO_Holo` in the working directory, then one level up.
+- With no arguments the CLI looks for `Output/Corpus_01 Properties` in the working directory, then one level up.
 - Output location: `.shader` files go to `src/UnityShaderDecompiler.Cli/Output/` (the project's `ProjectOutputRoot`), not the repo-root `Output/`.
-- Checked-in example decompilations live in `samples/`; the xUnit golden test compares against `samples/HOLO_Holo.shader`.
+- Checked-in example decompilations live in `samples/` (48 Unity 6 corpus shaders); the xUnit golden test compares every fixture against its `samples/<fixture>.shader`.
 - Both Python runners auto-detect a `dotnet` install with a net10.0 runtime (explicit `DOTNET`, then PATH, then `~/.dotnet`), so they work locally and in CI without a hard-coded user path.
 - Test fixtures are deliberately checked in under `tests/Fixtures/`; regenerate one with `python Extract.py shaders_json/<name>.json --out-dir Output` and copy the folder.
 - `test_faithfulness.py` treats a decompiler crash or a missing `Result:` line as a hard failure (never a skip).
