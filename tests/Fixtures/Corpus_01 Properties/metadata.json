@@ -1,0 +1,758 @@
+{
+  "name": "Corpus/01 Properties",
+  "properties": [
+    {
+      "name": "_Header",
+      "description": "Header",
+      "type": 2,
+      "flags": 0,
+      "defaultValue": {
+        "x": 0,
+        "y": 0,
+        "z": 0,
+        "w": 0
+      },
+      "defTexture": {
+        "m_DefaultName": "",
+        "m_TexDim": 1
+      },
+      "attributes": [
+        "Header(Header Label)"
+      ]
+    },
+    {
+      "name": "_Space",
+      "description": "Space",
+      "type": 2,
+      "flags": 0,
+      "defaultValue": {
+        "x": 0,
+        "y": 0,
+        "z": 0,
+        "w": 0
+      },
+      "defTexture": {
+        "m_DefaultName": "",
+        "m_TexDim": 1
+      },
+      "attributes": [
+        "Space(12)"
+      ]
+    },
+    {
+      "name": "_Toggle",
+      "description": "Toggle",
+      "type": 2,
+      "flags": 0,
+      "defaultValue": {
+        "x": 1,
+        "y": 0,
+        "z": 0,
+        "w": 0
+      },
+      "defTexture": {
+        "m_DefaultName": "",
+        "m_TexDim": 1
+      },
+      "attributes": [
+        "Toggle"
+      ]
+    },
+    {
+      "name": "_ToggleOff",
+      "description": "Toggle Off",
+      "type": 2,
+      "flags": 0,
+      "defaultValue": {
+        "x": 0,
+        "y": 0,
+        "z": 0,
+        "w": 0
+      },
+      "defTexture": {
+        "m_DefaultName": "",
+        "m_TexDim": 1
+      },
+      "attributes": [
+        "ToggleOff"
+      ]
+    },
+    {
+      "name": "_CullEnum",
+      "description": "Cull Mode",
+      "type": 2,
+      "flags": 0,
+      "defaultValue": {
+        "x": 2,
+        "y": 0,
+        "z": 0,
+        "w": 0
+      },
+      "defTexture": {
+        "m_DefaultName": "",
+        "m_TexDim": 1
+      },
+      "attributes": [
+        "Enum(UnityEngine.Rendering.CullMode)"
+      ]
+    },
+    {
+      "name": "_CustomEnum",
+      "description": "Custom Enum",
+      "type": 2,
+      "flags": 0,
+      "defaultValue": {
+        "x": 1,
+        "y": 0,
+        "z": 0,
+        "w": 0
+      },
+      "defTexture": {
+        "m_DefaultName": "",
+        "m_TexDim": 1
+      },
+      "attributes": [
+        "Enum(Off,0,On,1)"
+      ]
+    },
+    {
+      "name": "_Power",
+      "description": "Power",
+      "type": 3,
+      "flags": 0,
+      "defaultValue": {
+        "x": 0.5,
+        "y": 0.01,
+        "z": 1,
+        "w": 0
+      },
+      "defTexture": {
+        "m_DefaultName": "",
+        "m_TexDim": 1
+      },
+      "attributes": [
+        "PowerSlider(3.0)"
+      ]
+    },
+    {
+      "name": "_IntRange",
+      "description": "Int Range",
+      "type": 3,
+      "flags": 0,
+      "defaultValue": {
+        "x": 5,
+        "y": 0,
+        "z": 10,
+        "w": 0
+      },
+      "defTexture": {
+        "m_DefaultName": "",
+        "m_TexDim": 1
+      },
+      "attributes": [
+        "IntRange"
+      ]
+    },
+    {
+      "name": "_NoScaleTex",
+      "description": "No Scale",
+      "type": 4,
+      "flags": 4,
+      "defaultValue": {
+        "x": 0,
+        "y": 0,
+        "z": 0,
+        "w": 0
+      },
+      "defTexture": {
+        "m_DefaultName": "white",
+        "m_TexDim": 2
+      },
+      "attributes": []
+    },
+    {
+      "name": "_NormalMap",
+      "description": "Normal Map",
+      "type": 4,
+      "flags": 8,
+      "defaultValue": {
+        "x": 0,
+        "y": 0,
+        "z": 0,
+        "w": 0
+      },
+      "defTexture": {
+        "m_DefaultName": "bump",
+        "m_TexDim": 2
+      },
+      "attributes": []
+    },
+    {
+      "name": "_HdrColor",
+      "description": "HDR Color",
+      "type": 0,
+      "flags": 16,
+      "defaultValue": {
+        "x": 1,
+        "y": 1,
+        "z": 1,
+        "w": 1
+      },
+      "defTexture": {
+        "m_DefaultName": "",
+        "m_TexDim": 1
+      },
+      "attributes": []
+    },
+    {
+      "name": "_GammaColor",
+      "description": "Gamma Color",
+      "type": 0,
+      "flags": 32,
+      "defaultValue": {
+        "x": 0.5,
+        "y": 0.5,
+        "z": 0.5,
+        "w": 1
+      },
+      "defTexture": {
+        "m_DefaultName": "",
+        "m_TexDim": 1
+      },
+      "attributes": []
+    },
+    {
+      "name": "_PerRendererColor",
+      "description": "Per Renderer Color",
+      "type": 0,
+      "flags": 2,
+      "defaultValue": {
+        "x": 1,
+        "y": 1,
+        "z": 1,
+        "w": 1
+      },
+      "defTexture": {
+        "m_DefaultName": "",
+        "m_TexDim": 1
+      },
+      "attributes": []
+    },
+    {
+      "name": "_BaseMap",
+      "description": "Base Map",
+      "type": 4,
+      "flags": 128,
+      "defaultValue": {
+        "x": 0,
+        "y": 0,
+        "z": 0,
+        "w": 0
+      },
+      "defTexture": {
+        "m_DefaultName": "white",
+        "m_TexDim": 2
+      },
+      "attributes": []
+    },
+    {
+      "name": "_BaseColor",
+      "description": "Base Color",
+      "type": 0,
+      "flags": 256,
+      "defaultValue": {
+        "x": 1,
+        "y": 1,
+        "z": 1,
+        "w": 1
+      },
+      "defTexture": {
+        "m_DefaultName": "",
+        "m_TexDim": 1
+      },
+      "attributes": []
+    },
+    {
+      "name": "_Hidden",
+      "description": "Hidden",
+      "type": 2,
+      "flags": 1,
+      "defaultValue": {
+        "x": 0,
+        "y": 0,
+        "z": 0,
+        "w": 0
+      },
+      "defTexture": {
+        "m_DefaultName": "",
+        "m_TexDim": 1
+      },
+      "attributes": []
+    },
+    {
+      "name": "_Float",
+      "description": "Float",
+      "type": 2,
+      "flags": 0,
+      "defaultValue": {
+        "x": 1.5,
+        "y": 0,
+        "z": 0,
+        "w": 0
+      },
+      "defTexture": {
+        "m_DefaultName": "",
+        "m_TexDim": 1
+      },
+      "attributes": []
+    },
+    {
+      "name": "_Int",
+      "description": "Int",
+      "type": 2,
+      "flags": 0,
+      "defaultValue": {
+        "x": 3,
+        "y": 0,
+        "z": 0,
+        "w": 0
+      },
+      "defTexture": {
+        "m_DefaultName": "",
+        "m_TexDim": 1
+      },
+      "attributes": []
+    },
+    {
+      "name": "_Color",
+      "description": "Color",
+      "type": 0,
+      "flags": 0,
+      "defaultValue": {
+        "x": 1,
+        "y": 0,
+        "z": 1,
+        "w": 1
+      },
+      "defTexture": {
+        "m_DefaultName": "",
+        "m_TexDim": 1
+      },
+      "attributes": []
+    },
+    {
+      "name": "_Vector",
+      "description": "Vector",
+      "type": 1,
+      "flags": 0,
+      "defaultValue": {
+        "x": 1,
+        "y": 2,
+        "z": 3,
+        "w": 4
+      },
+      "defTexture": {
+        "m_DefaultName": "",
+        "m_TexDim": 1
+      },
+      "attributes": []
+    },
+    {
+      "name": "_Range",
+      "description": "Range",
+      "type": 3,
+      "flags": 0,
+      "defaultValue": {
+        "x": 2,
+        "y": -5,
+        "z": 5,
+        "w": 0
+      },
+      "defTexture": {
+        "m_DefaultName": "",
+        "m_TexDim": 1
+      },
+      "attributes": []
+    },
+    {
+      "name": "_Tex2D",
+      "description": "2D",
+      "type": 4,
+      "flags": 0,
+      "defaultValue": {
+        "x": 0,
+        "y": 0,
+        "z": 0,
+        "w": 0
+      },
+      "defTexture": {
+        "m_DefaultName": "white",
+        "m_TexDim": 2
+      },
+      "attributes": []
+    },
+    {
+      "name": "_Tex3D",
+      "description": "3D",
+      "type": 4,
+      "flags": 0,
+      "defaultValue": {
+        "x": 0,
+        "y": 0,
+        "z": 0,
+        "w": 0
+      },
+      "defTexture": {
+        "m_DefaultName": "black",
+        "m_TexDim": 3
+      },
+      "attributes": []
+    },
+    {
+      "name": "_TexCube",
+      "description": "Cube",
+      "type": 4,
+      "flags": 0,
+      "defaultValue": {
+        "x": 0,
+        "y": 0,
+        "z": 0,
+        "w": 0
+      },
+      "defTexture": {
+        "m_DefaultName": "black",
+        "m_TexDim": 4
+      },
+      "attributes": []
+    },
+    {
+      "name": "_Tex2DArray",
+      "description": "2D Array",
+      "type": 4,
+      "flags": 0,
+      "defaultValue": {
+        "x": 0,
+        "y": 0,
+        "z": 0,
+        "w": 0
+      },
+      "defTexture": {
+        "m_DefaultName": "white",
+        "m_TexDim": 5
+      },
+      "attributes": []
+    },
+    {
+      "name": "_TexCubeArray",
+      "description": "Cube Array",
+      "type": 4,
+      "flags": 0,
+      "defaultValue": {
+        "x": 0,
+        "y": 0,
+        "z": 0,
+        "w": 0
+      },
+      "defTexture": {
+        "m_DefaultName": "black",
+        "m_TexDim": 6
+      },
+      "attributes": []
+    }
+  ],
+  "subShaders": [
+    {
+      "tags": {
+        "QUEUE": "Geometry",
+        "RenderType": "Opaque"
+      },
+      "lod": 100,
+      "passes": [
+        {
+          "name": "",
+          "nameIndices": {
+            "$Globals": 0,
+            "UnityPerCamera": 14,
+            "UnityPerDraw": 1,
+            "UnityPerFrame": 2,
+            "_BaseColor": 21,
+            "_BaseMap": 7,
+            "_BaseMap_ST": 3,
+            "_Color": 17,
+            "_Float": 15,
+            "_GammaColor": 20,
+            "_HdrColor": 19,
+            "_Int": 16,
+            "_NoScaleTex": 8,
+            "_PerRendererColor": 22,
+            "_Tex2D": 9,
+            "_Tex2DArray": 12,
+            "_Tex3D": 10,
+            "_TexCube": 11,
+            "_TexCubeArray": 13,
+            "_Vector": 18,
+            "_WorldSpaceCameraPos": 23,
+            "unity_MatrixVP": 6,
+            "unity_ObjectToWorld": 4,
+            "unity_WorldToObject": 5
+          },
+          "tags": {
+            "QUEUE": "Geometry",
+            "RenderType": "Opaque"
+          },
+          "renderState": {
+            "cull": 2,
+            "zTest": 4,
+            "zWrite": 1,
+            "zClip": 1,
+            "lighting": false,
+            "fogMode": -1,
+            "alphaToMask": 0,
+            "conservative": 0,
+            "offsetFactor": 0,
+            "offsetUnits": 0,
+            "stencilRef": 0,
+            "stencilReadMask": 255,
+            "stencilWriteMask": 255,
+            "stencilOpFront": {
+              "m_Comp": {
+                "m_Name": "<noninit>",
+                "m_Value": 8
+              },
+              "m_Fail": {
+                "m_Name": "<noninit>",
+                "m_Value": 0
+              },
+              "m_Pass": {
+                "m_Name": "<noninit>",
+                "m_Value": 0
+              },
+              "m_ZFail": {
+                "m_Name": "<noninit>",
+                "m_Value": 0
+              }
+            },
+            "stencilOpBack": {
+              "m_Comp": {
+                "m_Name": "<noninit>",
+                "m_Value": 8
+              },
+              "m_Fail": {
+                "m_Name": "<noninit>",
+                "m_Value": 0
+              },
+              "m_Pass": {
+                "m_Name": "<noninit>",
+                "m_Value": 0
+              },
+              "m_ZFail": {
+                "m_Name": "<noninit>",
+                "m_Value": 0
+              }
+            },
+            "separateBlend": false,
+            "blend": {
+              "srcBlend": 1,
+              "dstBlend": 0,
+              "srcBlendAlpha": 1,
+              "dstBlendAlpha": 0,
+              "blendOp": 0,
+              "blendOpAlpha": 0,
+              "colorMask": 15
+            }
+          },
+          "programs": {
+            "ProgVertex": {
+              "subProgramCount": 4
+            },
+            "ProgFragment": {
+              "subProgramCount": 4
+            }
+          },
+          "constantBuffers": [
+            {
+              "slot": 0,
+              "stage": "Fragment",
+              "name": "$Globals",
+              "size": 160,
+              "variables": [
+                {
+                  "name": "_Float",
+                  "offset": 48,
+                  "dim": 1,
+                  "arraySize": 0
+                },
+                {
+                  "name": "_Int",
+                  "offset": 52,
+                  "dim": 1,
+                  "arraySize": 0
+                },
+                {
+                  "name": "_Color",
+                  "offset": 64,
+                  "dim": 4,
+                  "arraySize": 0
+                },
+                {
+                  "name": "_Vector",
+                  "offset": 80,
+                  "dim": 4,
+                  "arraySize": 0
+                },
+                {
+                  "name": "_HdrColor",
+                  "offset": 96,
+                  "dim": 4,
+                  "arraySize": 0
+                },
+                {
+                  "name": "_GammaColor",
+                  "offset": 112,
+                  "dim": 4,
+                  "arraySize": 0
+                },
+                {
+                  "name": "_BaseColor",
+                  "offset": 128,
+                  "dim": 4,
+                  "arraySize": 0
+                },
+                {
+                  "name": "_PerRendererColor",
+                  "offset": 144,
+                  "dim": 4,
+                  "arraySize": 0
+                }
+              ]
+            },
+            {
+              "slot": 1,
+              "stage": "Fragment",
+              "name": "UnityPerCamera",
+              "size": 144,
+              "variables": [
+                {
+                  "name": "_WorldSpaceCameraPos",
+                  "offset": 64,
+                  "dim": 3,
+                  "arraySize": 0
+                }
+              ]
+            },
+            {
+              "slot": 0,
+              "stage": "Vertex",
+              "name": "$Globals",
+              "size": 160,
+              "variables": [
+                {
+                  "name": "_BaseMap_ST",
+                  "offset": 32,
+                  "dim": 4,
+                  "arraySize": 0
+                }
+              ]
+            },
+            {
+              "slot": 1,
+              "stage": "Vertex",
+              "name": "UnityPerDraw",
+              "size": 176,
+              "variables": [
+                {
+                  "name": "unity_ObjectToWorld",
+                  "offset": 0,
+                  "rowCount": 4,
+                  "arraySize": 0,
+                  "isMatrix": true
+                },
+                {
+                  "name": "unity_WorldToObject",
+                  "offset": 64,
+                  "rowCount": 4,
+                  "arraySize": 0,
+                  "isMatrix": true
+                }
+              ]
+            },
+            {
+              "slot": 2,
+              "stage": "Vertex",
+              "name": "UnityPerFrame",
+              "size": 368,
+              "variables": [
+                {
+                  "name": "unity_MatrixVP",
+                  "offset": 272,
+                  "rowCount": 4,
+                  "arraySize": 0,
+                  "isMatrix": true
+                }
+              ]
+            }
+          ],
+          "textures": [],
+          "samplers": [],
+          "keywords": {
+            "$Globals": 0,
+            "UnityPerCamera": 14,
+            "UnityPerDraw": 1,
+            "UnityPerFrame": 2,
+            "_BaseColor": 21,
+            "_BaseMap": 7,
+            "_BaseMap_ST": 3,
+            "_Color": 17,
+            "_Float": 15,
+            "_GammaColor": 20,
+            "_HdrColor": 19,
+            "_Int": 16,
+            "_NoScaleTex": 8,
+            "_PerRendererColor": 22,
+            "_Tex2D": 9,
+            "_Tex2DArray": 12,
+            "_Tex3D": 10,
+            "_TexCube": 11,
+            "_TexCubeArray": 13,
+            "_Vector": 18,
+            "_WorldSpaceCameraPos": 23,
+            "unity_MatrixVP": 6,
+            "unity_ObjectToWorld": 4,
+            "unity_WorldToObject": 5
+          }
+        }
+      ]
+    }
+  ],
+  "fallback": "Diffuse",
+  "customEditor": "",
+  "keywords": [
+    "STEREO_INSTANCING_ON",
+    "UNITY_SINGLE_PASS_STEREO",
+    "STEREO_MULTIVIEW_ON",
+    "STEREO_CUBEMAP_RENDER_ON",
+    "INSTANCING_ON",
+    "FOG_LINEAR",
+    "FOG_EXP",
+    "FOG_EXP2",
+    "DIRECTIONAL",
+    "LIGHTPROBE_SH",
+    "SHADOWS_SHADOWMASK",
+    "DYNAMICLIGHTMAP_ON",
+    "LIGHTMAP_ON",
+    "LIGHTMAP_SHADOW_MIXING",
+    "DIRLIGHTMAP_COMBINED",
+    "SHADOWS_SCREEN",
+    "VERTEXLIGHT_ON",
+    "SHADOWS_DEPTH",
+    "SHADOWS_CUBE",
+    "POINT",
+    "SPOT",
+    "POINT_COOKIE",
+    "DIRECTIONAL_COOKIE",
+    "UNITY_HDR_ON",
+    "EDITOR_VISUALIZATION"
+  ],
+  "dependencies": [],
+  "disableNoSubshadersMessage": false
+}
