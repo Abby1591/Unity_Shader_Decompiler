@@ -24,3 +24,10 @@ TestResults/
 # Python
 __pycache__/
 *.pyc
+
+#Unity Project
+/ShaderCorpus/
+/ShaderCorpusBuild/
+
+#opencode
+/.opencode/
