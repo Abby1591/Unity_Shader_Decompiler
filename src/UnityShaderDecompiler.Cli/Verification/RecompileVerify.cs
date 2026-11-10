@@ -130,7 +130,7 @@ public static class RecompileVerify
     // pairs of float2 outputs onto one register (TEXCOORD1 mask 0xC) where
     // the original compiler used separate registers (mask 0x3), so the same
     // interface compiles to different masks. The component COUNT is what
-    // matters â€” a float2 vs float3 field is a real decompiler bug and still
+    // matters — a float2 vs float3 field is a real decompiler bug and still
     // mismatches via the popcount.
     private static string Canonical(SignatureElement e) =>
         $"{e.SemanticName}:{e.SemanticIndex}:{e.SystemValue}:{System.Numerics.BitOperations.PopCount(e.Mask)}";
@@ -187,7 +187,7 @@ public static class RecompileVerify
     }
 
     // Dumps the DXBC disassembly of every non-compute subprogram in each
-    // folder's blob.bin to <folder>\.disasm.txt â€” bytecode-level ground
+    // folder's blob.bin to <folder>\.disasm.txt — bytecode-level ground
     // truth for diagnosing decompiler output (swizzle/type bugs etc.).
     public static void DumpDisasm(string outputRoot)
     {

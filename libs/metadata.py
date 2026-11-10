@@ -8,13 +8,13 @@ This does NOT touch m_CompressedBlob — that stays in blob.py/ShaderBlob.
 """
 
 import json
+from .shader_json import load_shader_json, parameter_offset
 
 
 class ShaderMetadata:
     def __init__(self, json_path):
         self.json_path = json_path
-        with open(json_path, "r", encoding="utf8") as f:
-            self.data = json.load(f)
+        self.data = load_shader_json(json_path)
 
     def build(self):
         d = self.data
@@ -107,7 +107,7 @@ class ShaderMetadata:
                     for v in b.get("m_VectorParams", []) or []:
                         entry = {
                             "name": index_to_name.get(v.get("m_NameIndex"), ""),
-                            "offset": v.get("m_Index", 0),
+                            "offset": parameter_offset(v),
                             "dim": v.get("m_Dim", 0),
                             "arraySize": v.get("m_ArraySize", 0),
                         }
@@ -117,7 +117,7 @@ class ShaderMetadata:
                     for m in b.get("m_MatrixParams", []) or []:
                         entry = {
                             "name": index_to_name.get(m.get("m_NameIndex"), ""),
-                            "offset": m.get("m_Index", 0),
+                            "offset": parameter_offset(m),
                             "rowCount": m.get("m_RowCount", 0),
                             "arraySize": m.get("m_ArraySize", 0),
                             "isMatrix": True,
@@ -211,14 +211,14 @@ class ShaderMetadata:
                 for v in b.get("m_VectorParams", []) or []:
                     cb["variables"].append({
                         "name": index_to_name.get(v.get("m_NameIndex"), ""),
-                        "offset": v.get("m_Index", 0),
+                        "offset": parameter_offset(v),
                         "dim": v.get("m_Dim", 0),
                         "arraySize": v.get("m_ArraySize", 0),
                     })
                 for m in b.get("m_MatrixParams", []) or []:
                     cb["variables"].append({
                         "name": index_to_name.get(m.get("m_NameIndex"), ""),
-                        "offset": m.get("m_Index", 0),
+                        "offset": parameter_offset(m),
                         "rowCount": m.get("m_RowCount", 0),
                         "arraySize": m.get("m_ArraySize", 0),
                         "isMatrix": True,

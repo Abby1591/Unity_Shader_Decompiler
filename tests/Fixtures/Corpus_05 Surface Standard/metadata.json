@@ -1,0 +1,1608 @@
+{
+  "name": "Corpus/05 Surface Standard",
+  "properties": [
+    {
+      "name": "_Color",
+      "description": "Color",
+      "type": 0,
+      "flags": 0,
+      "defaultValue": {
+        "x": 1,
+        "y": 1,
+        "z": 1,
+        "w": 1
+      },
+      "defTexture": {
+        "m_DefaultName": "",
+        "m_TexDim": 1
+      },
+      "attributes": []
+    },
+    {
+      "name": "_MainTex",
+      "description": "Albedo",
+      "type": 4,
+      "flags": 0,
+      "defaultValue": {
+        "x": 0,
+        "y": 0,
+        "z": 0,
+        "w": 0
+      },
+      "defTexture": {
+        "m_DefaultName": "white",
+        "m_TexDim": 2
+      },
+      "attributes": []
+    },
+    {
+      "name": "_BumpMap",
+      "description": "Normal",
+      "type": 4,
+      "flags": 8,
+      "defaultValue": {
+        "x": 0,
+        "y": 0,
+        "z": 0,
+        "w": 0
+      },
+      "defTexture": {
+        "m_DefaultName": "bump",
+        "m_TexDim": 2
+      },
+      "attributes": []
+    },
+    {
+      "name": "_BumpScale",
+      "description": "Normal Scale",
+      "type": 2,
+      "flags": 0,
+      "defaultValue": {
+        "x": 1,
+        "y": 0,
+        "z": 0,
+        "w": 0
+      },
+      "defTexture": {
+        "m_DefaultName": "",
+        "m_TexDim": 1
+      },
+      "attributes": []
+    },
+    {
+      "name": "_Metallic",
+      "description": "Metallic",
+      "type": 3,
+      "flags": 0,
+      "defaultValue": {
+        "x": 0,
+        "y": 0,
+        "z": 1,
+        "w": 0
+      },
+      "defTexture": {
+        "m_DefaultName": "",
+        "m_TexDim": 1
+      },
+      "attributes": []
+    },
+    {
+      "name": "_Glossiness",
+      "description": "Smoothness",
+      "type": 3,
+      "flags": 0,
+      "defaultValue": {
+        "x": 0.5,
+        "y": 0,
+        "z": 1,
+        "w": 0
+      },
+      "defTexture": {
+        "m_DefaultName": "",
+        "m_TexDim": 1
+      },
+      "attributes": []
+    },
+    {
+      "name": "_MetallicGlossMap",
+      "description": "Metallic Map",
+      "type": 4,
+      "flags": 0,
+      "defaultValue": {
+        "x": 0,
+        "y": 0,
+        "z": 0,
+        "w": 0
+      },
+      "defTexture": {
+        "m_DefaultName": "white",
+        "m_TexDim": 2
+      },
+      "attributes": []
+    },
+    {
+      "name": "_OcclusionMap",
+      "description": "Occlusion",
+      "type": 4,
+      "flags": 0,
+      "defaultValue": {
+        "x": 0,
+        "y": 0,
+        "z": 0,
+        "w": 0
+      },
+      "defTexture": {
+        "m_DefaultName": "white",
+        "m_TexDim": 2
+      },
+      "attributes": []
+    },
+    {
+      "name": "_OcclusionStrength",
+      "description": "Occlusion Strength",
+      "type": 3,
+      "flags": 0,
+      "defaultValue": {
+        "x": 1,
+        "y": 0,
+        "z": 1,
+        "w": 0
+      },
+      "defTexture": {
+        "m_DefaultName": "",
+        "m_TexDim": 1
+      },
+      "attributes": []
+    },
+    {
+      "name": "_EmissionColor",
+      "description": "Emission",
+      "type": 0,
+      "flags": 16,
+      "defaultValue": {
+        "x": 0,
+        "y": 0,
+        "z": 0,
+        "w": 1
+      },
+      "defTexture": {
+        "m_DefaultName": "",
+        "m_TexDim": 1
+      },
+      "attributes": []
+    },
+    {
+      "name": "_EmissionMap",
+      "description": "Emission Map",
+      "type": 4,
+      "flags": 0,
+      "defaultValue": {
+        "x": 0,
+        "y": 0,
+        "z": 0,
+        "w": 0
+      },
+      "defTexture": {
+        "m_DefaultName": "white",
+        "m_TexDim": 2
+      },
+      "attributes": []
+    },
+    {
+      "name": "_Cutoff",
+      "description": "Alpha Cutoff",
+      "type": 3,
+      "flags": 0,
+      "defaultValue": {
+        "x": 0.5,
+        "y": 0,
+        "z": 1,
+        "w": 0
+      },
+      "defTexture": {
+        "m_DefaultName": "",
+        "m_TexDim": 1
+      },
+      "attributes": []
+    },
+    {
+      "name": "_DetailMask",
+      "description": "Detail Mask",
+      "type": 4,
+      "flags": 0,
+      "defaultValue": {
+        "x": 0,
+        "y": 0,
+        "z": 0,
+        "w": 0
+      },
+      "defTexture": {
+        "m_DefaultName": "white",
+        "m_TexDim": 2
+      },
+      "attributes": []
+    },
+    {
+      "name": "_DetailAlbedo",
+      "description": "Detail Albedo",
+      "type": 4,
+      "flags": 0,
+      "defaultValue": {
+        "x": 0,
+        "y": 0,
+        "z": 0,
+        "w": 0
+      },
+      "defTexture": {
+        "m_DefaultName": "gray",
+        "m_TexDim": 2
+      },
+      "attributes": []
+    },
+    {
+      "name": "_DetailNormal",
+      "description": "Detail Normal",
+      "type": 4,
+      "flags": 0,
+      "defaultValue": {
+        "x": 0,
+        "y": 0,
+        "z": 0,
+        "w": 0
+      },
+      "defTexture": {
+        "m_DefaultName": "bump",
+        "m_TexDim": 2
+      },
+      "attributes": []
+    }
+  ],
+  "subShaders": [
+    {
+      "tags": {
+        "PerformanceChecks": "False",
+        "QUEUE": "Geometry",
+        "RenderType": "Opaque"
+      },
+      "lod": 300,
+      "passes": [
+        {
+          "name": "",
+          "nameIndices": {
+            "$Globals": 0,
+            "UnityLighting": 16,
+            "UnityPerCamera": 15,
+            "UnityPerDraw": 1,
+            "UnityPerFrame": 2,
+            "UnityProbeVolume": 18,
+            "UnityReflectionProbes": 17,
+            "_BumpMap_ST": 4,
+            "_BumpScale": 20,
+            "_Color": 25,
+            "_Cutoff": 24,
+            "_DetailAlbedo_ST": 9,
+            "_DetailMask_ST": 8,
+            "_DetailNormal_ST": 10,
+            "_EmissionColor": 26,
+            "_EmissionMap_ST": 7,
+            "_Glossiness": 22,
+            "_LightColor0": 19,
+            "_MainTex_ST": 3,
+            "_Metallic": 21,
+            "_MetallicGlossMap_ST": 5,
+            "_OcclusionMap_ST": 6,
+            "_OcclusionStrength": 23,
+            "_WorldSpaceCameraPos": 27,
+            "_WorldSpaceLightPos0": 28,
+            "unity_MatrixVP": 14,
+            "unity_ObjectToWorld": 12,
+            "unity_OcclusionMaskSelector": 29,
+            "unity_ProbeVolumeMin": 40,
+            "unity_ProbeVolumeParams": 38,
+            "unity_ProbeVolumeSizeInv": 39,
+            "unity_ProbeVolumeWorldToObject": 41,
+            "unity_SpecCube0_BoxMax": 30,
+            "unity_SpecCube0_BoxMin": 31,
+            "unity_SpecCube0_HDR": 33,
+            "unity_SpecCube0_ProbePosition": 32,
+            "unity_SpecCube1_BoxMax": 34,
+            "unity_SpecCube1_BoxMin": 35,
+            "unity_SpecCube1_HDR": 37,
+            "unity_SpecCube1_ProbePosition": 36,
+            "unity_WorldToObject": 13,
+            "unity_WorldTransformParams": 11
+          },
+          "tags": {
+            "LIGHTMODE": "FORWARDBASE",
+            "PerformanceChecks": "False",
+            "QUEUE": "Geometry",
+            "RenderType": "Opaque",
+            "SHADOWSUPPORT": "true"
+          },
+          "renderState": {
+            "cull": 2,
+            "zTest": 4,
+            "zWrite": 1,
+            "zClip": 1,
+            "lighting": false,
+            "fogMode": -1,
+            "alphaToMask": 0,
+            "conservative": 0,
+            "offsetFactor": 0,
+            "offsetUnits": 0,
+            "stencilRef": 0,
+            "stencilReadMask": 255,
+            "stencilWriteMask": 255,
+            "stencilOpFront": {
+              "m_Comp": {
+                "m_Name": "<noninit>",
+                "m_Value": 8
+              },
+              "m_Fail": {
+                "m_Name": "<noninit>",
+                "m_Value": 0
+              },
+              "m_Pass": {
+                "m_Name": "<noninit>",
+                "m_Value": 0
+              },
+              "m_ZFail": {
+                "m_Name": "<noninit>",
+                "m_Value": 0
+              }
+            },
+            "stencilOpBack": {
+              "m_Comp": {
+                "m_Name": "<noninit>",
+                "m_Value": 8
+              },
+              "m_Fail": {
+                "m_Name": "<noninit>",
+                "m_Value": 0
+              },
+              "m_Pass": {
+                "m_Name": "<noninit>",
+                "m_Value": 0
+              },
+              "m_ZFail": {
+                "m_Name": "<noninit>",
+                "m_Value": 0
+              }
+            },
+            "separateBlend": false,
+            "blend": {
+              "srcBlend": 1,
+              "dstBlend": 0,
+              "srcBlendAlpha": 1,
+              "dstBlendAlpha": 0,
+              "blendOp": 0,
+              "blendOpAlpha": 0,
+              "colorMask": 15
+            }
+          },
+          "programs": {
+            "ProgVertex": {
+              "subProgramCount": 4
+            },
+            "ProgFragment": {
+              "subProgramCount": 4
+            }
+          },
+          "constantBuffers": [
+            {
+              "slot": 0,
+              "stage": "Fragment",
+              "name": "$Globals",
+              "size": 256,
+              "variables": [
+                {
+                  "name": "_LightColor0",
+                  "offset": 32,
+                  "dim": 4,
+                  "arraySize": 0
+                },
+                {
+                  "name": "_BumpScale",
+                  "offset": 64,
+                  "dim": 1,
+                  "arraySize": 0
+                },
+                {
+                  "name": "_Metallic",
+                  "offset": 68,
+                  "dim": 1,
+                  "arraySize": 0
+                },
+                {
+                  "name": "_Glossiness",
+                  "offset": 72,
+                  "dim": 1,
+                  "arraySize": 0
+                },
+                {
+                  "name": "_OcclusionStrength",
+                  "offset": 76,
+                  "dim": 1,
+                  "arraySize": 0
+                },
+                {
+                  "name": "_Cutoff",
+                  "offset": 80,
+                  "dim": 1,
+                  "arraySize": 0
+                },
+                {
+                  "name": "_Color",
+                  "offset": 96,
+                  "dim": 4,
+                  "arraySize": 0
+                },
+                {
+                  "name": "_EmissionColor",
+                  "offset": 112,
+                  "dim": 4,
+                  "arraySize": 0
+                }
+              ]
+            },
+            {
+              "slot": 1,
+              "stage": "Fragment",
+              "name": "UnityPerCamera",
+              "size": 144,
+              "variables": [
+                {
+                  "name": "_WorldSpaceCameraPos",
+                  "offset": 64,
+                  "dim": 3,
+                  "arraySize": 0
+                }
+              ]
+            },
+            {
+              "slot": 2,
+              "stage": "Fragment",
+              "name": "UnityLighting",
+              "size": 768,
+              "variables": [
+                {
+                  "name": "_WorldSpaceLightPos0",
+                  "offset": 0,
+                  "dim": 4,
+                  "arraySize": 0
+                },
+                {
+                  "name": "unity_OcclusionMaskSelector",
+                  "offset": 736,
+                  "dim": 4,
+                  "arraySize": 0
+                }
+              ]
+            },
+            {
+              "slot": 3,
+              "stage": "Fragment",
+              "name": "UnityReflectionProbes",
+              "size": 128,
+              "variables": [
+                {
+                  "name": "unity_SpecCube0_BoxMax",
+                  "offset": 0,
+                  "dim": 4,
+                  "arraySize": 0
+                },
+                {
+                  "name": "unity_SpecCube0_BoxMin",
+                  "offset": 16,
+                  "dim": 4,
+                  "arraySize": 0
+                },
+                {
+                  "name": "unity_SpecCube0_ProbePosition",
+                  "offset": 32,
+                  "dim": 4,
+                  "arraySize": 0
+                },
+                {
+                  "name": "unity_SpecCube0_HDR",
+                  "offset": 48,
+                  "dim": 4,
+                  "arraySize": 0
+                },
+                {
+                  "name": "unity_SpecCube1_BoxMax",
+                  "offset": 64,
+                  "dim": 4,
+                  "arraySize": 0
+                },
+                {
+                  "name": "unity_SpecCube1_BoxMin",
+                  "offset": 80,
+                  "dim": 4,
+                  "arraySize": 0
+                },
+                {
+                  "name": "unity_SpecCube1_ProbePosition",
+                  "offset": 96,
+                  "dim": 4,
+                  "arraySize": 0
+                },
+                {
+                  "name": "unity_SpecCube1_HDR",
+                  "offset": 112,
+                  "dim": 4,
+                  "arraySize": 0
+                }
+              ]
+            },
+            {
+              "slot": 4,
+              "stage": "Fragment",
+              "name": "UnityProbeVolume",
+              "size": 112,
+              "variables": [
+                {
+                  "name": "unity_ProbeVolumeParams",
+                  "offset": 0,
+                  "dim": 4,
+                  "arraySize": 0
+                },
+                {
+                  "name": "unity_ProbeVolumeSizeInv",
+                  "offset": 80,
+                  "dim": 3,
+                  "arraySize": 0
+                },
+                {
+                  "name": "unity_ProbeVolumeMin",
+                  "offset": 96,
+                  "dim": 3,
+                  "arraySize": 0
+                },
+                {
+                  "name": "unity_ProbeVolumeWorldToObject",
+                  "offset": 16,
+                  "rowCount": 4,
+                  "arraySize": 0,
+                  "isMatrix": true
+                }
+              ]
+            },
+            {
+              "slot": 0,
+              "stage": "Vertex",
+              "name": "$Globals",
+              "size": 256,
+              "variables": [
+                {
+                  "name": "_MainTex_ST",
+                  "offset": 128,
+                  "dim": 4,
+                  "arraySize": 0
+                },
+                {
+                  "name": "_BumpMap_ST",
+                  "offset": 144,
+                  "dim": 4,
+                  "arraySize": 0
+                },
+                {
+                  "name": "_MetallicGlossMap_ST",
+                  "offset": 160,
+                  "dim": 4,
+                  "arraySize": 0
+                },
+                {
+                  "name": "_OcclusionMap_ST",
+                  "offset": 176,
+                  "dim": 4,
+                  "arraySize": 0
+                },
+                {
+                  "name": "_EmissionMap_ST",
+                  "offset": 192,
+                  "dim": 4,
+                  "arraySize": 0
+                },
+                {
+                  "name": "_DetailMask_ST",
+                  "offset": 208,
+                  "dim": 4,
+                  "arraySize": 0
+                },
+                {
+                  "name": "_DetailAlbedo_ST",
+                  "offset": 224,
+                  "dim": 4,
+                  "arraySize": 0
+                },
+                {
+                  "name": "_DetailNormal_ST",
+                  "offset": 240,
+                  "dim": 4,
+                  "arraySize": 0
+                }
+              ]
+            },
+            {
+              "slot": 1,
+              "stage": "Vertex",
+              "name": "UnityPerDraw",
+              "size": 176,
+              "variables": [
+                {
+                  "name": "unity_WorldTransformParams",
+                  "offset": 144,
+                  "dim": 4,
+                  "arraySize": 0
+                },
+                {
+                  "name": "unity_ObjectToWorld",
+                  "offset": 0,
+                  "rowCount": 4,
+                  "arraySize": 0,
+                  "isMatrix": true
+                },
+                {
+                  "name": "unity_WorldToObject",
+                  "offset": 64,
+                  "rowCount": 4,
+                  "arraySize": 0,
+                  "isMatrix": true
+                }
+              ]
+            },
+            {
+              "slot": 2,
+              "stage": "Vertex",
+              "name": "UnityPerFrame",
+              "size": 368,
+              "variables": [
+                {
+                  "name": "unity_MatrixVP",
+                  "offset": 272,
+                  "rowCount": 4,
+                  "arraySize": 0,
+                  "isMatrix": true
+                }
+              ]
+            }
+          ],
+          "textures": [],
+          "samplers": [],
+          "keywords": {
+            "$Globals": 0,
+            "UnityLighting": 16,
+            "UnityPerCamera": 15,
+            "UnityPerDraw": 1,
+            "UnityPerFrame": 2,
+            "UnityProbeVolume": 18,
+            "UnityReflectionProbes": 17,
+            "_BumpMap_ST": 4,
+            "_BumpScale": 20,
+            "_Color": 25,
+            "_Cutoff": 24,
+            "_DetailAlbedo_ST": 9,
+            "_DetailMask_ST": 8,
+            "_DetailNormal_ST": 10,
+            "_EmissionColor": 26,
+            "_EmissionMap_ST": 7,
+            "_Glossiness": 22,
+            "_LightColor0": 19,
+            "_MainTex_ST": 3,
+            "_Metallic": 21,
+            "_MetallicGlossMap_ST": 5,
+            "_OcclusionMap_ST": 6,
+            "_OcclusionStrength": 23,
+            "_WorldSpaceCameraPos": 27,
+            "_WorldSpaceLightPos0": 28,
+            "unity_MatrixVP": 14,
+            "unity_ObjectToWorld": 12,
+            "unity_OcclusionMaskSelector": 29,
+            "unity_ProbeVolumeMin": 40,
+            "unity_ProbeVolumeParams": 38,
+            "unity_ProbeVolumeSizeInv": 39,
+            "unity_ProbeVolumeWorldToObject": 41,
+            "unity_SpecCube0_BoxMax": 30,
+            "unity_SpecCube0_BoxMin": 31,
+            "unity_SpecCube0_HDR": 33,
+            "unity_SpecCube0_ProbePosition": 32,
+            "unity_SpecCube1_BoxMax": 34,
+            "unity_SpecCube1_BoxMin": 35,
+            "unity_SpecCube1_HDR": 37,
+            "unity_SpecCube1_ProbePosition": 36,
+            "unity_WorldToObject": 13,
+            "unity_WorldTransformParams": 11
+          }
+        },
+        {
+          "name": "",
+          "nameIndices": {
+            "$Globals": 6,
+            "UnityLighting": 8,
+            "UnityPerCamera": 7,
+            "UnityPerDraw": 0,
+            "UnityPerFrame": 1,
+            "UnityProbeVolume": 9,
+            "_LightColor0": 10,
+            "_WorldSpaceCameraPos": 11,
+            "_WorldSpaceLightPos0": 12,
+            "unity_MatrixVP": 5,
+            "unity_ObjectToWorld": 3,
+            "unity_OcclusionMaskSelector": 13,
+            "unity_ProbeVolumeMin": 16,
+            "unity_ProbeVolumeParams": 14,
+            "unity_ProbeVolumeSizeInv": 15,
+            "unity_ProbeVolumeWorldToObject": 17,
+            "unity_WorldToObject": 4,
+            "unity_WorldTransformParams": 2
+          },
+          "tags": {
+            "LIGHTMODE": "FORWARDADD",
+            "PerformanceChecks": "False",
+            "QUEUE": "Geometry",
+            "RenderType": "Opaque",
+            "SHADOWSUPPORT": "true"
+          },
+          "renderState": {
+            "cull": 2,
+            "zTest": 4,
+            "zWrite": 0,
+            "zClip": 1,
+            "lighting": false,
+            "fogMode": -1,
+            "alphaToMask": 0,
+            "conservative": 0,
+            "offsetFactor": 0,
+            "offsetUnits": 0,
+            "stencilRef": 0,
+            "stencilReadMask": 255,
+            "stencilWriteMask": 255,
+            "stencilOpFront": {
+              "m_Comp": {
+                "m_Name": "<noninit>",
+                "m_Value": 8
+              },
+              "m_Fail": {
+                "m_Name": "<noninit>",
+                "m_Value": 0
+              },
+              "m_Pass": {
+                "m_Name": "<noninit>",
+                "m_Value": 0
+              },
+              "m_ZFail": {
+                "m_Name": "<noninit>",
+                "m_Value": 0
+              }
+            },
+            "stencilOpBack": {
+              "m_Comp": {
+                "m_Name": "<noninit>",
+                "m_Value": 8
+              },
+              "m_Fail": {
+                "m_Name": "<noninit>",
+                "m_Value": 0
+              },
+              "m_Pass": {
+                "m_Name": "<noninit>",
+                "m_Value": 0
+              },
+              "m_ZFail": {
+                "m_Name": "<noninit>",
+                "m_Value": 0
+              }
+            },
+            "separateBlend": false,
+            "blend": {
+              "srcBlend": 1,
+              "dstBlend": 1,
+              "srcBlendAlpha": 1,
+              "dstBlendAlpha": 1,
+              "blendOp": 0,
+              "blendOpAlpha": 0,
+              "colorMask": 15
+            }
+          },
+          "programs": {
+            "ProgVertex": {
+              "subProgramCount": 4
+            },
+            "ProgFragment": {
+              "subProgramCount": 4
+            }
+          },
+          "constantBuffers": [
+            {
+              "slot": 0,
+              "stage": "Fragment",
+              "name": "$Globals",
+              "size": 304,
+              "variables": [
+                {
+                  "name": "_LightColor0",
+                  "offset": 32,
+                  "dim": 4,
+                  "arraySize": 0
+                }
+              ]
+            },
+            {
+              "slot": 1,
+              "stage": "Fragment",
+              "name": "UnityPerCamera",
+              "size": 144,
+              "variables": [
+                {
+                  "name": "_WorldSpaceCameraPos",
+                  "offset": 64,
+                  "dim": 3,
+                  "arraySize": 0
+                }
+              ]
+            },
+            {
+              "slot": 2,
+              "stage": "Fragment",
+              "name": "UnityLighting",
+              "size": 768,
+              "variables": [
+                {
+                  "name": "_WorldSpaceLightPos0",
+                  "offset": 0,
+                  "dim": 4,
+                  "arraySize": 0
+                },
+                {
+                  "name": "unity_OcclusionMaskSelector",
+                  "offset": 736,
+                  "dim": 4,
+                  "arraySize": 0
+                }
+              ]
+            },
+            {
+              "slot": 3,
+              "stage": "Fragment",
+              "name": "UnityProbeVolume",
+              "size": 112,
+              "variables": [
+                {
+                  "name": "unity_ProbeVolumeParams",
+                  "offset": 0,
+                  "dim": 4,
+                  "arraySize": 0
+                },
+                {
+                  "name": "unity_ProbeVolumeSizeInv",
+                  "offset": 80,
+                  "dim": 3,
+                  "arraySize": 0
+                },
+                {
+                  "name": "unity_ProbeVolumeMin",
+                  "offset": 96,
+                  "dim": 3,
+                  "arraySize": 0
+                },
+                {
+                  "name": "unity_ProbeVolumeWorldToObject",
+                  "offset": 16,
+                  "rowCount": 4,
+                  "arraySize": 0,
+                  "isMatrix": true
+                }
+              ]
+            },
+            {
+              "slot": 0,
+              "stage": "Vertex",
+              "name": "$Globals",
+              "size": 0,
+              "variables": [
+                {
+                  "name": "_MainTex_ST",
+                  "offset": 128,
+                  "dim": 4,
+                  "arraySize": 0
+                },
+                {
+                  "name": "_BumpMap_ST",
+                  "offset": 144,
+                  "dim": 4,
+                  "arraySize": 0
+                },
+                {
+                  "name": "_MetallicGlossMap_ST",
+                  "offset": 160,
+                  "dim": 4,
+                  "arraySize": 0
+                },
+                {
+                  "name": "_OcclusionMap_ST",
+                  "offset": 176,
+                  "dim": 4,
+                  "arraySize": 0
+                },
+                {
+                  "name": "_EmissionMap_ST",
+                  "offset": 192,
+                  "dim": 4,
+                  "arraySize": 0
+                },
+                {
+                  "name": "_DetailMask_ST",
+                  "offset": 208,
+                  "dim": 4,
+                  "arraySize": 0
+                },
+                {
+                  "name": "_DetailAlbedo_ST",
+                  "offset": 224,
+                  "dim": 4,
+                  "arraySize": 0
+                },
+                {
+                  "name": "_DetailNormal_ST",
+                  "offset": 240,
+                  "dim": 4,
+                  "arraySize": 0
+                },
+                {
+                  "name": "_LightColor0",
+                  "offset": 32,
+                  "dim": 4,
+                  "arraySize": 0
+                },
+                {
+                  "name": "_BumpScale",
+                  "offset": 64,
+                  "dim": 1,
+                  "arraySize": 0
+                },
+                {
+                  "name": "_Metallic",
+                  "offset": 68,
+                  "dim": 1,
+                  "arraySize": 0
+                },
+                {
+                  "name": "_Glossiness",
+                  "offset": 72,
+                  "dim": 1,
+                  "arraySize": 0
+                },
+                {
+                  "name": "_OcclusionStrength",
+                  "offset": 76,
+                  "dim": 1,
+                  "arraySize": 0
+                },
+                {
+                  "name": "_Cutoff",
+                  "offset": 80,
+                  "dim": 1,
+                  "arraySize": 0
+                },
+                {
+                  "name": "_Color",
+                  "offset": 96,
+                  "dim": 4,
+                  "arraySize": 0
+                },
+                {
+                  "name": "_EmissionColor",
+                  "offset": 112,
+                  "dim": 4,
+                  "arraySize": 0
+                }
+              ]
+            },
+            {
+              "slot": 1,
+              "stage": "Vertex",
+              "name": "UnityPerDraw",
+              "size": 176,
+              "variables": [
+                {
+                  "name": "unity_WorldTransformParams",
+                  "offset": 144,
+                  "dim": 4,
+                  "arraySize": 0
+                },
+                {
+                  "name": "unity_ObjectToWorld",
+                  "offset": 0,
+                  "rowCount": 4,
+                  "arraySize": 0,
+                  "isMatrix": true
+                },
+                {
+                  "name": "unity_WorldToObject",
+                  "offset": 64,
+                  "rowCount": 4,
+                  "arraySize": 0,
+                  "isMatrix": true
+                }
+              ]
+            },
+            {
+              "slot": 2,
+              "stage": "Vertex",
+              "name": "UnityPerFrame",
+              "size": 368,
+              "variables": [
+                {
+                  "name": "unity_MatrixVP",
+                  "offset": 272,
+                  "rowCount": 4,
+                  "arraySize": 0,
+                  "isMatrix": true
+                }
+              ]
+            }
+          ],
+          "textures": [],
+          "samplers": [],
+          "keywords": {
+            "$Globals": 6,
+            "UnityLighting": 8,
+            "UnityPerCamera": 7,
+            "UnityPerDraw": 0,
+            "UnityPerFrame": 1,
+            "UnityProbeVolume": 9,
+            "_LightColor0": 10,
+            "_WorldSpaceCameraPos": 11,
+            "_WorldSpaceLightPos0": 12,
+            "unity_MatrixVP": 5,
+            "unity_ObjectToWorld": 3,
+            "unity_OcclusionMaskSelector": 13,
+            "unity_ProbeVolumeMin": 16,
+            "unity_ProbeVolumeParams": 14,
+            "unity_ProbeVolumeSizeInv": 15,
+            "unity_ProbeVolumeWorldToObject": 17,
+            "unity_WorldToObject": 4,
+            "unity_WorldTransformParams": 2
+          }
+        },
+        {
+          "name": "",
+          "nameIndices": {
+            "$Globals": 0,
+            "UnityPerDraw": 1,
+            "UnityPerFrame": 2,
+            "_BumpMap_ST": 4,
+            "_BumpScale": 15,
+            "_Color": 20,
+            "_Cutoff": 19,
+            "_DetailAlbedo_ST": 9,
+            "_DetailMask_ST": 8,
+            "_DetailNormal_ST": 10,
+            "_EmissionColor": 21,
+            "_EmissionMap_ST": 7,
+            "_Glossiness": 17,
+            "_MainTex_ST": 3,
+            "_Metallic": 16,
+            "_MetallicGlossMap_ST": 5,
+            "_OcclusionMap_ST": 6,
+            "_OcclusionStrength": 18,
+            "unity_MatrixVP": 14,
+            "unity_ObjectToWorld": 12,
+            "unity_WorldToObject": 13,
+            "unity_WorldTransformParams": 11
+          },
+          "tags": {
+            "LIGHTMODE": "DEFERRED",
+            "PerformanceChecks": "False",
+            "QUEUE": "Geometry",
+            "RenderType": "Opaque"
+          },
+          "renderState": {
+            "cull": 2,
+            "zTest": 4,
+            "zWrite": 1,
+            "zClip": 1,
+            "lighting": false,
+            "fogMode": -1,
+            "alphaToMask": 0,
+            "conservative": 0,
+            "offsetFactor": 0,
+            "offsetUnits": 0,
+            "stencilRef": 0,
+            "stencilReadMask": 255,
+            "stencilWriteMask": 255,
+            "stencilOpFront": {
+              "m_Comp": {
+                "m_Name": "<noninit>",
+                "m_Value": 8
+              },
+              "m_Fail": {
+                "m_Name": "<noninit>",
+                "m_Value": 0
+              },
+              "m_Pass": {
+                "m_Name": "<noninit>",
+                "m_Value": 0
+              },
+              "m_ZFail": {
+                "m_Name": "<noninit>",
+                "m_Value": 0
+              }
+            },
+            "stencilOpBack": {
+              "m_Comp": {
+                "m_Name": "<noninit>",
+                "m_Value": 8
+              },
+              "m_Fail": {
+                "m_Name": "<noninit>",
+                "m_Value": 0
+              },
+              "m_Pass": {
+                "m_Name": "<noninit>",
+                "m_Value": 0
+              },
+              "m_ZFail": {
+                "m_Name": "<noninit>",
+                "m_Value": 0
+              }
+            },
+            "separateBlend": false,
+            "blend": {
+              "srcBlend": 1,
+              "dstBlend": 0,
+              "srcBlendAlpha": 1,
+              "dstBlendAlpha": 0,
+              "blendOp": 0,
+              "blendOpAlpha": 0,
+              "colorMask": 15
+            }
+          },
+          "programs": {
+            "ProgVertex": {
+              "subProgramCount": 4
+            },
+            "ProgFragment": {
+              "subProgramCount": 4
+            }
+          },
+          "constantBuffers": [
+            {
+              "slot": 0,
+              "stage": "Fragment",
+              "name": "$Globals",
+              "size": 272,
+              "variables": [
+                {
+                  "name": "_BumpScale",
+                  "offset": 64,
+                  "dim": 1,
+                  "arraySize": 0
+                },
+                {
+                  "name": "_Metallic",
+                  "offset": 68,
+                  "dim": 1,
+                  "arraySize": 0
+                },
+                {
+                  "name": "_Glossiness",
+                  "offset": 72,
+                  "dim": 1,
+                  "arraySize": 0
+                },
+                {
+                  "name": "_OcclusionStrength",
+                  "offset": 76,
+                  "dim": 1,
+                  "arraySize": 0
+                },
+                {
+                  "name": "_Cutoff",
+                  "offset": 80,
+                  "dim": 1,
+                  "arraySize": 0
+                },
+                {
+                  "name": "_Color",
+                  "offset": 96,
+                  "dim": 4,
+                  "arraySize": 0
+                },
+                {
+                  "name": "_EmissionColor",
+                  "offset": 112,
+                  "dim": 4,
+                  "arraySize": 0
+                }
+              ]
+            },
+            {
+              "slot": 0,
+              "stage": "Vertex",
+              "name": "$Globals",
+              "size": 272,
+              "variables": [
+                {
+                  "name": "_MainTex_ST",
+                  "offset": 128,
+                  "dim": 4,
+                  "arraySize": 0
+                },
+                {
+                  "name": "_BumpMap_ST",
+                  "offset": 144,
+                  "dim": 4,
+                  "arraySize": 0
+                },
+                {
+                  "name": "_MetallicGlossMap_ST",
+                  "offset": 160,
+                  "dim": 4,
+                  "arraySize": 0
+                },
+                {
+                  "name": "_OcclusionMap_ST",
+                  "offset": 176,
+                  "dim": 4,
+                  "arraySize": 0
+                },
+                {
+                  "name": "_EmissionMap_ST",
+                  "offset": 192,
+                  "dim": 4,
+                  "arraySize": 0
+                },
+                {
+                  "name": "_DetailMask_ST",
+                  "offset": 208,
+                  "dim": 4,
+                  "arraySize": 0
+                },
+                {
+                  "name": "_DetailAlbedo_ST",
+                  "offset": 224,
+                  "dim": 4,
+                  "arraySize": 0
+                },
+                {
+                  "name": "_DetailNormal_ST",
+                  "offset": 240,
+                  "dim": 4,
+                  "arraySize": 0
+                }
+              ]
+            },
+            {
+              "slot": 1,
+              "stage": "Vertex",
+              "name": "UnityPerDraw",
+              "size": 176,
+              "variables": [
+                {
+                  "name": "unity_WorldTransformParams",
+                  "offset": 144,
+                  "dim": 4,
+                  "arraySize": 0
+                },
+                {
+                  "name": "unity_ObjectToWorld",
+                  "offset": 0,
+                  "rowCount": 4,
+                  "arraySize": 0,
+                  "isMatrix": true
+                },
+                {
+                  "name": "unity_WorldToObject",
+                  "offset": 64,
+                  "rowCount": 4,
+                  "arraySize": 0,
+                  "isMatrix": true
+                }
+              ]
+            },
+            {
+              "slot": 2,
+              "stage": "Vertex",
+              "name": "UnityPerFrame",
+              "size": 368,
+              "variables": [
+                {
+                  "name": "unity_MatrixVP",
+                  "offset": 272,
+                  "rowCount": 4,
+                  "arraySize": 0,
+                  "isMatrix": true
+                }
+              ]
+            }
+          ],
+          "textures": [],
+          "samplers": [],
+          "keywords": {
+            "$Globals": 0,
+            "UnityPerDraw": 1,
+            "UnityPerFrame": 2,
+            "_BumpMap_ST": 4,
+            "_BumpScale": 15,
+            "_Color": 20,
+            "_Cutoff": 19,
+            "_DetailAlbedo_ST": 9,
+            "_DetailMask_ST": 8,
+            "_DetailNormal_ST": 10,
+            "_EmissionColor": 21,
+            "_EmissionMap_ST": 7,
+            "_Glossiness": 17,
+            "_MainTex_ST": 3,
+            "_Metallic": 16,
+            "_MetallicGlossMap_ST": 5,
+            "_OcclusionMap_ST": 6,
+            "_OcclusionStrength": 18,
+            "unity_MatrixVP": 14,
+            "unity_ObjectToWorld": 12,
+            "unity_WorldToObject": 13,
+            "unity_WorldTransformParams": 11
+          }
+        },
+        {
+          "name": "",
+          "nameIndices": {
+            "$Globals": 0,
+            "UnityLighting": 1,
+            "UnityPerDraw": 3,
+            "UnityPerFrame": 4,
+            "UnityShadows": 2,
+            "_Color": 13,
+            "_Cutoff": 12,
+            "_MainTex": 11,
+            "_MainTex_ST": 5,
+            "_WorldSpaceLightPos0": 6,
+            "unity_LightShadowBias": 7,
+            "unity_MatrixVP": 10,
+            "unity_ObjectToWorld": 8,
+            "unity_WorldToObject": 9
+          },
+          "tags": {
+            "LIGHTMODE": "SHADOWCASTER",
+            "PerformanceChecks": "False",
+            "QUEUE": "Geometry",
+            "RenderType": "Opaque",
+            "SHADOWSUPPORT": "true"
+          },
+          "renderState": {
+            "cull": 2,
+            "zTest": 4,
+            "zWrite": 1,
+            "zClip": 1,
+            "lighting": false,
+            "fogMode": -1,
+            "alphaToMask": 0,
+            "conservative": 0,
+            "offsetFactor": 0,
+            "offsetUnits": 0,
+            "stencilRef": 0,
+            "stencilReadMask": 255,
+            "stencilWriteMask": 255,
+            "stencilOpFront": {
+              "m_Comp": {
+                "m_Name": "<noninit>",
+                "m_Value": 8
+              },
+              "m_Fail": {
+                "m_Name": "<noninit>",
+                "m_Value": 0
+              },
+              "m_Pass": {
+                "m_Name": "<noninit>",
+                "m_Value": 0
+              },
+              "m_ZFail": {
+                "m_Name": "<noninit>",
+                "m_Value": 0
+              }
+            },
+            "stencilOpBack": {
+              "m_Comp": {
+                "m_Name": "<noninit>",
+                "m_Value": 8
+              },
+              "m_Fail": {
+                "m_Name": "<noninit>",
+                "m_Value": 0
+              },
+              "m_Pass": {
+                "m_Name": "<noninit>",
+                "m_Value": 0
+              },
+              "m_ZFail": {
+                "m_Name": "<noninit>",
+                "m_Value": 0
+              }
+            },
+            "separateBlend": false,
+            "blend": {
+              "srcBlend": 1,
+              "dstBlend": 0,
+              "srcBlendAlpha": 1,
+              "dstBlendAlpha": 0,
+              "blendOp": 0,
+              "blendOpAlpha": 0,
+              "colorMask": 15
+            }
+          },
+          "programs": {
+            "ProgVertex": {
+              "subProgramCount": 4
+            },
+            "ProgFragment": {
+              "subProgramCount": 4
+            }
+          },
+          "constantBuffers": [
+            {
+              "slot": 0,
+              "stage": "Fragment",
+              "name": "$Globals",
+              "size": 144,
+              "variables": [
+                {
+                  "name": "_Cutoff",
+                  "offset": 80,
+                  "dim": 1,
+                  "arraySize": 0
+                },
+                {
+                  "name": "_Color",
+                  "offset": 96,
+                  "dim": 4,
+                  "arraySize": 0
+                }
+              ]
+            },
+            {
+              "slot": 0,
+              "stage": "Vertex",
+              "name": "$Globals",
+              "size": 144,
+              "variables": [
+                {
+                  "name": "_MainTex_ST",
+                  "offset": 128,
+                  "dim": 4,
+                  "arraySize": 0
+                }
+              ]
+            },
+            {
+              "slot": 1,
+              "stage": "Vertex",
+              "name": "UnityLighting",
+              "size": 768,
+              "variables": [
+                {
+                  "name": "_WorldSpaceLightPos0",
+                  "offset": 0,
+                  "dim": 4,
+                  "arraySize": 0
+                }
+              ]
+            },
+            {
+              "slot": 2,
+              "stage": "Vertex",
+              "name": "UnityShadows",
+              "size": 416,
+              "variables": [
+                {
+                  "name": "unity_LightShadowBias",
+                  "offset": 80,
+                  "dim": 4,
+                  "arraySize": 0
+                }
+              ]
+            },
+            {
+              "slot": 3,
+              "stage": "Vertex",
+              "name": "UnityPerDraw",
+              "size": 176,
+              "variables": [
+                {
+                  "name": "unity_ObjectToWorld",
+                  "offset": 0,
+                  "rowCount": 4,
+                  "arraySize": 0,
+                  "isMatrix": true
+                },
+                {
+                  "name": "unity_WorldToObject",
+                  "offset": 64,
+                  "rowCount": 4,
+                  "arraySize": 0,
+                  "isMatrix": true
+                }
+              ]
+            },
+            {
+              "slot": 4,
+              "stage": "Vertex",
+              "name": "UnityPerFrame",
+              "size": 368,
+              "variables": [
+                {
+                  "name": "unity_MatrixVP",
+                  "offset": 272,
+                  "rowCount": 4,
+                  "arraySize": 0,
+                  "isMatrix": true
+                }
+              ]
+            }
+          ],
+          "textures": [],
+          "samplers": [],
+          "keywords": {
+            "$Globals": 0,
+            "UnityLighting": 1,
+            "UnityPerDraw": 3,
+            "UnityPerFrame": 4,
+            "UnityShadows": 2,
+            "_Color": 13,
+            "_Cutoff": 12,
+            "_MainTex": 11,
+            "_MainTex_ST": 5,
+            "_WorldSpaceLightPos0": 6,
+            "unity_LightShadowBias": 7,
+            "unity_MatrixVP": 10,
+            "unity_ObjectToWorld": 8,
+            "unity_WorldToObject": 9
+          }
+        }
+      ]
+    }
+  ],
+  "fallback": "Standard",
+  "customEditor": "",
+  "keywords": [
+    "STEREO_INSTANCING_ON",
+    "UNITY_SINGLE_PASS_STEREO",
+    "STEREO_MULTIVIEW_ON",
+    "STEREO_CUBEMAP_RENDER_ON",
+    "INSTANCING_ON",
+    "DIRECTIONAL",
+    "LIGHTPROBE_SH",
+    "SHADOWS_SHADOWMASK",
+    "DYNAMICLIGHTMAP_ON",
+    "LIGHTMAP_ON",
+    "LIGHTMAP_SHADOW_MIXING",
+    "DIRLIGHTMAP_COMBINED",
+    "SHADOWS_SCREEN",
+    "VERTEXLIGHT_ON",
+    "POINT",
+    "SPOT",
+    "POINT_COOKIE",
+    "DIRECTIONAL_COOKIE",
+    "SHADOWS_DEPTH",
+    "SHADOWS_SOFT",
+    "SHADOWS_CUBE",
+    "UNITY_HDR_ON",
+    "EDITOR_VISUALIZATION",
+    "FOG_LINEAR",
+    "FOG_EXP",
+    "FOG_EXP2",
+    "_NORMALMAP",
+    "_ALPHATEST_ON",
+    "_ALPHABLEND_ON",
+    "_ALPHAPREMULTIPLY_ON",
+    "_METALLICGLOSSMAP",
+    "_PARALLAXMAP",
+    "_EMISSION",
+    "_DETAIL_MULX2",
+    "_SMOOTHNESS_TEXTURE_ALBEDO_CHANNEL_A",
+    "_SPECULARHIGHLIGHTS_OFF",
+    "_GLOSSYREFLECTIONS_OFF"
+  ],
+  "dependencies": [],
+  "disableNoSubshadersMessage": false
+}

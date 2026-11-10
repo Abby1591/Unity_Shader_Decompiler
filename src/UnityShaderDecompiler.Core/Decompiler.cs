@@ -121,7 +121,8 @@ public static class Decompiler
         using var stream = new MemoryStream(bytes);
         using var reader = new BinaryReader(stream);
 
-        // Unity 2022.3.x — the serialized shader-blob version this tool targets.
+        // Unity 2019.3+ (including Unity 6) serialized shader-blob entry
+        // layout: every subprogram entry carries an explicit segment index.
         int[] version = { 2022, 3, 62 };
         var program = new ShaderProgram(reader, version);
 

@@ -1,5 +1,5 @@
-﻿"""
-Stage 0 â€” Frontend / Preprocessing orchestrator.
+"""
+Stage 0 — Frontend / Preprocessing orchestrator.
 
 For a given shader JSON export, produces the three inputs Program.cs (C#)
 now expects, all in one per-shader output folder:
@@ -9,8 +9,8 @@ now expects, all in one per-shader output folder:
     Output/<ShaderName>/dummy.shader   (if a match exists)
 
 Usage:
-    python Extract.py shaders_json/HOLO_Holo.json
-    python Extract.py shaders_json/HOLO_Holo.json --dummy-dir shaders_dummy
+    python Extract.py shaders_json/Corpus_01 Properties.json
+    python Extract.py shaders_json/Corpus_01 Properties.json --dummy-dir shaders_dummy
 """
 
 import argparse
@@ -30,7 +30,7 @@ def safe_folder_name(name: str) -> str:
 
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument("json_path", help="Path to the AssetStudio shader JSON export")
+    ap.add_argument("json_path", help="Path to an AssetStudio or AssetRipper shader JSON export")
     ap.add_argument("--dummy-dir", default="shaders_dummy",
                      help="Directory of AssetStudio plain-text dummy exports")
     ap.add_argument("--out-dir", default="Output", help="Root output directory")
@@ -44,7 +44,7 @@ def main():
         print(f"Not found: {json_path}")
         sys.exit(1)
 
-    # 0.1 â€” blob
+    # 0.1 — blob
     shader = ShaderBlob(str(json_path))
     blob = shader.get_blob()
 
@@ -58,13 +58,13 @@ def main():
         f.write(blob)
     print(f"Saved {blob_path} ({len(blob)} bytes)")
 
-    # 0.2 â€” metadata
+    # 0.2 — metadata
     meta = ShaderMetadata(str(json_path))
     meta_path = out_dir / "metadata.json"
     meta.save(str(meta_path))
     print(f"Saved {meta_path}")
 
-    # 0.3 â€” dummy shader (best effort, not required)
+    # 0.3 — dummy shader (best effort, not required)
     dummy_path = out_dir / "dummy.shader"
     if copy_dummy_shader(shader.name, args.dummy_dir, str(dummy_path)):
         print(f"Saved {dummy_path}")

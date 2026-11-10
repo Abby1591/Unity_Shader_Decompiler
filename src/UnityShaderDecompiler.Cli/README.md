@@ -45,7 +45,7 @@ vendored AssetStudio code.
 # From the repository root
 dotnet restore UnityShaderDecompiler.sln
 dotnet build UnityShaderDecompiler.sln -c Release
-dotnet run --project "src/UnityShaderDecompiler.Cli/UnityShaderDecompiler.Cli.csproj" -- Output/HOLO_Holo
+dotnet run --project "src/UnityShaderDecompiler.Cli/UnityShaderDecompiler.Cli.csproj" -- Output/Corpus_01 Properties
 
 # Regression suite
 dotnet test UnityShaderDecompiler.sln

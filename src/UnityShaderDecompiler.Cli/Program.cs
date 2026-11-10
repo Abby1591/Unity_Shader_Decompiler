@@ -41,7 +41,7 @@ internal class Program
             // bytecode — the gate that --surface-shaders waits on.
             string shader = args.Length > 1 && File.Exists(args[1])
                 ? args[1]
-                : Path.Combine(FindOutputRoot(), "PicaVoxel_PicaVoxel Diffuse.shader");
+                : Path.Combine(FindOutputRoot(), "Corpus_01 Properties.shader");
             RecompileVerify.Run(shader);
             return;
         }
@@ -89,9 +89,10 @@ internal class Program
 
         // args[0] is a folder produced by Extract.py (blob.bin +
         // metadata.json + optional dummy.shader), or a direct blob.bin path.
-        // No-args default: the HOLO_Holo input folder under the repo Output/,
-        // resolved from either the working directory or one level up so the
-        // app works whether it is launched from the repo root or from src/.
+        // No-args default: the Corpus_01 Properties Stage 0 folder under the
+        // repo Output/, resolved from either the working directory or one
+        // level up so the app works whether it is launched from the repo root
+        // or from src/.
         string inputPath = args.Length > 0 ? args[0] : DefaultInputFolder();
         bool failOnError = args.Contains("--fail-on-error");
 
@@ -181,16 +182,16 @@ internal class Program
     // Locate the decompiler Output/ folder regardless of the launch directory.
     private static string FindOutputRoot() => Decompiler.FindOutputRoot();
 
-    // No-args input: the HOLO_Holo Stage 0 folder. Check the working
-    // directory first, then one level up (the historical layout where the app
-    // was launched from its own project folder).
+    // No-args input: the Corpus_01 Properties Stage 0 folder. Check the
+    // working directory first, then one level up (the historical layout where
+    // the app was launched from its own project folder).
     private static string DefaultInputFolder()
     {
         string cwd = Directory.GetCurrentDirectory();
         string[] candidates =
         {
-            Path.Combine(cwd, "Output", "HOLO_Holo"),
-            Path.Combine(cwd, "..", "Output", "HOLO_Holo"),
+            Path.Combine(cwd, "Output", "Corpus_01 Properties"),
+            Path.Combine(cwd, "..", "Output", "Corpus_01 Properties"),
         };
 
         return candidates.FirstOrDefault(Directory.Exists) ?? candidates[0];

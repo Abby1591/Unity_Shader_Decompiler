@@ -1,4 +1,4 @@
-﻿#!/usr/bin/env python3
+#!/usr/bin/env python3
 """
 Automated faithfulness test: runs the C# decompiler's --faithfulness-test
 flag on every shader folder in Output/ (each containing blob.bin +

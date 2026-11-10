@@ -18,9 +18,26 @@ public class DecompilerIntegrationTests
 {
     public static TheoryData<string, string> Fixtures => new()
     {
-        { "HOLO_Holo", "HOLO/Holo" },
-        { "Hidden_BrightPassFilter2", "Hidden/BrightPassFilter2" },
-        { "PicaVoxel_PicaVoxel Diffuse", "PicaVoxel/PicaVoxel Diffuse" },
+        { "Corpus_01 Properties", "Corpus/01 Properties" },
+        { "Corpus_04 Vertex Fragment", "Corpus/04 Vertex Fragment" },
+        { "Corpus_05 Surface Standard", "Corpus/05 Surface Standard" },
+        { "Corpus_14 Shadow Depth Meta Motion", "Corpus/14 Shadow Depth Meta Motion" },
+        { "Corpus_19 Hull Domain", "Corpus/19 Hull Domain" },
+        { "Corpus_20 Instancing", "Corpus/20 Instancing" },
+        { "Corpus_26 Multiple Render Targets", "Corpus/26 Multiple Render Targets" },
+    };
+
+    // The tessellation fixture contains only hull/domain programs in its
+    // blob, so it is covered by HullDomain_EmitsHullAndDomainEntryPoints
+    // instead of the vertex/fragment pairing contract.
+    public static TheoryData<string, string> VertexFragmentFixtures => new()
+    {
+        { "Corpus_01 Properties", "Corpus/01 Properties" },
+        { "Corpus_04 Vertex Fragment", "Corpus/04 Vertex Fragment" },
+        { "Corpus_05 Surface Standard", "Corpus/05 Surface Standard" },
+        { "Corpus_14 Shadow Depth Meta Motion", "Corpus/14 Shadow Depth Meta Motion" },
+        { "Corpus_20 Instancing", "Corpus/20 Instancing" },
+        { "Corpus_26 Multiple Render Targets", "Corpus/26 Multiple Render Targets" },
     };
 
     [Theory]
@@ -46,7 +63,7 @@ public class DecompilerIntegrationTests
     }
 
     [Theory]
-    [MemberData(nameof(Fixtures))]
+    [MemberData(nameof(VertexFragmentFixtures))]
     public void Decompile_PairsVertexAndFragmentFunctions(string fixture, string _)
     {
         var result = FixtureCache.Decompile(fixture);
@@ -103,30 +120,66 @@ public class DecompilerIntegrationTests
         Assert.Equal(first.ShaderText, second.ShaderText);
     }
 
-    [Fact]
-    public void Holo_EmitsCbuffersTexturesAndSamplers()
+    [Theory]
+    [MemberData(nameof(Fixtures))]
+    public void EveryPass_EmitsOneHlslProgram(string fixture, string _)
     {
-        var text = FixtureCache.Decompile("HOLO_Holo").ShaderText;
+        var result = FixtureCache.Decompile(fixture);
+
+        int programs = Regex.Matches(result.ShaderText, "HLSLPROGRAM").Count;
+        Assert.Equal(result.Passes.Count, programs);
+    }
+
+    [Fact]
+    public void Properties_EmitsCbuffersTexturesAndSamplers()
+    {
+        var text = FixtureCache.Decompile("Corpus_01 Properties").ShaderText;
 
         Assert.Contains("cbuffer _GlobalsCB_b0", text);
         Assert.Contains("_Color", text);
         Assert.Contains("unity_ObjectToWorld", text);
-        Assert.Contains("Texture2D _MainTex", text);
-        Assert.Contains("SamplerState sampler_MainTex", text);
+        Assert.Contains("Texture2D _BaseMap", text);
+        Assert.Contains("SamplerState sampler_BaseMap", text);
     }
 
     [Fact]
-    public void PicaVoxel_EmitsOneHlslProgramPerVariantPass()
+    public void SurfaceStandard_EmitsLightingMembersUsedByBytecode()
     {
-        var result = FixtureCache.Decompile("PicaVoxel_PicaVoxel Diffuse");
+        // Metadata lists _LightColor0/_WorldSpaceLightPos0 for the lighting
+        // variant; the bytecode reads both and they must survive.
+        var text = FixtureCache.Decompile("Corpus_05 Surface Standard").ShaderText;
 
-        // 16 verts x 8 frags + 10 verts x 10 frags + 4 verts x 4 frags, with
-        // duplicate variants folded, is the current pass contract for this
-        // fixture. A change here means variant pairing changed.
-        Assert.Equal(22, result.Passes.Count);
+        Assert.Contains("_WorldSpaceLightPos0", text);
+        Assert.Contains("_LightColor0", text);
+    }
 
-        int programs = Regex.Matches(result.ShaderText, "HLSLPROGRAM").Count;
-        Assert.Equal(result.Passes.Count, programs);
+    [Fact]
+    public void HullDomain_EmitsHullAndDomainEntryPoints()
+    {
+        var text = FixtureCache.Decompile("Corpus_19 Hull Domain").ShaderText;
+
+        Assert.Contains(" hull(", text);
+        Assert.Contains(" domain(", text);
+    }
+
+    [Fact]
+    public void MultipleRenderTargets_EmitsEveryTarget()
+    {
+        var text = FixtureCache.Decompile("Corpus_26 Multiple Render Targets").ShaderText;
+
+        for (int target = 0; target <= 7; target++)
+            Assert.Contains($"sv_Target{target}", text);
+    }
+
+    [Fact]
+    public void MultiPassFixture_EmitsEachLightMode()
+    {
+        var text = FixtureCache.Decompile("Corpus_14 Shadow Depth Meta Motion").ShaderText;
+
+        Assert.Contains("\"SHADOWCASTER\"", text);
+        Assert.Contains("\"DepthOnly\"", text);
+        Assert.Contains("\"DepthNormals\"", text);
+        Assert.Contains("\"MOTIONVECTORS\"", text);
     }
 
     [Fact]
@@ -136,7 +189,7 @@ public class DecompilerIntegrationTests
         string log = CaptureConsole(() =>
         {
             var result = UnityShaderDecompiler.Core.Decompiler.DecompileFolder(
-                TestPaths.FixtureFolder("HOLO_Holo"),
+                TestPaths.FixtureFolder("Corpus_01 Properties"),
                 new DecompileOptions { OutRoot = temp.Path, Verbose = true });
 
             Assert.NotNull(result.OutputPath);
@@ -150,8 +203,9 @@ public class DecompilerIntegrationTests
     [Fact]
     public void FixtureBlobs_AllContainParseableDxbc()
     {
-        foreach (var fixture in new[] { "HOLO_Holo", "Hidden_BrightPassFilter2", "PicaVoxel_PicaVoxel Diffuse" })
+        foreach (object[] row in Fixtures)
         {
+            string fixture = (string)row[0];
             var project = UnityShaderDecompiler.Core.DXBC.Metadata.ShaderProject.LoadFromFolder(TestPaths.FixtureFolder(fixture));
             using var stream = new MemoryStream(project.Blob);
             using var reader = new BinaryReader(stream);
