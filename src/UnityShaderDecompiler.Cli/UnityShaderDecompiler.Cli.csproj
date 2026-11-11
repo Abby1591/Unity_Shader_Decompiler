@@ -17,4 +17,8 @@
         <ProjectReference Include="..\UnityShaderDecompiler.Core\UnityShaderDecompiler.Core.csproj" />
     </ItemGroup>
 
+    <ItemGroup>
+        <PackageReference Include="System.CommandLine" Version="3.0.0" />
+    </ItemGroup>
+
 </Project>
