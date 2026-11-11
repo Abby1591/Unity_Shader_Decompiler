@@ -353,12 +353,13 @@ public static class Decompiler
             }
             catch (Exception ex)
             {
-                log.WriteLine($"Program{i} decompilation failed, {ex.Message}\n{ex.StackTrace}");
                 if (options.FailOnError)
                 {
-                    log.WriteLine($"Decompilation stopped");
+                    log.WriteLine($"Program{i} decompilation failed. Decompilation stopped.");
                     throw;
                 }
+
+                log.WriteLine($"Program{i} decompilation failed, {ex.Message}\n{ex.StackTrace}");
             }
 
             log.WriteLine();
