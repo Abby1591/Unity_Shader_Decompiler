@@ -3,7 +3,7 @@ using UnityShaderDecompiler.Cli;
 
 namespace UnityShaderDecompiler.Tests;
 
-public class CommandLineOptionsTests
+public class CliCommandTests
 {
     [Theory]
     [InlineData("--fail-on-error", "INPUT", "--out-root", "output folder")]
