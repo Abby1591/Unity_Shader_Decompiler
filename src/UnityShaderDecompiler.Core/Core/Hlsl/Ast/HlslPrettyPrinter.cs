@@ -681,6 +681,14 @@ public static partial class HlslPrettyPrinter
         var body = new StringBuilder();
         PrintBlock(body, fn.Statements, indent: 4, ctx);
 
+        // DXBC functions return through a `ret` instruction; a switch (or an
+        // if whose merge tail got attached to the last case) can leave the
+        // printer's last case holding the return, so the function falls
+        // through. A trailing return is harmless when unreachable.
+        if (fn.OutputStruct is not null
+            && (fn.Statements.Statements.Count == 0 || fn.Statements.Statements[^1] is not HlslReturnStatement))
+            body.Append("                return o;\n");
+
         foreach (string name in ctx.Macros.OrderBy(n => n))
             sb.Append("                ").Append(MacroDefine(name)).Append('\n');
 

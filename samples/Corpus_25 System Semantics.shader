@@ -50,9 +50,9 @@ Shader "Corpus/25 System Semantics"
             program1Output vert(program1Input i)
             {
                 program1Output o = (program1Output)0;
-                float r0_x_1 = bitfieldinsert(1, 1, SV_VertexID0.x, 0);
+                float r0_x_1 = ((((uint)(0) & ~(1u << (1))) | (((uint)(i.sv_Vertexid0.x) & 1u) << (1))));
                 float r0_z_1 = asfloat(asint(i.sv_Vertexid0.x) & asint(2));
-                float4 r0_xyzw_2 = (float)(float4(r0_x_1, r0_z_1, r0_x_1, r0_x_1));
+                float4 r0_xyzw_2 = (float4)(float4(r0_x_1, r0_z_1, r0_x_1, r0_x_1));
                 float r0_x_2 = r0_xyzw_2.x;
                 float r0_y_1 = r0_xyzw_2.y;
                 o.sv_Position0.xy = (mad(float4(r0_x_2, r0_y_1, r0_x_2, r0_x_2), float4(2, 2, 0, 0), float4(-1, -1, 0, 0))).xy;

@@ -146,7 +146,7 @@ Shader "Corpus/11 Surface Vertex Color"
                 float r4_y_11;
                 float r4_z_10;
                 float r4_w_8;
-                if ((unity_ProbeVolumeParams.x == 1))
+                if (((unity_ProbeVolumeParams.x == 1)).x)
                 {
                     float3 r4_yzw_2 = ((i.texcoord2.yyyy * unity_ProbeVolumeWorldToObject[1].xxyz)).yzw;
                     float3 r4_yzw_3 = (mad(unity_ProbeVolumeWorldToObject[0].xxyz, i.texcoord2.xxxx, r4_yzw_2.xxyz)).yzw;
@@ -5024,7 +5024,7 @@ Shader "Corpus/11 Surface Vertex Color"
                 float r4_y_11;
                 float r4_z_10;
                 float r4_w_8;
-                if ((unity_ProbeVolumeParams.x == 1))
+                if (((unity_ProbeVolumeParams.x == 1)).x)
                 {
                     float3 r4_yzw_2 = ((i.texcoord2.yyyy * unity_ProbeVolumeWorldToObject[1].xxyz)).yzw;
                     float3 r4_yzw_3 = (mad(unity_ProbeVolumeWorldToObject[0].xxyz, i.texcoord2.xxxx, r4_yzw_2.xxyz)).yzw;
@@ -5395,7 +5395,7 @@ Shader "Corpus/11 Surface Vertex Color"
                 float r3_x_5;
                 float r3_y_5;
                 float r3_z_4;
-                if ((cb2_values[0].x == 1))
+                if (((cb2_values[0].x == 1)).x)
                 {
                     float3 r2_yzw_2 = ((i.texcoord2.yyyy * cb2_values[2].xxyz)).yzw;
                     float3 r2_yzw_3 = (mad(cb2_values[1].xxyz, i.texcoord2.xxxx, r2_yzw_2.xxyz)).yzw;
@@ -5717,7 +5717,7 @@ Shader "Corpus/11 Surface Vertex Color"
                 float r3_x_5;
                 float r3_y_5;
                 float r3_z_4;
-                if ((cb2_values[0].x == 1))
+                if (((cb2_values[0].x == 1)).x)
                 {
                     float3 r2_yzw_2 = ((i.texcoord2.yyyy * cb2_values[2].xxyz)).yzw;
                     float3 r2_yzw_3 = (mad(cb2_values[1].xxyz, i.texcoord2.xxxx, r2_yzw_2.xxyz)).yzw;

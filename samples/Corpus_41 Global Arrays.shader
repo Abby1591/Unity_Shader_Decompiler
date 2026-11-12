@@ -49,6 +49,8 @@ Shader "Corpus/41 Global Arrays"
             SamplerState sampler_linear_clamp1;
             Texture2D _MainTex;
             Texture2DArray t1;
+            StructuredBuffer<float4> t2;
+            ByteAddressBuffer t3;
             struct program1Input
             {
                 float4 position0 : POSITION0;

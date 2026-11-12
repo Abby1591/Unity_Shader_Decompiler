@@ -408,7 +408,7 @@ Shader "Corpus/13 Deferred"
                 float r3_y_13;
                 float r3_z_12;
                 float r3_w_8;
-                if ((cb6_values[0].x == 1))
+                if (((cb6_values[0].x == 1)).x)
                 {
                     float4 r3_xyzw_4 = (i.texcoord2.yyyy * cb6_values[2].xxyz);
                     float r3_y_4 = r3_xyzw_4.y;
@@ -819,7 +819,7 @@ Shader "Corpus/13 Deferred"
                 float r3_y_13;
                 float r3_z_12;
                 float r3_w_8;
-                if ((cb6_values[0].x == 1))
+                if (((cb6_values[0].x == 1)).x)
                 {
                     float4 r3_xyzw_4 = (i.texcoord2.yyyy * cb6_values[2].xxyz);
                     float r3_y_4 = r3_xyzw_4.y;
@@ -1223,7 +1223,7 @@ Shader "Corpus/13 Deferred"
                 float r3_y_13;
                 float r3_z_12;
                 float r3_w_8;
-                if ((cb5_values[0].x == 1))
+                if (((cb5_values[0].x == 1)).x)
                 {
                     float4 r3_xyzw_4 = (i.texcoord2.yyyy * cb5_values[2].xxyz);
                     float r3_y_4 = r3_xyzw_4.y;
@@ -1614,7 +1614,7 @@ Shader "Corpus/13 Deferred"
                 float r3_y_13;
                 float r3_z_12;
                 float r3_w_8;
-                if ((cb5_values[0].x == 1))
+                if (((cb5_values[0].x == 1)).x)
                 {
                     float4 r3_xyzw_4 = (i.texcoord2.yyyy * cb5_values[2].xxyz);
                     float r3_y_4 = r3_xyzw_4.y;

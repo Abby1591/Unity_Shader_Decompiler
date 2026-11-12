@@ -62,12 +62,12 @@ Shader "Corpus/23 Integer Math"
             program3Output frag(program3Input i)
             {
                 program3Output o = (program3Output)0;
-                float r0_x_1 = firstbithigh(unity_ObjectToWorld[2]);
+                float r0_x_1 = firstbithigh(asuint(unity_ObjectToWorld[2]));
                 float r0_y_1 = (r0_x_1 == -1);
-                float r0_y_2 = firstbitlow(unity_ObjectToWorld[2]);
-                float r0_y_3 = countbits(unity_ObjectToWorld[2]);
-                float r0_y_4 = reversebits(unity_ObjectToWorld[2]);
-                float r0_x_6 = (r0_y_4 + (r0_y_3 + (r0_y_2 + (r0_y_1 ? NaN : (-r0_x_1 + 31)))));
+                float r0_y_2 = firstbitlow(asuint(unity_ObjectToWorld[2]));
+                float r0_y_3 = countbits(asuint(unity_ObjectToWorld[2]));
+                float r0_y_4 = reversebits(asuint(unity_ObjectToWorld[2]));
+                float r0_x_6 = (r0_y_4 + (r0_y_3 + (r0_y_2 + (r0_y_1 ? asfloat(0xFFFFFFFFu) : (-r0_x_1 + 31)))));
                 float r0_y_5 = asfloat(asint(unity_ObjectToWorld[2]) << asint(3));
                 float r0_z_1 = asfloat(asint(unity_ObjectToWorld[2]) >> asint(2));
                 float r0_y_6 = (r0_z_1 + r0_y_5);
@@ -79,7 +79,7 @@ Shader "Corpus/23 Integer Math"
                 float r0_y_8 = (r0_w_2 + r0_y_7);
                 float r0_w_3 = asfloat(asint(unity_ObjectToWorld[2]) ^ asint(170));
                 float r0_y_9 = (r0_w_3 + r0_y_8);
-                float r0_w_4 = ~unity_ObjectToWorld[2];
+                float r0_w_4 = ~asuint(unity_ObjectToWorld[2]);
                 float r0_y_10 = (r0_w_4 + r0_y_9);
                 float r0_y_11 = (float)(r0_y_10);
                 float r0_w_5 = (-unity_ObjectToWorld[2] + unity_ObjectToWorld[2]);
@@ -91,20 +91,21 @@ Shader "Corpus/23 Integer Math"
                 float r1_z_1 = r1_xyzw_2.z;
                 float r1_w_1 = asfloat(asint(r1_y_2) ^ asint(unity_ObjectToWorld[2]));
                 float r1_w_2 = asfloat(asint(r1_w_1) & asint(2147483648));
-                float r2_x_2 = (r3_x / max(unity_ObjectToWorld[2], -unity_ObjectToWorld[2]));
+                float r2_x_2 = (asuint(clamp(max(unity_ObjectToWorld[2], -unity_ObjectToWorld[2]), -3.4e38, 3.4e38)) / asuint(r1_y_2));
+                float r3_x_1 = (asuint(clamp(max(unity_ObjectToWorld[2], -unity_ObjectToWorld[2]), -3.4e38, 3.4e38)) % asuint(r1_y_2));
                 float4 r1_xyzw_3 = min(r1_z_1.xxxx, int4(0, 10, 6, 0));
                 float r1_y_3 = r1_xyzw_3.y;
                 float r1_z_2 = r1_xyzw_3.z;
                 float r2_y_1 = -r2_x_2;
                 float r1_w_3 = ((r1_w_2 != 0) ? r2_y_1 : r2_x_2);
                 float r0_w_8 = (r0_w_7 + r1_w_3);
-                float r1_w_4 = -r3_x;
-                float r0_z_3 = ((r0_z_2 != 0) ? r1_w_4 : r3_x);
+                float r1_w_4 = -r3_x_1;
+                float r0_z_3 = ((r0_z_2 != 0) ? r1_w_4 : r3_x_1);
                 float r0_z_4 = (r0_z_3 + r0_w_8);
                 float r0_z_5 = mad(unity_ObjectToWorld[2], 3, r0_z_4);
                 float r0_w_9 = asfloat(asint(unity_ObjectToWorld[2]) >> asint(1));
                 float r0_z_6 = (r0_w_9 + r0_z_5);
-                float2 r0_xz_7 = ((float)(float4(r0_x_6, r0_x_6, r0_z_6, r0_x_6))).xz;
+                float2 r0_xz_7 = ((float4)(float4(r0_x_6, r0_x_6, r0_z_6, r0_x_6))).xz;
                 float r0_y_12 = (r0_y_11 + r0_xz_7.y);
                 float r0_y_13 = f32tof16(unity_ObjectToWorld[2]);
                 float r0_y_14 = f16tof32(r0_y_13);

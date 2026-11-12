@@ -318,6 +318,31 @@ public static class HlslAstBuilder
                     };
                     break;
 
+                case IRDeclaration.IRResourceRawDeclaration raw:
+                    yield return new HlslResourceNode
+                    {
+                        Name = raw.SymbolicName ?? $"t{raw.Slot}",
+                        Kind = HlslResourceKind.Texture,
+                        Slot = raw.Slot,
+                        TypeHint = "ByteAddressBuffer",
+                    };
+                    break;
+
+                case IRDeclaration.IRResourceStructuredDeclaration structured:
+                    yield return new HlslResourceNode
+                    {
+                        Name = structured.SymbolicName ?? $"t{structured.Slot}",
+                        Kind = HlslResourceKind.Texture,
+                        Slot = structured.Slot,
+                        // shortcut: only the common float4 stride has a
+                        // known element type; widen when a shader needs
+                        // another stride.
+                        TypeHint = structured.StructureStride == 16
+                            ? "StructuredBuffer<float4>"
+                            : "StructuredBuffer<uint>",
+                    };
+                    break;
+
                 case IRDeclaration.IRSamplerDeclaration samp:
                     bool isComparison = ComparisonSamplers(blocks).Contains(samp.Slot);
                     // Unity pairs samplers with textures by naming convention:
@@ -704,9 +729,9 @@ public static class HlslAstBuilder
             ResourceDimension.Texture2DArray => $"{prefix}Texture2DArray",
             ResourceDimension.Texture2DMSArray => $"{prefix}Texture2DMSArray",
             ResourceDimension.TextureCubeArray => $"{prefix}TextureCubeArray",
-            ResourceDimension.Buffer => $"{prefix}Buffer",
+            ResourceDimension.Buffer => $"{prefix}Buffer<uint>",
             ResourceDimension.RawBuffer => $"{prefix}ByteAddressBuffer",
-            ResourceDimension.StructuredBuffer => $"{prefix}StructuredBuffer",
+            ResourceDimension.StructuredBuffer => $"{prefix}StructuredBuffer<uint>",
             _ => null,
         };
     }

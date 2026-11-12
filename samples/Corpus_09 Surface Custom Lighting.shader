@@ -2041,7 +2041,7 @@ Shader "Corpus/09 Surface Custom Lighting"
                 float r2_y_13;
                 float r2_z_12;
                 float r2_w_8;
-                if ((cb6_values[0].x == 1))
+                if (((cb6_values[0].x == 1)).x)
                 {
                     float4 r2_xyzw_4 = (i.texcoord2.yyyy * cb6_values[2].xxyz);
                     float r2_y_4 = r2_xyzw_4.y;
@@ -2126,13 +2126,9 @@ Shader "Corpus/09 Surface Custom Lighting"
                     r2_y_20 = r2_y_15;
                 }
                 float r1_w_6 = mad(r1_w_5, (-r2_y_20 + saturate(dot(float4(r2_x_13, r2_y_13, r2_z_12, r2_w_8), unity_OcclusionMaskSelector))), r2_y_20);
-                float r2_x_17 = (t1.Sample(sampler_linear_clamp3, ((dot(r5_xyz_4.xyzx, r5_xyz_4.xyzx)).xxxx).xy)).x;
-                float4 r2_xyzw_21 = t1.Sample(sampler_linear_clamp3, ((dot(r5_xyz_4.xyzx, r5_xyz_4.xyzx)).xxxx).xy);
-                float r2_y_21 = r2_xyzw_21.y;
-                float r2_z_17 = r2_xyzw_21.z;
-                float r2_w_12 = r2_xyzw_21.w;
+                float4 r2_xyzw_17 = t1.Sample(sampler_linear_clamp3, ((dot(r5_xyz_4.xyzx, r5_xyz_4.xyzx)).xxxx).xy);
                 float4 r5_xyzw_5 = t2.Sample(sampler_linear_clamp2, r5_xyz_4.xyz);
-                float r1_w_7 = (r1_w_6 * (r2_x_17 * r5_xyzw_5.w));
+                float r1_w_7 = (r1_w_6 * (r2_xyzw_17.x * r5_xyzw_5.w));
                 float r1_y_2 = (cb0_values[10].w + 1);
                 float3 r0_xyz_2 = (mad(r0_xyz_1.xyzx, r0_w_2.xxxx, unitViewDir_xyz_1.xyzx)).xyz;
                 float r0_w_3 = dot(r0_xyz_2.xyzx, r0_xyz_2.xyzx);
@@ -2339,7 +2335,7 @@ Shader "Corpus/09 Surface Custom Lighting"
                 float r2_y_13;
                 float r2_z_12;
                 float r2_w_8;
-                if ((cb6_values[0].x == 1))
+                if (((cb6_values[0].x == 1)).x)
                 {
                     float4 r2_xyzw_4 = (i.texcoord2.yyyy * cb6_values[2].xxyz);
                     float r2_y_4 = r2_xyzw_4.y;
@@ -2612,7 +2608,7 @@ Shader "Corpus/09 Surface Custom Lighting"
                 float r2_y_13;
                 float r2_z_12;
                 float r2_w_8;
-                if ((cb6_values[0].x == 1))
+                if (((cb6_values[0].x == 1)).x)
                 {
                     float4 r2_xyzw_4 = (i.texcoord2.yyyy * cb6_values[2].xxyz);
                     float r2_y_4 = r2_xyzw_4.y;
@@ -2697,12 +2693,8 @@ Shader "Corpus/09 Surface Custom Lighting"
                     r2_y_20 = r2_y_15;
                 }
                 float r1_w_6 = mad(r1_w_5, (-r2_y_20 + saturate(dot(float4(r2_x_13, r2_y_13, r2_z_12, r2_w_8), unity_OcclusionMaskSelector))), r2_y_20);
-                float r2_x_17 = (t1.Sample(sampler_linear_clamp2, ((dot(r5_xyz_4.xyzx, r5_xyz_4.xyzx)).xxxx).xy)).x;
-                float4 r2_xyzw_21 = t1.Sample(sampler_linear_clamp2, ((dot(r5_xyz_4.xyzx, r5_xyz_4.xyzx)).xxxx).xy);
-                float r2_y_21 = r2_xyzw_21.y;
-                float r2_z_17 = r2_xyzw_21.z;
-                float r2_w_12 = r2_xyzw_21.w;
-                float r1_w_7 = (r1_w_6 * r2_x_17);
+                float4 r2_xyzw_17 = t1.Sample(sampler_linear_clamp2, ((dot(r5_xyz_4.xyzx, r5_xyz_4.xyzx)).xxxx).xy);
+                float r1_w_7 = (r1_w_6 * r2_xyzw_17.x);
                 float r1_y_2 = (cb0_values[10].w + 1);
                 float3 r0_xyz_2 = (mad(r0_xyz_1.xyzx, r0_w_2.xxxx, unitViewDir_xyz_1.xyzx)).xyz;
                 float r0_w_3 = dot(r0_xyz_2.xyzx, r0_xyz_2.xyzx);
@@ -2907,7 +2899,7 @@ Shader "Corpus/09 Surface Custom Lighting"
                 float r2_y_13;
                 float r2_z_12;
                 float r2_w_8;
-                if ((cb6_values[0].x == 1))
+                if (((cb6_values[0].x == 1)).x)
                 {
                     float4 r2_xyzw_4 = (i.texcoord2.yyyy * cb6_values[2].xxyz);
                     float r2_y_4 = r2_xyzw_4.y;
@@ -3630,7 +3622,7 @@ Shader "Corpus/09 Surface Custom Lighting"
                 float r2_y_13;
                 float r2_z_12;
                 float r2_w_8;
-                if ((cb6_values[0].x == 1))
+                if (((cb6_values[0].x == 1)).x)
                 {
                     float4 r2_xyzw_4 = (i.texcoord2.yyyy * cb6_values[2].xxyz);
                     float r2_y_4 = r2_xyzw_4.y;
@@ -3782,10 +3774,10 @@ Shader "Corpus/09 Surface Custom Lighting"
                 float r0_y_6 = log2(r0_y_5);
                 float r0_y_7 = (r0_y_6 * cb0_values[15].x);
                 float r0_y_8 = exp2(r0_y_7);
-                float r2_x_20 = ((r4_xyz_2.xyzx * _LightColor0.xyzx)).x;
-                float4 r2_xyzw_31 = (r4_xyz_2.xyzx * _LightColor0.xyzx);
-                float r2_y_31 = r2_xyzw_31.y;
-                float r2_z_27 = r2_xyzw_31.z;
+                float4 r2_xyzw_20 = (r4_xyz_2.xyzx * _LightColor0.xyzx);
+                float r2_x_20 = r2_xyzw_20.x;
+                float r2_y_31 = r2_xyzw_20.y;
+                float r2_z_27 = r2_xyzw_20.z;
                 float r0_z_4 = (r1_w_7 * saturate(((dot(i.texcoord1.xyzx, ((r0_w_2.xxxx * r0_xyz_1.xyzx)).xyzx) + cb0_values[15].w) / r1_y_2)));
                                 float4 r1_xyzw_5 = (((pow(saturate(dot(i.texcoord1.xyzx, ((r0_w_4.xxxx * r0_xyz_2.xyzx)).xyzx)), 64) * cb0_values[15].y)).xxxx * _LightColor0.xyzx);
                 float r1_x_5 = r1_xyzw_5.x;
@@ -3978,7 +3970,7 @@ Shader "Corpus/09 Surface Custom Lighting"
                 float r2_y_13;
                 float r2_z_12;
                 float r2_w_8;
-                if ((cb6_values[0].x == 1))
+                if (((cb6_values[0].x == 1)).x)
                 {
                     float4 r2_xyzw_4 = (i.texcoord2.yyyy * cb6_values[2].xxyz);
                     float r2_y_4 = r2_xyzw_4.y;
@@ -5277,7 +5269,7 @@ Shader "Corpus/09 Surface Custom Lighting"
                 float r2_y_13;
                 float r2_z_12;
                 float r2_w_8;
-                if ((cb5_values[0].x == 1))
+                if (((cb5_values[0].x == 1)).x)
                 {
                     float4 r2_xyzw_4 = (i.texcoord2.yyyy * cb5_values[2].xxyz);
                     float r2_y_4 = r2_xyzw_4.y;
@@ -5362,13 +5354,9 @@ Shader "Corpus/09 Surface Custom Lighting"
                     r2_y_20 = r2_y_15;
                 }
                 float r1_w_6 = mad(r1_w_5, (-r2_y_20 + saturate(dot(float4(r2_x_13, r2_y_13, r2_z_12, r2_w_8), unity_OcclusionMaskSelector))), r2_y_20);
-                float r2_x_17 = (t1.Sample(sampler_linear_clamp3, ((dot(r5_xyz_4.xyzx, r5_xyz_4.xyzx)).xxxx).xy)).x;
-                float4 r2_xyzw_21 = t1.Sample(sampler_linear_clamp3, ((dot(r5_xyz_4.xyzx, r5_xyz_4.xyzx)).xxxx).xy);
-                float r2_y_21 = r2_xyzw_21.y;
-                float r2_z_17 = r2_xyzw_21.z;
-                float r2_w_12 = r2_xyzw_21.w;
+                float4 r2_xyzw_17 = t1.Sample(sampler_linear_clamp3, ((dot(r5_xyz_4.xyzx, r5_xyz_4.xyzx)).xxxx).xy);
                 float4 r5_xyzw_5 = t2.Sample(sampler_linear_clamp2, r5_xyz_4.xyz);
-                float r1_w_7 = (r1_w_6 * (r2_x_17 * r5_xyzw_5.w));
+                float r1_w_7 = (r1_w_6 * (r2_xyzw_17.x * r5_xyzw_5.w));
                 float r1_y_2 = (cb0_values[10].w + 1);
                 float3 r0_xyz_2 = (mad(r0_xyz_1.xyzx, r0_w_2.xxxx, unitViewDir_xyz_1.xyzx)).xyz;
                 float r0_w_3 = dot(r0_xyz_2.xyzx, r0_xyz_2.xyzx);
@@ -5556,7 +5544,7 @@ Shader "Corpus/09 Surface Custom Lighting"
                 float r2_y_13;
                 float r2_z_12;
                 float r2_w_8;
-                if ((cb5_values[0].x == 1))
+                if (((cb5_values[0].x == 1)).x)
                 {
                     float4 r2_xyzw_4 = (i.texcoord2.yyyy * cb5_values[2].xxyz);
                     float r2_y_4 = r2_xyzw_4.y;
@@ -5810,7 +5798,7 @@ Shader "Corpus/09 Surface Custom Lighting"
                 float r2_y_13;
                 float r2_z_12;
                 float r2_w_8;
-                if ((cb5_values[0].x == 1))
+                if (((cb5_values[0].x == 1)).x)
                 {
                     float4 r2_xyzw_4 = (i.texcoord2.yyyy * cb5_values[2].xxyz);
                     float r2_y_4 = r2_xyzw_4.y;
@@ -5895,12 +5883,8 @@ Shader "Corpus/09 Surface Custom Lighting"
                     r2_y_20 = r2_y_15;
                 }
                 float r1_w_6 = mad(r1_w_5, (-r2_y_20 + saturate(dot(float4(r2_x_13, r2_y_13, r2_z_12, r2_w_8), unity_OcclusionMaskSelector))), r2_y_20);
-                float r2_x_17 = (t1.Sample(sampler_linear_clamp2, ((dot(r5_xyz_4.xyzx, r5_xyz_4.xyzx)).xxxx).xy)).x;
-                float4 r2_xyzw_21 = t1.Sample(sampler_linear_clamp2, ((dot(r5_xyz_4.xyzx, r5_xyz_4.xyzx)).xxxx).xy);
-                float r2_y_21 = r2_xyzw_21.y;
-                float r2_z_17 = r2_xyzw_21.z;
-                float r2_w_12 = r2_xyzw_21.w;
-                float r1_w_7 = (r1_w_6 * r2_x_17);
+                float4 r2_xyzw_17 = t1.Sample(sampler_linear_clamp2, ((dot(r5_xyz_4.xyzx, r5_xyz_4.xyzx)).xxxx).xy);
+                float r1_w_7 = (r1_w_6 * r2_xyzw_17.x);
                 float r1_y_2 = (cb0_values[10].w + 1);
                 float3 r0_xyz_2 = (mad(r0_xyz_1.xyzx, r0_w_2.xxxx, unitViewDir_xyz_1.xyzx)).xyz;
                 float r0_w_3 = dot(r0_xyz_2.xyzx, r0_xyz_2.xyzx);
@@ -6086,7 +6070,7 @@ Shader "Corpus/09 Surface Custom Lighting"
                 float r2_y_13;
                 float r2_z_12;
                 float r2_w_8;
-                if ((cb5_values[0].x == 1))
+                if (((cb5_values[0].x == 1)).x)
                 {
                     float4 r2_xyzw_4 = (i.texcoord2.yyyy * cb5_values[2].xxyz);
                     float r2_y_4 = r2_xyzw_4.y;
@@ -6759,7 +6743,7 @@ Shader "Corpus/09 Surface Custom Lighting"
                 float r2_y_13;
                 float r2_z_12;
                 float r2_w_8;
-                if ((cb5_values[0].x == 1))
+                if (((cb5_values[0].x == 1)).x)
                 {
                     float4 r2_xyzw_4 = (i.texcoord2.yyyy * cb5_values[2].xxyz);
                     float r2_y_4 = r2_xyzw_4.y;
@@ -6911,10 +6895,10 @@ Shader "Corpus/09 Surface Custom Lighting"
                 float r0_y_6 = log2(r0_y_5);
                 float r0_y_7 = (r0_y_6 * cb0_values[15].x);
                 float r0_y_8 = exp2(r0_y_7);
-                float r2_x_20 = ((r4_xyz_2.xyzx * _LightColor0.xyzx)).x;
-                float4 r2_xyzw_31 = (r4_xyz_2.xyzx * _LightColor0.xyzx);
-                float r2_y_31 = r2_xyzw_31.y;
-                float r2_z_27 = r2_xyzw_31.z;
+                float4 r2_xyzw_20 = (r4_xyz_2.xyzx * _LightColor0.xyzx);
+                float r2_x_20 = r2_xyzw_20.x;
+                float r2_y_31 = r2_xyzw_20.y;
+                float r2_z_27 = r2_xyzw_20.z;
                 float r0_z_4 = (r1_w_7 * saturate(((dot(i.texcoord1.xyzx, ((r0_w_2.xxxx * r0_xyz_1.xyzx)).xyzx) + cb0_values[15].w) / r1_y_2)));
                                 float4 r1_xyzw_5 = (((pow(saturate(dot(i.texcoord1.xyzx, ((r0_w_4.xxxx * r0_xyz_2.xyzx)).xyzx)), 64) * cb0_values[15].y)).xxxx * _LightColor0.xyzx);
                 float r1_x_5 = r1_xyzw_5.x;
@@ -7091,7 +7075,7 @@ Shader "Corpus/09 Surface Custom Lighting"
                 float r2_y_13;
                 float r2_z_12;
                 float r2_w_8;
-                if ((cb5_values[0].x == 1))
+                if (((cb5_values[0].x == 1)).x)
                 {
                     float4 r2_xyzw_4 = (i.texcoord2.yyyy * cb5_values[2].xxyz);
                     float r2_y_4 = r2_xyzw_4.y;

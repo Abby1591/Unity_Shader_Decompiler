@@ -2847,7 +2847,7 @@ Shader "Corpus/36 Dissolve"
                 {
                     float r1_w_5 = (unity_ProbeVolumeParams.y == 1);
                     float3 r7_xyz_5 = (((mad(unity_ProbeVolumeWorldToObject[2].xyzx, i.texcoord2.zzzz, (mad(unity_ProbeVolumeWorldToObject[0].xyzx, i.texcoord2.xxxx, ((i.texcoord2.yyyy * unity_ProbeVolumeWorldToObject[1].xyzx)).xyzx)).xyzx)).xyzx + unity_ProbeVolumeWorldToObject[3].xyzx)).xyz;
-                    unity_ProbeVolumeParamsSelect_xyz_6 = ((r1_w_5.xxxx ? r7_xyz_5.xyzx : i.texcoord2.xyzx)).xyz;
+                    float3 unity_ProbeVolumeParamsSelect_xyz_6 = ((r1_w_5.xxxx ? r7_xyz_5.xyzx : i.texcoord2.xyzx)).xyz;
                     float4 r7_xyzw_8 = (((unity_ProbeVolumeParamsSelect_xyz_6.xyzx + -unity_ProbeVolumeMin.xyzx)).xxyz * unity_ProbeVolumeSizeInv.xxyz);
                     float r7_y_8 = r7_xyzw_8.y;
                     float r7_z_8 = r7_xyzw_8.z;
@@ -3051,6 +3051,7 @@ Shader "Corpus/36 Dissolve"
                 float _Metallic;
                 float _Smoothness;
                 float4 _MainTex_ST;
+                float4 _DissolveMap_ST_b0;
                 float4 cb0_values[13];
             };
             cbuffer _UnityPerDrawCB_b1
@@ -3290,6 +3291,7 @@ Shader "Corpus/36 Dissolve"
                 float _Metallic;
                 float _Smoothness;
                 float4 _MainTex_ST;
+                float4 _DissolveMap_ST_b0;
                 float4 cb0_values[13];
             };
             cbuffer _UnityPerDrawCB_b1
@@ -3434,7 +3436,7 @@ Shader "Corpus/36 Dissolve"
                 float r7_y_9;
                 float r7_z_9;
                 float r7_w_4;
-                if ((cb6_values[0].x == 1))
+                if (((cb6_values[0].x == 1)).x)
                 {
                     float3 r7_xyz_6 = (((mad(cb6_values[3].xyzx, i.texcoord2.zzzz, (mad(cb6_values[1].xyzx, i.texcoord2.xxxx, ((i.texcoord2.yyyy * cb6_values[2].xyzx)).xyzx)).xyzx)).xyzx + cb6_values[4].xyzx)).xyz;
                     float4 r2_xyzw_8 = (((cb6_values[0].y == 1)).xxxx ? r7_xyz_6.xyzx : i.texcoord2.xyzx);
@@ -3603,6 +3605,7 @@ Shader "Corpus/36 Dissolve"
                 float _Metallic;
                 float _Smoothness;
                 float4 _MainTex_ST;
+                float4 _DissolveMap_ST_b0;
                 float4 cb0_values[13];
             };
             cbuffer _UnityPerDrawCB_b1
@@ -3747,7 +3750,7 @@ Shader "Corpus/36 Dissolve"
                 float r7_y_9;
                 float r7_z_9;
                 float r7_w_4;
-                if ((cb6_values[0].x == 1))
+                if (((cb6_values[0].x == 1)).x)
                 {
                     float3 r7_xyz_6 = (((mad(cb6_values[3].xyzx, i.texcoord2.zzzz, (mad(cb6_values[1].xyzx, i.texcoord2.xxxx, ((i.texcoord2.yyyy * cb6_values[2].xyzx)).xyzx)).xyzx)).xyzx + cb6_values[4].xyzx)).xyz;
                     float4 r2_xyzw_8 = (((cb6_values[0].y == 1)).xxxx ? r7_xyz_6.xyzx : i.texcoord2.xyzx);
@@ -3901,6 +3904,7 @@ Shader "Corpus/36 Dissolve"
                 float _Metallic;
                 float _Smoothness;
                 float4 _MainTex_ST;
+                float4 _DissolveMap_ST_b0;
                 float4 cb0_values[13];
             };
             cbuffer _UnityPerDrawCB_b1
@@ -4043,7 +4047,7 @@ Shader "Corpus/36 Dissolve"
                 float r7_y_9;
                 float r7_z_9;
                 float r7_w_4;
-                if ((cb6_values[0].x == 1))
+                if (((cb6_values[0].x == 1)).x)
                 {
                     float3 r7_xyz_6 = (((mad(cb6_values[3].xyzx, i.texcoord2.zzzz, (mad(cb6_values[1].xyzx, i.texcoord2.xxxx, ((i.texcoord2.yyyy * cb6_values[2].xyzx)).xyzx)).xyzx)).xyzx + cb6_values[4].xyzx)).xyz;
                     float4 r2_xyzw_8 = (((cb6_values[0].y == 1)).xxxx ? r7_xyz_6.xyzx : i.texcoord2.xyzx);
@@ -4211,6 +4215,7 @@ Shader "Corpus/36 Dissolve"
                 float _Metallic;
                 float _Smoothness;
                 float4 _MainTex_ST;
+                float4 _DissolveMap_ST_b0;
                 float4 cb0_values[13];
             };
             cbuffer _UnityPerDrawCB_b1
@@ -4353,7 +4358,7 @@ Shader "Corpus/36 Dissolve"
                 float r7_y_9;
                 float r7_z_9;
                 float r7_w_4;
-                if ((cb6_values[0].x == 1))
+                if (((cb6_values[0].x == 1)).x)
                 {
                     float3 r7_xyz_6 = (((mad(cb6_values[3].xyzx, i.texcoord2.zzzz, (mad(cb6_values[1].xyzx, i.texcoord2.xxxx, ((i.texcoord2.yyyy * cb6_values[2].xyzx)).xyzx)).xyzx)).xyzx + cb6_values[4].xyzx)).xyz;
                     float4 r2_xyzw_8 = (((cb6_values[0].y == 1)).xxxx ? r7_xyz_6.xyzx : i.texcoord2.xyzx);
@@ -4506,6 +4511,7 @@ Shader "Corpus/36 Dissolve"
                 float _Metallic;
                 float _Smoothness;
                 float4 _MainTex_ST;
+                float4 _DissolveMap_ST_b0;
                 float4 cb0_values[13];
             };
             cbuffer _UnityPerDrawCB_b1
@@ -4798,6 +4804,7 @@ Shader "Corpus/36 Dissolve"
                 float _Metallic;
                 float _Smoothness;
                 float4 _MainTex_ST;
+                float4 _DissolveMap_ST_b0;
                 float4 cb0_values[7];
             };
             cbuffer _UnityPerDrawCB_b1
@@ -5086,6 +5093,7 @@ Shader "Corpus/36 Dissolve"
                 float _Metallic;
                 float _Smoothness;
                 float4 _MainTex_ST;
+                float4 _DissolveMap_ST_b0;
                 float4 cb0_values[18];
             };
             cbuffer _UnityPerDrawCB_b1
@@ -5229,7 +5237,7 @@ Shader "Corpus/36 Dissolve"
                 float r7_y_9;
                 float r7_z_9;
                 float r7_w_4;
-                if ((cb6_values[0].x == 1))
+                if (((cb6_values[0].x == 1)).x)
                 {
                     float3 r7_xyz_6 = (((mad(cb6_values[3].xyzx, i.texcoord2.zzzz, (mad(cb6_values[1].xyzx, i.texcoord2.xxxx, ((i.texcoord2.yyyy * cb6_values[2].xyzx)).xyzx)).xyzx)).xyzx + cb6_values[4].xyzx)).xyz;
                     float4 r2_xyzw_8 = (((cb6_values[0].y == 1)).xxxx ? r7_xyz_6.xyzx : i.texcoord2.xyzx);
@@ -5269,8 +5277,9 @@ Shader "Corpus/36 Dissolve"
                     float4 r7_xyzw_12 = mad(cb3_values[10].xyzw, i.texcoord2.zzzz, r7_xyzw_11);
                     float4 r7_xyzw_13 = (r7_xyzw_12 + cb3_values[11].xyzw);
                     float3 r7_xyz_14 = ((r7_xyzw_13.xyzx / r7_xyzw_13.wwww)).xyz;
-                    float r2_y_9 = (mad(r7_xyz_14.xxyx, cb0_values[8].zzwz, float4(0, 0.5, 0.5, 0))).y;
-                    float r2_z_6 = (mad(r7_xyz_14.xxyx, cb0_values[8].zzwz, float4(0, 0.5, 0.5, 0))).z;
+                    float4 r2_xyzw_9 = mad(r7_xyz_14.xxyx, cb0_values[8].zzwz, float4(0, 0.5, 0.5, 0));
+                    float r2_y_9 = r2_xyzw_9.y;
+                    float r2_z_6 = r2_xyzw_9.z;
                     float4 r2_xyzw_10 = floor(float4(r2_y_9, r2_y_9, r2_z_6, r2_y_9));
                     float r2_y_10 = r2_xyzw_10.y;
                     float r2_z_7 = r2_xyzw_10.z;
@@ -5439,6 +5448,7 @@ Shader "Corpus/36 Dissolve"
                 float _Metallic;
                 float _Smoothness;
                 float4 _MainTex_ST;
+                float4 _DissolveMap_ST_b0;
                 float4 cb0_values[13];
             };
             cbuffer _UnityPerDrawCB_b1
@@ -5582,7 +5592,7 @@ Shader "Corpus/36 Dissolve"
                 float r7_y_9;
                 float r7_z_9;
                 float r7_w_4;
-                if ((cb6_values[0].x == 1))
+                if (((cb6_values[0].x == 1)).x)
                 {
                     float3 r7_xyz_6 = (((mad(cb6_values[3].xyzx, i.texcoord2.zzzz, (mad(cb6_values[1].xyzx, i.texcoord2.xxxx, ((i.texcoord2.yyyy * cb6_values[2].xyzx)).xyzx)).xyzx)).xyzx + cb6_values[4].xyzx)).xyz;
                     float4 r2_xyzw_8 = (((cb6_values[0].y == 1)).xxxx ? r7_xyz_6.xyzx : i.texcoord2.xyzx);
@@ -5622,8 +5632,9 @@ Shader "Corpus/36 Dissolve"
                 float r2_z_6 = (-cb3_values[24].x + 1);
                 float r2_y_8 = mad(r2_y_7, r2_z_6, cb3_values[24].x);
                 float r1_w_8 = mad(r1_w_7, (-r2_y_8 + saturate(dot(float4(r7_x_9, r7_y_9, r7_z_9, r7_w_4), unity_OcclusionMaskSelector))), r2_y_8);
-                float r2_y_9 = ((r6_xyzw_4.xxyx / r6_xyzw_4.wwww)).y;
-                float r2_z_7 = ((r6_xyzw_4.xxyx / r6_xyzw_4.wwww)).z;
+                float4 r2_xyzw_9 = (r6_xyzw_4.xxyx / r6_xyzw_4.wwww);
+                float r2_y_9 = r2_xyzw_9.y;
+                float r2_z_7 = r2_xyzw_9.z;
                 float4 r2_xyzw_10 = (float4(r2_y_9, r2_y_9, r2_z_7, r2_y_9) + float4(0, 0.5, 0.5, 0));
                 float r2_y_10 = r2_xyzw_10.y;
                 float r2_z_8 = r2_xyzw_10.z;
@@ -5738,6 +5749,7 @@ Shader "Corpus/36 Dissolve"
                 float _Metallic;
                 float _Smoothness;
                 float4 _MainTex_ST;
+                float4 _DissolveMap_ST_b0;
                 float4 cb0_values[13];
             };
             cbuffer _UnityPerDrawCB_b1
@@ -6003,6 +6015,7 @@ Shader "Corpus/36 Dissolve"
                 float _Metallic;
                 float _Smoothness;
                 float4 _MainTex_ST;
+                float4 _DissolveMap_ST_b0;
                 float4 cb0_values[13];
             };
             cbuffer _UnityPerDrawCB_b1
@@ -6264,6 +6277,7 @@ Shader "Corpus/36 Dissolve"
                 float _Metallic;
                 float _Smoothness;
                 float4 _MainTex_ST;
+                float4 _DissolveMap_ST_b0;
                 float4 cb0_values[13];
             };
             cbuffer _UnityPerDrawCB_b1
@@ -6533,6 +6547,7 @@ Shader "Corpus/36 Dissolve"
                 float _Metallic;
                 float _Smoothness;
                 float4 _MainTex_ST;
+                float4 _DissolveMap_ST_b0;
                 float4 cb0_values[7];
             };
             cbuffer _UnityPerDrawCB_b1
@@ -6780,6 +6795,7 @@ Shader "Corpus/36 Dissolve"
                 float _Metallic;
                 float _Smoothness;
                 float4 _MainTex_ST;
+                float4 _DissolveMap_ST_b0;
                 float4 cb0_values[13];
             };
             cbuffer _UnityPerDrawCB_b1
@@ -7037,6 +7053,7 @@ Shader "Corpus/36 Dissolve"
                 float _Metallic;
                 float _Smoothness;
                 float4 _MainTex_ST;
+                float4 _DissolveMap_ST_b0;
                 float4 cb0_values[13];
             };
             cbuffer _UnityPerDrawCB_b1
@@ -7171,7 +7188,7 @@ Shader "Corpus/36 Dissolve"
                 float r7_y_9;
                 float r7_z_9;
                 float r7_w_4;
-                if ((cb5_values[0].x == 1))
+                if (((cb5_values[0].x == 1)).x)
                 {
                     float3 r7_xyz_6 = (((mad(cb5_values[3].xyzx, i.texcoord2.zzzz, (mad(cb5_values[1].xyzx, i.texcoord2.xxxx, ((i.texcoord2.yyyy * cb5_values[2].xyzx)).xyzx)).xyzx)).xyzx + cb5_values[4].xyzx)).xyz;
                     float4 r2_xyzw_8 = (((cb5_values[0].y == 1)).xxxx ? r7_xyz_6.xyzx : i.texcoord2.xyzx);
@@ -7331,6 +7348,7 @@ Shader "Corpus/36 Dissolve"
                 float _Metallic;
                 float _Smoothness;
                 float4 _MainTex_ST;
+                float4 _DissolveMap_ST_b0;
                 float4 cb0_values[13];
             };
             cbuffer _UnityPerDrawCB_b1
@@ -7465,7 +7483,7 @@ Shader "Corpus/36 Dissolve"
                 float r7_y_9;
                 float r7_z_9;
                 float r7_w_4;
-                if ((cb5_values[0].x == 1))
+                if (((cb5_values[0].x == 1)).x)
                 {
                     float3 r7_xyz_6 = (((mad(cb5_values[3].xyzx, i.texcoord2.zzzz, (mad(cb5_values[1].xyzx, i.texcoord2.xxxx, ((i.texcoord2.yyyy * cb5_values[2].xyzx)).xyzx)).xyzx)).xyzx + cb5_values[4].xyzx)).xyz;
                     float4 r2_xyzw_8 = (((cb5_values[0].y == 1)).xxxx ? r7_xyz_6.xyzx : i.texcoord2.xyzx);
@@ -7610,6 +7628,7 @@ Shader "Corpus/36 Dissolve"
                 float _Metallic;
                 float _Smoothness;
                 float4 _MainTex_ST;
+                float4 _DissolveMap_ST_b0;
                 float4 cb0_values[13];
             };
             cbuffer _UnityPerDrawCB_b1
@@ -7742,7 +7761,7 @@ Shader "Corpus/36 Dissolve"
                 float r7_y_9;
                 float r7_z_9;
                 float r7_w_4;
-                if ((cb5_values[0].x == 1))
+                if (((cb5_values[0].x == 1)).x)
                 {
                     float3 r7_xyz_6 = (((mad(cb5_values[3].xyzx, i.texcoord2.zzzz, (mad(cb5_values[1].xyzx, i.texcoord2.xxxx, ((i.texcoord2.yyyy * cb5_values[2].xyzx)).xyzx)).xyzx)).xyzx + cb5_values[4].xyzx)).xyz;
                     float4 r2_xyzw_8 = (((cb5_values[0].y == 1)).xxxx ? r7_xyz_6.xyzx : i.texcoord2.xyzx);
@@ -7901,6 +7920,7 @@ Shader "Corpus/36 Dissolve"
                 float _Metallic;
                 float _Smoothness;
                 float4 _MainTex_ST;
+                float4 _DissolveMap_ST_b0;
                 float4 cb0_values[13];
             };
             cbuffer _UnityPerDrawCB_b1
@@ -8033,7 +8053,7 @@ Shader "Corpus/36 Dissolve"
                 float r7_y_9;
                 float r7_z_9;
                 float r7_w_4;
-                if ((cb5_values[0].x == 1))
+                if (((cb5_values[0].x == 1)).x)
                 {
                     float3 r7_xyz_6 = (((mad(cb5_values[3].xyzx, i.texcoord2.zzzz, (mad(cb5_values[1].xyzx, i.texcoord2.xxxx, ((i.texcoord2.yyyy * cb5_values[2].xyzx)).xyzx)).xyzx)).xyzx + cb5_values[4].xyzx)).xyz;
                     float4 r2_xyzw_8 = (((cb5_values[0].y == 1)).xxxx ? r7_xyz_6.xyzx : i.texcoord2.xyzx);
@@ -8177,6 +8197,7 @@ Shader "Corpus/36 Dissolve"
                 float _Metallic;
                 float _Smoothness;
                 float4 _MainTex_ST;
+                float4 _DissolveMap_ST_b0;
                 float4 cb0_values[13];
             };
             cbuffer _UnityPerDrawCB_b1
@@ -8454,6 +8475,7 @@ Shader "Corpus/36 Dissolve"
                 float _Metallic;
                 float _Smoothness;
                 float4 _MainTex_ST;
+                float4 _DissolveMap_ST_b0;
                 float4 cb0_values[7];
             };
             cbuffer _UnityPerDrawCB_b1
@@ -8725,6 +8747,7 @@ Shader "Corpus/36 Dissolve"
                 float _Metallic;
                 float _Smoothness;
                 float4 _MainTex_ST;
+                float4 _DissolveMap_ST_b0;
                 float4 cb0_values[18];
             };
             cbuffer _UnityPerDrawCB_b1
@@ -8861,7 +8884,7 @@ Shader "Corpus/36 Dissolve"
                 float r7_y_9;
                 float r7_z_9;
                 float r7_w_4;
-                if ((cb5_values[0].x == 1))
+                if (((cb5_values[0].x == 1)).x)
                 {
                     float3 r7_xyz_6 = (((mad(cb5_values[3].xyzx, i.texcoord2.zzzz, (mad(cb5_values[1].xyzx, i.texcoord2.xxxx, ((i.texcoord2.yyyy * cb5_values[2].xyzx)).xyzx)).xyzx)).xyzx + cb5_values[4].xyzx)).xyz;
                     float4 r2_xyzw_8 = (((cb5_values[0].y == 1)).xxxx ? r7_xyz_6.xyzx : i.texcoord2.xyzx);
@@ -8901,8 +8924,9 @@ Shader "Corpus/36 Dissolve"
                     float4 r7_xyzw_12 = mad(cb3_values[10].xyzw, i.texcoord2.zzzz, r7_xyzw_11);
                     float4 r7_xyzw_13 = (r7_xyzw_12 + cb3_values[11].xyzw);
                     float3 r7_xyz_14 = ((r7_xyzw_13.xyzx / r7_xyzw_13.wwww)).xyz;
-                    float r2_y_9 = (mad(r7_xyz_14.xxyx, cb0_values[8].zzwz, float4(0, 0.5, 0.5, 0))).y;
-                    float r2_z_6 = (mad(r7_xyz_14.xxyx, cb0_values[8].zzwz, float4(0, 0.5, 0.5, 0))).z;
+                    float4 r2_xyzw_9 = mad(r7_xyz_14.xxyx, cb0_values[8].zzwz, float4(0, 0.5, 0.5, 0));
+                    float r2_y_9 = r2_xyzw_9.y;
+                    float r2_z_6 = r2_xyzw_9.z;
                     float4 r2_xyzw_10 = floor(float4(r2_y_9, r2_y_9, r2_z_6, r2_y_9));
                     float r2_y_10 = r2_xyzw_10.y;
                     float r2_z_7 = r2_xyzw_10.z;
@@ -9062,6 +9086,7 @@ Shader "Corpus/36 Dissolve"
                 float _Metallic;
                 float _Smoothness;
                 float4 _MainTex_ST;
+                float4 _DissolveMap_ST_b0;
                 float4 cb0_values[13];
             };
             cbuffer _UnityPerDrawCB_b1
@@ -9198,7 +9223,7 @@ Shader "Corpus/36 Dissolve"
                 float r7_y_9;
                 float r7_z_9;
                 float r7_w_4;
-                if ((cb5_values[0].x == 1))
+                if (((cb5_values[0].x == 1)).x)
                 {
                     float3 r7_xyz_6 = (((mad(cb5_values[3].xyzx, i.texcoord2.zzzz, (mad(cb5_values[1].xyzx, i.texcoord2.xxxx, ((i.texcoord2.yyyy * cb5_values[2].xyzx)).xyzx)).xyzx)).xyzx + cb5_values[4].xyzx)).xyz;
                     float4 r2_xyzw_8 = (((cb5_values[0].y == 1)).xxxx ? r7_xyz_6.xyzx : i.texcoord2.xyzx);
@@ -9238,8 +9263,9 @@ Shader "Corpus/36 Dissolve"
                 float r2_z_6 = (-cb3_values[24].x + 1);
                 float r2_y_8 = mad(r2_y_7, r2_z_6, cb3_values[24].x);
                 float r1_w_8 = mad(r1_w_7, (-r2_y_8 + saturate(dot(float4(r7_x_9, r7_y_9, r7_z_9, r7_w_4), unity_OcclusionMaskSelector))), r2_y_8);
-                float r2_y_9 = ((r6_xyzw_4.xxyx / r6_xyzw_4.wwww)).y;
-                float r2_z_7 = ((r6_xyzw_4.xxyx / r6_xyzw_4.wwww)).z;
+                float4 r2_xyzw_9 = (r6_xyzw_4.xxyx / r6_xyzw_4.wwww);
+                float r2_y_9 = r2_xyzw_9.y;
+                float r2_z_7 = r2_xyzw_9.z;
                 float4 r2_xyzw_10 = (float4(r2_y_9, r2_y_9, r2_z_7, r2_y_9) + float4(0, 0.5, 0.5, 0));
                 float r2_y_10 = r2_xyzw_10.y;
                 float r2_z_8 = r2_xyzw_10.z;
@@ -9345,6 +9371,7 @@ Shader "Corpus/36 Dissolve"
                 float _Metallic;
                 float _Smoothness;
                 float4 _MainTex_ST;
+                float4 _DissolveMap_ST_b0;
                 float4 cb0_values[13];
             };
             cbuffer _UnityPerDrawCB_b1
@@ -9591,6 +9618,7 @@ Shader "Corpus/36 Dissolve"
                 float _Metallic;
                 float _Smoothness;
                 float4 _MainTex_ST;
+                float4 _DissolveMap_ST_b0;
                 float4 cb0_values[13];
             };
             cbuffer _UnityPerDrawCB_b1
@@ -9834,6 +9862,7 @@ Shader "Corpus/36 Dissolve"
                 float _Metallic;
                 float _Smoothness;
                 float4 _MainTex_ST;
+                float4 _DissolveMap_ST_b0;
                 float4 cb0_values[13];
             };
             cbuffer _UnityPerDrawCB_b1
@@ -10088,6 +10117,7 @@ Shader "Corpus/36 Dissolve"
                 float _Metallic;
                 float _Smoothness;
                 float4 _MainTex_ST;
+                float4 _DissolveMap_ST_b0;
                 float4 cb0_values[7];
             };
             cbuffer _UnityPerDrawCB_b1
@@ -11030,7 +11060,7 @@ Shader "Corpus/36 Dissolve"
             {
                 program131Output o = (program131Output)0;
                 float4 r0_xyzw_1 = _MainTex.Sample(sampler_MainTex, (i.texcoord1.xyxx).xy);
-                if (((r0_xyzw_1.x + -_Cutoff) < 0)) discard;
+                if ((((r0_xyzw_1.x + -_Cutoff) < 0)).x) discard;
                 o.sv_Target0.xyzw = float4(0, 0, 0, 0);
                 return o;
             }
@@ -11135,7 +11165,7 @@ Shader "Corpus/36 Dissolve"
             {
                 program132Output o = (program132Output)0;
                 float4 r0_xyzw_1 = _MainTex.Sample(sampler_MainTex, (i.texcoord1.xyxx).xy);
-                if (((r0_xyzw_1.x + -_Cutoff) < 0)) discard;
+                if ((((r0_xyzw_1.x + -_Cutoff) < 0)).x) discard;
                 o.sv_Target0.xyzw = float4(0, 0, 0, 0);
                 return o;
             }

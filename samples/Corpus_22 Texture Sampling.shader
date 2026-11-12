@@ -116,13 +116,14 @@ Shader "Corpus/22 Texture Sampling"
             program3Output frag(program3Input i)
             {
                 program3Output o = (program3Output)0;
-                float3 r0_xyz_1 = (_Tex2DArray.SampleGrad(sampler_Tex2DArray, (i.texcoord0.xyxx).xy, float4(r0_x, r0_y, r0_x, r0_x), float4(r0_z, r0_w, r0_z, r0_z))).xyz;
+                float2 r0_zw_1 = (ddy_coarse(i.texcoord0.xxxy)).zw;
+                float3 r0_xyz_2 = (_Tex2DArray.SampleGrad(sampler_Tex2DArray, (i.texcoord0.xyxx).xy, (ddx_coarse(i.texcoord0.xyxx)).xyxx, r0_zw_1.xyxx)).xyz;
                 float3 r1_xyz_1 = (_Tex2DArray.Sample(sampler_Tex2DArray, (i.texcoord0.xyxx).xy)).xyz;
                 float3 r2_xyz_1 = (_Tex2DArray.SampleLevel(sampler_Tex2DArray, (i.texcoord0.xyxx).xy, _Lod)).xyz;
                 float3 r1_xyz_3 = (_Tex2DArray.SampleBias(sampler_Tex2DArray, (i.texcoord0.xyxx).xy, _Bias)).xyz;
                 float3 r1_xyz_5 = (_Tex2DArray.Gather(sampler_Tex2DArray, (i.texcoord0.xyxx).xy)).xyz;
-                float3 r0_xyz_5 = ((((((((r0_xyz_1.xyzx + ((r1_xyz_1.xyzx + r2_xyz_1.xyzx)).xyzx)).xyzx + r1_xyz_3.xyzx)).xyzx + (r1_xyz_1).xyzx)).xyzx + r1_xyz_5.xyzx)).xyz;
-                float2 r1_xy_7 = ((int)(((i.texcoord0.xyxx * float4(256, 256, 0, 0))).xyxx)).xy;
+                float3 r0_xyz_6 = ((((((((r0_xyz_2.xyzx + ((r1_xyz_1.xyzx + r2_xyz_1.xyzx)).xyzx)).xyzx + r1_xyz_3.xyzx)).xyzx + (r1_xyz_1).xyzx)).xyzx + r1_xyz_5.xyzx)).xyz;
+                float2 r1_xy_7 = ((int4)(((i.texcoord0.xyxx * float4(256, 256, 0, 0))).xyxx)).xy;
                 float4 r1_xyzw_6 = float4(0, 0, 0, 0);
                 float r1_z_6 = r1_xyzw_6.z;
                 float r1_w_1 = r1_xyzw_6.w;
@@ -134,8 +135,8 @@ Shader "Corpus/22 Texture Sampling"
                 float r1_x_9 = r1_xyzw_9.x;
                 float r1_y_9 = r1_xyzw_9.y;
                 float r1_z_8 = r1_xyzw_9.z;
-                float r0_w_1 = t9.SampleCmp(sampler_comparison_linear_clamp6, (i.texcoord0.xyxx).xy, 0.5);
-                float r0_w_2 = t9.SampleCmpLevelZero(sampler_comparison_linear_clamp6, (i.texcoord0.xyxx).xy, 0.5);
+                float r0_w_2 = t9.SampleCmp(sampler_comparison_linear_clamp6, (i.texcoord0.xyxx).xy, 0.5);
+                float r0_w_3 = t9.SampleCmpLevelZero(sampler_comparison_linear_clamp6, (i.texcoord0.xyxx).xy, 0.5);
                 float2 TEXCOORD0_xy_10 = (i.texcoord0.xyxx).xy;
                 float r1_z_9 = 0.5;
                 float3 r2_xyz_2 = (_TexCubeArray.Sample(sampler_TexCubeArray, (float4(TEXCOORD0_xy_10.x, TEXCOORD0_xy_10.y, r1_z_9, TEXCOORD0_xy_10.x)).xyz)).xyz;
@@ -157,7 +158,7 @@ Shader "Corpus/22 Texture Sampling"
                 float3 r5_xyz_2 = (t7.SampleLevel(sampler_linear_clamp4, (float4(unitWorldNormal_xyz_2.x, unitWorldNormal_xyz_2.y, unitWorldNormal_xyz_2.z, r3_w_1)).xyzw, _Lod)).xyz;
                 float3 r3_xyz_3 = (_TexCube.Sample(sampler_TexCube, unitWorldNormal_xyz_2.xyz)).xyz;
                 float3 r2_xyz_9 = ((r5_xyz_2.xyzx + ((r2_xyz_7.xyzx + r4_xyz_5.xyzx)).xyzx)).xyz;
-                float3 r0_xyz_10 = ((((r0_w_2.xxxx + ((r0_w_1.xxxx + ((((r0_xyz_5.xyzx + float4(r1_x_8, r1_y_8, r1_z_7, r1_x_8))).xyzx + float4(r1_x_9, r1_y_9, r1_z_8, r1_x_9))).xyzx)).xyzx)).xyzx + r2_xyz_9.xyzx)).xyz;
+                float3 r0_xyz_11 = ((((r0_w_3.xxxx + ((r0_w_2.xxxx + ((((r0_xyz_6.xyzx + float4(r1_x_8, r1_y_8, r1_z_7, r1_x_8))).xyzx + float4(r1_x_9, r1_y_9, r1_z_8, r1_x_9))).xyzx)).xyzx)).xyzx + r2_xyz_9.xyzx)).xyz;
                 float3 r2_xyz_10 = (_Tex2D.Sample(sampler_Tex2D, (i.texcoord0.xyxx).xy)).xyz;
                 float3 r4_xyz_6 = (_Tex2D.SampleLevel(sampler_Tex2D, (i.texcoord0.xyxx).xy, _Lod)).xyz;
                 float4 r4_xyzw_8 = _Tex2D.Sample(sampler_Tex2D, (((i.texcoord3.xyxx / i.texcoord3.wwww)).xyxx).xy);
@@ -176,11 +177,11 @@ Shader "Corpus/22 Texture Sampling"
                 float r1_x_13 = r1_xyzw_13.x;
                 float r1_y_13 = r1_xyzw_13.y;
                 float r1_z_12 = r1_xyzw_13.z;
-                o.sv_Target0.xyz = ((((r0_xyz_10.xyzx + float4(r1_x_13, r1_y_13, r1_z_12, r1_x_13))).xyzx * float4(0.03448276, 0.03448276, 0.03448276, 0))).xyz;
-                float2 r0_xy_12 = /* TODO: no confirmed HLSL mapping for ResInfo */ _Tex2DArray.ResInfo();
-                float2 r0_xy_13 = ((float)(r0_xy_12.xyxx)).xy;
-                float r0_y_14 = max(r0_xy_13.y, 1);
-                o.sv_Target0.w = min((r0_xy_13.x / r0_y_14), 1);
+                o.sv_Target0.xyz = ((((r0_xyz_11.xyzx + float4(r1_x_13, r1_y_13, r1_z_12, r1_x_13))).xyzx * float4(0.03448276, 0.03448276, 0.03448276, 0))).xyz;
+                float2 r0_xy_13 = /* TODO: no confirmed HLSL mapping for ResInfo */ _Tex2DArray.ResInfo();
+                float2 r0_xy_14 = ((float4)(r0_xy_13.xyxx)).xy;
+                float r0_y_15 = max(r0_xy_14.y, 1);
+                o.sv_Target0.w = min((r0_xy_14.x / r0_y_15), 1);
                 return o;
             }
             ENDHLSL

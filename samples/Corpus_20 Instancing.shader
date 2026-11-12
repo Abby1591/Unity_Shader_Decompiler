@@ -32,7 +32,7 @@ Shader "Corpus/20 Instancing"
             };
             cbuffer Props : register(b3)
             {
-                float4 _Color : packoffset(c0);
+                float4 _Color_b3 : packoffset(c0);
             };
             SamplerState sampler_MainTex;
             Texture2D _MainTex;

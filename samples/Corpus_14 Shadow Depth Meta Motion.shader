@@ -101,7 +101,7 @@ Shader "Corpus/14 Shadow Depth Meta Motion"
             {
                 program4Output o = (program4Output)0;
                 float4 r0_xyzw_1 = _MainTex.Sample(sampler_MainTex, (i.texcoord1.xyxx).xy);
-                if (((r0_xyzw_1.w + -_Cutoff) < 0)) discard;
+                if ((((r0_xyzw_1.w + -_Cutoff) < 0)).x) discard;
                 o.sv_Target0.xyzw = float4(0, 0, 0, 0);
                 return o;
             }
@@ -195,7 +195,7 @@ Shader "Corpus/14 Shadow Depth Meta Motion"
             {
                 program5Output o = (program5Output)0;
                 float4 r0_xyzw_1 = _MainTex.Sample(sampler_MainTex, (i.texcoord1.xyxx).xy);
-                if (((r0_xyzw_1.w + -_Cutoff) < 0)) discard;
+                if ((((r0_xyzw_1.w + -_Cutoff) < 0)).x) discard;
                 o.sv_Target0.xyzw = float4(0, 0, 0, 0);
                 return o;
             }

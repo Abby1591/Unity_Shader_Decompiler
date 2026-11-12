@@ -670,6 +670,41 @@ public static class Decompiler
             }
         }
 
+        // A variable exposed in two different cbuffers of one pass (Unity's
+        // metadata can list e.g. _Color in both the property buffer and the
+        // globals buffer) is an HLSL redefinition. Keep the lowest-slot
+        // declaration; member lookup is by name, so reads still resolve.
+        var cbVars = new HashSet<string>(StringComparer.Ordinal);
+        foreach (HlslResourceNode cb in pass.Resources
+            .Where(r => r.Kind == HlslResourceKind.ConstantBuffer)
+            .OrderBy(r => r.Slot))
+        {
+            // A variable listed in two cbuffers is an HLSL redefinition.
+            // Keep the lowest-slot name and suffix the duplicate so the
+            // higher slot still declares its register binding.
+            // shortcut: reads that resolve to the duplicate still use the
+            // kept name (same layout, possibly a different buffer value).
+            for (int i = 0; i < cb.Variables.Count; i++)
+            {
+                HlslCBufferVariable v = cb.Variables[i];
+                if (cbVars.Add(v.Name))
+                    continue;
+                cb.Variables[i] = new HlslCBufferVariable
+                {
+                    Name = $"{v.Name}_b{cb.Slot}",
+                    TypeName = v.TypeName,
+                    Offset = v.Offset,
+                    Size = v.Size,
+                    ArraySize = v.ArraySize,
+                };
+            }
+        }
+        // A buffer left empty by dedupe declares no member and nothing in
+        // the body can reference it; emitting `cbuffer X { };` is not worth
+        // the risk with older compilers.
+        pass.Resources.RemoveAll(r =>
+            r.Kind == HlslResourceKind.ConstantBuffer && r.Variables.Count == 0);
+
         if (c.Function.InputStruct is not null) pass.Structs.Add(c.Function.InputStruct);
         if (c.Function.OutputStruct is not null) pass.Structs.Add(c.Function.OutputStruct);
 
