@@ -24,7 +24,7 @@ public static class IRPipeline
         public List<(string Phase, string Text)> StageDumps { get; } = new();
     }
 
-    public static Result Run(DxbcFile file, bool dumpStages = false)
+    public static Result Run(DxbcFile file, bool dumpStages = false, bool failOnError = false)
     {
         var stageDumps = new List<(string Phase, string Text)>();
 
@@ -43,7 +43,7 @@ public static class IRPipeline
 
         // 1. Decode -> flat IR (no control flow structure yet)
         var builder = new IRBuilder();
-        IRProgram program = builder.Build(file.Shader!);
+        IRProgram program = builder.Build(file.Shader!, failOnError);
 
         // 2. Split into basic blocks and wire up predecessors/successors
         List<IRBlock> blocks = IRBlockBuilder.Build(program);

@@ -1,4 +1,5 @@
 using System;
+using System.CommandLine;
 using System.IO;
 using System.Linq;
 using UnityShaderDecompiler.Core.DXBC.Metadata;
@@ -8,100 +9,89 @@ namespace UnityShaderDecompiler.Cli;
 
 internal class Program
 {
-    static void Main(string[] args)
+    static int Main(string[] args)
     {
-        if (args.Contains("--run-spec-tests"))
+        RootCommand command = CliCommand.Create();
+        command.SetAction(Run);
+        return command.Parse(args).Invoke();
+    }
+
+    private static int Run(ParseResult args)
+    {
+        if (args.GetValue(CliOptions.RunSpecTests))
         {
             SpecTestVectors.Run();
-            return;
+            return 0;
         }
 
-        if (args.Contains("--verify-signatures"))
+        if (args.GetValue(CliOptions.VerifySignatures))
         {
             // Cross-check the ISGN parse against d3dcompiler's own signature
             // extraction across every shipped subprogram.
-            string root = args.Length > 1 && Directory.Exists(args[1])
-                ? args[1]
-                : FindOutputRoot();
+            string root = args.GetValue(CliOptions.InputPath) ?? FindOutputRoot();
             SignatureCrossCheck.Run(root);
-            return;
+            return 0;
         }
 
-        if (args.Contains("--strip-survivors"))
+        if (args.GetValue(CliOptions.StripSurvivors))
         {
             // Which DXBC chunks survive D3DStripShader(flags=7)?
             StripSurvivors.Run(FindOutputRoot());
-            return;
+            return 0;
         }
 
-        if (args.Contains("--recompile-verify"))
+        if (args.GetValue(CliOptions.RecompileVerify))
         {
             // Recompile each decompiled HLSLPROGRAM pass with real
             // d3dcompiler and match its signatures against the shipped
             // bytecode — the gate that --surface-shaders waits on.
-            string shader = args.Length > 1 && File.Exists(args[1])
-                ? args[1]
-                : Path.Combine(FindOutputRoot(), "Corpus_01 Properties.shader");
+            string shader = args.GetValue(CliOptions.InputPath)
+                ?? Path.Combine(FindOutputRoot(), "Corpus_01 Properties.shader");
             RecompileVerify.Run(shader);
-            return;
+            return 0;
         }
 
-        if (args.Contains("--recompile-verify-all"))
+        if (args.GetValue(CliOptions.RecompileVerifyAll))
         {
             // Aggregate health across every decompiled .shader in the Output
             // root: one compile-rate + unmatched count instead of 39 runs.
-            string root = args.Length > 1 && Directory.Exists(args[1])
-                ? args[1]
-                : FindOutputRoot();
+            string root = args.GetValue(CliOptions.InputPath) ?? FindOutputRoot();
             RecompileVerify.RunAll(root);
-            return;
+            return 0;
         }
 
-        if (args.Contains("--disasm"))
+        if (args.GetValue(CliOptions.Disassemble))
         {
             // Dump every non-compute subprogram's DXBC disassembly to a
             // sibling <name>.disasm.txt for bytecode-level inspection.
-            string target = args.Length > 1 && Directory.Exists(args[1])
-                ? args[1]
-                : FindOutputRoot();
+            string target = args.GetValue(CliOptions.InputPath) ?? FindOutputRoot();
             RecompileVerify.DumpDisasm(target);
-            return;
+            return 0;
         }
 
-        if (args.Contains("--faithfulness-test"))
+        if (args.GetValue(CliOptions.FaithfulnessTest))
         {
             // Unified faithfulness test: decompile + recompile-verify +
             // metadata fidelity in one pass. Exits with 0 on full pass,
             // 1 on any failure.
-            int ffIdx = Array.IndexOf(args, "--faithfulness-test");
-            string folder = ffIdx + 1 < args.Length
-                ? Path.GetFullPath(args[ffIdx + 1])
+            string? input = args.GetValue(CliOptions.InputPath);
+            string folder = input is not null
+                ? Path.GetFullPath(input)
                 : FindOutputRoot();
             if (!Directory.Exists(folder))
             {
                 Console.WriteLine($"Input not found: {folder}");
-                Environment.ExitCode = 1;
-                return;
+                return 1;
             }
-            Environment.ExitCode = RunFaithfulnessTest(folder, args);
-            return;
+            return RunFaithfulnessTest(folder, args);
         }
 
-        // args[0] is a folder produced by Extract.py (blob.bin +
-        // metadata.json + optional dummy.shader), or a direct blob.bin path.
-        // No-args default: the Corpus_01 Properties Stage 0 folder under the
-        // repo Output/, resolved from either the working directory or one
-        // level up so the app works whether it is launched from the repo root
-        // or from src/.
-        string inputPath = args.Length > 0 ? args[0] : DefaultInputFolder();
-
+        string inputPath = args.GetValue(CliOptions.InputPath) ?? DefaultInputFolder();
+        
         // Output root for the generated .shader (+ opt-in program*.bin/
         // .dxbc/.hlsl artifacts). Defaults to the project-local Output/ so
         // results are visible inside the IDE; --out-root overrides it.
-        string outRoot = Decompiler.ProjectOutputRoot();
-        int outRootFlag = Array.IndexOf(args, "--out-root");
-        if (outRootFlag >= 0 && outRootFlag + 1 < args.Length)
-            outRoot = args[outRootFlag + 1];
+        string outRoot = args.GetValue(CliOptions.OutRoot) ?? Decompiler.ProjectOutputRoot();
 
         ShaderProject project;
 
@@ -119,7 +109,7 @@ internal class Program
                     "`python Extract.py shaders_json/<name>.json --out-dir Output " +
                     "(--flat for a single root-level shader)` first, or pass the " +
                     "path to a folder/blob explicitly.");
-                return;
+                return 1;
             }
         }
         else if (File.Exists(inputPath))
@@ -133,7 +123,7 @@ internal class Program
                 Console.WriteLine(
                     $"metadata.json not found next to {inputPath}. " +
                     "Run Extract.py to produce a proper Stage 0 output folder.");
-                return;
+                return 1;
             }
 
             project = ShaderProject.LoadFromFolder(dir!);
@@ -141,23 +131,25 @@ internal class Program
         else
         {
             Console.WriteLine($"Input not found: {inputPath}");
-            return;
+            return 1;
         }
 
-        var options = new DecompileOptions
+        DecompileOptions decompileOptions = new DecompileOptions
         {
             OutRoot = outRoot,
-            DumpStages = args.Contains("--dump-stages"),
-            DumpKeywords = args.Contains("--dump-keywords"),
-            SaveSubprograms = args.Contains("--save-subprograms"),
-            FuseTemps = !args.Contains("--no-fuse-temps"),
-            ReconstructSurfaceShaders = !args.Contains("--no-surface-shaders"),
-            KeepPasses = args.Contains("--keep-passes"),
-            KeepRegisterBindings = args.Contains("--keep-register-bindings"),
+            DumpStages = args.GetValue(CliOptions.DumpStages),
+            DumpKeywords = args.GetValue(CliOptions.DumpKeywords),
+            FailOnError = args.GetValue(CliOptions.FailOnError),
+            SaveSubprograms = args.GetValue(CliOptions.SaveSubprograms),
+            FuseTemps = !args.GetValue(CliOptions.NoFuseTemps),
+            ReconstructSurfaceShaders = !args.GetValue(CliOptions.NoSurfaceShaders),
+            KeepPasses = args.GetValue(CliOptions.KeepPasses),
+            KeepRegisterBindings = args.GetValue(CliOptions.KeepRegisterBindings),
             Verbose = true,
         };
 
-        Decompiler.Decompile(project, options);
+        Decompiler.Decompile(project, decompileOptions);
+        return 0;
     }
 
     // Locate the decompiler Output/ folder regardless of the launch directory.
@@ -180,12 +172,9 @@ internal class Program
 
     // Runs the full decompilation pipeline on a single blob folder, then
     // verifies the output .shader against the original DXBC bytecode.
-    private static int RunFaithfulnessTest(string folder, string[] args)
+    private static int RunFaithfulnessTest(string folder, ParseResult args)
     {
-        string outRoot = Decompiler.ProjectOutputRoot();
-        int outRootFlag = Array.IndexOf(args, "--out-root");
-        if (outRootFlag >= 0 && outRootFlag + 1 < args.Length)
-            outRoot = args[outRootFlag + 1];
+        string outRoot = args.GetValue(CliOptions.OutRoot) ?? Decompiler.ProjectOutputRoot();
 
         ShaderProject project;
         try
@@ -208,9 +197,10 @@ internal class Program
             result = Decompiler.Decompile(project, new DecompileOptions
             {
                 OutRoot = outRoot,
-                FuseTemps = !args.Contains("--no-fuse-temps"),
-                ReconstructSurfaceShaders = !args.Contains("--no-surface-shaders"),
-                KeepPasses = args.Contains("--keep-passes"),
+                FailOnError = args.GetValue(CliOptions.FailOnError),
+                FuseTemps = !args.GetValue(CliOptions.NoFuseTemps),
+                ReconstructSurfaceShaders = !args.GetValue(CliOptions.NoSurfaceShaders),
+                KeepPasses = args.GetValue(CliOptions.KeepPasses),
                 Verbose = false,
             });
         }
@@ -224,7 +214,7 @@ internal class Program
         Console.WriteLine();
 
         // ── Run faithfulness checks ──
-        var report = FaithfulnessTest.Run(folder, result.ShaderText, outRoot);
+        FaithfulnessTest.Result report = FaithfulnessTest.Run(folder, result.ShaderText, outRoot);
         report.PipelineCompleted = true;
         return FaithfulnessTest.PrintReport(result.OutputPath!, report);
     }

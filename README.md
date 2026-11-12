@@ -139,6 +139,9 @@ dotnet run --project "src/UnityShaderDecompiler.Cli/UnityShaderDecompiler.Cli.cs
 
 # Write output somewhere other than the project-local Output/
 dotnet run --project "src/UnityShaderDecompiler.Cli/UnityShaderDecompiler.Cli.csproj" -- Output/Corpus_01 Properties --out-root ./decompiled
+
+# Show help and all available options
+dotnet run --project "src/UnityShaderDecompiler.Cli/UnityShaderDecompiler.Cli.csproj" -- --help
 ```
 
 With no arguments, the decompiler looks for `Output/Corpus_01 Properties` in the working
@@ -148,6 +151,7 @@ directory and then one level up.
 
 | Option | Purpose |
 | --- | --- |
+| `--help` / `-h` / `-?` | Show help and all available options |
 | `--out-root <dir>` | Write the `.shader` and subprogram artifacts to `<dir>` |
 | `--dump-stages` | Print the IR after every pipeline phase |
 | `--save-subprograms` | Write per-subprogram `.bin`, `.dxbc`, and disassembly files |
@@ -180,6 +184,7 @@ and spaces are stripped).
 | `--out-root <dir>` | Write `.shader` output and subprogram artifacts to `<dir>` instead of the project-local `Output/` |
 | `--dump-stages` | Print a full IR snapshot after every pipeline phase and every optimization pass |
 | `--dump-keywords` | Print each subprogram's global and local keyword sets |
+| `--fail-on-error` | Stop as soon as a subprogram encounters a decompilation error |
 | `--save-subprograms` | Also write per-subprogram `program{i}.bin`, `program{i}.dxbc`, and `program{i}.hlsl` (disassembly) |
 | `--no-fuse-temps` | Disable temp fusion; keep every SSA copy as a separate statement |
 | `--no-surface-shaders` | Disable surface-shader recognition; emit raw reconstructed HLSLPROGRAM passes |

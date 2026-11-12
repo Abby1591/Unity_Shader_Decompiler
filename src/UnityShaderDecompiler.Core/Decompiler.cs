@@ -20,6 +20,9 @@ namespace UnityShaderDecompiler.Core;
 /// </summary>
 public sealed class DecompileOptions
 {
+    /// <summary>Abort on decompilation errors instead of logging and continuing.</summary>
+    public bool FailOnError { get; init; }
+    
     /// <summary>Print the IR after every pipeline phase.</summary>
     public bool DumpStages { get; init; }
 
@@ -173,7 +176,6 @@ public static class Decompiler
             }
 
             log.WriteLine($"Type     : {sp.m_ProgramType}");
-
             if (options.DumpKeywords)
                 log.WriteLine($"Keywords : [{string.Join(" | ", sp.m_Keywords)}]  Local: [{string.Join(" | ", sp.m_LocalKeywords ?? Array.Empty<string>())}]");
             log.WriteLine($"Version  : {sp.m_Version}");
@@ -186,6 +188,11 @@ public static class Decompiler
                 log.WriteLine($"Saved: {rawPath}");
             }
 
+            if (!ShaderPlatform.IsDXBC(sp.m_ProgramType)) {
+                log.WriteLine($"SubProgram Type not supported: {sp.m_ProgramType}");
+                continue;
+            }
+            
             try
             {
                 // Classifier: kind + (for non-compute) the 0x26-byte header
@@ -222,7 +229,7 @@ public static class Decompiler
                     log.WriteLine($"Saved: {dxbcPath}");
                 }
 
-                IRPipeline.Result pipelineResult = IRPipeline.Run(dxbcFile, options.DumpStages);
+                IRPipeline.Result pipelineResult = IRPipeline.Run(dxbcFile, options.DumpStages, options.FailOnError);
 
                 if (options.DumpStages)
                 {
@@ -250,6 +257,10 @@ public static class Decompiler
                     foreach (var error in pipelineResult.SsaVerification.Errors)
                         log.WriteLine($"  {error}");
                     log.WriteLine();
+                    if (options.FailOnError)
+                    {
+                        throw new InvalidDataException("SSA verification failed");
+                    }
                 }
 
                 if (pipelineResult.RecognizedLoops.Count > 0)
@@ -342,7 +353,13 @@ public static class Decompiler
             }
             catch (Exception ex)
             {
-                log.WriteLine($"No DXBC: {ex.Message}");
+                if (options.FailOnError)
+                {
+                    log.WriteLine($"Program{i} decompilation failed. Decompilation stopped.");
+                    throw;
+                }
+
+                log.WriteLine($"Program{i} decompilation failed, {ex.Message}\n{ex.StackTrace}");
             }
 
             log.WriteLine();
