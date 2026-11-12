@@ -72,7 +72,9 @@ Shader "Corpus/29 Skybox"
                 float r0_x_1 = (_Rotation * 0.017453292);
                 float r1_x_1 = sin(-r0_x_1);
                 float r0_x_2 = sin(r0_x_1);
-                float3 r2_yzw_1 = normalize(i.texcoord0);
+                float r0_y_1 = dot(i.texcoord0.xyzx, i.texcoord0.xyzx);
+                float r0_y_2 = rsqrt(r0_y_1);
+                float3 r2_yzw_1 = ((r0_y_2.xxxx * i.texcoord0.xxyz)).yzw;
                 float r0_y_3 = mad(i.texcoord0.y, r0_y_2, -_GroundHeight);
                 float r0_y_4 = saturate((r0_y_3 * 5));
                 float r1_y_1 = cos(r0_x_2);

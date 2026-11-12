@@ -167,23 +167,20 @@ public static partial class HlslPrettyPrinter
         PrintTags(sb, pass.Tags, indent: "            ");
         PrintRenderState(sb, pass.State);
 
-        // Empty pass (no decompiled functions) — emit a valid stub so
-        // pass indices stay stable for Graphics.Blit(material, passIndex).
+        // A pass whose program is not in the blob (no decompiled functions)
+        // keeps its name, tags, render state and index, but gets no HLSL:
+        // anything emitted here would be invented code that matches nothing.
         bool hasAnyFunction = pass.VertexFunction is not null || pass.FragmentFunction is not null
             || pass.GeometryFunction is not null || pass.HullFunction is not null
             || pass.DomainFunction is not null || pass.ComputeFunction is not null;
 
-        sb.Append("            HLSLPROGRAM\n");
-
         if (!hasAnyFunction)
         {
-            sb.AppendLine("            #pragma vertex vert");
-            sb.AppendLine("            #pragma fragment frag");
-            sb.AppendLine("            cbuffer _StubCB : register(b1) { float4x4 unity_MatrixVP; };");
-            sb.AppendLine("            struct v2f { float4 pos : SV_POSITION; };");
-            sb.AppendLine("            v2f vert(float4 v : POSITION) { v2f o; o.pos = mul(unity_MatrixVP, v); return o; }");
-            sb.AppendLine("            float4 frag(v2f i) : SV_Target { return 0; }");
+            sb.Append("        }\n");
+            return;
         }
+
+        sb.Append("            HLSLPROGRAM\n");
 
         // Interpolator hand-off map: the vertex stage records which semantic
         // fields carry named values (worldPos, worldNormal, ...) so the
