@@ -3051,6 +3051,7 @@ Shader "Corpus/36 Dissolve"
                 float _Metallic;
                 float _Smoothness;
                 float4 _MainTex_ST;
+                float4 _DissolveMap_ST_b0;
                 float4 cb0_values[13];
             };
             cbuffer _UnityPerDrawCB_b1
@@ -3290,6 +3291,7 @@ Shader "Corpus/36 Dissolve"
                 float _Metallic;
                 float _Smoothness;
                 float4 _MainTex_ST;
+                float4 _DissolveMap_ST_b0;
                 float4 cb0_values[13];
             };
             cbuffer _UnityPerDrawCB_b1
@@ -3603,6 +3605,7 @@ Shader "Corpus/36 Dissolve"
                 float _Metallic;
                 float _Smoothness;
                 float4 _MainTex_ST;
+                float4 _DissolveMap_ST_b0;
                 float4 cb0_values[13];
             };
             cbuffer _UnityPerDrawCB_b1
@@ -3901,6 +3904,7 @@ Shader "Corpus/36 Dissolve"
                 float _Metallic;
                 float _Smoothness;
                 float4 _MainTex_ST;
+                float4 _DissolveMap_ST_b0;
                 float4 cb0_values[13];
             };
             cbuffer _UnityPerDrawCB_b1
@@ -4211,6 +4215,7 @@ Shader "Corpus/36 Dissolve"
                 float _Metallic;
                 float _Smoothness;
                 float4 _MainTex_ST;
+                float4 _DissolveMap_ST_b0;
                 float4 cb0_values[13];
             };
             cbuffer _UnityPerDrawCB_b1
@@ -4506,6 +4511,7 @@ Shader "Corpus/36 Dissolve"
                 float _Metallic;
                 float _Smoothness;
                 float4 _MainTex_ST;
+                float4 _DissolveMap_ST_b0;
                 float4 cb0_values[13];
             };
             cbuffer _UnityPerDrawCB_b1
@@ -4798,6 +4804,7 @@ Shader "Corpus/36 Dissolve"
                 float _Metallic;
                 float _Smoothness;
                 float4 _MainTex_ST;
+                float4 _DissolveMap_ST_b0;
                 float4 cb0_values[7];
             };
             cbuffer _UnityPerDrawCB_b1
@@ -5086,6 +5093,7 @@ Shader "Corpus/36 Dissolve"
                 float _Metallic;
                 float _Smoothness;
                 float4 _MainTex_ST;
+                float4 _DissolveMap_ST_b0;
                 float4 cb0_values[18];
             };
             cbuffer _UnityPerDrawCB_b1
@@ -5440,6 +5448,7 @@ Shader "Corpus/36 Dissolve"
                 float _Metallic;
                 float _Smoothness;
                 float4 _MainTex_ST;
+                float4 _DissolveMap_ST_b0;
                 float4 cb0_values[13];
             };
             cbuffer _UnityPerDrawCB_b1
@@ -5740,6 +5749,7 @@ Shader "Corpus/36 Dissolve"
                 float _Metallic;
                 float _Smoothness;
                 float4 _MainTex_ST;
+                float4 _DissolveMap_ST_b0;
                 float4 cb0_values[13];
             };
             cbuffer _UnityPerDrawCB_b1
@@ -6005,6 +6015,7 @@ Shader "Corpus/36 Dissolve"
                 float _Metallic;
                 float _Smoothness;
                 float4 _MainTex_ST;
+                float4 _DissolveMap_ST_b0;
                 float4 cb0_values[13];
             };
             cbuffer _UnityPerDrawCB_b1
@@ -6266,6 +6277,7 @@ Shader "Corpus/36 Dissolve"
                 float _Metallic;
                 float _Smoothness;
                 float4 _MainTex_ST;
+                float4 _DissolveMap_ST_b0;
                 float4 cb0_values[13];
             };
             cbuffer _UnityPerDrawCB_b1
@@ -6535,6 +6547,7 @@ Shader "Corpus/36 Dissolve"
                 float _Metallic;
                 float _Smoothness;
                 float4 _MainTex_ST;
+                float4 _DissolveMap_ST_b0;
                 float4 cb0_values[7];
             };
             cbuffer _UnityPerDrawCB_b1
@@ -6782,6 +6795,7 @@ Shader "Corpus/36 Dissolve"
                 float _Metallic;
                 float _Smoothness;
                 float4 _MainTex_ST;
+                float4 _DissolveMap_ST_b0;
                 float4 cb0_values[13];
             };
             cbuffer _UnityPerDrawCB_b1
@@ -7039,6 +7053,7 @@ Shader "Corpus/36 Dissolve"
                 float _Metallic;
                 float _Smoothness;
                 float4 _MainTex_ST;
+                float4 _DissolveMap_ST_b0;
                 float4 cb0_values[13];
             };
             cbuffer _UnityPerDrawCB_b1
@@ -7333,6 +7348,7 @@ Shader "Corpus/36 Dissolve"
                 float _Metallic;
                 float _Smoothness;
                 float4 _MainTex_ST;
+                float4 _DissolveMap_ST_b0;
                 float4 cb0_values[13];
             };
             cbuffer _UnityPerDrawCB_b1
@@ -7612,6 +7628,7 @@ Shader "Corpus/36 Dissolve"
                 float _Metallic;
                 float _Smoothness;
                 float4 _MainTex_ST;
+                float4 _DissolveMap_ST_b0;
                 float4 cb0_values[13];
             };
             cbuffer _UnityPerDrawCB_b1
@@ -7903,6 +7920,7 @@ Shader "Corpus/36 Dissolve"
                 float _Metallic;
                 float _Smoothness;
                 float4 _MainTex_ST;
+                float4 _DissolveMap_ST_b0;
                 float4 cb0_values[13];
             };
             cbuffer _UnityPerDrawCB_b1
@@ -8179,6 +8197,7 @@ Shader "Corpus/36 Dissolve"
                 float _Metallic;
                 float _Smoothness;
                 float4 _MainTex_ST;
+                float4 _DissolveMap_ST_b0;
                 float4 cb0_values[13];
             };
             cbuffer _UnityPerDrawCB_b1
@@ -8456,6 +8475,7 @@ Shader "Corpus/36 Dissolve"
                 float _Metallic;
                 float _Smoothness;
                 float4 _MainTex_ST;
+                float4 _DissolveMap_ST_b0;
                 float4 cb0_values[7];
             };
             cbuffer _UnityPerDrawCB_b1
@@ -8727,6 +8747,7 @@ Shader "Corpus/36 Dissolve"
                 float _Metallic;
                 float _Smoothness;
                 float4 _MainTex_ST;
+                float4 _DissolveMap_ST_b0;
                 float4 cb0_values[18];
             };
             cbuffer _UnityPerDrawCB_b1
@@ -9065,6 +9086,7 @@ Shader "Corpus/36 Dissolve"
                 float _Metallic;
                 float _Smoothness;
                 float4 _MainTex_ST;
+                float4 _DissolveMap_ST_b0;
                 float4 cb0_values[13];
             };
             cbuffer _UnityPerDrawCB_b1
@@ -9349,6 +9371,7 @@ Shader "Corpus/36 Dissolve"
                 float _Metallic;
                 float _Smoothness;
                 float4 _MainTex_ST;
+                float4 _DissolveMap_ST_b0;
                 float4 cb0_values[13];
             };
             cbuffer _UnityPerDrawCB_b1
@@ -9595,6 +9618,7 @@ Shader "Corpus/36 Dissolve"
                 float _Metallic;
                 float _Smoothness;
                 float4 _MainTex_ST;
+                float4 _DissolveMap_ST_b0;
                 float4 cb0_values[13];
             };
             cbuffer _UnityPerDrawCB_b1
@@ -9838,6 +9862,7 @@ Shader "Corpus/36 Dissolve"
                 float _Metallic;
                 float _Smoothness;
                 float4 _MainTex_ST;
+                float4 _DissolveMap_ST_b0;
                 float4 cb0_values[13];
             };
             cbuffer _UnityPerDrawCB_b1
@@ -10092,6 +10117,7 @@ Shader "Corpus/36 Dissolve"
                 float _Metallic;
                 float _Smoothness;
                 float4 _MainTex_ST;
+                float4 _DissolveMap_ST_b0;
                 float4 cb0_values[7];
             };
             cbuffer _UnityPerDrawCB_b1
