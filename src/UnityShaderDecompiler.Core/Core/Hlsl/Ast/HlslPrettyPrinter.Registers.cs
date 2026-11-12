@@ -34,8 +34,12 @@ public static partial class HlslPrettyPrinter
                     sb.Append(pad).Append(DeclType(comps)).Append(' ').Append(name).Append(";\n");
                 }
 
-                sb.Append(pad).Append("if (").Append(RenderExpression(iff.Condition, ctx)).Append(")\n");
+                sb.Append(pad).Append("if (").Append(RenderCondition(iff.Condition, ctx)).Append(")\n");
                 sb.Append(pad).Append("{\n");
+                // Declarations inside an arm are scoped to that arm's braces.
+                // ctx.Declared is function-wide, so restore the arm's names
+                // afterwards or a sibling branch thinks they are in scope.
+                var ifScope = new HashSet<string>(ctx.Declared);
                 PrintBlock(sb, iff.Then, indent + 1, ctx);
                 sb.Append(pad).Append("}\n");
                 if (iff.Else is not null)
@@ -44,6 +48,8 @@ public static partial class HlslPrettyPrinter
                     PrintBlock(sb, iff.Else, indent + 1, ctx);
                     sb.Append(pad).Append("}\n");
                 }
+                ctx.Declared.Clear();
+                ctx.Declared.UnionWith(ifScope);
                 break;
             }
 
@@ -66,37 +72,54 @@ public static partial class HlslPrettyPrinter
                 }
 
                 sb.Append(pad).Append("[loop]\n").Append(pad).Append("while (true)\n").Append(pad).Append("{\n");
+                var loopScope = new HashSet<string>(ctx.Declared);
                 PrintBlock(sb, loop.Body, indent + 1, ctx);
+                ctx.Declared.Clear();
+                ctx.Declared.UnionWith(loopScope);
                 sb.Append(pad).Append("}\n");
                 break;
             }
 
             case HlslSwitchStatement sw:
-                sb.Append(pad).Append("switch (").Append(RenderExpression(sw.Selector, ctx)).Append(")\n").Append(pad).Append("{\n");
+                // Case labels share one scope, but a declaration inside the
+                // first case cannot be jumped over by a later case. Hoist
+                // every destination name the cases write above the switch,
+                // the same way the if/loop paths do.
+                foreach ((string name, int comps) in WrittenDeclNames(
+                    sw.Cases.SelectMany(c => c.Body.Statements).ToList(), ctx))
+                {
+                    if (!ctx.Declared.Add(name))
+                        continue;
+                    sb.Append(pad).Append(DeclType(comps)).Append(' ').Append(name).Append(";\n");
+                }
+                sb.Append(pad).Append("switch (").Append(RenderCondition(sw.Selector, ctx)).Append(")\n").Append(pad).Append("{\n");
+                var switchScope = new HashSet<string>(ctx.Declared);
                 foreach (HlslSwitchCase c in sw.Cases)
                 {
                     sb.Append(pad).Append(c.Value is null ? "default:\n" : $"case {RenderExpression(c.Value, ctx)}:\n");
                     PrintBlock(sb, c.Body, indent + 1, ctx);
                 }
+                ctx.Declared.Clear();
+                ctx.Declared.UnionWith(switchScope);
                 sb.Append(pad).Append("}\n");
                 break;
 
             case HlslBreakStatement b:
-                sb.Append(pad).Append(b.Condition is null ? "break;" : $"if ({RenderExpression(b.Condition, ctx)}) break;").Append('\n');
+                sb.Append(pad).Append(b.Condition is null ? "break;" : $"if ({RenderCondition(b.Condition, ctx)}) break;").Append('\n');
                 break;
 
             case HlslContinueStatement c:
-                sb.Append(pad).Append(c.Condition is null ? "continue;" : $"if ({RenderExpression(c.Condition, ctx)}) continue;").Append('\n');
+                sb.Append(pad).Append(c.Condition is null ? "continue;" : $"if ({RenderCondition(c.Condition, ctx)}) continue;").Append('\n');
                 break;
 
             case HlslReturnStatement r:
                 sb.Append(pad).Append(r.Condition is null
                     ? "return o;"
-                    : $"if ({RenderExpression(r.Condition, ctx)}) return o;").Append('\n');
+                    : $"if ({RenderCondition(r.Condition, ctx)}) return o;").Append('\n');
                 break;
 
             case HlslDiscardStatement d:
-                sb.Append(pad).Append("if (").Append(RenderExpression(d.Condition, ctx)).Append(") discard;\n");
+                sb.Append(pad).Append("if (").Append(RenderCondition(d.Condition, ctx)).Append(") discard;\n");
                 break;
 
             case HlslMemoryStoreStatement ms:
@@ -848,6 +871,29 @@ public static partial class HlslPrettyPrinter
         return suffix.Length > 1 ? suffix.Length - 1 : 1;
     }
 
+    // DXBC conditions test one lane. A cbuffer read without an explicit
+    // swizzle renders as the whole variable/row (RegisterReadWidth can't see
+    // a suffix), so treat an unsuffixed non-temp read as 4 here.
+    private static string RenderCondition(IRExpression expr, PrintContext ctx)
+    {
+        string text = RenderExpression(expr, ctx);
+        return ConditionWidth(expr, ctx) > 1 ? $"({text}).x" : text;
+    }
+
+    private static int ConditionWidth(IRExpression expr, PrintContext ctx) => expr switch
+    {
+        // A comparison against a cbuffer/matrix/signature read is the usual
+        // vector-vs-scalar mix. Appending .x to any such read is safe: HLSL
+        // allows scalar swizzles, so a genuinely scalar read still works.
+        IRExpression.RegisterExpression r
+            when r.Register.RegisterType is not (RegisterType.Temp or RegisterType.IndexableTemp) => 4,
+        IRExpression.BinaryExpression b => Math.Max(ConditionWidth(b.Left, ctx), ConditionWidth(b.Right, ctx)),
+        IRExpression.UnaryExpression u => ConditionWidth(u.Operand, ctx),
+        IRExpression.ConditionalExpression c => Math.Max(ConditionWidth(c.TrueExpression, ctx), ConditionWidth(c.FalseExpression, ctx)),
+        IRExpression.SwizzleExpression s => Math.Max(1, s.Components.Count),
+        _ => ExpressionWidth(expr, ctx),
+    };
+
     // Element-wise intrinsics keep their argument's width; a handful
     // collapse their result to a scalar; Cross produces a float3.
     private static int IntrinsicWidth(IRExpression.IntrinsicExpression expr, PrintContext ctx)
@@ -934,28 +980,47 @@ public static partial class HlslPrettyPrinter
         return names;
     }
 
-    // Top-level destination names a block's statements declare, mapped to
-    // the component count (declaration type) of the write. Only direct
-    // assignments matter — nested ifs/loops handle their own merges when
-    // they get printed.
+    // Destination names a block's statements declare, mapped to the
+    // component count (declaration type) of the write. Recurses through
+    // nested if/loop/switch bodies: a value written only inside a nested arm
+    // still needs its declaration hoisted by the enclosing merge.
     private static Dictionary<string, int> WrittenDeclNames(List<HlslStatementNode> statements, PrintContext ctx)
     {
         var names = new Dictionary<string, int>();
         foreach (HlslStatementNode stmt in statements)
-        {
-            IEnumerable<IRRegister> dests = stmt switch
-            {
-                HlslAssignmentStatement a => new[] { a.Destination },
-                HlslMultiAssignmentStatement ma => ma.Destinations.Where(d => d is not null).Cast<IRRegister>(),
-                _ => Array.Empty<IRRegister>(),
-            };
-
-            foreach (IRRegister dest in dests)
-                foreach ((string name, int comps) in DestinationDeclNames(dest, ctx))
-                    if (!names.TryGetValue(name, out int prev) || comps > prev)
-                        names[name] = comps;
-        }
+            CollectWrittenNames(stmt, names, ctx);
         return names;
+    }
+
+    private static void CollectWrittenNames(HlslStatementNode stmt, Dictionary<string, int> names, PrintContext ctx)
+    {
+        IEnumerable<IRRegister> dests = stmt switch
+        {
+            HlslAssignmentStatement a => new[] { a.Destination },
+            HlslMultiAssignmentStatement ma => ma.Destinations.Where(d => d is not null).Cast<IRRegister>(),
+            _ => Array.Empty<IRRegister>(),
+        };
+
+        foreach (IRRegister dest in dests)
+            foreach ((string name, int comps) in DestinationDeclNames(dest, ctx))
+                if (!names.TryGetValue(name, out int prev) || comps > prev)
+                    names[name] = comps;
+
+        switch (stmt)
+        {
+            case HlslIfStatement i:
+                CollectWrittenNames(i.Then, names, ctx);
+                if (i.Else is not null)
+                    CollectWrittenNames(i.Else, names, ctx);
+                break;
+            case HlslLoopStatement l:
+                CollectWrittenNames(l.Body, names, ctx);
+                break;
+            case HlslSwitchStatement s:
+                foreach (HlslSwitchCase c in s.Cases)
+                    CollectWrittenNames(c.Body, names, ctx);
+                break;
+        }
     }
 
     // The exact identifier(s) and width RenderAssignmentLines would declare
@@ -1001,15 +1066,47 @@ public static partial class HlslPrettyPrinter
         IRExpression.MatrixVectorMultiplyExpression mv => RenderMatrixMultiply(mv, ctx),
         IRExpression.TextureOperationExpression tex => RenderTextureOp(tex, ctx),
         IRExpression.BinaryExpression b when IsBitwise(b.Operation) => RenderBitwise(b, ctx),
+        // DXBC integer arithmetic reads register bits; HLSL rejects % on
+        // floats, and asuint keeps the width of either operand.
+        IRExpression.BinaryExpression b when b.Operation is IRExpression.BinaryOperation.Modulo
+            or IRExpression.BinaryOperation.UnsignedDivide =>
+            $"({IntBits(b.Left, ctx)} {BinaryOpText(b.Operation)} {IntBits(b.Right, ctx)})",
         IRExpression.BinaryExpression b => $"({RenderExpression(b.Left, ctx)} {BinaryOpText(b.Operation)} {RenderExpression(b.Right, ctx)})",
         IRExpression.UnaryExpression u => RenderUnary(u, ctx),
         IRExpression.ConditionalExpression c => $"({RenderExpression(c.Condition, ctx)} ? {RenderExpression(c.TrueExpression, ctx)} : {RenderExpression(c.FalseExpression, ctx)})",
         IRExpression.DotProductExpression d => $"dot({RenderExpression(d.Left, ctx)}, {RenderExpression(d.Right, ctx)})",
         IRExpression.SwizzleExpression s => RenderSwizzle(s, ctx),
         IRExpression.RegisterExpression r => RenderRegisterRead(r.Register, ctx),
+        // HLSL has no bfi/bfe builtins; expand the bitfield forms inline.
+        // shortcut: bfe's sign-extend shift is UB for width 0 or 32, which
+        // DXBC does not emit; guard if a shader ever hits it.
+        IRExpression.BitFieldInsertExpression bfi =>
+            $"((((uint)({RenderExpression(bfi.Base, ctx)}) & ~({MaskOf(bfi.Width, ctx)} << ({RenderExpression(bfi.Offset, ctx)})))"
+            + $" | (((uint)({RenderExpression(bfi.Insert, ctx)}) & {MaskOf(bfi.Width, ctx)}) << ({RenderExpression(bfi.Offset, ctx)}))))",
+        IRExpression.BitFieldExtractExpression bfe when !bfe.Signed =>
+            $"(((uint)({RenderExpression(bfe.Value, ctx)}) >> ({RenderExpression(bfe.Offset, ctx)})) & {MaskOf(bfe.Width, ctx)})",
+        IRExpression.BitFieldExtractExpression bfe =>
+            $"((int)((((uint)({RenderExpression(bfe.Value, ctx)}) >> ({RenderExpression(bfe.Offset, ctx)})) & {MaskOf(bfe.Width, ctx)}) << (32 - ({RenderExpression(bfe.Width, ctx)}))) >> (32 - ({RenderExpression(bfe.Width, ctx)})))",
         IRExpression.ConstantExpression => expr.ToString()!,
         _ => expr.ToString()!, // no dedicated renderer yet — fall back to IR debug text rather than crash
     };
+
+    // Bitfield width mask: (1 << width) - 1, with the 32-bit full mask
+    // special-cased because shifting a 32-bit value by 32 is undefined.
+    private static string MaskOf(IRExpression width, PrintContext ctx)
+    {
+        if (width is IRExpression.ConstantExpression
+            { Kind: IRExpression.ConstantExpression.ConstantKind.Int or IRExpression.ConstantExpression.ConstantKind.UInt, RawValues.Length: 1 } c)
+        {
+            uint w = c.Kind == IRExpression.ConstantExpression.ConstantKind.Int
+                ? unchecked((uint)(int)c.RawValues[0])
+                : c.RawValues[0];
+            return w >= 32 ? "0xFFFFFFFFu" : $"{(1u << (int)w) - 1u}u";
+        }
+
+        string wExpr = RenderExpression(width, ctx);
+        return $"(({wExpr}) >= 32 ? 0xFFFFFFFFu : ((1u << ({wExpr})) - 1u))";
+    }
 
     // Lane selection for an inlined single-use temp. Components are source
     // register component indices relative to the value's own lanes, so a
@@ -1059,7 +1156,8 @@ public static partial class HlslPrettyPrinter
     {
         IRExpression.UnaryExpression.UnaryOperation.Negate => $"-{RenderExpression(u.Operand, ctx)}",
         IRExpression.UnaryExpression.UnaryOperation.LogicalNot => $"!{RenderExpression(u.Operand, ctx)}",
-        IRExpression.UnaryExpression.UnaryOperation.BitwiseNot => $"~{RenderExpression(u.Operand, ctx)}",
+        // DXBC bit ops reinterpret the register bits; HLSL rejects ~ on float.
+        IRExpression.UnaryExpression.UnaryOperation.BitwiseNot => $"~asuint({RenderExpression(u.Operand, ctx)})",
         IRExpression.UnaryExpression.UnaryOperation.Absolute => $"abs({RenderExpression(u.Operand, ctx)})",
         _ => RenderExpression(u.Operand, ctx),
     };
@@ -1104,6 +1202,32 @@ public static partial class HlslPrettyPrinter
         return $"asfloat(asint({Op(b.Left)}) {BinaryOpText(b.Operation)} asint({Op(b.Right)}))";
     }
 
+    // Reinterprets an operand as the uint bits the integer opcode sees.
+    // D3DCompiler folds max(a, -a) into an abs source modifier, which integer
+    // opcodes reject (X8000); clamp is a no-op that keeps the value explicit.
+    // shortcut: only the max(a, -a) spelling is guarded, add other abs-fold
+    // spellings if a shader hits the same X8000.
+    private static string IntBits(IRExpression expr, PrintContext ctx)
+    {
+        bool abs = expr is IRExpression.IntrinsicExpression { Intrinsic: IRExpression.IRIntrinsic.Max } max
+            && max.Arguments.Count == 2
+            && (IsNegationOf(max.Arguments[0], max.Arguments[1], ctx)
+                || IsNegationOf(max.Arguments[1], max.Arguments[0], ctx));
+        string text = RenderExpression(expr, ctx);
+        return abs
+            ? $"asuint(clamp({text}, -3.4e38, 3.4e38))"
+            : $"asuint({text})";
+    }
+
+    private static bool IsNegationOf(IRExpression maybeNegated, IRExpression value, PrintContext ctx)
+    {
+        // The negate can live on the register operand (source modifier) or in
+        // a UnaryExpression, so compare the rendered text rather than shape.
+        string plain = RenderExpression(value, ctx);
+        string negated = RenderExpression(maybeNegated, ctx);
+        return negated == "-" + plain || negated == "(-" + plain + ")";
+    }
+
     private static string BinaryOpText(IRExpression.BinaryOperation op) => op switch
     {
         IRExpression.BinaryOperation.Add => "+",
@@ -1137,14 +1261,22 @@ public static partial class HlslPrettyPrinter
         string Arg(int n) => RenderExpression(expr.Arguments[n], ctx);
         string AllArgs() => string.Join(", ", expr.Arguments.Select(a => RenderExpression(a, ctx)));
 
-        // Casts use C-style cast syntax, not a function call.
+        // Casts use C-style cast syntax, not a function call. DXBC converts
+        // per component, so a vector argument needs a vector cast type:
+        // `(int)float4` is a scalar cast and `(...).xy` on it is invalid.
+        string Cast(string type)
+        {
+            int width = ExpressionWidth(expr.Arguments[0], ctx);
+            return width > 1 ? $"({type}{width})({Arg(0)})" : $"({type})({Arg(0)})";
+        }
+
         switch (expr.Intrinsic)
         {
-            case IRExpression.IRIntrinsic.CastFloat: return $"(float)({Arg(0)})";
-            case IRExpression.IRIntrinsic.CastInt: return $"(int)({Arg(0)})";
-            case IRExpression.IRIntrinsic.CastUInt: return $"(uint)({Arg(0)})";
-            case IRExpression.IRIntrinsic.CastDouble: return $"(double)({Arg(0)})";
-            case IRExpression.IRIntrinsic.CastBool: return $"(bool)({Arg(0)})";
+            case IRExpression.IRIntrinsic.CastFloat: return Cast("float");
+            case IRExpression.IRIntrinsic.CastInt: return Cast("int");
+            case IRExpression.IRIntrinsic.CastUInt: return Cast("uint");
+            case IRExpression.IRIntrinsic.CastDouble: return Cast("double");
+            case IRExpression.IRIntrinsic.CastBool: return Cast("bool");
         }
 
         string? name = expr.Intrinsic switch
@@ -1208,7 +1340,14 @@ public static partial class HlslPrettyPrinter
         };
 
         return name is not null
-            ? $"{name}({AllArgs()})"
+            ? expr.Intrinsic is IRExpression.IRIntrinsic.CountBits
+                or IRExpression.IRIntrinsic.ReverseBits
+                or IRExpression.IRIntrinsic.FirstBitHigh
+                or IRExpression.IRIntrinsic.FirstBitLow
+                // These take int/uint; the operand register is float-typed
+                // in the emitted HLSL, so reinterpret the bits as DXBC does.
+                ? $"{name}({string.Join(", ", expr.Arguments.Select(a => $"asuint({RenderExpression(a, ctx)})"))})"
+                : $"{name}({AllArgs()})"
             : $"/* TODO: no HLSL mapping for {expr.Intrinsic} */ {expr.Intrinsic}({AllArgs()})";
     }
 

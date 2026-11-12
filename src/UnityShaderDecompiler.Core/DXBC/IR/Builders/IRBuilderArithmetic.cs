@@ -85,14 +85,10 @@ public partial class IRBuilder
     private void BuildDiv(IRProgram program, Instruction instruction) =>
         BuildTypedBinary(program, instruction, IRExpression.BinaryOperation.Divide, BuildExpression);
 
-    private void BuildUDiv(IRProgram program, Instruction instruction) =>
-        BuildTypedBinary(program, instruction, IRExpression.BinaryOperation.UnsignedDivide, BuildUIntExpression);
-
-    // Real DXBC udiv is udiv dest_quot, dest_rem, src0, src1 (4 operands) —
-    // same multi-destination shape as imul. Not wired into ConvertInstruction
-    // yet since udiv has no OpcodeTable entry to confirm the operand order
-    // against; BuildUDiv above stays as the single-output simplification
-    // until then. Use this once confirmed.
+    // Real DXBC udiv is udiv dest_quot, dest_rem, src0, src1 (4 operands).
+    // The opcode table confirms OperandCount == 4, so the remainder
+    // destination has to be emitted too.
+    private void BuildUDiv(IRProgram program, Instruction instruction) => BuildUDivExtended(program, instruction);
     private void BuildUDivExtended(IRProgram program, Instruction instruction)
     {
         IRExpression left = BuildUIntExpression(instruction.Operands[2]);

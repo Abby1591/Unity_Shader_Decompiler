@@ -72,7 +72,7 @@ Shader "Corpus/24 Flow Control"
                 [loop]
                 while (true)
                 {
-                    if ((r0_yz_3.y >= unity_ObjectToWorld[2])) break;
+                    if (((r0_yz_3.y >= unity_ObjectToWorld[2])).x) break;
                     r0_y_15 = mad(r0_yz_3.x, 0.5, 0.25);
                     r0_z_8 = (r0_yz_3.y + 1);
                     r0_yz_3 = float2(r0_y_15, r0_z_8);
@@ -90,31 +90,44 @@ Shader "Corpus/24 Flow Control"
                 float r0_y_5 = (0.5 < r0_x_11);
                 float r0_z_6 = (-r0_x_11 + 1);
                 float r0_x_12 = (r0_y_5 ? r0_z_6 : r0_x_11);
-                switch (unity_ObjectToWorld[2])
+                float r0_y_10;
+                float r0_y_11;
+                float r0_y_9;
+                float r0_y_8;
+                float r0_y_7;
+                float r0_y_6;
+                float r0_z_7;
+                float r1_x_4;
+                float r0_x_14;
+                float r0_x_20;
+                float r0_y_12;
+                float r0_y_13;
+                float r0_y_14;
+                switch ((unity_ObjectToWorld[2]).x)
                 {
                 case 0:
-                    float r0_y_10 = (r0_x_12 + 0.1);
-                    float r0_y_11 = r0_y_10;
+                    r0_y_10 = (r0_x_12 + 0.1);
+                    r0_y_11 = r0_y_10;
                     break;
                 case 1:
-                    float r0_y_9 = (r0_x_12 + 0.2);
+                    r0_y_9 = (r0_x_12 + 0.2);
                     r0_y_11 = r0_y_9;
                     break;
                 case 2:
-                    float r0_y_8 = (r0_x_12 + 0.3);
+                    r0_y_8 = (r0_x_12 + 0.3);
                     r0_y_11 = r0_y_8;
                     break;
                 case 3:
-                    float r0_y_7 = (r0_x_12 + 0.4);
+                    r0_y_7 = (r0_x_12 + 0.4);
                     r0_y_11 = r0_y_7;
                     break;
                 default:
-                    float r0_y_6 = (r0_x_12 + 0.5);
+                    r0_y_6 = (r0_x_12 + 0.5);
                     r0_y_11 = r0_y_6;
                     break;
-                    float r0_z_7 = unity_ObjectToWorld[2];
-                    float r1_x_4 = 0;
-                    float r0_x_14 = r0_y_11;
+                    r0_z_7 = unity_ObjectToWorld[2];
+                    r1_x_4 = 0;
+                    r0_x_14 = r0_y_11;
                     float r1_y_2;
                     float r2_y_1;
                     float r1_y_3;
@@ -165,16 +178,17 @@ Shader "Corpus/24 Flow Control"
                         r1_x_4 = (r1_x_4 + 1);
                         r0_x_14 = r1_zw_3.x;
                     }
-                    float r0_x_20 = frac(mad(frac(mad(frac(mad(r0_x_14, 1.37, 0.11)), 1.37, 0.11)), 1.37, 0.11));
-                    float r0_y_12 = (r0_xyzw_1.w + -unity_ObjectToWorld[2]);
-                    float r0_y_13 = (r0_y_12 < 0);
+                    r0_x_20 = frac(mad(frac(mad(frac(mad(r0_x_14, 1.37, 0.11)), 1.37, 0.11)), 1.37, 0.11));
+                    r0_y_12 = (r0_xyzw_1.w + -unity_ObjectToWorld[2]);
+                    r0_y_13 = (r0_y_12 < 0);
                     if (r0_y_13) discard;
-                    float r0_y_14 = (r0_x_20 < 0.01);
+                    r0_y_14 = (r0_x_20 < 0.01);
                     if (r0_y_14) discard;
                     o.sv_Target0.xyz = (frac(r0_x_20.xxxx)).xyz;
                     o.sv_Target0.w = 1;
                     return o;
                 }
+                return o;
             }
             ENDHLSL
         }

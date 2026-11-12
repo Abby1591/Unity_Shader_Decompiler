@@ -122,10 +122,40 @@ Shader "Corpus/45 Debug"
                 float unitWorldPos_y_1 = unitWorldPos_xyzw_3.y;
                 float unitWorldPos_z_1 = unitWorldPos_xyzw_3.z;
                 float3 unitWorldPos_xyz_1 = normalize(i.texcoord2);
-                switch (_DebugMode)
+                float3 COLOR0_xyz_12;
+                float r0_x_5;
+                float r0_y_3;
+                float r0_z_3;
+                float r0_x_6;
+                float r0_y_4;
+                float r0_z_4;
+                float r0_x_7;
+                float r0_y_5;
+                float r0_z_5;
+                float3 TEXCOORD0_xyz_7;
+                float3 COLOR0_xyz_6;
+                float unitWorldPos_x_4;
+                float unitWorldPos_y_2;
+                float unitWorldPos_z_2;
+                float r0_x_9;
+                float r0_y_7;
+                float r0_z_7;
+                float r0_x_10;
+                float r0_y_8;
+                float r0_z_8;
+                float r0_x_11;
+                float r0_y_9;
+                float r0_z_9;
+                float r0_x_12;
+                float r0_y_10;
+                float r0_z_10;
+                float r0_x_13;
+                float r0_y_11;
+                float r0_z_11;
+                switch ((_DebugMode).x)
                 {
                 case 0:
-                    float3 COLOR0_xyz_12 = ((r0_xyzw_1.xyzx * _Color.xyzx)).xyz;
+                    COLOR0_xyz_12 = ((r0_xyzw_1.xyzx * _Color.xyzx)).xyz;
                     break;
                 case 1:
                     COLOR0_xyz_12 = (mad(float4(unitWorldPos_x_3, unitWorldPos_y_1, unitWorldPos_z_1, unitWorldPos_x_3), float4(0.5, 0.5, 0.5, 0), float4(0.5, 0.5, 0.5, 0))).xyz;
@@ -135,25 +165,25 @@ Shader "Corpus/45 Debug"
                     break;
                 case 3:
                     float4 r0_xyzw_5 = (float4(unitWorldPos_z_1, unitWorldPos_x_3, unitWorldPos_y_1, unitWorldPos_z_1) * unitWorldPos_xyz_1.xyzx);
-                    float r0_x_5 = r0_xyzw_5.x;
-                    float r0_y_3 = r0_xyzw_5.y;
-                    float r0_z_3 = r0_xyzw_5.z;
+                    r0_x_5 = r0_xyzw_5.x;
+                    r0_y_3 = r0_xyzw_5.y;
+                    r0_z_3 = r0_xyzw_5.z;
                     float4 r0_xyzw_6 = mad(float4(unitWorldPos_y_1, unitWorldPos_z_1, unitWorldPos_x_3, unitWorldPos_y_1), unitWorldPos_xyz_1.yzxy, -float4(r0_x_5, r0_y_3, r0_z_3, r0_x_5));
-                    float r0_x_6 = r0_xyzw_6.x;
-                    float r0_y_4 = r0_xyzw_6.y;
-                    float r0_z_4 = r0_xyzw_6.z;
+                    r0_x_6 = r0_xyzw_6.x;
+                    r0_y_4 = r0_xyzw_6.y;
+                    r0_z_4 = r0_xyzw_6.z;
                     float4 r0_xyzw_7 = (float4(r0_x_6, r0_y_4, r0_z_4, r0_x_6) * i.texcoord2.wwww);
-                    float r0_x_7 = r0_xyzw_7.x;
-                    float r0_y_5 = r0_xyzw_7.y;
-                    float r0_z_5 = r0_xyzw_7.z;
+                    r0_x_7 = r0_xyzw_7.x;
+                    r0_y_5 = r0_xyzw_7.y;
+                    r0_z_5 = r0_xyzw_7.z;
                     COLOR0_xyz_12 = (mad(float4(r0_x_7, r0_y_5, r0_z_5, r0_x_7), float4(0.5, 0.5, 0.5, 0), float4(0.5, 0.5, 0.5, 0))).xyz;
                     break;
                 case 4:
-                    float3 TEXCOORD0_xyz_7 = (i.texcoord0.xyxx).xyz;
+                    TEXCOORD0_xyz_7 = (i.texcoord0.xyxx).xyz;
                     COLOR0_xyz_12 = TEXCOORD0_xyz_7;
                     break;
                 case 5:
-                    float3 COLOR0_xyz_6 = i.color0.xyz;
+                    COLOR0_xyz_6 = i.color0.xyz;
                     COLOR0_xyz_12 = COLOR0_xyz_6;
                     break;
                 case 6:
@@ -161,9 +191,9 @@ Shader "Corpus/45 Debug"
                     break;
                 case 7:
                     float4 unitWorldPos_xyzw_4 = ((rsqrt(dot(i.texcoord4.xyzx, i.texcoord4.xyzx))).xxxx * i.texcoord4.xyzx);
-                    float unitWorldPos_x_4 = unitWorldPos_xyzw_4.x;
-                    float unitWorldPos_y_2 = unitWorldPos_xyzw_4.y;
-                    float unitWorldPos_z_2 = unitWorldPos_xyzw_4.z;
+                    unitWorldPos_x_4 = unitWorldPos_xyzw_4.x;
+                    unitWorldPos_y_2 = unitWorldPos_xyzw_4.y;
+                    unitWorldPos_z_2 = unitWorldPos_xyzw_4.z;
                     COLOR0_xyz_12 = saturate(dot(float4(unitWorldPos_x_3, unitWorldPos_y_1, unitWorldPos_z_1, unitWorldPos_x_3), float4(unitWorldPos_x_4, unitWorldPos_y_2, unitWorldPos_z_2, unitWorldPos_x_4)));
                     break;
                 case 8:
@@ -176,29 +206,30 @@ Shader "Corpus/45 Debug"
                     COLOR0_xyz_12 = (float4(1, 0, 1, 0)).xyz;
                     break;
                     float4 r0_xyzw_9 = saturate((COLOR0_xyz_12.xyzx * _DebugScale.xxxx));
-                    float r0_x_9 = r0_xyzw_9.x;
-                    float r0_y_7 = r0_xyzw_9.y;
-                    float r0_z_7 = r0_xyzw_9.z;
+                    r0_x_9 = r0_xyzw_9.x;
+                    r0_y_7 = r0_xyzw_9.y;
+                    r0_z_7 = r0_xyzw_9.z;
                     float4 r0_xyzw_10 = log2(float4(r0_x_9, r0_y_7, r0_z_7, r0_x_9));
-                    float r0_x_10 = r0_xyzw_10.x;
-                    float r0_y_8 = r0_xyzw_10.y;
-                    float r0_z_8 = r0_xyzw_10.z;
+                    r0_x_10 = r0_xyzw_10.x;
+                    r0_y_8 = r0_xyzw_10.y;
+                    r0_z_8 = r0_xyzw_10.z;
                     float4 r0_xyzw_11 = (float4(r0_x_10, r0_y_8, r0_z_8, r0_x_10) * float4(0.41666666, 0.41666666, 0.41666666, 0));
-                    float r0_x_11 = r0_xyzw_11.x;
-                    float r0_y_9 = r0_xyzw_11.y;
-                    float r0_z_9 = r0_xyzw_11.z;
+                    r0_x_11 = r0_xyzw_11.x;
+                    r0_y_9 = r0_xyzw_11.y;
+                    r0_z_9 = r0_xyzw_11.z;
                     float4 r0_xyzw_12 = exp2(float4(r0_x_11, r0_y_9, r0_z_9, r0_x_11));
-                    float r0_x_12 = r0_xyzw_12.x;
-                    float r0_y_10 = r0_xyzw_12.y;
-                    float r0_z_10 = r0_xyzw_12.z;
+                    r0_x_12 = r0_xyzw_12.x;
+                    r0_y_10 = r0_xyzw_12.y;
+                    r0_z_10 = r0_xyzw_12.z;
                     float4 r0_xyzw_13 = mad(float4(r0_x_12, r0_y_10, r0_z_10, r0_x_12), float4(1.055, 1.055, 1.055, 0), float4(-0.055, -0.055, -0.055, 0));
-                    float r0_x_13 = r0_xyzw_13.x;
-                    float r0_y_11 = r0_xyzw_13.y;
-                    float r0_z_11 = r0_xyzw_13.z;
+                    r0_x_13 = r0_xyzw_13.x;
+                    r0_y_11 = r0_xyzw_13.y;
+                    r0_z_11 = r0_xyzw_13.z;
                     o.sv_Target0.xyz = (max(float4(r0_x_13, r0_y_11, r0_z_11, r0_x_13), float4(0, 0, 0, 0))).xyz;
                     o.sv_Target0.w = 1;
                     return o;
                 }
+                return o;
             }
             ENDHLSL
         }

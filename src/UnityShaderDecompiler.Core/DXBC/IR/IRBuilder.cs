@@ -296,6 +296,10 @@ public partial class IRBuilder
             case Opcode.Ule: BuildUle(program, instruction); break;
             case Opcode.DerivRtx: BuildDerivRtx(program, instruction); break;
             case Opcode.DerivRty: BuildDerivRty(program, instruction); break;
+            case Opcode.DerivRtxCoarse: BuildDerivRtxCoarse(program, instruction); break;
+            case Opcode.DerivRtxFine: BuildDerivRtxFine(program, instruction); break;
+            case Opcode.DerivRtyCoarse: BuildDerivRtyCoarse(program, instruction); break;
+            case Opcode.DerivRtyFine: BuildDerivRtyFine(program, instruction); break;
             case Opcode.Any: BuildAny(program, instruction); break;
             case Opcode.All: BuildAll(program, instruction); break;
             case Opcode.Dp2Add: BuildDp2Add(program, instruction); break;

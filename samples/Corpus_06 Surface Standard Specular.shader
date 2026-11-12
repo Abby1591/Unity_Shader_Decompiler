@@ -3786,7 +3786,7 @@ Shader "Corpus/06 Surface Standard Specular"
                 float r2_y_13;
                 float r2_z_12;
                 float r2_w_8;
-                if ((cb6_values[0].x == 1))
+                if (((cb6_values[0].x == 1)).x)
                 {
                     float4 r2_xyzw_4 = (i.texcoord5.yyyy * cb6_values[2].xxyz);
                     float r2_y_4 = r2_xyzw_4.y;
@@ -4162,7 +4162,7 @@ Shader "Corpus/06 Surface Standard Specular"
                 float r2_y_13;
                 float r2_z_12;
                 float r2_w_8;
-                if ((cb6_values[0].x == 1))
+                if (((cb6_values[0].x == 1)).x)
                 {
                     float4 r2_xyzw_4 = (i.texcoord5.yyyy * cb6_values[2].xxyz);
                     float r2_y_4 = r2_xyzw_4.y;
@@ -4517,7 +4517,7 @@ Shader "Corpus/06 Surface Standard Specular"
                 float r2_y_13;
                 float r2_z_12;
                 float r2_w_8;
-                if ((cb6_values[0].x == 1))
+                if (((cb6_values[0].x == 1)).x)
                 {
                     float4 r2_xyzw_4 = (i.texcoord5.yyyy * cb6_values[2].xxyz);
                     float r2_y_4 = r2_xyzw_4.y;
@@ -4890,7 +4890,7 @@ Shader "Corpus/06 Surface Standard Specular"
                 float r2_y_13;
                 float r2_z_12;
                 float r2_w_8;
-                if ((cb6_values[0].x == 1))
+                if (((cb6_values[0].x == 1)).x)
                 {
                     float4 r2_xyzw_4 = (i.texcoord5.yyyy * cb6_values[2].xxyz);
                     float r2_y_4 = r2_xyzw_4.y;
@@ -5872,7 +5872,7 @@ Shader "Corpus/06 Surface Standard Specular"
                 float r2_y_13;
                 float r2_z_12;
                 float r2_w_8;
-                if ((cb6_values[0].x == 1))
+                if (((cb6_values[0].x == 1)).x)
                 {
                     float4 r2_xyzw_4 = (i.texcoord5.yyyy * cb6_values[2].xxyz);
                     float r2_y_4 = r2_xyzw_4.y;
@@ -6020,10 +6020,10 @@ Shader "Corpus/06 Surface Standard Specular"
                 float r2_z_27 = dot(i.texcoord4.xyzx, float4(r6_x_3, r6_y_2, r6_z_2, r6_x_3));
                 float r2_w_11 = dot(float4(r2_x_20, r2_y_33, r2_z_27, r2_x_20), float4(r2_x_20, r2_y_33, r2_z_27, r2_x_20));
                 float r2_w_12 = rsqrt(r2_w_11);
-                float r2_x_21 = ((r2_w_12.xxxx * float4(r2_x_20, r2_y_33, r2_z_27, r2_x_20))).x;
-                float4 r2_xyzw_34 = (r2_w_12.xxxx * float4(r2_x_20, r2_y_33, r2_z_27, r2_x_20));
-                float r2_y_34 = r2_xyzw_34.y;
-                float r2_z_28 = r2_xyzw_34.z;
+                float4 r2_xyzw_21 = (r2_w_12.xxxx * float4(r2_x_20, r2_y_33, r2_z_27, r2_x_20));
+                float r2_x_21 = r2_xyzw_21.x;
+                float r2_y_34 = r2_xyzw_21.y;
+                float r2_z_28 = r2_xyzw_21.z;
                 float4 r6_xyzw_4 = (r1_w_10.xxxx * _LightColor0.xyzx);
                 float r6_x_4 = r6_xyzw_4.x;
                 float r6_y_3 = r6_xyzw_4.y;
@@ -6302,7 +6302,7 @@ Shader "Corpus/06 Surface Standard Specular"
                 float r2_y_13;
                 float r2_z_12;
                 float r2_w_8;
-                if ((cb6_values[0].x == 1))
+                if (((cb6_values[0].x == 1)).x)
                 {
                     float4 r2_xyzw_4 = (i.texcoord5.yyyy * cb6_values[2].xxyz);
                     float r2_y_4 = r2_xyzw_4.y;
@@ -8111,7 +8111,7 @@ Shader "Corpus/06 Surface Standard Specular"
                 float r2_y_13;
                 float r2_z_12;
                 float r2_w_8;
-                if ((cb5_values[0].x == 1))
+                if (((cb5_values[0].x == 1)).x)
                 {
                     float4 r2_xyzw_4 = (i.texcoord5.yyyy * cb5_values[2].xxyz);
                     float r2_y_4 = r2_xyzw_4.y;
@@ -8467,7 +8467,7 @@ Shader "Corpus/06 Surface Standard Specular"
                 float r2_y_13;
                 float r2_z_12;
                 float r2_w_8;
-                if ((cb5_values[0].x == 1))
+                if (((cb5_values[0].x == 1)).x)
                 {
                     float4 r2_xyzw_4 = (i.texcoord5.yyyy * cb5_values[2].xxyz);
                     float r2_y_4 = r2_xyzw_4.y;
@@ -8802,7 +8802,7 @@ Shader "Corpus/06 Surface Standard Specular"
                 float r2_y_13;
                 float r2_z_12;
                 float r2_w_8;
-                if ((cb5_values[0].x == 1))
+                if (((cb5_values[0].x == 1)).x)
                 {
                     float4 r2_xyzw_4 = (i.texcoord5.yyyy * cb5_values[2].xxyz);
                     float r2_y_4 = r2_xyzw_4.y;
@@ -9155,7 +9155,7 @@ Shader "Corpus/06 Surface Standard Specular"
                 float r2_y_13;
                 float r2_z_12;
                 float r2_w_8;
-                if ((cb5_values[0].x == 1))
+                if (((cb5_values[0].x == 1)).x)
                 {
                     float4 r2_xyzw_4 = (i.texcoord5.yyyy * cb5_values[2].xxyz);
                     float r2_y_4 = r2_xyzw_4.y;
@@ -10086,7 +10086,7 @@ Shader "Corpus/06 Surface Standard Specular"
                 float r2_y_13;
                 float r2_z_12;
                 float r2_w_8;
-                if ((cb5_values[0].x == 1))
+                if (((cb5_values[0].x == 1)).x)
                 {
                     float4 r2_xyzw_4 = (i.texcoord5.yyyy * cb5_values[2].xxyz);
                     float r2_y_4 = r2_xyzw_4.y;
@@ -10234,10 +10234,10 @@ Shader "Corpus/06 Surface Standard Specular"
                 float r2_z_27 = dot(i.texcoord4.xyzx, float4(r6_x_3, r6_y_2, r6_z_2, r6_x_3));
                 float r2_w_11 = dot(float4(r2_x_20, r2_y_33, r2_z_27, r2_x_20), float4(r2_x_20, r2_y_33, r2_z_27, r2_x_20));
                 float r2_w_12 = rsqrt(r2_w_11);
-                float r2_x_21 = ((r2_w_12.xxxx * float4(r2_x_20, r2_y_33, r2_z_27, r2_x_20))).x;
-                float4 r2_xyzw_34 = (r2_w_12.xxxx * float4(r2_x_20, r2_y_33, r2_z_27, r2_x_20));
-                float r2_y_34 = r2_xyzw_34.y;
-                float r2_z_28 = r2_xyzw_34.z;
+                float4 r2_xyzw_21 = (r2_w_12.xxxx * float4(r2_x_20, r2_y_33, r2_z_27, r2_x_20));
+                float r2_x_21 = r2_xyzw_21.x;
+                float r2_y_34 = r2_xyzw_21.y;
+                float r2_z_28 = r2_xyzw_21.z;
                 float4 r6_xyzw_4 = (r1_w_10.xxxx * _LightColor0.xyzx);
                 float r6_x_4 = r6_xyzw_4.x;
                 float r6_y_3 = r6_xyzw_4.y;
@@ -10497,7 +10497,7 @@ Shader "Corpus/06 Surface Standard Specular"
                 float r2_y_13;
                 float r2_z_12;
                 float r2_w_8;
-                if ((cb5_values[0].x == 1))
+                if (((cb5_values[0].x == 1)).x)
                 {
                     float4 r2_xyzw_4 = (i.texcoord5.yyyy * cb5_values[2].xxyz);
                     float r2_y_4 = r2_xyzw_4.y;

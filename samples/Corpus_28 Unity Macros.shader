@@ -39,8 +39,6 @@ Shader "Corpus/28 Unity Macros"
             };
             cbuffer _UnityPerFrameCB_b3
             {
-                float4x4 unity_ObjectToWorld : packoffset(c0);
-                float4x4 unity_WorldToObject : packoffset(c4);
                 float4x4 unity_MatrixV : packoffset(c9);
                 float4x4 unity_MatrixVP : packoffset(c17);
             };
@@ -240,8 +238,6 @@ Shader "Corpus/28 Unity Macros"
             };
             cbuffer _UnityPerFrameCB_b3
             {
-                float4x4 unity_ObjectToWorld : packoffset(c0);
-                float4x4 unity_WorldToObject : packoffset(c4);
                 float4x4 unity_MatrixV : packoffset(c9);
                 float4x4 unity_MatrixVP : packoffset(c17);
             };
