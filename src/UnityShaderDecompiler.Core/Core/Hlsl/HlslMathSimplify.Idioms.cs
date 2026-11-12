@@ -95,9 +95,10 @@ internal static partial class HlslMathSimplify
             for (int j = 0; j < lines.Length; j++)
             {
                 if (j == i || j == i + 1 || j == i + 2 || drop[j]) continue;
-                if (lines[j].Contains($" {rsr} ") || lines[j].Contains($" {rsr}.") ||
-                    lines[j].Contains($"({rsr}.") || lines[j].Contains($",{rsr} ") ||
-                    lines[j].Contains($",{rsr}.") || lines[j].EndsWith($" {rsr}"))
+                // Compare identifier tokens, not substrings or space-delimited
+                // text: the value is also used as `mad(x, rsr, y)`, with a
+                // space after the comma, which no substring test caught.
+                if (Tokenize(lines[j]).Any(t => t.Text == rsr))
                 {
                     rsrUsedElsewhere = true;
                     break;

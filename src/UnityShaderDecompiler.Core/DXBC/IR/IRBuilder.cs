@@ -780,7 +780,12 @@ public partial class IRBuilder
         {
             RegisterType = operand.RegisterType,
             Type = GetRegisterType(operand.RegisterType, operand.RegisterIndex),
-            Index = operand.RegisterIndex,
+            // A per-vertex input array (geometry/tessellation `v[vertex][reg]`)
+            // carries the register in the SECOND index; the first is the
+            // vertex. Every other operand puts the register first.
+            Index = operand.RegisterType == RegisterType.Input && operand.Indices.Count > 1
+                ? operand.Indices[1]
+                : operand.RegisterIndex,
 
             Mask = operand.Mask,
 

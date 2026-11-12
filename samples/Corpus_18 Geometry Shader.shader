@@ -106,32 +106,30 @@ Shader "Corpus/18 Geometry Shader"
             program4Output geom(program4Input i)
             {
                 program4Output o = (program4Output)0;
-                float3 r0_xyz_1 = ((-i.sv_Position0.zxyz + i.texcoord0.zxyz)).xyz;
-                float3 r1_xyz_1 = ((-i.sv_Position0.yzxy + i.texcoord1.yzxy)).xyz;
+                float3 r0_xyz_1 = ((-i.sv_Position0.zxyz + i.sv_Position0.zxyz)).xyz;
+                float3 r1_xyz_1 = ((-i.sv_Position0.yzxy + i.sv_Position0.yzxy)).xyz;
                 float3 r0_xyz_2 = (mad(r0_xyz_1.zxyz, r1_xyz_1.yzxy, ((r0_xyz_1.xyzx * r1_xyz_1.xyzx)).xyzx)).xyz;
-                float3 r0_xyz_4 = normalize(r0_xyz_2);
-                o.sv_Position0.xyz = ((mad(r0_xyz_4.xyzx, float4(0.01, 0.01, 0.01, 0), i.sv_Position0.xyzx)).xyzx).xyz;
+                float3 r1_xyz_2 = normalize(r0_xyz_2);
+                o.sv_Position0.xyz = r1_xyz_2.xyz;
                 o.sv_Position0.w = i.sv_Position0.w;
-                o.texcoord0.xyz = i.sv_Position0.xyz;
-                o.texcoord1.xy = (i.sv_Position0.xyxx).xy;
-                float r0_w_3 = asfloat(asint(inputprimitiveid0) & asint(1));
+                o.texcoord0.xyz = i.texcoord0.xyz;
+                o.texcoord1.xy = (i.texcoord1.xyxx).xy;
+                float r0_w_3 = asfloat(asint(i.sv_Primitiveid0) & asint(1));
                 float r0_w_4 = ((r0_w_3 != 0) ? 0.5 : 1);
-                float4 r1_xyzw_3 = (r0_w_4.xxxx * i.sv_Position0.xyzw);
+                float4 r1_xyzw_3 = (r0_w_4.xxxx * i.color0.xyzw);
                 o.color0.xyzw = r1_xyzw_3;
                 // TODO: unhandled IR node — emitStream(0)
-                o.sv_Position0.xyz = ((mad(r0_xyz_4.xyzx, float4(0.01, 0.01, 0.01, 0), i.texcoord0.xyzx)).xyzx).xyz;
-                o.sv_Position0.w = i.texcoord0.w;
+                o.sv_Position0.xyz = ((r1_xyz_2).xyzx).xyz;
+                o.sv_Position0.w = i.sv_Position0.w;
                 o.texcoord0.xyz = i.texcoord0.xyz;
-                o.texcoord1.xy = (i.texcoord0.xyxx).xy;
-                float4 r1_xyzw_5 = (r0_w_4.xxxx * i.texcoord0.xyzw);
-                float4 r2_xyzw_2 = (r0_w_4.xxxx * i.texcoord1.xyzw);
-                o.color0.xyzw = r1_xyzw_5;
-                // TODO: unhandled IR node — emitStream(0)
-                o.sv_Position0.xyz = ((mad(r0_xyz_4.xyzx, float4(0.01, 0.01, 0.01, 0), i.texcoord1.xyzx)).xyzx).xyz;
-                o.sv_Position0.w = i.texcoord1.w;
-                o.texcoord0.xyz = i.texcoord1.xyz;
                 o.texcoord1.xy = (i.texcoord1.xyxx).xy;
-                o.color0.xyzw = r2_xyzw_2;
+                o.color0.xyzw = r1_xyzw_3;
+                // TODO: unhandled IR node — emitStream(0)
+                o.sv_Position0.xyz = ((r1_xyz_2).xyzx).xyz;
+                o.sv_Position0.w = i.sv_Position0.w;
+                o.texcoord0.xyz = i.texcoord0.xyz;
+                o.texcoord1.xy = (i.texcoord1.xyxx).xy;
+                o.color0.xyzw = r1_xyzw_3;
                 // TODO: unhandled IR node — emitStream(0)
                 // TODO: unhandled IR node — cutStream(0)
                 return o;

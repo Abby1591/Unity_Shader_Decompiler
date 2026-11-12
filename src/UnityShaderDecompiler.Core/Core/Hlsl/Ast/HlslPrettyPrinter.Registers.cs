@@ -490,6 +490,12 @@ public static partial class HlslPrettyPrinter
             RegisterType.Output =>
                 RenderSignatureField(reg, "o", ctx.OutputElements, ctx),
 
+            // Geometry/tessellation input primitive ID is an implicit system
+            // value, not part of the register-indexed input array. The input
+            // struct builds its field from the ISGN SV_PrimitiveID element.
+            RegisterType.InputPrimitiveID =>
+                "i." + HlslAstBuilder.ToFieldName("SV_PrimitiveID0"),
+
             RegisterType.ConstantBuffer =>
                 RenderCbufferRead(reg, ctx),
 
@@ -705,6 +711,18 @@ public static partial class HlslPrettyPrinter
                         yield return $"float {scalar};";
                 }
             }
+        }
+
+        // resinfo has no expression-form HLSL equivalent: GetDimensions
+        // reports through out-parameters, so query into uint locals and then
+        // build the destination value from them.
+        if (expr is IRExpression.TextureOperationExpression
+            { Operation: IRExpression.TextureOperation.ResInfo } info
+            && SingleDestName(dest, active, ctx) is { } infoName)
+        {
+            foreach (string line in RenderResInfo(info, infoName, active, dest, ctx))
+                yield return line;
+            yield break;
         }
 
         string rawRhs = RenderExpression(expr, ctx);
@@ -1197,6 +1215,8 @@ public static partial class HlslPrettyPrinter
         string Op(IRExpression side)
         {
             string s = RenderExpression(side, ctx);
+            // A literal is already an integer; asint has no int overload.
+            if (side is IRExpression.ConstantExpression) return s;
             return IsComparisonish(side) ? $"(float)({s})" : s;
         }
         return $"asfloat(asint({Op(b.Left)}) {BinaryOpText(b.Operation)} asint({Op(b.Right)}))";
@@ -1368,6 +1388,58 @@ public static partial class HlslPrettyPrinter
         "Texture2D" or "Texture2DMS" => ".xy",
         "TextureCubeArray" => ".xyzw",
         _ => ".xyz",
+    };
+
+    // DXBC resinfo has no expression-form HLSL equivalent: GetDimensions
+    // reports through uint out-parameters. Query into locals named off the
+    // destination, then build the destination value from them.
+    // shortcut: the 2D/3D/cube families are mapped; a multisampled target
+    // omits the mip parameter, other exotic resource types fall back to 3.
+    private static IEnumerable<string> RenderResInfo(
+        IRExpression.TextureOperationExpression tex,
+        string name,
+        List<int> active,
+        IRRegister dest,
+        PrintContext ctx)
+    {
+        string resource = RenderRegisterRead(tex.Resource, ctx);
+        string type = tex.Resource is { } rr
+            ? ctx.TextureTypeBySlot.GetValueOrDefault((int)rr.Index, "Texture2D")
+            : "Texture2D";
+        int outCount = ResInfoOutCount(type);
+        bool hasMip = !type.Contains("MS", StringComparison.Ordinal);
+
+        var outs = Enumerable.Range(0, outCount).Select(i => $"{name}_{ComponentLetters[i]}").ToList();
+        yield return $"uint {string.Join(", ", outs)};";
+
+        var args = new List<string>();
+        if (hasMip)
+        {
+            string mip = tex.LOD is null ? "0" : RenderExpression(tex.LOD, ctx);
+            args.Add($"(uint)({mip})");
+        }
+        args.AddRange(outs);
+        yield return $"{resource}.GetDimensions({string.Join(", ", args)});";
+
+        string value = active.Count == 1
+            ? outs[active[0]]
+            : $"float{active.Count}({string.Join(", ", active.Select(c => outs[c]))})";
+
+        if (dest.SsaVersion[active[0]] is { } v)
+            foreach (int c in active)
+                ctx.DeclaredViews[(LocationOf(dest, c), v)] = (name, active);
+
+        yield return ctx.Declared.Add(name)
+            ? $"{DeclType(active.Count)} {name} = {value};"
+            : $"{name} = {value};";
+    }
+
+    private static int ResInfoOutCount(string type) => type switch
+    {
+        "Texture1D" => 2,
+        "Texture2D" or "TextureCube" or "Texture1DArray" => 3,
+        "Texture2DArray" or "Texture3D" or "TextureCubeArray" => 4,
+        _ => 3,
     };
 
     // Confirmed 1:1 against real Texture2D/TextureCube method names;

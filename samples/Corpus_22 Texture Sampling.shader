@@ -178,7 +178,9 @@ Shader "Corpus/22 Texture Sampling"
                 float r1_y_13 = r1_xyzw_13.y;
                 float r1_z_12 = r1_xyzw_13.z;
                 o.sv_Target0.xyz = ((((r0_xyz_11.xyzx + float4(r1_x_13, r1_y_13, r1_z_12, r1_x_13))).xyzx * float4(0.03448276, 0.03448276, 0.03448276, 0))).xyz;
-                float2 r0_xy_13 = /* TODO: no confirmed HLSL mapping for ResInfo */ _Tex2DArray.ResInfo();
+                uint r0_xy_13_x, r0_xy_13_y, r0_xy_13_z;
+                _Tex2DArray.GetDimensions((uint)(0), r0_xy_13_x, r0_xy_13_y, r0_xy_13_z);
+                float2 r0_xy_13 = float2(r0_xy_13_x, r0_xy_13_y);
                 float2 r0_xy_14 = ((float4)(r0_xy_13.xyxx)).xy;
                 float r0_y_15 = max(r0_xy_14.y, 1);
                 o.sv_Target0.w = min((r0_xy_14.x / r0_y_15), 1);

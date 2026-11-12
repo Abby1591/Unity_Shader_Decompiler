@@ -127,8 +127,16 @@ public class DecompilerIntegrationTests
     {
         var result = FixtureCache.Decompile(fixture);
 
+        // A pass whose program is not in the blob (e.g. a GrabPass or a pass
+        // built only for another graphics API) keeps its render state but
+        // emits no HLSL block: fabricating one would not be the shader.
         int programs = Regex.Matches(result.ShaderText, "HLSLPROGRAM").Count;
-        Assert.Equal(result.Passes.Count, programs);
+        int passesWithProgram = result.Passes.Count(p =>
+            p.VertexFunction is not null || p.FragmentFunction is not null
+            || p.GeometryFunction is not null || p.HullFunction is not null
+            || p.DomainFunction is not null || p.ComputeFunction is not null);
+        Assert.Equal(passesWithProgram, programs);
+        Assert.DoesNotContain("_StubCB", result.ShaderText);
     }
 
     [Fact]
