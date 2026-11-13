@@ -72,22 +72,25 @@ public static class FaithfulnessTest
 
             string? vsEntry = PragmaEntry(block, "vertex");
             string? psEntry = PragmaEntry(block, "fragment");
-            if (vsEntry is null && psEntry is null) continue;
+            string? gsEntry = PragmaEntry(block, "geometry");
+            if (vsEntry is null && psEntry is null && gsEntry is null) continue;
 
             CompilePass(block, vsEntry, "vs_5_0", "Vertex", out var vsIn, out var vsOut, out string? vsErr);
             CompilePass(block, psEntry, "ps_5_0", "Fragment", out var psIn, out var psOut, out string? psErr);
+            CompilePass(block, gsEntry, "gs_5_0", "Geometry", out var gsIn, out var gsOut, out string? gsErr);
 
-            if (vsErr is not null || psErr is not null)
+            if (vsErr is not null || psErr is not null || gsErr is not null)
             {
                 result.CompileFailures++;
-                result.Errors.Add($"{label}: compile FAILED ({FirstErrors(vsErr ?? psErr ?? "")})");
+                result.Errors.Add($"{label}: compile FAILED ({FirstErrors(vsErr ?? psErr ?? gsErr ?? "")})");
                 continue;
             }
             result.Recompiled++;
 
             bool matched = shipped.Any(s =>
                 vsEntry is not null && s.Stage == "Vertex" && SetsEqual(s.Input, vsIn) && SetsEqual(s.Output, vsOut)
-                || psEntry is not null && s.Stage == "Fragment" && SetsEqual(s.Input, psIn) && SetsEqual(s.Output, psOut));
+                || psEntry is not null && s.Stage == "Fragment" && SetsEqual(s.Input, psIn) && SetsEqual(s.Output, psOut)
+                || gsEntry is not null && s.Stage == "Geometry" && SetsEqual(s.Input, gsIn) && SetsEqual(s.Output, gsOut));
             if (matched)
                 result.SignatureMatched++;
             else
@@ -277,6 +280,9 @@ public static class FaithfulnessTest
                 : sub.m_ProgramType is ShaderGpuProgramType.DX11PixelSM40
                     or ShaderGpuProgramType.DX11PixelSM50
                 ? "Fragment"
+                : sub.m_ProgramType is ShaderGpuProgramType.DX11GeometrySM40
+                    or ShaderGpuProgramType.DX11GeometrySM50
+                ? "Geometry"
                 : "Other";
             if (stage == "Other") continue;
 

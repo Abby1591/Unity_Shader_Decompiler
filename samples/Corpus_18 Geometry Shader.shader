@@ -65,7 +65,6 @@ Shader "Corpus/18 Geometry Shader"
                 float3 texcoord0 : TEXCOORD0;
                 float2 texcoord1 : TEXCOORD1;
                 float4 color0 : COLOR0;
-                uint sv_Primitiveid0 : SV_PrimitiveID;
             };
             struct program4Output
             {
@@ -103,36 +102,40 @@ Shader "Corpus/18 Geometry Shader"
                 o.sv_Target0.w = r1_xyzw_3.w;
                 return o;
             }
-            program4Output geom(program4Input i)
+            #pragma geometry geom
+            [maxvertexcount(3)]
+            void geom(triangle program4Input i[3], uint sv_Primitiveid0 : SV_PrimitiveID, inout TriangleStream<program4Output> stream)
             {
                 program4Output o = (program4Output)0;
-                float3 r0_xyz_1 = ((-i.sv_Position0.zxyz + i.sv_Position0.zxyz)).xyz;
-                float3 r1_xyz_1 = ((-i.sv_Position0.yzxy + i.sv_Position0.yzxy)).xyz;
+                float3 r0_xyz_1 = ((-i[0].sv_Position0.zxyz + i[1].sv_Position0.zxyz)).xyz;
+                float3 r1_xyz_1 = ((-i[0].sv_Position0.yzxy + i[2].sv_Position0.yzxy)).xyz;
                 float3 r0_xyz_2 = (mad(r0_xyz_1.zxyz, r1_xyz_1.yzxy, ((r0_xyz_1.xyzx * r1_xyz_1.xyzx)).xyzx)).xyz;
-                float3 r1_xyz_2 = normalize(r0_xyz_2);
-                o.sv_Position0.xyz = r1_xyz_2.xyz;
-                o.sv_Position0.w = i.sv_Position0.w;
-                o.texcoord0.xyz = i.texcoord0.xyz;
-                o.texcoord1.xy = (i.texcoord1.xyxx).xy;
-                float r0_w_3 = asfloat(asint(i.sv_Primitiveid0) & asint(1));
+                float3 r0_xyz_4 = normalize(r0_xyz_2);
+                o.sv_Position0.xyz = ((mad(r0_xyz_4.xyzx, float4(0.01, 0.01, 0.01, 0), i[0].sv_Position0.xyzx)).xyzx).xyz;
+                o.sv_Position0.w = i[0].sv_Position0.w;
+                o.texcoord0.xyz = i[0].texcoord0.xyz;
+                o.texcoord1.xy = (i[0].texcoord1.xyxx).xy;
+                float r0_w_3 = asfloat(asint(sv_Primitiveid0) & asint(1));
                 float r0_w_4 = ((r0_w_3 != 0) ? 0.5 : 1);
-                float4 r1_xyzw_3 = (r0_w_4.xxxx * i.color0.xyzw);
+                float4 r1_xyzw_3 = (r0_w_4.xxxx * i[0].color0.xyzw);
                 o.color0.xyzw = r1_xyzw_3;
-                // TODO: unhandled IR node — emitStream(0)
-                o.sv_Position0.xyz = ((r1_xyz_2).xyzx).xyz;
-                o.sv_Position0.w = i.sv_Position0.w;
-                o.texcoord0.xyz = i.texcoord0.xyz;
-                o.texcoord1.xy = (i.texcoord1.xyxx).xy;
-                o.color0.xyzw = r1_xyzw_3;
-                // TODO: unhandled IR node — emitStream(0)
-                o.sv_Position0.xyz = ((r1_xyz_2).xyzx).xyz;
-                o.sv_Position0.w = i.sv_Position0.w;
-                o.texcoord0.xyz = i.texcoord0.xyz;
-                o.texcoord1.xy = (i.texcoord1.xyxx).xy;
-                o.color0.xyzw = r1_xyzw_3;
-                // TODO: unhandled IR node — emitStream(0)
-                // TODO: unhandled IR node — cutStream(0)
-                return o;
+                stream.Append(o);
+                o.sv_Position0.xyz = ((mad(r0_xyz_4.xyzx, float4(0.01, 0.01, 0.01, 0), i[1].sv_Position0.xyzx)).xyzx).xyz;
+                o.sv_Position0.w = i[1].sv_Position0.w;
+                o.texcoord0.xyz = i[1].texcoord0.xyz;
+                o.texcoord1.xy = (i[1].texcoord1.xyxx).xy;
+                float4 r1_xyzw_5 = (r0_w_4.xxxx * i[1].color0.xyzw);
+                float4 r2_xyzw_2 = (r0_w_4.xxxx * i[2].color0.xyzw);
+                o.color0.xyzw = r1_xyzw_5;
+                stream.Append(o);
+                o.sv_Position0.xyz = ((mad(r0_xyz_4.xyzx, float4(0.01, 0.01, 0.01, 0), i[2].sv_Position0.xyzx)).xyzx).xyz;
+                o.sv_Position0.w = i[2].sv_Position0.w;
+                o.texcoord0.xyz = i[2].texcoord0.xyz;
+                o.texcoord1.xy = (i[2].texcoord1.xyxx).xy;
+                o.color0.xyzw = r2_xyzw_2;
+                stream.Append(o);
+                stream.RestartStrip();
+                return;
             }
             ENDHLSL
         }

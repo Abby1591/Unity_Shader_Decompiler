@@ -23,6 +23,7 @@ public class DecompilerIntegrationTests
         { "Corpus_04 Vertex Fragment", "Corpus/04 Vertex Fragment" },
         { "Corpus_05 Surface Standard", "Corpus/05 Surface Standard" },
         { "Corpus_14 Shadow Depth Meta Motion", "Corpus/14 Shadow Depth Meta Motion" },
+        { "Corpus_18 Geometry Shader", "Corpus/18 Geometry Shader" },
         { "Corpus_19 Hull Domain", "Corpus/19 Hull Domain" },
         { "Corpus_20 Instancing", "Corpus/20 Instancing" },
         { "Corpus_26 Multiple Render Targets", "Corpus/26 Multiple Render Targets" },
@@ -191,6 +192,24 @@ public class DecompilerIntegrationTests
 
         Assert.Contains("_WorldSpaceLightPos0", text);
         Assert.Contains("_LightColor0", text);
+    }
+
+    [Fact]
+    public void Geometry_EmitsEntryPointSignatureAndStreamCalls()
+    {
+        string text = FixtureCache.Decompile("Corpus_18 Geometry Shader").ShaderText;
+
+        Assert.Contains("#pragma geometry geom", text);
+        Assert.Contains("[maxvertexcount(3)]", text);
+        // The per-vertex input is an array; SV_PrimitiveID is a separate
+        // parameter because D3D rejects it inside the array struct.
+        Assert.Contains("triangle program4Input i[3]", text);
+        Assert.Contains("SV_PrimitiveID", text);
+        Assert.Contains("inout TriangleStream<program4Output> stream", text);
+        Assert.Contains("i[1].sv_Position0.w", text);
+        Assert.Contains("stream.Append(o);", text);
+        Assert.Contains("stream.RestartStrip();", text);
+        Assert.DoesNotContain("unhandled IR node", text);
     }
 
     [Fact]

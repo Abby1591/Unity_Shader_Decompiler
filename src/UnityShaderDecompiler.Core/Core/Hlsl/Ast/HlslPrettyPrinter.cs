@@ -216,7 +216,16 @@ public static partial class HlslPrettyPrinter
             sb.Append("            #pragma fragment frag\n");
             PrintFunction(sb, pass.FragmentFunction, pass.Cbuffers, fuseTemps, stageInputs: stageInterpolators, resources: pass.Resources, cbufferRenames: cbufferRenames);
         }
-        foreach (HlslFunctionNode? f in new[] { pass.GeometryFunction, pass.HullFunction, pass.DomainFunction, pass.ComputeFunction })
+        if (pass.GeometryFunction is not null)
+        {
+            sb.Append("            #pragma geometry geom\n");
+            PrintFunction(sb, pass.GeometryFunction, pass.Cbuffers, fuseTemps, resources: pass.Resources, cbufferRenames: cbufferRenames);
+        }
+
+        // Hull/domain/compute blocks stay pragma-less: their entry points need
+        // ShaderLab attributes (domain/partitioning/outputtopology) that are
+        // not wired yet.
+        foreach (HlslFunctionNode? f in new[] { pass.HullFunction, pass.DomainFunction, pass.ComputeFunction })
             if (f is not null)
                 PrintFunction(sb, f, pass.Cbuffers, fuseTemps, resources: pass.Resources, cbufferRenames: cbufferRenames);
 
@@ -623,6 +632,8 @@ public static partial class HlslPrettyPrinter
         public Dictionary<string, string> CbufferVarRenames { get; } = new();
     }
 
+    private static string StreamName(uint stream) => stream == 0 ? "stream" : $"stream{stream}";
+
     private static void PrintFunction(
         StringBuilder sb,
         HlslFunctionNode fn,
@@ -635,9 +646,28 @@ public static partial class HlslPrettyPrinter
     {
         string outType = fn.OutputStruct?.Name ?? "void";
         string inType = fn.InputStruct?.Name ?? "";
-        string inParam = fn.InputStruct is null ? "" : $"{inType} i";
 
-        sb.Append("            ").Append(outType).Append(' ').Append(fn.Name).Append('(').Append(inParam).Append(")\n            {\n");
+        if (fn.Stage == HlslShaderStage.Geometry)
+        {
+            var parameters = new List<string>();
+            if (fn.InputStruct is not null)
+                parameters.Add($"{fn.GeometryInputPrimitive} {inType} i[{fn.GeometryInputVertexCount}]");
+            // SV_PrimitiveID and friends are whole-primitive values and HLSL
+            // only accepts them as separate entry-point parameters.
+            foreach (HlslFieldNode field in fn.PerPrimitiveInputs)
+                parameters.Add($"{field.TypeHint} {field.Name} : {field.Semantic}");
+            foreach (uint stream in fn.GeometryStreams)
+                parameters.Add($"inout {fn.GeometryOutputStream}<{outType}> {StreamName(stream)}");
+
+            sb.Append("            [maxvertexcount(").Append(fn.GeometryMaxOutputVertices).Append(")]\n");
+            sb.Append("            void ").Append(fn.Name).Append('(')
+              .Append(string.Join(", ", parameters)).Append(")\n            {\n");
+        }
+        else
+        {
+            string inParam = fn.InputStruct is null ? "" : $"{inType} i";
+            sb.Append("            ").Append(outType).Append(' ').Append(fn.Name).Append('(').Append(inParam).Append(")\n            {\n");
+        }
 
         // Filter the pass-wide cbuffer table down to the ones this stage
         // actually binds (its own stage, plus any shared "" entries) —
@@ -688,8 +718,10 @@ public static partial class HlslPrettyPrinter
         // DXBC functions return through a `ret` instruction; a switch (or an
         // if whose merge tail got attached to the last case) can leave the
         // printer's last case holding the return, so the function falls
-        // through. A trailing return is harmless when unreachable.
-        if (fn.OutputStruct is not null
+        // through. A trailing return is harmless when unreachable. Geometry
+        // entry points are void and emit through the stream instead.
+        if (fn.Stage != HlslShaderStage.Geometry
+            && fn.OutputStruct is not null
             && (fn.Statements.Statements.Count == 0 || fn.Statements.Statements[^1] is not HlslReturnStatement))
             body.Append("                return o;\n");
 

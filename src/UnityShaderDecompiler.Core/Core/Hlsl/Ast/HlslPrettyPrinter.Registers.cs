@@ -113,9 +113,19 @@ public static partial class HlslPrettyPrinter
                 break;
 
             case HlslReturnStatement r:
+            {
+                // Geometry entry points are void: ret emits nothing, the
+                // output goes through stream.Append before it.
+                string ret = ctx.Stage == HlslShaderStage.Geometry ? "return;" : "return o;";
                 sb.Append(pad).Append(r.Condition is null
-                    ? "return o;"
-                    : $"if ({RenderCondition(r.Condition, ctx)}) return o;").Append('\n');
+                    ? ret
+                    : $"if ({RenderCondition(r.Condition, ctx)}) {ret}").Append('\n');
+                break;
+            }
+
+            case HlslEmitStatement e:
+                sb.Append(pad).Append(StreamName((uint)e.Stream))
+                  .Append(e.IsCut ? ".RestartStrip();" : ".Append(o);").Append('\n');
                 break;
 
             case HlslDiscardStatement d:
@@ -485,16 +495,18 @@ public static partial class HlslPrettyPrinter
                 RenderTempRead(reg, ctx),
 
             RegisterType.Input =>
-                RenderSignatureField(reg, "i", ctx.InputElements, ctx),
+                RenderSignatureField(reg, InputPrefix(reg, ctx), ctx.InputElements, ctx),
 
             RegisterType.Output =>
                 RenderSignatureField(reg, "o", ctx.OutputElements, ctx),
 
-            // Geometry/tessellation input primitive ID is an implicit system
-            // value, not part of the register-indexed input array. The input
-            // struct builds its field from the ISGN SV_PrimitiveID element.
-            RegisterType.InputPrimitiveID =>
-                "i." + HlslAstBuilder.ToFieldName("SV_PrimitiveID0"),
+            // Geometry input primitive ID is an implicit per-primitive system
+            // value, not a field of the per-vertex array. Geometry shaders
+            // take it as its own parameter; other stages still have it in the
+            // input struct.
+            RegisterType.InputPrimitiveID => ctx.Stage == HlslShaderStage.Geometry
+                ? HlslAstBuilder.ToFieldName("SV_PrimitiveID0")
+                : "i." + HlslAstBuilder.ToFieldName("SV_PrimitiveID0"),
 
             RegisterType.ConstantBuffer =>
                 RenderCbufferRead(reg, ctx),
@@ -525,6 +537,20 @@ public static partial class HlslPrettyPrinter
             ShdrParser.OperandModifier.AbsNeg => $"-abs({rendered})",
             _ => rendered,
         };
+    }
+
+    // Geometry input registers carry the array element (vertex index) in
+    // Indices[0]; every other stage's input is a single struct parameter.
+    private static string InputPrefix(IRRegister reg, PrintContext ctx)
+    {
+        if (ctx.Stage != HlslShaderStage.Geometry || reg.Indices.Count == 0)
+            return "i";
+
+        IRExpression? relative = reg.RelativeIndices[0];
+        string index = relative is not null
+            ? RenderExpression(relative, ctx)
+            : reg.Indices[0].ToString();
+        return $"i[{index}]";
     }
 
     private static string FieldNameFor(IRRegister reg, PrintContext ctx)

@@ -251,6 +251,22 @@ public sealed class HlslFunctionNode
     public HlslStructNode? InputStruct { get; set; }
     public HlslStructNode? OutputStruct { get; set; }
 
+    // Geometry stage entry-point metadata, recovered from the declaration
+    // stream (dcl_inputprimitive / dcl_maxout / dcl_outputtopology). The
+    // SFI0 chunk that also carries these is stripped from shipped blobs.
+    public string? GeometryInputPrimitive { get; set; }   // point/line/triangle/lineadj/triangleadj
+    public int GeometryInputVertexCount { get; set; }
+    public int GeometryMaxOutputVertices { get; set; }
+    public string GeometryOutputStream { get; set; } = "TriangleStream";
+
+    // dcl_stream slots; stream 0 is the default when the shader declares none.
+    public List<uint> GeometryStreams { get; } = new();
+
+    // System values that belong to the whole primitive (SV_PrimitiveID)
+    // rather than each vertex. HLSL requires them as separate GS parameters,
+    // so they are kept out of InputStruct.
+    public List<HlslFieldNode> PerPrimitiveInputs { get; } = new();
+
     // ISGN/OSGN elements grouped by register index. A register can be
     // split across two elements with disjoint masks (packed attributes —
     // e.g. TEXCOORD0.xy + TEXCOORD1.zw sharing register o1), and the struct
