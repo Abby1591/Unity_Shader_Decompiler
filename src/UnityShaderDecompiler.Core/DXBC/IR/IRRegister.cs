@@ -98,6 +98,13 @@ public sealed class IRRegister
             _ => $"{RegisterType.ToString().ToLower()}{Index}"
         };
 
+        // A per-vertex input array element is `v[vertex][register]`. The
+        // vertex index is part of the register's identity: without it, passes
+        // that use ToString() as a key (value numbering) treat reads of the
+        // same field on different vertices as one value and fold them.
+        if (RegisterType == RegisterType.Input && Indices.Count > 1)
+            name = $"{name}[{IndexToString(0)}]";
+
         string suffix = ComponentMode switch
         {
             Operand.OperandComponentMode.Mask => MaskToString(Mask),

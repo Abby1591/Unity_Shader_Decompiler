@@ -21,6 +21,7 @@ public class GoldenMetadataTests
         "Corpus_04 Vertex Fragment",
         "Corpus_05 Surface Standard",
         "Corpus_14 Shadow Depth Meta Motion",
+        "Corpus_18 Geometry Shader",
         "Corpus_19 Hull Domain",
         "Corpus_20 Instancing",
         "Corpus_26 Multiple Render Targets",

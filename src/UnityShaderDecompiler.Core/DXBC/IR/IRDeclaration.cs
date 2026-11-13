@@ -106,6 +106,19 @@ public abstract class IRDeclaration
         public uint Index { get; init; }
     }
 
+    // dcl_inputprimitive: geometry-shader input primitive, D3D10_SB_PRIMITIVE
+    // numbering (1=point, 2=line, 3=triangle, 6=lineadj, 7=triangleadj).
+    public sealed class IRInputPrimitiveDeclaration : IRDeclaration
+    {
+        public uint Primitive { get; init; }
+    }
+
+    // dcl_maxout: upper bound on vertices the geometry shader may emit
+    public sealed class IRMaxOutputVertexCountDeclaration : IRDeclaration
+    {
+        public uint Count { get; init; }
+    }
+
     // dcl_interface: SM5 interface/class slot table for dynamic linkage
     public sealed class IRInterfaceDeclaration : IRDeclaration
     {

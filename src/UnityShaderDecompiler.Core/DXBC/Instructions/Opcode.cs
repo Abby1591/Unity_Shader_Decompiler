@@ -177,6 +177,9 @@ public enum Opcode
     DclDomain,
     DclPartitioning,
     DclOutputTopology,
+    DclInputPrimitive,
+    DclMaxOutputVertexCount,
+    DclInputSIV,
 
     // ===================== previously missing SM5 declarations/atomics =====================
 

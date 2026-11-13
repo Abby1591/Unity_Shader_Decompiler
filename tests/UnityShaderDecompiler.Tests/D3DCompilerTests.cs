@@ -30,6 +30,24 @@ public class D3DCompilerTests
 
     [Fact]
     [Trait("Category", "D3D")]
+    public void CompileHlsl_DecompiledGeometryShader_Compiles()
+    {
+        if (!OperatingSystem.IsWindows())
+            return;
+
+        string text = FixtureCache.Decompile("Corpus_18 Geometry Shader").ShaderText;
+        int start = text.IndexOf("HLSLPROGRAM", StringComparison.Ordinal) + "HLSLPROGRAM".Length;
+        int end = text.IndexOf("ENDHLSL", start, StringComparison.Ordinal);
+        string block = text[start..end];
+
+        Assert.Contains("#pragma geometry geom", block);
+        byte[] dxbc = DxbcCompiler.Compile(block, "geom", "gs_5_0");
+
+        Assert.Equal("DXBC", Encoding.ASCII.GetString(dxbc, 0, 4));
+    }
+
+    [Fact]
+    [Trait("Category", "D3D")]
     public void CompileHlsl_InvalidSource_Throws()
     {
         if (!OperatingSystem.IsWindows())

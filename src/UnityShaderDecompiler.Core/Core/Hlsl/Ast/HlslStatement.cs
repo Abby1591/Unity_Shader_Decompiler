@@ -92,6 +92,14 @@ public sealed class HlslMemoryStoreStatement : HlslStatementNode
     public IRExpression Value { get; init; } = null!;
 }
 
+// Geometry-shader emit/cut: append the current output vertex to a stream and
+// (optionally) end the primitive strip.
+public sealed class HlslEmitStatement : HlslStatementNode
+{
+    public bool IsCut { get; init; }
+    public int Stream { get; init; }
+}
+
 // Fallback for anything without a dedicated node yet (atomics, barriers,
 // geometry-shader emit/cut, hull-shader phases, dynamic-linkage calls,
 // post-SSA phi nodes) — wraps the original IRStatement verbatim rather
@@ -242,9 +250,22 @@ public static class HlslStatementBuilder
                     i++;
                     continue;
 
+                case IRStatement.IREmitVertex emit:
+                    block.Statements.Add(new HlslEmitStatement { Stream = (int)(emit.Stream ?? 0) });
+                    i++;
+                    continue;
+
+                case IRStatement.IRCutStream cut:
+                    // emitThenCut is one DXBC instruction but two HLSL calls.
+                    if (cut.EmitBeforeCut)
+                        block.Statements.Add(new HlslEmitStatement { Stream = (int)(cut.Stream ?? 0) });
+                    block.Statements.Add(new HlslEmitStatement { IsCut = true, Stream = (int)(cut.Stream ?? 0) });
+                    i++;
+                    continue;
+
                 default:
                     // IRLabel, IRCall, IRInterfaceCall, IRPhase, IRAtomicOp,
-                    // IRBarrier, IREmitVertex, IRCutStream, IRPhi — all rare
+                    // IRBarrier, IRPhi — all rare
                     // in the shaders this project targets (hull/geometry/
                     // compute stages, or post-SSA-only nodes). Preserved
                     // verbatim rather than guessed at.

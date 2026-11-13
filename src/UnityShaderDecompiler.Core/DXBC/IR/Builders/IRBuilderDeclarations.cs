@@ -289,6 +289,22 @@ public partial class IRBuilder
         program.Declarations.Add(new IRDeclaration.IROutputTopologyDeclaration { Topology = topology });
     }
 
+    private void BuildInputPrimitive(IRProgram program, Instruction instruction)
+    {
+        program.Declarations.Add(new IRDeclaration.IRInputPrimitiveDeclaration
+        {
+            Primitive = instruction.ExtraData.Count > 0 ? instruction.ExtraData[0] : 0
+        });
+    }
+
+    private void BuildMaxOutputVertexCount(IRProgram program, Instruction instruction)
+    {
+        program.Declarations.Add(new IRDeclaration.IRMaxOutputVertexCountDeclaration
+        {
+            Count = instruction.ExtraData.Count > 0 ? instruction.ExtraData[0] : 0
+        });
+    }
+
     // ============================================================
     // Raw/structured resource & UAV/TGSM declarations
     // ============================================================

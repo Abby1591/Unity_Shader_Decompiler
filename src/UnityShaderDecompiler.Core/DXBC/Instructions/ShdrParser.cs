@@ -160,6 +160,7 @@ private OpcodeInfo DecodeOpcode(uint opcode)
             Opcode.DclInput => false,
             Opcode.DclInputPS => false,
             Opcode.DclInputSVG => false,
+            Opcode.DclInputSIV => false,
             Opcode.DclOutput => false,
             Opcode.DclOutputSIV => false,
             Opcode.DclTemps => false,
@@ -684,10 +685,25 @@ private RegisterType DecodeRegisterType(uint type)
                     break;
                 
                 //----------------------------------------------------------
-                // dcl_input_sgv
+                // dcl_input_sgv / dcl_input_siv
                 //----------------------------------------------------------
                 case 96:
+                case 97:
                     instruction.ExtraData.Add(reader.ReadUInt32()); // system-value semantic
+                    break;
+
+                //----------------------------------------------------------
+                // dcl_inputprimitive - primitive type packed into bits 11-16
+                //----------------------------------------------------------
+                case 93:
+                    instruction.ExtraData.Add((token >> 11) & 0x3F);
+                    break;
+
+                //----------------------------------------------------------
+                // dcl_maxout - one raw immediate DWORD: max output vertices
+                //----------------------------------------------------------
+                case 94:
+                    instruction.ExtraData.Add(reader.ReadUInt32());
                     break;
                 
                 //----------------------------------------------------------

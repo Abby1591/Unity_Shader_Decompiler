@@ -127,8 +127,19 @@ public static class HlslAstBuilder
         // Unity's compiler produced, not just a semantic name. Falls
         // back to the Stage 2 declaration-only reconstruction (always
         // float4) only if a signature chunk wasn't parsed.
-        function.InputStruct = inputSignature is not null
-            ? BuildStructFromSignature($"{sourceName}Input", inputSignature.Elements)
+        List<SignatureElement>? inputElements = inputSignature?.Elements;
+        if (stage.Value == HlslShaderStage.Geometry && inputElements is not null)
+        {
+            // SV_PrimitiveID/SV_GSInstanceID belong to the primitive, not each
+            // vertex: HLSL rejects them inside the per-vertex input array, so
+            // they are lifted out into their own entry-point parameters.
+            foreach (SignatureElement el in inputElements.Where(IsPerPrimitiveSystemValue))
+                function.PerPrimitiveInputs.Add(BuildField(el));
+            inputElements = inputElements.Where(e => !IsPerPrimitiveSystemValue(e)).ToList();
+        }
+
+        function.InputStruct = inputElements is not null
+            ? BuildStructFromSignature($"{sourceName}Input", inputElements)
             : BuildStruct($"{sourceName}Input", declarations
                 .OfType<IRDeclaration.IRInputDeclaration>()
                 .Select(d => (Register: d.Register, d.SymbolicName)));
@@ -154,8 +165,62 @@ public static class HlslAstBuilder
         function.Statements = HlslStatementBuilder.Build(function.Body);
         HlslNameRecovery.Apply(function.Statements);
 
+        if (stage.Value == HlslShaderStage.Geometry)
+            ApplyGeometryInfo(function, declarations);
+
         return function;
     }
+
+    // dcl_inputprimitive/dcl_maxout are the only geometry metadata that
+    // survives Unity's stripped blobs (the SFI0 chunk is gone), so they come
+    // from the declaration stream. dcl_outputtopology is opcode 92.
+    private static void ApplyGeometryInfo(HlslFunctionNode function, List<IRDeclaration> declarations)
+    {
+        uint primitive = declarations.OfType<IRDeclaration.IRInputPrimitiveDeclaration>()
+            .LastOrDefault()?.Primitive ?? 0;
+        (function.GeometryInputPrimitive, function.GeometryInputVertexCount) = primitive switch
+        {
+            1 => ("point", 1),
+            2 => ("line", 2),
+            3 => ("triangle", 3),
+            6 => ("lineadj", 4),
+            7 => ("triangleadj", 6),
+            // dcl_inputprimitive is mandatory in a geometry program; if it is
+            // missing treat the input as triangles, which compiles and is what
+            // Unity's geometry shaders almost always use.
+            _ => ("triangle", 3),
+        };
+
+        function.GeometryMaxOutputVertices = (int)(declarations
+            .OfType<IRDeclaration.IRMaxOutputVertexCountDeclaration>()
+            .LastOrDefault()?.Count ?? 0);
+        if (function.GeometryMaxOutputVertices <= 0)
+        {
+            // Without dcl_maxout, the emit count is an exact bound for
+            // straight-line geometry code and a lower bound in loops.
+            int emits = function.Body.Count(s => s is IRStatement.IREmitVertex);
+            function.GeometryMaxOutputVertices = Math.Max(1, emits);
+        }
+
+        function.GeometryOutputStream = declarations
+            .OfType<IRDeclaration.IROutputTopologyDeclaration>()
+            .LastOrDefault()?.Topology switch
+        {
+            IRDeclaration.TessellatorOutputPrimitive.Point => "PointStream",
+            IRDeclaration.TessellatorOutputPrimitive.Line => "LineStream",
+            _ => "TriangleStream",
+        };
+
+        foreach (IRDeclaration.IRStreamDeclaration stream in declarations.OfType<IRDeclaration.IRStreamDeclaration>())
+            function.GeometryStreams.Add(stream.Index);
+        if (function.GeometryStreams.Count == 0)
+            function.GeometryStreams.Add(0);
+    }
+
+    // shortcut: only SV_PrimitiveID is routed out of the array; SV_GSInstanceID
+    // has no register type yet, so it stays on the per-vertex input struct.
+    private static bool IsPerPrimitiveSystemValue(SignatureElement el) =>
+        el.SystemValue is (uint)SignatureSystemValue.PrimitiveId;
 
     private static string CanonicalFunctionName(HlslShaderStage stage) => stage switch
     {
@@ -171,25 +236,26 @@ public static class HlslAstBuilder
     private static HlslStructNode BuildStructFromSignature(string name, List<SignatureElement> elements)
     {
         var s = new HlslStructNode { Name = name };
-
         foreach (SignatureElement el in elements)
-        {
-            // SV_ system-value semantics (SV_Position, SV_Target, etc.) do not
-            // take an index in HLSL — "SV_Position0" is invalid.  Regular
-            // semantics (POSITION, TEXCOORD, COLOR) use the index to
-            // distinguish multiple channels: POSITION0, TEXCOORD1, etc.
-            string semantic = el.SemanticIndex == 0 && el.SemanticName.StartsWith("SV_", StringComparison.Ordinal)
-                ? el.SemanticName
-                : $"{el.SemanticName}{el.SemanticIndex}";
-            s.Fields.Add(new HlslFieldNode
-            {
-                Name = ToFieldName($"{el.SemanticName}{el.SemanticIndex}"),
-                Semantic = semantic,
-                TypeHint = TypeFromSignatureElement(el),
-            });
-        }
-
+            s.Fields.Add(BuildField(el));
         return s;
+    }
+
+    private static HlslFieldNode BuildField(SignatureElement el)
+    {
+        // SV_ system-value semantics (SV_Position, SV_Target, etc.) do not
+        // take an index in HLSL — "SV_Position0" is invalid.  Regular
+        // semantics (POSITION, TEXCOORD, COLOR) use the index to
+        // distinguish multiple channels: POSITION0, TEXCOORD1, etc.
+        string semantic = el.SemanticIndex == 0 && el.SemanticName.StartsWith("SV_", StringComparison.Ordinal)
+            ? el.SemanticName
+            : $"{el.SemanticName}{el.SemanticIndex}";
+        return new HlslFieldNode
+        {
+            Name = ToFieldName($"{el.SemanticName}{el.SemanticIndex}"),
+            Semantic = semantic,
+            TypeHint = TypeFromSignatureElement(el),
+        };
     }
 
     private static void GroupSignatureByRegister(Dictionary<uint, List<SignatureElement>> byRegister, List<SignatureElement> elements)

@@ -365,6 +365,9 @@ public partial class IRBuilder
             case Opcode.DclDomain: BuildDomain(program, instruction); break;
             case Opcode.DclPartitioning: BuildPartitioning(program, instruction); break;
             case Opcode.DclOutputTopology: BuildOutputTopology(program, instruction); break;
+            case Opcode.DclInputPrimitive: BuildInputPrimitive(program, instruction); break;
+            case Opcode.DclMaxOutputVertexCount: BuildMaxOutputVertexCount(program, instruction); break;
+            case Opcode.DclInputSIV: BuildInputSGV(program, instruction); break;
             case Opcode.DclTessOutputPrimitive: BuildTessOutputPrimitive(program, instruction); break;
             case Opcode.DclHSForkPhaseInstanceCount: BuildHSForkPhaseInstanceCount(program, instruction); break;
             case Opcode.DclHSJoinPhaseInstanceCount: BuildHSJoinPhaseInstanceCount(program, instruction); break;
