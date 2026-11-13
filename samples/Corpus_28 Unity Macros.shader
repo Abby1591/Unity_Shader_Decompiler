@@ -17,6 +17,7 @@ Shader "Corpus/28 Unity Macros"
             Cull Back
             ZTest LEqual
             ZWrite On
+            // Folded keyword variants (base state emitted): FOG_LINEAR
             HLSLPROGRAM
             cbuffer _GlobalsCB_b0
             {

@@ -180,6 +180,13 @@ public static partial class HlslPrettyPrinter
             return;
         }
 
+        if (pass.FoldedKeywords.Count > 0)
+        {
+            // Say what was lost: only the base keyword state is decompiled.
+            sb.Append("            // Folded keyword variants (base state emitted): ")
+              .Append(string.Join(", ", pass.FoldedKeywords)).Append('\n');
+        }
+
         sb.Append("            HLSLPROGRAM\n");
 
         // Interpolator hand-off map: the vertex stage records which semantic

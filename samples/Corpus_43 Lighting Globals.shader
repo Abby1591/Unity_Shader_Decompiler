@@ -17,6 +17,7 @@ Shader "Corpus/43 Lighting Globals"
             Cull Back
             ZTest LEqual
             ZWrite On
+            // Folded keyword variants (base state emitted): FOG_LINEAR, LIGHTPROBE_SH, SHADOWS_SCREEN
             HLSLPROGRAM
             cbuffer _GlobalsCB_b0
             {
