@@ -513,11 +513,6 @@ public static class Decompiler
                 groups[^1].Add(c);
         }
 
-        var subshaderByPass = new Dictionary<HlslPassNode, HlslSubShaderNode>();
-        foreach (HlslSubShaderNode ss in astShader.SubShaders)
-            foreach (HlslPassNode p in ss.Passes)
-                subshaderByPass[p] = ss;
-
         int totalPasses = 0;
 
         for (int gi = 0; gi < groups.Count; gi++)
@@ -564,21 +559,16 @@ public static class Decompiler
                 }
             }
 
-            // First pair fills the shell pass; the rest get clones.
-            for (int pi = 0; pi < pairs.Count; pi++)
+            // One pass per compiled variant set: the pairs in a group are
+            // keyword variants of the same ShaderLab pass, so emitting each
+            // as its own pass would run every variant on every draw and
+            // shift pass indices. The first pair is the pass body; the rest
+            // are folded (their keyword permutations are not recoverable).
+            if (pairs.Count > 0)
             {
-                var (v, f) = pairs[pi];
-                HlslPassNode pass = pi == 0 ? shell : ClonePass(shell);
-                if (!ReferenceEquals(pass, shell))
-                {
-                    HlslSubShaderNode ss = subshaderByPass[shell];
-                    int insertAt = ss.Passes.IndexOf(shell) + 1;
-                    ss.Passes.Insert(insertAt, pass);
-                    subshaderByPass[pass] = ss;
-                }
-
-                AttachPassProgram(pass, v, textureNames, log);
-                AttachPassProgram(pass, f, textureNames, log);
+                var (v, f) = pairs[0];
+                AttachPassProgram(shell, v, textureNames, log);
+                AttachPassProgram(shell, f, textureNames, log);
                 totalPasses++;
             }
 
@@ -596,11 +586,8 @@ public static class Decompiler
             }
             else
             {
-                int unpaired = verts.Count(v => !pairs.Any(p => ReferenceEquals(p.V, v)))
-                             + frags.Count(f => !pairs.Any(p => ReferenceEquals(p.F, f)));
-                log.WriteLine(
-                    $"  Pass group {gi}: {verts.Count} verts x {frags.Count} frags => {pairs.Count} distinct variant pass(es) " +
-                    $"({unpaired} unpaired duplicate(s) folded)");
+                string folded = pairs.Count > 1 ? $", {pairs.Count - 1} keyword variant pair(s) folded" : "";
+                log.WriteLine($"  Pass group {gi}: {verts.Count} verts x {frags.Count} frags => 1 pass{folded}.");
             }
         }
 
@@ -733,24 +720,6 @@ public static class Decompiler
             $"Stage 2: attached {c.Stage} function '{c.Function.Name}' to pass '{pass.Name}' " +
             $"(in:{c.Function.InputStruct?.Fields.Count ?? 0} out:{c.Function.OutputStruct?.Fields.Count ?? 0} " +
             $"resources+{pass.Resources.Count})");
-    }
-
-    // A variant pass: same name/tags/render state and the same per-pass
-    // cbuffer layout as the shell pass it was cloned from, but its own
-    // function slots/resources/structs (filled by AttachPassProgram).
-    private static HlslPassNode ClonePass(HlslPassNode src)
-    {
-        var clone = new HlslPassNode
-        {
-            Name = src.Name,
-            RenderStateRaw = src.RenderStateRaw,
-            State = src.State,
-        };
-        foreach (var (k, v) in src.Tags)
-            clone.Tags[k] = v;
-        foreach (var (k, v) in src.Cbuffers)
-            clone.Cbuffers[k] = v;
-        return clone;
     }
 
     private static void AttachFunction(HlslPassNode pass, HlslFunctionNode function)

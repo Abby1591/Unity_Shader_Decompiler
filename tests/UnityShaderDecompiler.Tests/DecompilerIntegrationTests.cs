@@ -139,6 +139,24 @@ public class DecompilerIntegrationTests
         Assert.DoesNotContain("_StubCB", result.ShaderText);
     }
 
+    [Theory]
+    [MemberData(nameof(Fixtures))]
+    public void EveryMetadataPass_KeepsItsPassBlock(string fixture, string _)
+    {
+        // Pass indices are how real code addresses passes (SetPass,
+        // Graphics.Blit(material, passIndex)). Keyword variants of one pass
+        // must fold into it rather than becoming extra passes, so the emitted
+        // pass count and order match the serialized shader.
+        var result = FixtureCache.Decompile(fixture);
+        string meta = File.ReadAllText(Path.Combine(TestPaths.FixtureFolder(fixture), "metadata.json"));
+        using var doc = System.Text.Json.JsonDocument.Parse(meta);
+        int expected = doc.RootElement.GetProperty("subShaders").EnumerateArray()
+            .Sum(ss => ss.GetProperty("passes").GetArrayLength());
+
+        int passes = Regex.Matches(result.ShaderText, @"(?m)^        Pass$").Count;
+        Assert.Equal(expected, passes);
+    }
+
     [Fact]
     public void Properties_EmitsCbuffersTexturesAndSamplers()
     {
