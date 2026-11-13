@@ -68,6 +68,10 @@ public sealed class DecompiledSubprogram
     public required string OutputSignature { get; init; }
     public required string InputInterpolators { get; init; }
     public required string OutputInterpolators { get; init; }
+
+    // The keyword set this subprogram was compiled for. Variants of one pass
+    // differ only here; the pass is decompiled from the base one.
+    public required string[] Keywords { get; init; }
     internal string Hash { get; set; } = "";
 }
 
@@ -339,6 +343,7 @@ public static class Decompiler
                         OutputSignature = InterfaceKey(dxbcFile.OutputSignature?.Elements),
                         InputInterpolators = InterfaceInterpKey(dxbcFile.InputSignature?.Elements),
                         OutputInterpolators = InterfaceInterpKey(dxbcFile.OutputSignature?.Elements),
+                        Keywords = sp.m_Keywords ?? Array.Empty<string>(),
                     });
                     log.WriteLine($"Stage 2: collected {function.Stage} function '{function.Name}' (subprogram {i}).");
                 }
@@ -562,11 +567,23 @@ public static class Decompiler
             // One pass per compiled variant set: the pairs in a group are
             // keyword variants of the same ShaderLab pass, so emitting each
             // as its own pass would run every variant on every draw and
-            // shift pass indices. The first pair is the pass body; the rest
-            // are folded (their keyword permutations are not recoverable).
+            // shift pass indices. The body is the variant with the fewest
+            // keywords (keyword sets only add to the base state); the rest
+            // are folded and named in the output.
+            string[] foldedKeywords = Array.Empty<string>();
             if (pairs.Count > 0)
             {
-                var (v, f) = pairs[0];
+                var (v, f) = pairs.OrderBy(p => p.V.Keywords.Length).First();
+                var baseKeywords = v.Keywords.ToHashSet(StringComparer.Ordinal);
+                foldedKeywords = pairs
+                    .SelectMany(p => p.V.Keywords)
+                    .Where(k => !baseKeywords.Contains(k))
+                    .Distinct(StringComparer.Ordinal)
+                    .OrderBy(k => k, StringComparer.Ordinal)
+                    .ToArray();
+                foreach (string keyword in foldedKeywords)
+                    shell.FoldedKeywords.Add(keyword);
+
                 AttachPassProgram(shell, v, textureNames, log);
                 AttachPassProgram(shell, f, textureNames, log);
                 totalPasses++;
@@ -586,7 +603,10 @@ public static class Decompiler
             }
             else
             {
-                string folded = pairs.Count > 1 ? $", {pairs.Count - 1} keyword variant pair(s) folded" : "";
+                string folded = pairs.Count > 1
+                    ? $", {pairs.Count - 1} keyword variant pair(s) folded" +
+                      (foldedKeywords.Length > 0 ? $": {string.Join(", ", foldedKeywords)}" : "")
+                    : "";
                 log.WriteLine($"  Pass group {gi}: {verts.Count} verts x {frags.Count} frags => 1 pass{folded}.");
             }
         }

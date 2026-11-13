@@ -196,6 +196,11 @@ public sealed class HlslPassNode
     public List<HlslResourceNode> Resources { get; } = new();
     public List<HlslStructNode> Structs { get; } = new();
 
+    // Keywords of the compiled variants this pass was folded from, beyond the
+    // base state. The body is the base variant; these are documented in the
+    // output so the missing keyword permutations are visible.
+    public List<string> FoldedKeywords { get; } = new();
+
     // Cbuffer layout recovered from the ShaderLab metadata (per-pass
     // replacement for the stripped RDEF chunk), keyed by (register slot,
     // stage). Stages bind their own tables, so a slot number alone is

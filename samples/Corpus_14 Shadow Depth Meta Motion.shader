@@ -18,6 +18,7 @@ Shader "Corpus/14 Shadow Depth Meta Motion"
             Cull Back
             ZTest LEqual
             ZWrite On
+            // Folded keyword variants (base state emitted): SHADOWS_CUBE
             HLSLPROGRAM
             cbuffer _GlobalsCB_b0
             {

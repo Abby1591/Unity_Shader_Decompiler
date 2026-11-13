@@ -16,6 +16,7 @@ Shader "Corpus/47 Lightmap"
             Cull Back
             ZTest LEqual
             ZWrite On
+            // Folded keyword variants (base state emitted): FOG_LINEAR
             HLSLPROGRAM
             cbuffer _GlobalsCB_b0
             {

@@ -39,6 +39,7 @@ Shader "Corpus/30 Sprite UI"
                 Fail Keep
                 ZFail Keep
             }
+            // Folded keyword variants (base state emitted): ETC1_EXTERNAL_ALPHA, PIXELSNAP_ON
             HLSLPROGRAM
             cbuffer _GlobalsCB_b0
             {

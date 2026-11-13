@@ -19,6 +19,7 @@ Shader "Corpus/08 Surface Blinn Phong"
             Cull Back
             ZTest LEqual
             ZWrite On
+            // Folded keyword variants (base state emitted): FOG_LINEAR, LIGHTPROBE_SH, SHADOWS_SCREEN
             HLSLPROGRAM
             cbuffer _GlobalsCB_b0
             {
@@ -218,6 +219,7 @@ Shader "Corpus/08 Surface Blinn Phong"
             ZTest LEqual
             ZWrite Off
             Blend One One
+            // Folded keyword variants (base state emitted): DIRECTIONAL, DIRECTIONAL_COOKIE, FOG_LINEAR, POINT_COOKIE, SHADOWS_CUBE, SHADOWS_DEPTH, SHADOWS_SCREEN, SHADOWS_SOFT, SPOT
             HLSLPROGRAM
             cbuffer _GlobalsCB_b0
             {
@@ -426,6 +428,7 @@ Shader "Corpus/08 Surface Blinn Phong"
             Cull Back
             ZTest LEqual
             ZWrite On
+            // Folded keyword variants (base state emitted): LIGHTPROBE_SH, UNITY_HDR_ON
             HLSLPROGRAM
             cbuffer _GlobalsCB_b0
             {
