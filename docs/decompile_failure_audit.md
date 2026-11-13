@@ -1,5 +1,12 @@
 # Corpus decompile failure audit
 
+> **Status: historical.** Written against `master` (`cd703e5`), before the
+> emitter and pass-grouping fixes that followed it. All 21 shaders named below
+> now pass the faithfulness gate (48/48): the missing temp declarations,
+> `resinfo`, geometry input indices, stub passes and pass/variant grouping are
+> fixed on `master`, and `samples/` has been regenerated. Read this as the
+> diagnosis that drove those fixes, not as present-day state.
+
 Measured on `master` (`cd703e5`) against the 48 Unity 6 corpus shaders in
 `samples/`. Stage 0 extracted with `Extract.py`, Stage 1 decompiled with the
 CLI, every `HLSLPROGRAM` block recompiled with `d3dcompiler`.
