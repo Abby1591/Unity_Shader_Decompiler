@@ -309,7 +309,7 @@ class ShaderMetadata:
             "stencilRef": self._unwrap(state.get("m_StencilRef"), 0),
             "stencilReadMask": self._unwrap(state.get("m_StencilReadMask"), 255),
             "stencilWriteMask": self._unwrap(state.get("m_StencilWriteMask"), 255),
-            "stencilOpFront": state.get("m_StencilOpFront"),
+            "stencilOpFront": self._stencil_front(state),
             "stencilOpBack": state.get("m_StencilOpBack"),
             "separateBlend": state.get("m_RtSeparateBlend", False),
             "blend": blend,
@@ -329,6 +329,23 @@ class ShaderMetadata:
                 "blend": old_blend if isinstance(old_blend, dict) else blend,
             })
         return rs
+
+    @staticmethod
+    def _stencil_front(state):
+        # A single-face `Stencil { ... }` block is serialized into
+        # m_StencilOp, while m_StencilOpFront keeps the all-default
+        # placeholder. Prefer the single-face op whenever it is non-default.
+        single = state.get("m_StencilOp")
+        if isinstance(single, dict) and not ShaderMetadata._stencil_default(single):
+            return single
+        return state.get("m_StencilOpFront")
+
+    @staticmethod
+    def _stencil_default(op):
+        def value(key):
+            entry = op.get(key)
+            return entry.get("m_Value") if isinstance(entry, dict) else None
+        return (value("m_Comp"), value("m_Pass"), value("m_Fail"), value("m_ZFail")) == (8, 0, 0, 0)
 
     @staticmethod
     def _named(x):

@@ -159,6 +159,31 @@ jobs:
             2>&1 | tee "$BUILD_DIR/Logs/golden-tests.log"
           echo "::endgroup::"
 
+      # Compares the output against the original .shader sources in
+      # tests/Sources, which the metadata-driven golden test cannot do.
+      # --keep leaves Output/ populated for the faithfulness step below.
+      - name: 🔍 Source Fidelity Tests
+        if: runner.os == 'Windows'
+        shell: bash
+        run: |
+          echo "::group::Source fidelity tests"
+          python -m pip install --quiet lz4
+          python "tests/e2e/test_source_fidelity.py" \
+            --keep \
+            --parser "src/UnityShaderDecompiler.Cli/bin/Release/net10.0/Shader Decompiler.exe" \
+            2>&1 | tee "$BUILD_DIR/Logs/source-fidelity.log"
+          echo "::endgroup::"
+
+      - name: 🔁 Recompile Faithfulness Tests
+        if: runner.os == 'Windows'
+        shell: bash
+        run: |
+          echo "::group::Faithfulness tests"
+          python "tests/e2e/test_faithfulness.py" \
+            --parser "src/UnityShaderDecompiler.Cli/bin/Release/net10.0/Shader Decompiler.exe" \
+            2>&1 | tee "$BUILD_DIR/Logs/faithfulness.log"
+          echo "::endgroup::"
+
       - name: 🗓️ Get Build Date
         id: date
         shell: bash

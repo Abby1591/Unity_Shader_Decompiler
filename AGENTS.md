@@ -57,6 +57,21 @@ python tests/e2e/test_faithfulness.py --filter Corpus_05
 ```
 Decompiles the blob, recompiles every HLSLPROGRAM block with d3dcompiler, compares input/output signatures against the shipped subprograms, and checks metadata fidelity (properties, fallback, cbuffer bindings). Reports PASS/FAIL per shader. Requires Windows + d3dcompiler_47.dll.
 
+### Source fidelity tests (Python, end-to-end)
+```bash
+python tests/e2e/test_source_fidelity.py
+python tests/e2e/test_source_fidelity.py --keep --filter Corpus_02
+```
+Compares the decompiled output against the original `.shader` sources copied to
+`tests/Sources/` (from `ShaderCorpus/Assets/ShaderCorpus/Shaders/`), so a Stage-0
+extraction bug cannot hide behind matching metadata. Checks name, properties
+(name/description/type/numeric default), fallback, SubShader count and tags, pass
+count, and per-pass render state (Cull, ZWrite, ZTest, ZClip, Blend, BlendOp,
+ColorMask, Offset, AlphaToMask, Lighting, Stencil). Deliberately skipped because
+the player build does not carry them: LOD, pass names, property attributes,
+texture default strings, `[Property]` state references, and surface-shader pass
+expansion. Defaults to the Debug parser; pass `--parser` to override.
+
 ### Verification/analysis modes (C# CLI flags, run after build)
 - `--run-spec-tests` — offline spec vectors (no D3D needed)
 - `--verify-signatures [dir]` — ISGN vs d3dcompiler cross-check (Windows)
@@ -70,7 +85,7 @@ Decompiles the blob, recompiles every HLSLPROGRAM block with d3dcompiler, compar
 - **Windows** with `d3dcompiler_47.dll` for D3D-backed modes (disasm, recompile, signatures, strip). Core pipeline is platform-neutral.
 
 ## Gotchas
-- CI (`.github/workflows/ci-build-info.yml`) builds every push/PR on Windows, Linux, and macOS, runs `dotnet test --filter "Category!=D3D"`, and smoke-tests `--run-spec-tests`; nightly (`.github/workflows/nightly.yml`) publishes artifacts at 03:00 UTC only when `master` has commits in the previous 24h, then runs the full test tier plus the Windows golden e2e suite.
+- CI (`.github/workflows/ci-build-info.yml`) builds every push/PR on Windows, Linux, and macOS, runs `dotnet test --filter "Category!=D3D"`, and smoke-tests `--run-spec-tests`; nightly (`.github/workflows/nightly.yml`) publishes artifacts at 03:00 UTC only when `master` has commits in the previous 24h, then runs the full test tier plus the Windows golden, source-fidelity, and faithfulness e2e suites.
 - `Program.cs` is only CLI dispatch. The pipeline lives in `src/UnityShaderDecompiler.Core/Decompiler.cs` (`Decompiler.Decompile` / `DecompileFolder`) and is the entry point tests should use.
 - `AllowUnsafeBlocks` is enabled in both C# projects (pinned-buffer D3D calls).
 - C# namespaces are `UnityShaderDecompiler.Core` (library) and `UnityShaderDecompiler.Cli` (executable); the vendored blob reader keeps `AssetStudio`.
@@ -78,6 +93,7 @@ Decompiles the blob, recompiles every HLSLPROGRAM block with d3dcompiler, compar
 - With no arguments the CLI looks for `Output/Corpus_01 Properties` in the working directory, then one level up.
 - Output location: `.shader` files go to `src/UnityShaderDecompiler.Cli/Output/` (the project's `ProjectOutputRoot`), not the repo-root `Output/`.
 - Checked-in example decompilations live in `samples/` (48 Unity 6 corpus shaders); the xUnit golden test compares every fixture against its `samples/<fixture>.shader`.
-- Both Python runners auto-detect a `dotnet` install with a net10.0 runtime (explicit `DOTNET`, then PATH, then `~/.dotnet`), so they work locally and in CI without a hard-coded user path.
+- `tests/Sources/` is a verbatim copy of `ShaderCorpus/Assets/ShaderCorpus/Shaders/*.shader` and is the independent oracle for `test_source_fidelity.py`; refresh it when the corpus sources change. It is not used by the metadata-driven tests.
+- The Python runners auto-detect a `dotnet` install with a net10.0 runtime (explicit `DOTNET`, then PATH, then `~/.dotnet`), so they work locally and in CI without a hard-coded user path.
 - Test fixtures are deliberately checked in under `tests/Fixtures/`; regenerate one with `python Extract.py shaders_json/<name>.json --out-dir Output` and copy the folder.
 - `test_faithfulness.py` treats a decompiler crash or a missing `Result:` line as a hard failure (never a skip).

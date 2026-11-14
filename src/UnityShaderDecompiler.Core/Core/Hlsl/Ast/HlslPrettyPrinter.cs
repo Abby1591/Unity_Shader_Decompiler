@@ -238,6 +238,8 @@ public static partial class HlslPrettyPrinter
         sb.Append("            Cull ").Append(s.Cull).Append('\n');
         sb.Append("            ZTest ").Append(ZTestText(s.ZTest)).Append('\n');
         sb.Append("            ZWrite ").Append(s.ZWrite ? "On" : "Off").Append('\n');
+        if (!s.ZClip)
+            sb.Append("            ZClip Off\n");
 
         if (s.Lighting)
             sb.Append("            Lighting On\n");
@@ -256,22 +258,66 @@ public static partial class HlslPrettyPrinter
             sb.Append('\n');
         }
 
-        if (s.Blend.BlendOp != HlslBlendOp.Add)
-            sb.Append("            BlendOp ").Append(s.Blend.BlendOp).Append('\n');
+        if (s.Blend.BlendOp != HlslBlendOp.Add || s.Blend.BlendOpAlpha != HlslBlendOp.Add)
+        {
+            sb.Append("            BlendOp ").Append(s.Blend.BlendOp);
+            if (s.Blend.BlendOpAlpha != s.Blend.BlendOp)
+                sb.Append(", ").Append(s.Blend.BlendOpAlpha);
+            sb.Append('\n');
+        }
 
-        if (s.StencilRef != 0 || s.StencilReadMask != 255 || s.StencilWriteMask != 255)
+        // Unity's m_ColMask: Red=8, Green=4, Blue=2, Alpha=1; 15 is the
+        // default and 0 means "write nothing".
+        if (s.Blend.ColorMask is int mask && mask != 15)
+            sb.Append("            ColorMask ").Append(ColorMaskText(mask)).Append('\n');
+
+        // shortcut: only the single-face Stencil form is emitted; Front/Back
+        // blocks need the separate-face state that the shipped blob does not
+        // decode yet.
+        if (StencilNonDefault(s))
         {
             sb.Append("            Stencil\n            {\n");
-            sb.Append("                Ref ").Append(s.StencilRef).Append('\n');
-            sb.Append("                ReadMask ").Append(s.StencilReadMask).Append('\n');
-            sb.Append("                WriteMask ").Append(s.StencilWriteMask).Append('\n');
+            if (s.StencilRef != 0)
+                sb.Append("                Ref ").Append(s.StencilRef).Append('\n');
+            if (s.StencilReadMask != 255)
+                sb.Append("                ReadMask ").Append(s.StencilReadMask).Append('\n');
+            if (s.StencilWriteMask != 255)
+                sb.Append("                WriteMask ").Append(s.StencilWriteMask).Append('\n');
             sb.Append("                Comp ").Append(ZTestText(s.StencilFront.Comp)).Append('\n');
-            sb.Append("                Pass ").Append(s.StencilFront.Pass).Append('\n');
-            sb.Append("                Fail ").Append(s.StencilFront.Fail).Append('\n');
-            sb.Append("                ZFail ").Append(s.StencilFront.ZFail).Append('\n');
+            sb.Append("                Pass ").Append(StencilOpText(s.StencilFront.Pass)).Append('\n');
+            sb.Append("                Fail ").Append(StencilOpText(s.StencilFront.Fail)).Append('\n');
+            sb.Append("                ZFail ").Append(StencilOpText(s.StencilFront.ZFail)).Append('\n');
             sb.Append("            }\n");
         }
     }
+
+    private static bool StencilNonDefault(HlslRenderState s) =>
+        s.StencilRef != 0 || s.StencilReadMask != 255 || s.StencilWriteMask != 255
+        || s.StencilFront.Comp != HlslCompareFunction.Always
+        || s.StencilFront.Pass != HlslStencilOp.Keep
+        || s.StencilFront.Fail != HlslStencilOp.Keep
+        || s.StencilFront.ZFail != HlslStencilOp.Keep;
+
+    private static string ColorMaskText(int mask)
+    {
+        if (mask == 0) return "0";
+        var sb = new StringBuilder();
+        if ((mask & 8) != 0) sb.Append('R');
+        if ((mask & 4) != 0) sb.Append('G');
+        if ((mask & 2) != 0) sb.Append('B');
+        if ((mask & 1) != 0) sb.Append('A');
+        return sb.ToString();
+    }
+
+    // ShaderLab abbreviates the Saturate/Wrap stencil ops.
+    private static string StencilOpText(HlslStencilOp op) => op switch
+    {
+        HlslStencilOp.IncrementSaturate => "IncrSat",
+        HlslStencilOp.DecrementSaturate => "DecrSat",
+        HlslStencilOp.IncrementWrap => "IncrWrap",
+        HlslStencilOp.DecrementWrap => "DecrWrap",
+        _ => op.ToString(),
+    };
 
     // Unity's ShaderLab spells the "always pass" compare function
     // "Always" like the others, but LessEqual is written "LEqual" and

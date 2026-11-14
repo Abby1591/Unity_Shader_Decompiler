@@ -28,13 +28,13 @@ Shader "Corpus/30 Sprite UI"
             Cull Off
             ZTest Disabled
             ZWrite Off
-            Blend One OneMinusSrcColor
+            Blend One OneMinusSrcAlpha
+            ColorMask 0
             Stencil
             {
-                Ref 0
                 ReadMask 0
                 WriteMask 0
-                Comp Always
+                Comp Disabled
                 Pass Keep
                 Fail Keep
                 ZFail Keep

@@ -15,9 +15,9 @@ Shader "Corpus/16 UsePass Consumer"
             Cull Off
             ZTest Disabled
             ZWrite Off
+            ZClip Off
             Stencil
             {
-                Ref 0
                 ReadMask 0
                 WriteMask 0
                 Comp Disabled
@@ -78,7 +78,7 @@ Shader "Corpus/16 UsePass Consumer"
             Cull Back
             ZTest Always
             ZWrite Off
-            Blend SrcAlpha OneMinusSrcColor
+            Blend SrcAlpha OneMinusSrcAlpha
         }
     }
     Fallback "Corpus/16 UsePass Base"

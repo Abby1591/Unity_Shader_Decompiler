@@ -78,7 +78,7 @@ Shader "Corpus/02 Render States"
             Cull Off
             ZTest LEqual
             ZWrite Off
-            Blend SrcAlpha OneMinusSrcColor
+            Blend SrcAlpha OneMinusSrcAlpha
         }
         Pass
         {
@@ -94,7 +94,7 @@ Shader "Corpus/02 Render States"
             Cull Off
             ZTest LEqual
             ZWrite Off
-            Blend One OneMinusSrcColor
+            Blend One OneMinusSrcAlpha
         }
         Pass
         {
@@ -110,7 +110,8 @@ Shader "Corpus/02 Render States"
             Cull Off
             ZTest LEqual
             ZWrite Off
-            Blend SrcAlpha OneMinusSrcColor, One OneMinusSrcColor
+            Blend SrcAlpha OneMinusSrcAlpha, One OneMinusSrcAlpha
+            BlendOp Add, Max
         }
         Pass
         {
@@ -120,6 +121,7 @@ Shader "Corpus/02 Render States"
             ZWrite On
             AlphaToMask On
             Offset -1, -1
+            ColorMask RG
         }
         Pass
         {
@@ -127,6 +129,7 @@ Shader "Corpus/02 Render States"
             Cull Off
             ZTest Always
             ZWrite On
+            ColorMask 0
         }
     }
 }
