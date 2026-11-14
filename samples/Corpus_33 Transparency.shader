@@ -17,7 +17,7 @@ Shader "Corpus/33 Transparency"
             Cull Off
             ZTest LEqual
             ZWrite Off
-            Blend SrcAlpha OneMinusSrcColor
+            Blend SrcAlpha OneMinusSrcAlpha
             HLSLPROGRAM
             cbuffer _GlobalsCB_b0
             {
@@ -89,7 +89,7 @@ Shader "Corpus/33 Transparency"
             Cull Off
             ZTest LEqual
             ZWrite Off
-            Blend One OneMinusSrcColor
+            Blend One OneMinusSrcAlpha
         }
         Pass
         {

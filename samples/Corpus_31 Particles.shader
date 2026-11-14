@@ -19,7 +19,8 @@ Shader "Corpus/31 Particles"
             Cull Off
             ZTest LEqual
             ZWrite Off
-            Blend SrcAlpha OneMinusSrcColor
+            Blend SrcAlpha OneMinusSrcAlpha
+            ColorMask RGB
             // Folded keyword variants (base state emitted): FOG_LINEAR, SOFTPARTICLES_ON
             HLSLPROGRAM
             cbuffer _GlobalsCB_b0

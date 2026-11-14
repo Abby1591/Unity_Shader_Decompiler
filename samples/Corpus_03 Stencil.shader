@@ -19,13 +19,12 @@ Shader "Corpus/03 Stencil"
             ZWrite On
             Stencil
             {
-                Ref 0
                 ReadMask 0
                 WriteMask 0
                 Comp Always
-                Pass Keep
+                Pass Replace
                 Fail Keep
-                ZFail Keep
+                ZFail Zero
             }
             HLSLPROGRAM
             cbuffer _UnityPerDrawCB_b0
@@ -84,10 +83,10 @@ Shader "Corpus/03 Stencil"
                 Ref 2
                 ReadMask 127
                 WriteMask 127
-                Comp Always
+                Comp Never
                 Pass Keep
-                Fail Keep
-                ZFail Keep
+                Fail IncrSat
+                ZFail DecrSat
             }
         }
         Pass
@@ -99,12 +98,10 @@ Shader "Corpus/03 Stencil"
             Stencil
             {
                 Ref 3
-                ReadMask 255
-                WriteMask 255
-                Comp Always
-                Pass Keep
-                Fail Keep
-                ZFail Keep
+                Comp Less
+                Pass Invert
+                Fail IncrWrap
+                ZFail DecrWrap
             }
         }
         Pass
@@ -116,10 +113,8 @@ Shader "Corpus/03 Stencil"
             Stencil
             {
                 Ref 4
-                ReadMask 255
-                WriteMask 255
-                Comp Always
-                Pass Keep
+                Comp LEqual
+                Pass Replace
                 Fail Keep
                 ZFail Keep
             }
@@ -133,9 +128,7 @@ Shader "Corpus/03 Stencil"
             Stencil
             {
                 Ref 5
-                ReadMask 255
-                WriteMask 255
-                Comp Always
+                Comp Equal
                 Pass Keep
                 Fail Keep
                 ZFail Keep
@@ -150,10 +143,8 @@ Shader "Corpus/03 Stencil"
             Stencil
             {
                 Ref 6
-                ReadMask 255
-                WriteMask 255
-                Comp Always
-                Pass Keep
+                Comp GEqual
+                Pass Zero
                 Fail Keep
                 ZFail Keep
             }
@@ -167,10 +158,8 @@ Shader "Corpus/03 Stencil"
             Stencil
             {
                 Ref 7
-                ReadMask 255
-                WriteMask 255
-                Comp Always
-                Pass Keep
+                Comp Greater
+                Pass Replace
                 Fail Keep
                 ZFail Keep
             }
@@ -184,10 +173,8 @@ Shader "Corpus/03 Stencil"
             Stencil
             {
                 Ref 8
-                ReadMask 255
-                WriteMask 255
-                Comp Always
-                Pass Keep
+                Comp NotEqual
+                Pass Invert
                 Fail Keep
                 ZFail Keep
             }

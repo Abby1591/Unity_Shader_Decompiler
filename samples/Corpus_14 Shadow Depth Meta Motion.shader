@@ -114,6 +114,7 @@ Shader "Corpus/14 Shadow Depth Meta Motion"
             Cull Back
             ZTest LEqual
             ZWrite On
+            ColorMask 0
             HLSLPROGRAM
             cbuffer _UnityPerDrawCB_b0
             {
@@ -166,6 +167,7 @@ Shader "Corpus/14 Shadow Depth Meta Motion"
             Cull Back
             ZTest LEqual
             ZWrite On
+            ColorMask RGB
             HLSLPROGRAM
             cbuffer _UnityPerDrawCB_b0
             {
