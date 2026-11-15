@@ -31,6 +31,7 @@ Shader "Corpus/27 Keywords"
             ZWrite On
             // Folded keyword variants (base state emitted): FOG_LINEAR, LIGHTPROBE_SH, SHADOWS_SCREEN, VERTEXLIGHT_ON, _FEATURE_A, _FEATURE_B, _LOCAL_A, _LOCAL_B, _LOCAL_FEATURE, _MODE_A, _MODE_B, _MODE_C
             HLSLPROGRAM
+            #pragma multi_compile _ FOG_LINEAR LIGHTPROBE_SH SHADOWS_SCREEN VERTEXLIGHT_ON _FEATURE_A _FEATURE_B _LOCAL_A _LOCAL_B _LOCAL_FEATURE _MODE_A _MODE_B _MODE_C
             cbuffer _GlobalsCB_b0
             {
                 float4 _LightColor0 : packoffset(c2);

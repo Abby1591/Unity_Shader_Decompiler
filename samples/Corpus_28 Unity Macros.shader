@@ -19,6 +19,7 @@ Shader "Corpus/28 Unity Macros"
             ZWrite On
             // Folded keyword variants (base state emitted): FOG_LINEAR
             HLSLPROGRAM
+            #pragma multi_compile _ FOG_LINEAR
             cbuffer _GlobalsCB_b0
             {
                 float4 _MainTex_ST : packoffset(c2);

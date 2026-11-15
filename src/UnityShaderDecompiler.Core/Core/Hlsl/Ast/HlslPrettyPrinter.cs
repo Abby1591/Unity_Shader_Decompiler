@@ -198,12 +198,23 @@ public static partial class HlslPrettyPrinter
 
         if (pass.FoldedKeywords.Count > 0)
         {
-            // Say what was lost: only the base keyword state is decompiled.
+            // Say what was lost: the keywords are declared so a re-import keeps
+            // the interface, but every variant compiles the base body.
             sb.Append("            // Folded keyword variants (base state emitted): ")
               .Append(string.Join(", ", pass.FoldedKeywords)).Append('\n');
         }
 
         sb.Append("            HLSLPROGRAM\n");
+
+        // Unity can't tell shader_feature from multi_compile in the blob, and
+        // the original grouping is lost, so declare the pass's keywords as one
+        // multi_compile set: every keyword name survives without inventing a
+        // variant count.
+        // shortcut: shader_feature/_local declarations and their grouping are
+        // not recovered; upgrade if variant stripping matters.
+        if (pass.FoldedKeywords.Count > 0)
+            sb.Append("            #pragma multi_compile _ ")
+              .Append(string.Join(" ", pass.FoldedKeywords)).Append('\n');
 
         // Interpolator hand-off map: the vertex stage records which semantic
         // fields carry named values (worldPos, worldNormal, ...) so the

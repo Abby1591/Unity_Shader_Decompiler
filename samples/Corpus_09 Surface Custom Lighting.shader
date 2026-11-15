@@ -22,6 +22,7 @@ Shader "Corpus/09 Surface Custom Lighting"
             ZWrite On
             // Folded keyword variants (base state emitted): FOG_LINEAR, LIGHTPROBE_SH, SHADOWS_SCREEN, VERTEXLIGHT_ON
             HLSLPROGRAM
+            #pragma multi_compile _ FOG_LINEAR LIGHTPROBE_SH SHADOWS_SCREEN VERTEXLIGHT_ON
             cbuffer _GlobalsCB_b0
             {
                 float4 _LightColor0 : packoffset(c2);
@@ -194,6 +195,7 @@ Shader "Corpus/09 Surface Custom Lighting"
             Blend One One
             // Folded keyword variants (base state emitted): DIRECTIONAL, DIRECTIONAL_COOKIE, FOG_LINEAR, POINT_COOKIE, SHADOWS_CUBE, SHADOWS_DEPTH, SHADOWS_SCREEN, SHADOWS_SOFT, SPOT
             HLSLPROGRAM
+            #pragma multi_compile _ DIRECTIONAL DIRECTIONAL_COOKIE FOG_LINEAR POINT_COOKIE SHADOWS_CUBE SHADOWS_DEPTH SHADOWS_SCREEN SHADOWS_SOFT SPOT
             cbuffer _GlobalsCB_b0
             {
                 float4 _LightColor0;

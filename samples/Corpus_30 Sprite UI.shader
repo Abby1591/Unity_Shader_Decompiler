@@ -42,6 +42,7 @@ Shader "Corpus/30 Sprite UI"
             }
             // Folded keyword variants (base state emitted): ETC1_EXTERNAL_ALPHA, PIXELSNAP_ON
             HLSLPROGRAM
+            #pragma multi_compile _ ETC1_EXTERNAL_ALPHA PIXELSNAP_ON
             cbuffer _GlobalsCB_b0
             {
                 float4 _MainTex_ST : packoffset(c2);

@@ -14,28 +14,30 @@ the gates are green:
 Everything below is outside what those runners assert. Counts are shader
 instances, not lines of code.
 
-## 1. Keyword variants are collapsed to one base variant
+## 1. Keyword variant bodies are not reconstructed
 
 Sources contain 38 `#pragma multi_compile*` lines (including 7
 `multi_compile_instancing`) and 2 `#pragma shader_feature` lines across 16
-shaders. Output contains zero. `BuildVariantPasses` picks the variant with the
-fewest keywords, emits its body, and records the rest in a comment:
+shaders. The keyword names now survive as one `#pragma multi_compile` line per
+pass, but every variant compiles the base variant's body, and the pragma is a
+single group rather than the source's groups:
 
 ```hlsl
 // Folded keyword variants (base state emitted): ETC1_EXTERNAL_ALPHA, PIXELSNAP_ON
+#pragma multi_compile _ ETC1_EXTERNAL_ALPHA PIXELSNAP_ON
 ```
 
-Impact: every non-base permutation is missing. `Corpus/30 Sprite UI`,
-`Corpus/27 Keywords`, `Corpus/31 Particles` and the other 13 keyword shaders
-do not reproduce their variant behaviour. The keyword names themselves are
-recoverable from the subprogram data, so this is an emission gap, not data
-loss.
+Impact: a re-imported shader keeps its keyword interface (material keyword
+toggles compile), but every non-base permutation still renders the base
+behaviour. `Corpus/30 Sprite UI`, `Corpus/27 Keywords`, `Corpus/31 Particles`
+and the other 13 keyword shaders differ from their source only in the variant
+bodies. Whether a keyword came from `shader_feature`, `*_local`, or a built-in
+group (`multi_compile_fwdbase`, `multi_compile_fog`, ...) is not recoverable
+from the blob.
 
-Fix: emit `#pragma multi_compile`/`#pragma shader_feature` lines from the
-serialized keyword sets, and either emit one pass per keyword set (matching
-Unity's variant expansion) or wrap variant bodies in `#if` blocks. The
-pass-to-subprogram association this needs already exists, so the work left is
-emission only.
+Fix (remaining): emit one body per compiled variant, each under the `#if`
+condition for its keyword set. The variant list per pass already exists; the
+work is emitting several bodies per pass instead of one.
 
 ## 2. Surface-shader reconstruction matches 0 of 8
 
