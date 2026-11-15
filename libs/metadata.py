@@ -331,6 +331,42 @@ class ShaderMetadata:
             "blend": blend,
         }
 
+        # A ShaderLab [Property] reference is serialized as the property name
+        # next to an unresolved placeholder value. Keep the name so the
+        # emitter can print the reference instead of the placeholder.
+        refs = {}
+
+        def note(field, wrapped):
+            if isinstance(wrapped, dict):
+                name = wrapped.get("m_Name")
+                if isinstance(name, str) and name and name != "<noninit>":
+                    refs[field] = name
+
+        note("cull", state.get("m_Culling"))
+        note("zTest", state.get("m_ZTest"))
+        note("zWrite", state.get("m_ZWrite"))
+        note("zClip", state.get("m_ZClip"))
+        note("alphaToMask", state.get("m_AlphaToMask"))
+        note("offsetFactor", state.get("m_OffsetFactor"))
+        note("offsetUnits", state.get("m_OffsetUnits"))
+        for field, key in (("srcBlend", "m_SourceBlend"), ("dstBlend", "m_DestinationBlend"),
+                           ("srcBlendAlpha", "m_SourceBlendAlpha"),
+                           ("dstBlendAlpha", "m_DestinationBlendAlpha"),
+                           ("blendOp", "m_BlendOp"), ("blendOpAlpha", "m_BlendOpAlpha"),
+                           ("colorMask", "m_ColMask")):
+            note("blend." + field, blend0.get(key))
+        stencil = self._stencil_front(state)
+        if not isinstance(stencil, dict):
+            stencil = {}
+        note("stencilRef", state.get("m_StencilRef"))
+        note("stencilReadMask", state.get("m_StencilReadMask"))
+        note("stencilWriteMask", state.get("m_StencilWriteMask"))
+        for field, key in (("stencilComp", "m_Comp"), ("stencilPass", "m_Pass"),
+                           ("stencilFail", "m_Fail"), ("stencilZFail", "m_ZFail")):
+            note(field, stencil.get(key))
+        if refs:
+            rs["propertyRefs"] = refs
+
         # Legacy nested schema (rasterState/depthState/...): if none of the
         # flat keys resolved, try it before giving up.
         if all(v is None for v in (rs["cull"], rs["zTest"], rs["zWrite"])):

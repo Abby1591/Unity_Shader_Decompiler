@@ -42,6 +42,13 @@ public static class HlslRenderStateBuilder
         };
 
         state.BlendTargets.Add(state.Blend);
+
+        if (renderState.TryGetProperty("propertyRefs", out var refs)
+            && refs.ValueKind == JsonValueKind.Object)
+            foreach (var p in refs.EnumerateObject())
+                if (p.Value.ValueKind == JsonValueKind.String)
+                    state.PropertyRefs[p.Name] = p.Value.GetString() ?? "";
+
         return state;
     }
 
