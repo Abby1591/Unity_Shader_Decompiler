@@ -14,28 +14,7 @@ the gates are green:
 Everything below is outside what those runners assert. Counts are shader
 instances, not lines of code.
 
-## 1. `[Property]` render-state references become literal placeholders
-
-Ten render-state lines use material property references:
-
-| Shader | Lines |
-|---|---|
-| `Corpus/03 Stencil` | `Ref [_StencilRef]`, `ReadMask [_StencilReadMask]`, `WriteMask [_StencilWriteMask]` |
-| `Corpus/30 Sprite UI` | `Ref [_Stencil]`, `Comp [_StencilComp]`, `Pass [_StencilOp]`, `ReadMask [_StencilReadMask]`, `WriteMask [_StencilWriteMask]`, `ZTest [unity_GUIZTestMode]`, `ColorMask [_ColorMask]` |
-
-The player build serializes the unresolved value, so output emits `Ref 0`,
-`ReadMask 0`, `WriteMask 0`, `Comp Disabled`, `ColorMask 0`, and
-`ZTest Disabled`. Sprite UI therefore writes no color and skips the stencil
-test at runtime.
-
-This value is not recoverable from the blob in general. Options: emit a
-warning comment when a state field is zero/default while the ShaderLab source
-used a property reference, or special-case the Unity built-ins
-(`unity_GUIZTestMode`, `_ColorMask`, `_Stencil*`) that the decompiler knows
-about. The source-fidelity runner deliberately skips these fields, so it
-cannot flag this.
-
-## 2. GrabPass is flattened and its texture is renamed
+## 1. GrabPass is flattened and its texture is renamed
 
 `Corpus/15 Grab Pass` and `Corpus/37 Water` emit a plain pass where the source
 has `GrabPass { "_GrabTexture" }` / `{ "_WaterGrab" }`. Output has no
@@ -54,7 +33,7 @@ source omits it), and rename the corresponding `tN` resource to that name.
 The custom name (`_WaterGrab`) is not recoverable; use the default name or a
 documented placeholder.
 
-## 3. Keyword variants are collapsed to one base variant
+## 2. Keyword variants are collapsed to one base variant
 
 Sources contain 38 `#pragma multi_compile*` lines (including 7
 `multi_compile_instancing`) and 2 `#pragma shader_feature` lines across 16
@@ -77,7 +56,7 @@ Unity's variant expansion) or wrap variant bodies in `#if` blocks. The
 pass-to-subprogram association this needs already exists, so the work left is
 emission only.
 
-## 4. Surface-shader reconstruction matches 0 of 8
+## 3. Surface-shader reconstruction matches 0 of 8
 
 `HlslSurfaceShaderRecognizer` runs by default and is meant to rewrite a
 compiled lit pass back to `#pragma surface surf <model>`. It returns `null`
@@ -95,7 +74,7 @@ Impact: output is valid ShaderLab but is not the source form; pass count and
 structure differ. `test_source_fidelity.py` skips surface pass structure for
 this reason.
 
-## 5. Stage entry points, `#pragma target`, and compute
+## 4. Stage entry points, `#pragma target`, and compute
 
 - `Corpus/19 Hull Domain` emits hull and domain functions but no
   `#pragma hull`/`#pragma domain`, `[domain(...)]`, `[partitioning(...)]`,
@@ -116,7 +95,7 @@ Cause: hull/domain/compute functions are printed without their ShaderLab
 attributes (`HlslPrettyPrinter.cs:236`, comment: "not wired yet"). Nothing
 tracks the minimum shader model required by the emitted code.
 
-## 6. Build-stripped or unemitted metadata
+## 5. Build-stripped or unemitted metadata
 
 These facts are not present in a player build, or are present but not printed.
 Counts are from the 48 sources versus the 48 outputs:
@@ -136,7 +115,7 @@ attributes, and `[Property]` refs. Its docstring says LOD is "serialized as
 0", which is only true when the source does not set it; 11 subshaders carry
 real LOD values.
 
-## 7. Emitter fallbacks and latent paths
+## 6. Emitter fallbacks and latent paths
 
 These are marked `shortcut:`/`TODO` in the code. None are hit by the current
 corpus (outputs contain no `TODO` comments today), so they are latent rather
@@ -157,7 +136,7 @@ than observed failures:
 | `HlslPrettyPrinter.Registers.cs:1428` | ResInfo maps 2D/3D/cube; multisampled targets omit the mip parameter and exotic resource types fall back to 3. |
 | `HlslSurfaceShaderRecognizer.cs:186` | Surface `Input` struct recovers only vertex colour, not `uv_*` fields. |
 
-## 8. Platform coverage
+## 7. Platform coverage
 
 Only DX11 SM4/5 subprograms are decoded. Everything else is logged and
 skipped (`Decompiler.cs:196`):
@@ -174,7 +153,7 @@ so this is visible in normal runs. It is a scope limitation (the project is a
 DXBC decompiler), not a regression, but it means platform-specific shader
 code is never emitted.
 
-## 9. Test blind spots
+## 8. Test blind spots
 
 - `test_faithfulness.py` recompiles every `HLSLPROGRAM` block and compares
   input/output signatures plus metadata. It does not compare instructions or
@@ -218,12 +197,11 @@ PY
 ```
 
 At the time of writing this prints only the two GrabPass shells
-(`Corpus/15`, `Corpus/37`), which have no program by design (gap 2).
+(`Corpus/15`, `Corpus/37`), which have no program by design (item 1).
 
 ## Suggested fix order
 
-1. `[Property]` render-state refs (item 1) — two corpus shaders render wrong.
-2. GrabPass (item 2) — two shaders lose their effect.
-3. Keyword variants (item 3) — 16 shaders lose non-base behaviour.
-4. `#pragma target`/hull attributes (item 5) — needed for re-import.
-5. Surface reconstruction (item 4) — quality of life, not visual correctness.
+1. GrabPass (item 1) — two shaders lose their effect.
+2. Keyword variants (item 2) — 16 shaders lose non-base behaviour.
+3. `#pragma target`/hull attributes (item 4) — needed for re-import.
+4. Surface reconstruction (item 3) — quality of life, not visual correctness.

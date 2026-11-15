@@ -244,41 +244,67 @@ public static partial class HlslPrettyPrinter
 
     private static void PrintRenderState(StringBuilder sb, HlslRenderState s)
     {
-        sb.Append("            Cull ").Append(s.Cull).Append('\n');
-        sb.Append("            ZTest ").Append(ZTestText(s.ZTest)).Append('\n');
-        sb.Append("            ZWrite ").Append(s.ZWrite ? "On" : "Off").Append('\n');
-        if (!s.ZClip)
-            sb.Append("            ZClip Off\n");
+        sb.Append("            Cull ")
+          .Append(StateValue(s, "cull", s.Cull.ToString())).Append('\n');
+        sb.Append("            ZTest ")
+          .Append(StateValue(s, "zTest", ZTestText(s.ZTest))).Append('\n');
+        sb.Append("            ZWrite ")
+          .Append(StateValue(s, "zWrite", s.ZWrite ? "On" : "Off")).Append('\n');
+        if (!s.ZClip || s.PropertyRefs.ContainsKey("zClip"))
+            sb.Append("            ZClip ")
+              .Append(StateValue(s, "zClip", s.ZClip ? "On" : "Off")).Append('\n');
 
         if (s.Lighting)
             sb.Append("            Lighting On\n");
 
-        if (s.AlphaToMask)
-            sb.Append("            AlphaToMask On\n");
+        if (s.AlphaToMask || s.PropertyRefs.ContainsKey("alphaToMask"))
+            sb.Append("            AlphaToMask ")
+              .Append(StateValue(s, "alphaToMask", s.AlphaToMask ? "On" : "Off")).Append('\n');
 
-        if (s.OffsetFactor != 0 || s.OffsetUnits != 0)
-            sb.Append("            Offset ").Append(s.OffsetFactor).Append(", ").Append(s.OffsetUnits).Append('\n');
+        if (s.OffsetFactor != 0 || s.OffsetUnits != 0
+            || s.PropertyRefs.ContainsKey("offsetFactor")
+            || s.PropertyRefs.ContainsKey("offsetUnits"))
+            sb.Append("            Offset ")
+              .Append(StateValue(s, "offsetFactor", s.OffsetFactor.ToString()))
+              .Append(", ")
+              .Append(StateValue(s, "offsetUnits", s.OffsetUnits.ToString())).Append('\n');
 
-        if (!(s.Blend.SrcBlend == HlslBlendMode.One && s.Blend.DstBlend == HlslBlendMode.Zero))
+        if (s.Blend.SrcBlend != HlslBlendMode.One || s.Blend.DstBlend != HlslBlendMode.Zero
+            || s.PropertyRefs.ContainsKey("blend.srcBlend")
+            || s.PropertyRefs.ContainsKey("blend.dstBlend"))
         {
-            sb.Append("            Blend ").Append(s.Blend.SrcBlend).Append(' ').Append(s.Blend.DstBlend);
-            if (s.Blend.SrcBlendAlpha != s.Blend.SrcBlend || s.Blend.DstBlendAlpha != s.Blend.DstBlend)
-                sb.Append(", ").Append(s.Blend.SrcBlendAlpha).Append(' ').Append(s.Blend.DstBlendAlpha);
+            sb.Append("            Blend ")
+              .Append(StateValue(s, "blend.srcBlend", s.Blend.SrcBlend.ToString())).Append(' ')
+              .Append(StateValue(s, "blend.dstBlend", s.Blend.DstBlend.ToString()));
+            if (s.Blend.SrcBlendAlpha != s.Blend.SrcBlend || s.Blend.DstBlendAlpha != s.Blend.DstBlend
+                || s.PropertyRefs.ContainsKey("blend.srcBlendAlpha")
+                || s.PropertyRefs.ContainsKey("blend.dstBlendAlpha"))
+                sb.Append(", ")
+                  .Append(StateValue(s, "blend.srcBlendAlpha", s.Blend.SrcBlendAlpha.ToString())).Append(' ')
+                  .Append(StateValue(s, "blend.dstBlendAlpha", s.Blend.DstBlendAlpha.ToString()));
             sb.Append('\n');
         }
 
-        if (s.Blend.BlendOp != HlslBlendOp.Add || s.Blend.BlendOpAlpha != HlslBlendOp.Add)
+        if (s.Blend.BlendOp != HlslBlendOp.Add || s.Blend.BlendOpAlpha != HlslBlendOp.Add
+            || s.PropertyRefs.ContainsKey("blend.blendOp")
+            || s.PropertyRefs.ContainsKey("blend.blendOpAlpha"))
         {
-            sb.Append("            BlendOp ").Append(s.Blend.BlendOp);
-            if (s.Blend.BlendOpAlpha != s.Blend.BlendOp)
-                sb.Append(", ").Append(s.Blend.BlendOpAlpha);
+            sb.Append("            BlendOp ")
+              .Append(StateValue(s, "blend.blendOp", s.Blend.BlendOp.ToString()));
+            if (s.Blend.BlendOpAlpha != s.Blend.BlendOp
+                || s.PropertyRefs.ContainsKey("blend.blendOpAlpha"))
+                sb.Append(", ")
+                  .Append(StateValue(s, "blend.blendOpAlpha", s.Blend.BlendOpAlpha.ToString()));
             sb.Append('\n');
         }
 
         // Unity's m_ColMask: Red=8, Green=4, Blue=2, Alpha=1; 15 is the
         // default and 0 means "write nothing".
-        if (s.Blend.ColorMask is int mask && mask != 15)
-            sb.Append("            ColorMask ").Append(ColorMaskText(mask)).Append('\n');
+        if (s.Blend.ColorMask is int mask && mask != 15
+            || s.PropertyRefs.ContainsKey("blend.colorMask"))
+            sb.Append("            ColorMask ")
+              .Append(StateValue(s, "blend.colorMask",
+                  ColorMaskText(s.Blend.ColorMask ?? 15))).Append('\n');
 
         // shortcut: only the single-face Stencil form is emitted; Front/Back
         // blocks need the separate-face state that the shipped blob does not
@@ -286,26 +312,43 @@ public static partial class HlslPrettyPrinter
         if (StencilNonDefault(s))
         {
             sb.Append("            Stencil\n            {\n");
-            if (s.StencilRef != 0)
-                sb.Append("                Ref ").Append(s.StencilRef).Append('\n');
-            if (s.StencilReadMask != 255)
-                sb.Append("                ReadMask ").Append(s.StencilReadMask).Append('\n');
-            if (s.StencilWriteMask != 255)
-                sb.Append("                WriteMask ").Append(s.StencilWriteMask).Append('\n');
-            sb.Append("                Comp ").Append(ZTestText(s.StencilFront.Comp)).Append('\n');
-            sb.Append("                Pass ").Append(StencilOpText(s.StencilFront.Pass)).Append('\n');
-            sb.Append("                Fail ").Append(StencilOpText(s.StencilFront.Fail)).Append('\n');
-            sb.Append("                ZFail ").Append(StencilOpText(s.StencilFront.ZFail)).Append('\n');
+            if (s.StencilRef != 0 || s.PropertyRefs.ContainsKey("stencilRef"))
+                sb.Append("                Ref ")
+                  .Append(StateValue(s, "stencilRef",
+                      s.StencilRef.ToString())).Append('\n');
+            if (s.StencilReadMask != 255 || s.PropertyRefs.ContainsKey("stencilReadMask"))
+                sb.Append("                ReadMask ")
+                  .Append(StateValue(s, "stencilReadMask",
+                      s.StencilReadMask.ToString())).Append('\n');
+            if (s.StencilWriteMask != 255 || s.PropertyRefs.ContainsKey("stencilWriteMask"))
+                sb.Append("                WriteMask ")
+                  .Append(StateValue(s, "stencilWriteMask",
+                      s.StencilWriteMask.ToString())).Append('\n');
+            sb.Append("                Comp ")
+              .Append(StateValue(s, "stencilComp", ZTestText(s.StencilFront.Comp))).Append('\n');
+            sb.Append("                Pass ")
+              .Append(StateValue(s, "stencilPass",
+                  StencilOpText(s.StencilFront.Pass))).Append('\n');
+            sb.Append("                Fail ")
+              .Append(StateValue(s, "stencilFail",
+                  StencilOpText(s.StencilFront.Fail))).Append('\n');
+            sb.Append("                ZFail ")
+              .Append(StateValue(s, "stencilZFail",
+                  StencilOpText(s.StencilFront.ZFail))).Append('\n');
             sb.Append("            }\n");
         }
     }
+
+    private static string StateValue(HlslRenderState s, string field, string literal) =>
+        s.PropertyRefs.TryGetValue(field, out string? name) ? $"[{name}]" : literal;
 
     private static bool StencilNonDefault(HlslRenderState s) =>
         s.StencilRef != 0 || s.StencilReadMask != 255 || s.StencilWriteMask != 255
         || s.StencilFront.Comp != HlslCompareFunction.Always
         || s.StencilFront.Pass != HlslStencilOp.Keep
         || s.StencilFront.Fail != HlslStencilOp.Keep
-        || s.StencilFront.ZFail != HlslStencilOp.Keep;
+        || s.StencilFront.ZFail != HlslStencilOp.Keep
+        || s.PropertyRefs.Keys.Any(k => k.StartsWith("stencil"));
 
     private static string ColorMaskText(int mask)
     {

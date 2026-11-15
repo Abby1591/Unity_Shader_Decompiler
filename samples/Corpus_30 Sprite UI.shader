@@ -26,16 +26,17 @@ Shader "Corpus/30 Sprite UI"
         {
             Tags { "CanUseSpriteAtlas"="true" "IGNOREPROJECTOR"="true" "PreviewType"="Plane" "QUEUE"="Transparent" "RenderType"="Transparent" }
             Cull Off
-            ZTest Disabled
+            ZTest [unity_GUIZTestMode]
             ZWrite Off
             Blend One OneMinusSrcAlpha
-            ColorMask 0
+            ColorMask [_ColorMask]
             Stencil
             {
-                ReadMask 0
-                WriteMask 0
-                Comp Disabled
-                Pass Keep
+                Ref [_Stencil]
+                ReadMask [_StencilReadMask]
+                WriteMask [_StencilWriteMask]
+                Comp [_StencilComp]
+                Pass [_StencilOp]
                 Fail Keep
                 ZFail Keep
             }

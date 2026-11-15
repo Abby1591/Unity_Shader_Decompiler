@@ -19,8 +19,9 @@ Shader "Corpus/03 Stencil"
             ZWrite On
             Stencil
             {
-                ReadMask 0
-                WriteMask 0
+                Ref [_StencilRef]
+                ReadMask [_StencilReadMask]
+                WriteMask [_StencilWriteMask]
                 Comp Always
                 Pass Replace
                 Fail Keep

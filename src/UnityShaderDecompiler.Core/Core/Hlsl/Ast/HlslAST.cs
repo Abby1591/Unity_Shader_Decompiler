@@ -172,6 +172,11 @@ public sealed class HlslRenderState
     // Only meaningful when SeparateBlend is true (MRT blending) — index 0
     // duplicates Blend for the common single-target case.
     public List<HlslBlendState> BlendTargets { get; } = new();
+
+    // ShaderLab [Property] references, keyed by field path ("zTest",
+    // "blend.srcBlend", "stencilComp", ...). The serialized state only holds
+    // the unresolved placeholder value, so these are what to print.
+    public Dictionary<string, string> PropertyRefs { get; } = new();
 }
 
 public sealed class HlslPassNode
