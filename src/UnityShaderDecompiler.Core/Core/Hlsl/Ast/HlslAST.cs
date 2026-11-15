@@ -183,6 +183,9 @@ public sealed class HlslPassNode
 {
     public string Name { get; init; } = "";
     public string UsePass { get; init; } = "";
+    // GrabPass texture name (Unity defaults to _GrabTexture); empty for a
+    // normal pass. A grab pass has no programs of its own.
+    public string GrabPassName { get; init; } = "";
     public Dictionary<string, string> Tags { get; } = new();
 
     // Raw render-state JSON, kept for anything Stage 6's typed parse

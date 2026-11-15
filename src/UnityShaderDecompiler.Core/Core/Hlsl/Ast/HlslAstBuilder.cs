@@ -85,6 +85,9 @@ public static class HlslAstBuilder
                 {
                     Name = pass.Name,
                     UsePass = pass.UsePass,
+                    GrabPassName = pass.Type == 2
+                        ? (string.IsNullOrEmpty(pass.TextureName) ? "_GrabTexture" : pass.TextureName)
+                        : "",
                     RenderStateRaw = pass.RenderState,
                     State = HlslRenderStateBuilder.Build(pass.RenderState),
                 };

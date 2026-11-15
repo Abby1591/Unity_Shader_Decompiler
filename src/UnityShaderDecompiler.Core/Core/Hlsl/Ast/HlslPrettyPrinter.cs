@@ -143,6 +143,13 @@ public static partial class HlslPrettyPrinter
 
         foreach (HlslPassNode pass in ss.Passes)
         {
+            // A GrabPass captures the screen into a named texture and carries
+            // no program of its own.
+            if (!string.IsNullOrEmpty(pass.GrabPassName))
+            {
+                sb.Append("        GrabPass { \"").Append(pass.GrabPassName).Append("\" }\n");
+                continue;
+            }
             // UsePass references a pass in another shader instead of carrying
             // its own program or state, so it is not wrapped in a Pass block.
             if (!string.IsNullOrEmpty(pass.UsePass))

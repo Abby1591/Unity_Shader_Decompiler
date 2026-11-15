@@ -11,22 +11,7 @@ Shader "Corpus/15 Grab Pass"
     {
         Tags { "IGNOREPROJECTOR"="true" "QUEUE"="Transparent" "RenderType"="Transparent" }
         LOD 0
-        Pass
-        {
-            Cull Off
-            ZTest Disabled
-            ZWrite Off
-            ZClip Off
-            Stencil
-            {
-                ReadMask 0
-                WriteMask 0
-                Comp Disabled
-                Pass Keep
-                Fail Keep
-                ZFail Keep
-            }
-        }
+        GrabPass { "_GrabTexture" }
         Pass
         {
             Tags { "IGNOREPROJECTOR"="true" "QUEUE"="Transparent" "RenderType"="Transparent" }
@@ -55,7 +40,7 @@ Shader "Corpus/15 Grab Pass"
             SamplerState sampler_linear_clamp;
             SamplerState sampler_MainTex;
             Texture2D _MainTex;
-            Texture2D t1;
+            Texture2D _GrabTexture;
             struct program1Input
             {
                 float4 position0 : POSITION0;
@@ -126,7 +111,7 @@ Shader "Corpus/15 Grab Pass"
                 float r0_z_4 = r0_xyzw_4.z;
                 float r0_w_5 = r0_xyzw_4.w;
                 float4 r1_xyzw_4 = _MainTex.Sample(sampler_MainTex, (float4(r0_z_4, r0_w_5, r0_z_4, r0_z_4)).xy);
-                float4 r2_xyzw_1 = t1.Sample(sampler_linear_clamp, (i.texcoord0.xyxx).xy);
+                float4 r2_xyzw_1 = _GrabTexture.Sample(sampler_linear_clamp, (i.texcoord0.xyxx).xy);
                 o.sv_Target0.xyz = (mad(r0_y_5.xxxx, (mad(r2_xyzw_1.xyzx, _Color.xyzx, -r1_xyzw_4.xyzx)).xyzx, r1_xyzw_4.xyzx)).xyz;
                 float r0_y_6 = (r2_xyzw_1.w * _Color.w);
                 o.sv_Target0.w = (mad(r0_x_5, 0.5, 0.5) * r0_y_6);

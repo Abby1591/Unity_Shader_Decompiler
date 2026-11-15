@@ -377,6 +377,8 @@ public static class Decompiler
         // (vertex, fragment) variant pair.
         BuildVariantPasses(astShader, allPasses, candidates, log);
 
+        ApplyGrabTextures(astShader);
+
         log.WriteLine();
         log.WriteLine("HLSL AST (Stage 2)");
         log.WriteLine("-------------------");
@@ -621,6 +623,35 @@ public static class Decompiler
         }
 
         log.WriteLine($"BuildVariantPasses: {groups.Count} pass group(s), {totalPasses} pass(es) emitted total.");
+    }
+
+    // Unity binds a GrabPass texture shader-wide, and the program that
+    // samples it has no name for the anonymous tN resource, so give that
+    // resource the grab name.
+    // shortcut: when a pass binds more than one anonymous texture (e.g. a
+    // grab texture plus _CameraDepthTexture) the lowest slot is assumed to be
+    // the grab texture; upgrade if a shader needs a better association.
+    private static void ApplyGrabTextures(HlslShaderNode shader)
+    {
+        foreach (HlslSubShaderNode ss in shader.SubShaders)
+        {
+            string? grab = ss.Passes
+                .Select(p => p.GrabPassName)
+                .FirstOrDefault(n => !string.IsNullOrEmpty(n));
+            if (grab is null)
+                continue;
+
+            HlslResourceNode? anonymous = ss.Passes
+                .SelectMany(p => p.Resources)
+                .Where(r => r.Kind == HlslResourceKind.Texture
+                    && r.TypeHint?.StartsWith("Texture") == true
+                    && r.Name.Length > 1 && r.Name[0] == 't'
+                    && r.Name[1..].All(char.IsDigit))
+                .OrderBy(r => r.Slot)
+                .FirstOrDefault();
+            if (anonymous is not null)
+                anonymous.Name = grab;
+        }
     }
 
     // Attaches each pass's own serialized subprograms. A vertex program can

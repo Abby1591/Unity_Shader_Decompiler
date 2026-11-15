@@ -14,26 +14,7 @@ the gates are green:
 Everything below is outside what those runners assert. Counts are shader
 instances, not lines of code.
 
-## 1. GrabPass is flattened and its texture is renamed
-
-`Corpus/15 Grab Pass` and `Corpus/37 Water` emit a plain pass where the source
-has `GrabPass { "_GrabTexture" }` / `{ "_WaterGrab" }`. Output has no
-`GrabPass` block, the grab texture becomes `Texture2D t1`, and the fragment
-reads `t1.Sample(...)` instead of `tex2Dproj(_GrabTexture, ...)`. The pass
-samples an unbound texture, so the refraction effect is lost at runtime.
-
-Cause: the emitter prints pass state and decoded programs only; the
-`GrabPass` directive and its texture name are not part of the render state it
-consumes. Texture names for non-property textures are not in metadata either,
-so `tN` is the only name available.
-
-Fix: recognise the program-less, depth-disabled pass that Unity emits for a
-GrabPass, emit `GrabPass { "_GrabTexture" }` (Unity's default name when the
-source omits it), and rename the corresponding `tN` resource to that name.
-The custom name (`_WaterGrab`) is not recoverable; use the default name or a
-documented placeholder.
-
-## 2. Keyword variants are collapsed to one base variant
+## 1. Keyword variants are collapsed to one base variant
 
 Sources contain 38 `#pragma multi_compile*` lines (including 7
 `multi_compile_instancing`) and 2 `#pragma shader_feature` lines across 16
@@ -56,7 +37,7 @@ Unity's variant expansion) or wrap variant bodies in `#if` blocks. The
 pass-to-subprogram association this needs already exists, so the work left is
 emission only.
 
-## 3. Surface-shader reconstruction matches 0 of 8
+## 2. Surface-shader reconstruction matches 0 of 8
 
 `HlslSurfaceShaderRecognizer` runs by default and is meant to rewrite a
 compiled lit pass back to `#pragma surface surf <model>`. It returns `null`
@@ -74,7 +55,7 @@ Impact: output is valid ShaderLab but is not the source form; pass count and
 structure differ. `test_source_fidelity.py` skips surface pass structure for
 this reason.
 
-## 4. Stage entry points, `#pragma target`, and compute
+## 3. Stage entry points, `#pragma target`, and compute
 
 - `Corpus/19 Hull Domain` emits hull and domain functions but no
   `#pragma hull`/`#pragma domain`, `[domain(...)]`, `[partitioning(...)]`,
@@ -95,7 +76,7 @@ Cause: hull/domain/compute functions are printed without their ShaderLab
 attributes (`HlslPrettyPrinter.cs:236`, comment: "not wired yet"). Nothing
 tracks the minimum shader model required by the emitted code.
 
-## 5. Build-stripped or unemitted metadata
+## 4. Build-stripped or unemitted metadata
 
 These facts are not present in a player build, or are present but not printed.
 Counts are from the 48 sources versus the 48 outputs:
@@ -115,7 +96,7 @@ attributes, and `[Property]` refs. Its docstring says LOD is "serialized as
 0", which is only true when the source does not set it; 11 subshaders carry
 real LOD values.
 
-## 6. Emitter fallbacks and latent paths
+## 5. Emitter fallbacks and latent paths
 
 These are marked `shortcut:`/`TODO` in the code. None are hit by the current
 corpus (outputs contain no `TODO` comments today), so they are latent rather
@@ -123,6 +104,7 @@ than observed failures:
 
 | Location | Gap |
 |---|---|
+| `Decompiler.cs:631` | A grab texture is matched to the lowest-slot anonymous `tN` resource; a pass binding several anonymous textures can pick the wrong one. |
 | `Decompiler.cs:757` | A variable declared in two cbuffers keeps the lowest slot's name; reads that resolve to the duplicate use the kept name and may read the wrong buffer value. |
 | `HlslAstBuilder.cs:150` | Hull/domain patch inputs are flattened to per-element `float4` parameters instead of `OutputPatch<T, N>`. |
 | `HlslAstBuilder.cs:249` | `SV_GSInstanceID` is not routed out of the per-vertex array (only `SV_PrimitiveID` is). |
@@ -136,7 +118,7 @@ than observed failures:
 | `HlslPrettyPrinter.Registers.cs:1428` | ResInfo maps 2D/3D/cube; multisampled targets omit the mip parameter and exotic resource types fall back to 3. |
 | `HlslSurfaceShaderRecognizer.cs:186` | Surface `Input` struct recovers only vertex colour, not `uv_*` fields. |
 
-## 7. Platform coverage
+## 6. Platform coverage
 
 Only DX11 SM4/5 subprograms are decoded. Everything else is logged and
 skipped (`Decompiler.cs:196`):
@@ -153,7 +135,7 @@ so this is visible in normal runs. It is a scope limitation (the project is a
 DXBC decompiler), not a regression, but it means platform-specific shader
 code is never emitted.
 
-## 8. Test blind spots
+## 7. Test blind spots
 
 - `test_faithfulness.py` recompiles every `HLSLPROGRAM` block and compares
   input/output signatures plus metadata. It does not compare instructions or
@@ -164,8 +146,7 @@ code is never emitted.
   attributes, `[Property]` state refs, surface-shader structure, and all HLSL
   text.
 - No corpus shader covers compute, hull/domain attributes, separate stencil
-  faces, `Fog`, `SetTexture`, MRT blend targets, or a GrabPass whose name
-  differs from `_GrabTexture`.
+  faces, `Fog`, `SetTexture`, or MRT blend targets.
 - The xUnit golden test compares only the 8 fixtures in
   `tests/UnityShaderDecompiler.Tests/GoldenMetadataTests.cs`; the other 40
   samples are refreshed manually.
@@ -196,12 +177,10 @@ for p in sorted(pathlib.Path("src/UnityShaderDecompiler.Cli/Output").glob("*.sha
 PY
 ```
 
-At the time of writing this prints only the two GrabPass shells
-(`Corpus/15`, `Corpus/37`), which have no program by design (item 1).
+At the time of writing this prints nothing: every emitted `Pass` has a body.
 
 ## Suggested fix order
 
-1. GrabPass (item 1) — two shaders lose their effect.
-2. Keyword variants (item 2) — 16 shaders lose non-base behaviour.
-3. `#pragma target`/hull attributes (item 4) — needed for re-import.
-4. Surface reconstruction (item 3) — quality of life, not visual correctness.
+1. Keyword variants (item 1) — 16 shaders lose non-base behaviour.
+2. `#pragma target`/hull attributes (item 3) — needed for re-import.
+3. Surface reconstruction (item 2) — quality of life, not visual correctness.
