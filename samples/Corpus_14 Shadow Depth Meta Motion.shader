@@ -237,6 +237,51 @@ Shader "Corpus/14 Shadow Depth Meta Motion"
             Cull Back
             ZTest LEqual
             ZWrite On
+            HLSLPROGRAM
+            cbuffer _UnityPerDrawCB_b0
+            {
+                float4x4 unity_ObjectToWorld : packoffset(c0);
+            };
+            cbuffer _UnityPerFrameCB_b1
+            {
+                float4x4 unity_MatrixVP : packoffset(c17);
+            };
+            struct program7Input
+            {
+                float4 position0 : POSITION0;
+                float3 normal0 : NORMAL0;
+                float4 texcoord0 : TEXCOORD0;
+            };
+            struct program7Output
+            {
+                float4 sv_Position0 : SV_POSITION;
+            };
+            struct program9Input
+            {
+                float4 sv_Position0 : SV_POSITION;
+            };
+            struct program9Output
+            {
+                float4 sv_Target0 : SV_Target;
+            };
+            #pragma vertex vert
+            program7Output vert(program7Input i)
+            {
+                program7Output o = (program7Output)0;
+                #define UnityObjectToClipPos(v) mul(unity_MatrixVP, v)
+                #define UnityObjectToWorldPos(v) mul(unity_ObjectToWorld, float4(v, 1.0))
+                float4 worldPos_xyzw_4 = UnityObjectToWorldPos(i.position0.xyz);
+                o.sv_Position0.xyzw = UnityObjectToClipPos(worldPos_xyzw_4);
+                return o;
+            }
+            #pragma fragment frag
+            program9Output frag(program9Input i)
+            {
+                program9Output o = (program9Output)0;
+                o.sv_Target0.xyzw = float4(0, 0, 0, 0);
+                return o;
+            }
+            ENDHLSL
         }
     }
     Fallback "Diffuse"

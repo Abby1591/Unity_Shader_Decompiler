@@ -28,7 +28,7 @@ Shader "Corpus/05 Surface Standard"
             Cull Back
             ZTest LEqual
             ZWrite On
-            // Folded keyword variants (base state emitted): LIGHTPROBE_SH, SHADOWS_SCREEN
+            // Folded keyword variants (base state emitted): LIGHTPROBE_SH, SHADOWS_SCREEN, VERTEXLIGHT_ON
             HLSLPROGRAM
             cbuffer _GlobalsCB_b0
             {

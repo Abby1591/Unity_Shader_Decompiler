@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Text.Json;
 
 namespace UnityShaderDecompiler.Core.DXBC.Metadata;
@@ -165,6 +166,10 @@ public sealed class SubShaderMetadata
 public sealed class PassMetadata
 {
     public string Name { get; init; } = "";
+
+    // UsePass target ("Shader/Pass"); empty for an ordinary pass. The pass
+    // has no programs of its own, so this is the only body it can emit.
+    public string UsePass { get; init; } = "";
     public Dictionary<string, string> Tags { get; init; } = new();
     public JsonElement RenderState { get; init; }
 
@@ -173,17 +178,34 @@ public sealed class PassMetadata
     // strips from shipped bytecode. Keyed by register slot.
     public List<CbufferMetadata> ConstantBuffers { get; init; } = new();
 
+    // Stage name -> indices into the blob's flat subprogram array. Unity
+    // serializes these per pass (m_PlayerSubPrograms[].m_BlobIndex); they are
+    // what makes "this pass uses that compiled program" explicit, instead of
+    // guessing the association from the serialization order.
+    public Dictionary<string, List<int>> ProgramIndices { get; } = new();
+
     public static PassMetadata From(JsonElement el)
     {
         var result = new PassMetadata
         {
             Name = el.TryGetProperty("name", out var n) ? n.GetString() ?? "" : "",
+            UsePass = el.TryGetProperty("useName", out var u) ? u.GetString() ?? "" : "",
             RenderState = el.TryGetProperty("renderState", out var rs) ? rs : default,
         };
 
         if (el.TryGetProperty("tags", out var tags) && tags.ValueKind == JsonValueKind.Object)
             foreach (var t in tags.EnumerateObject())
                 result.Tags[t.Name] = t.Value.ToString();
+
+        if (el.TryGetProperty("programs", out var programs) && programs.ValueKind == JsonValueKind.Object)
+            foreach (var stage in programs.EnumerateObject())
+                if (stage.Value.TryGetProperty("blobIndices", out var indices)
+                    && indices.ValueKind == JsonValueKind.Array)
+                    result.ProgramIndices[stage.Name] = indices
+                        .EnumerateArray()
+                        .Where(i => i.ValueKind == JsonValueKind.Number)
+                        .Select(i => i.GetInt32())
+                        .ToList();
 
         if (el.TryGetProperty("constantBuffers", out var cbs) && cbs.ValueKind == JsonValueKind.Array)
             foreach (var cb in cbs.EnumerateArray())

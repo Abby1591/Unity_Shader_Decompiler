@@ -501,6 +501,15 @@ public static class Decompiler
             if (prop.Kind == HlslPropertyKind.Texture)
                 textureNames[texSlot++] = prop.Name;
 
+        // Unity serializes the subprograms each pass uses (m_BlobIndex per
+        // stage), so use that association when the metadata carries it. The
+        // stage-order grouping below is only a fallback for older exports.
+        if (allPasses.Any(p => p.ProgramIndices.Count > 0))
+        {
+            BuildVariantPassesFromMetadata(allPasses, candidates, textureNames, log);
+            return;
+        }
+
         foreach (DecompiledSubprogram c in candidates)
             c.Hash = Convert.ToHexString(SHA256.HashData(c.DxbcBytes));
 
@@ -612,6 +621,62 @@ public static class Decompiler
         }
 
         log.WriteLine($"BuildVariantPasses: {groups.Count} pass group(s), {totalPasses} pass(es) emitted total.");
+    }
+
+    // Attaches each pass's own serialized subprograms. A vertex program can
+    // serve several passes (Corpus_02 has seven passes sharing one vertex and
+    // one fragment), so this follows the per-pass references instead of
+    // pairing programs 1:1 by serialization order.
+    private static void BuildVariantPassesFromMetadata(
+        List<HlslPassNode> allPasses,
+        List<DecompiledSubprogram> candidates,
+        Dictionary<uint, string> textureNames,
+        TextWriter log)
+    {
+        var byIndex = candidates.ToDictionary(c => c.Index);
+        int totalPrograms = 0;
+
+        foreach (HlslPassNode pass in allPasses)
+        {
+            int attached = 0;
+            foreach (var (stageName, indices) in pass.ProgramIndices)
+            {
+                if (!Enum.TryParse(stageName, out HlslShaderStage stage))
+                    continue;
+
+                // Several variants of one stage can be serialized for a pass
+                // (keyword sets); the base body is the one with the fewest
+                // keywords and the rest are folded into a comment.
+                var variants = indices
+                    .Select(i => byIndex.GetValueOrDefault(i))
+                    .Where(c => c is not null && c.Stage == stage)
+                    .Select(c => c!)
+                    .OrderBy(c => c.Keywords.Length)
+                    .ToList();
+                if (variants.Count == 0)
+                    continue;
+
+                DecompiledSubprogram baseVariant = variants[0];
+                AttachPassProgram(pass, baseVariant, textureNames, log);
+                attached++;
+                totalPrograms++;
+
+                var baseKeywords = baseVariant.Keywords.ToHashSet(StringComparer.Ordinal);
+                foreach (string keyword in variants.Skip(1)
+                             .SelectMany(c => c.Keywords)
+                             .Where(k => !baseKeywords.Contains(k))
+                             .Distinct(StringComparer.Ordinal)
+                             .OrderBy(k => k, StringComparer.Ordinal))
+                    if (!pass.FoldedKeywords.Contains(keyword))
+                        pass.FoldedKeywords.Add(keyword);
+            }
+
+            if (attached == 0 && string.IsNullOrEmpty(pass.UsePass))
+                log.WriteLine($"  Pass '{pass.Name}': no serialized subprogram, left empty.");
+        }
+
+        log.WriteLine(
+            $"BuildVariantPasses: {totalPrograms} program(s) attached from per-pass metadata across {allPasses.Count} pass(es).");
     }
 
     // Attaches one candidate's function, resources and structs to a pass,

@@ -10,29 +10,22 @@ Shader "Corpus/16 UsePass Consumer"
     {
         Tags { "CanUseSpriteAtlas"="true" "FORCENOSHADOWCASTING"="true" "IGNOREPROJECTOR"="true" "PreviewType"="Plane" "QUEUE"="Geometry+10" "RenderType"="Opaque" }
         LOD 200
+        UsePass "Corpus/16 UsePass Base/BASE"
         Pass
         {
-            Cull Off
-            ZTest Disabled
+            Tags { "CanUseSpriteAtlas"="true" "FORCENOSHADOWCASTING"="true" "IGNOREPROJECTOR"="true" "PreviewType"="Plane" "QUEUE"="Geometry+10" "RenderType"="Opaque" }
+            Cull Back
+            ZTest Always
             ZWrite Off
-            ZClip Off
-            Stencil
-            {
-                ReadMask 0
-                WriteMask 0
-                Comp Disabled
-                Pass Keep
-                Fail Keep
-                ZFail Keep
-            }
+            Blend SrcAlpha OneMinusSrcAlpha
             HLSLPROGRAM
-            cbuffer cb0 : register(b0)
+            cbuffer _UnityPerDrawCB_b0
             {
-                float4 cb0_values[4];
+                float4x4 unity_ObjectToWorld : packoffset(c0);
             };
-            cbuffer cb1 : register(b1)
+            cbuffer _UnityPerFrameCB_b1
             {
-                float4 cb1_values[21];
+                float4x4 unity_MatrixVP : packoffset(c17);
             };
             struct program1Input
             {
@@ -56,29 +49,20 @@ Shader "Corpus/16 UsePass Consumer"
             program1Output vert(program1Input i)
             {
                 program1Output o = (program1Output)0;
-                float4 worldPos_xyzw_1 = (i.position0.yyyy * cb0_values[1].xyzw);
-                float4 worldPos_xyzw_2 = mad(cb0_values[0].xyzw, i.position0.xxxx, worldPos_xyzw_1);
-                float4 worldPos_xyzw_3 = mad(cb0_values[2].xyzw, i.position0.zzzz, worldPos_xyzw_2);
-                float4 worldPos_xyzw_4 = (worldPos_xyzw_3 + cb0_values[3].xyzw);
-                o.sv_Position0.xyzw = mul(float4x4(cb1_values[17], cb1_values[18], cb1_values[19], cb1_values[20]), worldPos_xyzw_4);
+                #define UnityObjectToClipPos(v) mul(unity_MatrixVP, v)
+                #define UnityObjectToWorldPos(v) mul(unity_ObjectToWorld, float4(v, 1.0))
+                float4 worldPos_xyzw_4 = UnityObjectToWorldPos(i.position0.xyz);
+                o.sv_Position0.xyzw = UnityObjectToClipPos(worldPos_xyzw_4);
                 return o;
             }
             #pragma fragment frag
             program3Output frag(program3Input i)
             {
                 program3Output o = (program3Output)0;
-                o.sv_Target0.xyzw = cb0_values[2].xyzw;
+                o.sv_Target0.xyzw = unity_ObjectToWorld[2];
                 return o;
             }
             ENDHLSL
-        }
-        Pass
-        {
-            Tags { "CanUseSpriteAtlas"="true" "FORCENOSHADOWCASTING"="true" "IGNOREPROJECTOR"="true" "PreviewType"="Plane" "QUEUE"="Geometry+10" "RenderType"="Opaque" }
-            Cull Back
-            ZTest Always
-            ZWrite Off
-            Blend SrcAlpha OneMinusSrcAlpha
         }
     }
     Fallback "Corpus/16 UsePass Base"

@@ -508,6 +508,12 @@ public static partial class HlslPrettyPrinter
                 ? HlslAstBuilder.ToFieldName("SV_PrimitiveID0")
                 : "i." + HlslAstBuilder.ToFieldName("SV_PrimitiveID0"),
 
+            // Hull/domain implicit inputs are declared as function parameters
+            // (see HlslAstBuilder.BuildFunction), not struct fields.
+            RegisterType.InputForkInstanceID or RegisterType.InputJoinInstanceID
+                or RegisterType.InputDomainPoint or RegisterType.InputControlPoint =>
+                HlslAstBuilder.ImplicitInputName(reg) + MaskOrSwizzleSuffix(reg),
+
             RegisterType.ConstantBuffer =>
                 RenderCbufferRead(reg, ctx),
 
