@@ -79,6 +79,62 @@ Shader "Corpus/02 Render States"
             ZTest LEqual
             ZWrite Off
             Blend SrcAlpha OneMinusSrcAlpha
+            HLSLPROGRAM
+            cbuffer _GlobalsCB_b0
+            {
+                float4 _MainTex_ST : packoffset(c2);
+                float4 _Color : packoffset(c3);
+            };
+            cbuffer _UnityPerDrawCB_b1
+            {
+                float4x4 unity_ObjectToWorld : packoffset(c0);
+            };
+            cbuffer _UnityPerFrameCB_b2
+            {
+                float4x4 unity_MatrixVP : packoffset(c17);
+            };
+            SamplerState sampler_MainTex;
+            Texture2D _MainTex;
+            struct program1Input
+            {
+                float4 position0 : POSITION0;
+                float3 normal0 : NORMAL0;
+                float4 texcoord0 : TEXCOORD0;
+            };
+            struct program1Output
+            {
+                float4 sv_Position0 : SV_POSITION;
+                float2 texcoord0 : TEXCOORD0;
+            };
+            struct program3Input
+            {
+                float4 sv_Position0 : SV_POSITION;
+                float2 texcoord0 : TEXCOORD0;
+            };
+            struct program3Output
+            {
+                float4 sv_Target0 : SV_Target;
+            };
+            #pragma vertex vert
+            program1Output vert(program1Input i)
+            {
+                program1Output o = (program1Output)0;
+                #define UnityObjectToClipPos(v) mul(unity_MatrixVP, v)
+                #define UnityObjectToWorldPos(v) mul(unity_ObjectToWorld, float4(v, 1.0))
+                float4 worldPos_xyzw_4 = UnityObjectToWorldPos(i.position0.xyz);
+                o.sv_Position0.xyzw = UnityObjectToClipPos(worldPos_xyzw_4);
+                o.texcoord0.xy = (mad(i.texcoord0.xyxx, _MainTex_ST.xyxx, _MainTex_ST.zwzz)).xy;
+                return o;
+            }
+            #pragma fragment frag
+            program3Output frag(program3Input i)
+            {
+                program3Output o = (program3Output)0;
+                float4 r0_xyzw_1 = _MainTex.Sample(sampler_MainTex, (i.texcoord0.xyxx).xy);
+                o.sv_Target0.xyzw = (r0_xyzw_1 * _Color);
+                return o;
+            }
+            ENDHLSL
         }
         Pass
         {
@@ -87,6 +143,62 @@ Shader "Corpus/02 Render States"
             ZTest Always
             ZWrite Off
             Blend One One
+            HLSLPROGRAM
+            cbuffer _GlobalsCB_b0
+            {
+                float4 _MainTex_ST : packoffset(c2);
+                float4 _Color : packoffset(c3);
+            };
+            cbuffer _UnityPerDrawCB_b1
+            {
+                float4x4 unity_ObjectToWorld : packoffset(c0);
+            };
+            cbuffer _UnityPerFrameCB_b2
+            {
+                float4x4 unity_MatrixVP : packoffset(c17);
+            };
+            SamplerState sampler_MainTex;
+            Texture2D _MainTex;
+            struct program1Input
+            {
+                float4 position0 : POSITION0;
+                float3 normal0 : NORMAL0;
+                float4 texcoord0 : TEXCOORD0;
+            };
+            struct program1Output
+            {
+                float4 sv_Position0 : SV_POSITION;
+                float2 texcoord0 : TEXCOORD0;
+            };
+            struct program3Input
+            {
+                float4 sv_Position0 : SV_POSITION;
+                float2 texcoord0 : TEXCOORD0;
+            };
+            struct program3Output
+            {
+                float4 sv_Target0 : SV_Target;
+            };
+            #pragma vertex vert
+            program1Output vert(program1Input i)
+            {
+                program1Output o = (program1Output)0;
+                #define UnityObjectToClipPos(v) mul(unity_MatrixVP, v)
+                #define UnityObjectToWorldPos(v) mul(unity_ObjectToWorld, float4(v, 1.0))
+                float4 worldPos_xyzw_4 = UnityObjectToWorldPos(i.position0.xyz);
+                o.sv_Position0.xyzw = UnityObjectToClipPos(worldPos_xyzw_4);
+                o.texcoord0.xy = (mad(i.texcoord0.xyxx, _MainTex_ST.xyxx, _MainTex_ST.zwzz)).xy;
+                return o;
+            }
+            #pragma fragment frag
+            program3Output frag(program3Input i)
+            {
+                program3Output o = (program3Output)0;
+                float4 r0_xyzw_1 = _MainTex.Sample(sampler_MainTex, (i.texcoord0.xyxx).xy);
+                o.sv_Target0.xyzw = (r0_xyzw_1 * _Color);
+                return o;
+            }
+            ENDHLSL
         }
         Pass
         {
@@ -95,6 +207,64 @@ Shader "Corpus/02 Render States"
             ZTest LEqual
             ZWrite Off
             Blend One OneMinusSrcAlpha
+            HLSLPROGRAM
+            cbuffer _GlobalsCB_b0
+            {
+                float4 _MainTex_ST : packoffset(c2);
+                float4 _Color : packoffset(c3);
+            };
+            cbuffer _UnityPerDrawCB_b1
+            {
+                float4x4 unity_ObjectToWorld : packoffset(c0);
+            };
+            cbuffer _UnityPerFrameCB_b2
+            {
+                float4x4 unity_MatrixVP : packoffset(c17);
+            };
+            SamplerState sampler_MainTex;
+            Texture2D _MainTex;
+            struct program1Input
+            {
+                float4 position0 : POSITION0;
+                float3 normal0 : NORMAL0;
+                float4 texcoord0 : TEXCOORD0;
+            };
+            struct program1Output
+            {
+                float4 sv_Position0 : SV_POSITION;
+                float2 texcoord0 : TEXCOORD0;
+            };
+            struct program4Input
+            {
+                float4 sv_Position0 : SV_POSITION;
+                float2 texcoord0 : TEXCOORD0;
+            };
+            struct program4Output
+            {
+                float4 sv_Target0 : SV_Target;
+            };
+            #pragma vertex vert
+            program1Output vert(program1Input i)
+            {
+                program1Output o = (program1Output)0;
+                #define UnityObjectToClipPos(v) mul(unity_MatrixVP, v)
+                #define UnityObjectToWorldPos(v) mul(unity_ObjectToWorld, float4(v, 1.0))
+                float4 worldPos_xyzw_4 = UnityObjectToWorldPos(i.position0.xyz);
+                o.sv_Position0.xyzw = UnityObjectToClipPos(worldPos_xyzw_4);
+                o.texcoord0.xy = (mad(i.texcoord0.xyxx, _MainTex_ST.xyxx, _MainTex_ST.zwzz)).xy;
+                return o;
+            }
+            #pragma fragment frag
+            program4Output frag(program4Input i)
+            {
+                program4Output o = (program4Output)0;
+                float4 r0_xyzw_1 = _MainTex.Sample(sampler_MainTex, (i.texcoord0.xyxx).xy);
+                float4 r0_xyzw_2 = (r0_xyzw_1 * _Color);
+                o.sv_Target0.xyz = ((r0_xyzw_2.wwww * r0_xyzw_2.xyzx)).xyz;
+                o.sv_Target0.w = r0_xyzw_2.w;
+                return o;
+            }
+            ENDHLSL
         }
         Pass
         {
@@ -103,6 +273,62 @@ Shader "Corpus/02 Render States"
             ZTest LEqual
             ZWrite Off
             Blend DstColor Zero
+            HLSLPROGRAM
+            cbuffer _GlobalsCB_b0
+            {
+                float4 _MainTex_ST : packoffset(c2);
+                float4 _Color : packoffset(c3);
+            };
+            cbuffer _UnityPerDrawCB_b1
+            {
+                float4x4 unity_ObjectToWorld : packoffset(c0);
+            };
+            cbuffer _UnityPerFrameCB_b2
+            {
+                float4x4 unity_MatrixVP : packoffset(c17);
+            };
+            SamplerState sampler_MainTex;
+            Texture2D _MainTex;
+            struct program1Input
+            {
+                float4 position0 : POSITION0;
+                float3 normal0 : NORMAL0;
+                float4 texcoord0 : TEXCOORD0;
+            };
+            struct program1Output
+            {
+                float4 sv_Position0 : SV_POSITION;
+                float2 texcoord0 : TEXCOORD0;
+            };
+            struct program3Input
+            {
+                float4 sv_Position0 : SV_POSITION;
+                float2 texcoord0 : TEXCOORD0;
+            };
+            struct program3Output
+            {
+                float4 sv_Target0 : SV_Target;
+            };
+            #pragma vertex vert
+            program1Output vert(program1Input i)
+            {
+                program1Output o = (program1Output)0;
+                #define UnityObjectToClipPos(v) mul(unity_MatrixVP, v)
+                #define UnityObjectToWorldPos(v) mul(unity_ObjectToWorld, float4(v, 1.0))
+                float4 worldPos_xyzw_4 = UnityObjectToWorldPos(i.position0.xyz);
+                o.sv_Position0.xyzw = UnityObjectToClipPos(worldPos_xyzw_4);
+                o.texcoord0.xy = (mad(i.texcoord0.xyxx, _MainTex_ST.xyxx, _MainTex_ST.zwzz)).xy;
+                return o;
+            }
+            #pragma fragment frag
+            program3Output frag(program3Input i)
+            {
+                program3Output o = (program3Output)0;
+                float4 r0_xyzw_1 = _MainTex.Sample(sampler_MainTex, (i.texcoord0.xyxx).xy);
+                o.sv_Target0.xyzw = (r0_xyzw_1 * _Color);
+                return o;
+            }
+            ENDHLSL
         }
         Pass
         {
@@ -112,6 +338,62 @@ Shader "Corpus/02 Render States"
             ZWrite Off
             Blend SrcAlpha OneMinusSrcAlpha, One OneMinusSrcAlpha
             BlendOp Add, Max
+            HLSLPROGRAM
+            cbuffer _GlobalsCB_b0
+            {
+                float4 _MainTex_ST : packoffset(c2);
+                float4 _Color : packoffset(c3);
+            };
+            cbuffer _UnityPerDrawCB_b1
+            {
+                float4x4 unity_ObjectToWorld : packoffset(c0);
+            };
+            cbuffer _UnityPerFrameCB_b2
+            {
+                float4x4 unity_MatrixVP : packoffset(c17);
+            };
+            SamplerState sampler_MainTex;
+            Texture2D _MainTex;
+            struct program1Input
+            {
+                float4 position0 : POSITION0;
+                float3 normal0 : NORMAL0;
+                float4 texcoord0 : TEXCOORD0;
+            };
+            struct program1Output
+            {
+                float4 sv_Position0 : SV_POSITION;
+                float2 texcoord0 : TEXCOORD0;
+            };
+            struct program3Input
+            {
+                float4 sv_Position0 : SV_POSITION;
+                float2 texcoord0 : TEXCOORD0;
+            };
+            struct program3Output
+            {
+                float4 sv_Target0 : SV_Target;
+            };
+            #pragma vertex vert
+            program1Output vert(program1Input i)
+            {
+                program1Output o = (program1Output)0;
+                #define UnityObjectToClipPos(v) mul(unity_MatrixVP, v)
+                #define UnityObjectToWorldPos(v) mul(unity_ObjectToWorld, float4(v, 1.0))
+                float4 worldPos_xyzw_4 = UnityObjectToWorldPos(i.position0.xyz);
+                o.sv_Position0.xyzw = UnityObjectToClipPos(worldPos_xyzw_4);
+                o.texcoord0.xy = (mad(i.texcoord0.xyxx, _MainTex_ST.xyxx, _MainTex_ST.zwzz)).xy;
+                return o;
+            }
+            #pragma fragment frag
+            program3Output frag(program3Input i)
+            {
+                program3Output o = (program3Output)0;
+                float4 r0_xyzw_1 = _MainTex.Sample(sampler_MainTex, (i.texcoord0.xyxx).xy);
+                o.sv_Target0.xyzw = (r0_xyzw_1 * _Color);
+                return o;
+            }
+            ENDHLSL
         }
         Pass
         {
@@ -122,6 +404,62 @@ Shader "Corpus/02 Render States"
             AlphaToMask On
             Offset -1, -1
             ColorMask RG
+            HLSLPROGRAM
+            cbuffer _GlobalsCB_b0
+            {
+                float4 _MainTex_ST : packoffset(c2);
+                float4 _Color : packoffset(c3);
+            };
+            cbuffer _UnityPerDrawCB_b1
+            {
+                float4x4 unity_ObjectToWorld : packoffset(c0);
+            };
+            cbuffer _UnityPerFrameCB_b2
+            {
+                float4x4 unity_MatrixVP : packoffset(c17);
+            };
+            SamplerState sampler_MainTex;
+            Texture2D _MainTex;
+            struct program1Input
+            {
+                float4 position0 : POSITION0;
+                float3 normal0 : NORMAL0;
+                float4 texcoord0 : TEXCOORD0;
+            };
+            struct program1Output
+            {
+                float4 sv_Position0 : SV_POSITION;
+                float2 texcoord0 : TEXCOORD0;
+            };
+            struct program3Input
+            {
+                float4 sv_Position0 : SV_POSITION;
+                float2 texcoord0 : TEXCOORD0;
+            };
+            struct program3Output
+            {
+                float4 sv_Target0 : SV_Target;
+            };
+            #pragma vertex vert
+            program1Output vert(program1Input i)
+            {
+                program1Output o = (program1Output)0;
+                #define UnityObjectToClipPos(v) mul(unity_MatrixVP, v)
+                #define UnityObjectToWorldPos(v) mul(unity_ObjectToWorld, float4(v, 1.0))
+                float4 worldPos_xyzw_4 = UnityObjectToWorldPos(i.position0.xyz);
+                o.sv_Position0.xyzw = UnityObjectToClipPos(worldPos_xyzw_4);
+                o.texcoord0.xy = (mad(i.texcoord0.xyxx, _MainTex_ST.xyxx, _MainTex_ST.zwzz)).xy;
+                return o;
+            }
+            #pragma fragment frag
+            program3Output frag(program3Input i)
+            {
+                program3Output o = (program3Output)0;
+                float4 r0_xyzw_1 = _MainTex.Sample(sampler_MainTex, (i.texcoord0.xyxx).xy);
+                o.sv_Target0.xyzw = (r0_xyzw_1 * _Color);
+                return o;
+            }
+            ENDHLSL
         }
         Pass
         {
@@ -130,6 +468,50 @@ Shader "Corpus/02 Render States"
             ZTest Always
             ZWrite On
             ColorMask 0
+            HLSLPROGRAM
+            cbuffer _UnityPerDrawCB_b0
+            {
+                float4x4 unity_ObjectToWorld : packoffset(c0);
+            };
+            cbuffer _UnityPerFrameCB_b1
+            {
+                float4x4 unity_MatrixVP : packoffset(c17);
+            };
+            struct program6Input
+            {
+                float4 position0 : POSITION0;
+                float3 normal0 : NORMAL0;
+                float4 texcoord0 : TEXCOORD0;
+            };
+            struct program6Output
+            {
+                float4 sv_Position0 : SV_Position;
+            };
+            struct program8Input
+            {
+            };
+            struct program8Output
+            {
+                float4 sv_Target0 : SV_Target;
+            };
+            #pragma vertex vert
+            program6Output vert(program6Input i)
+            {
+                program6Output o = (program6Output)0;
+                #define UnityObjectToClipPos(v) mul(unity_MatrixVP, v)
+                #define UnityObjectToWorldPos(v) mul(unity_ObjectToWorld, float4(v, 1.0))
+                float4 worldPos_xyzw_4 = UnityObjectToWorldPos(i.position0.xyz);
+                o.sv_Position0.xyzw = UnityObjectToClipPos(worldPos_xyzw_4);
+                return o;
+            }
+            #pragma fragment frag
+            program8Output frag(program8Input i)
+            {
+                program8Output o = (program8Output)0;
+                o.sv_Target0.xyzw = float4(0, 0, 0, 0);
+                return o;
+            }
+            ENDHLSL
         }
     }
 }

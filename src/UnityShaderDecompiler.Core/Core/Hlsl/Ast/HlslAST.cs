@@ -177,6 +177,7 @@ public sealed class HlslRenderState
 public sealed class HlslPassNode
 {
     public string Name { get; init; } = "";
+    public string UsePass { get; init; } = "";
     public Dictionary<string, string> Tags { get; } = new();
 
     // Raw render-state JSON, kept for anything Stage 6's typed parse
@@ -209,6 +210,11 @@ public sealed class HlslPassNode
     // stages. Stage 13 uses it to render cbN[slot] reads as the real
     // variable names instead of opaque cbN_values arrays.
     public Dictionary<(int Slot, string Stage), CbufferMetadata> Cbuffers { get; } = new();
+
+    // Stage name -> indices into the blob's flat subprogram array, from the
+    // ShaderLab serialization. Empty when the pass has no own programs (a
+    // UsePass reference, or a GrabPass shell).
+    public Dictionary<string, List<int>> ProgramIndices { get; } = new();
 
     public IEnumerable<HlslFunctionNode> Functions()
     {

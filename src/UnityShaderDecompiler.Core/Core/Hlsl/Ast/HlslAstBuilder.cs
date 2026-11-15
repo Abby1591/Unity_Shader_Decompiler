@@ -84,11 +84,15 @@ public static class HlslAstBuilder
                 var passNode = new HlslPassNode
                 {
                     Name = pass.Name,
+                    UsePass = pass.UsePass,
                     RenderStateRaw = pass.RenderState,
                     State = HlslRenderStateBuilder.Build(pass.RenderState),
                 };
                 foreach (var (k, v) in pass.Tags)
                     passNode.Tags[k] = v;
+
+                foreach (var (stage, indices) in pass.ProgramIndices)
+                    passNode.ProgramIndices[stage] = indices;
 
                 foreach (CbufferMetadata cb in pass.ConstantBuffers)
                     if (cb.Slot >= 0 && !passNode.Cbuffers.ContainsKey((cb.Slot, cb.Stage)))
@@ -136,6 +140,31 @@ public static class HlslAstBuilder
             foreach (SignatureElement el in inputElements.Where(IsPerPrimitiveSystemValue))
                 function.PerPrimitiveInputs.Add(BuildField(el));
             inputElements = inputElements.Where(e => !IsPerPrimitiveSystemValue(e)).ToList();
+        }
+        else if (stage.Value is HlslShaderStage.Hull or HlslShaderStage.Domain)
+        {
+            // Hull fork/join instance IDs and the domain point/control-point
+            // patch are implicit stage inputs (registers, not signature
+            // elements). Declare the ones this program reads as parameters so
+            // the emitted hull/domain function is valid HLSL.
+            // shortcut: the domain patch is flattened to per-element float4
+            // parameters, not OutputPatch<T, N>; upgrade with the hull/domain
+            // attributes (docs/decompile_failure_audit.md item 5).
+            var declared = new HashSet<string>();
+            foreach (IRRegister reg in blocks
+                         .SelectMany(b => b.Statements)
+                         .SelectMany(s => s.Uses)
+                         .Where(r => IsImplicitStageInput(r.RegisterType)))
+            {
+                string name = ImplicitInputName(reg);
+                if (declared.Add(name))
+                    function.PerPrimitiveInputs.Add(new HlslFieldNode
+                    {
+                        Name = name,
+                        TypeHint = reg.RegisterType is RegisterType.InputForkInstanceID
+                            or RegisterType.InputJoinInstanceID ? "uint" : "float4",
+                    });
+            }
         }
 
         function.InputStruct = inputElements is not null
@@ -221,6 +250,20 @@ public static class HlslAstBuilder
     // has no register type yet, so it stays on the per-vertex input struct.
     private static bool IsPerPrimitiveSystemValue(SignatureElement el) =>
         el.SystemValue is (uint)SignatureSystemValue.PrimitiveId;
+
+    private static bool IsImplicitStageInput(RegisterType type) => type is
+        RegisterType.InputForkInstanceID or RegisterType.InputJoinInstanceID
+        or RegisterType.InputDomainPoint or RegisterType.InputControlPoint;
+
+    // Stable identifier shared with the printer: the function parameter this
+    // implicit stage input is declared as.
+    internal static string ImplicitInputName(IRRegister reg) => reg.RegisterType switch
+    {
+        RegisterType.InputControlPoint =>
+            $"inputcontrolpoint{(reg.Indices.Count > 0 ? reg.Indices[0] : reg.Index)}_" +
+            $"{(reg.Indices.Count > 1 ? reg.Indices[1] : 0)}",
+        _ => $"{reg.RegisterType.ToString().ToLowerInvariant()}{reg.Index}",
+    };
 
     private static string CanonicalFunctionName(HlslShaderStage stage) => stage switch
     {

@@ -29,7 +29,7 @@ Shader "Corpus/27 Keywords"
             Cull Back
             ZTest LEqual
             ZWrite On
-            // Folded keyword variants (base state emitted): FOG_LINEAR, LIGHTPROBE_SH, SHADOWS_SCREEN, VERTEXLIGHT_ON, _FEATURE_A, _FEATURE_B, _LOCAL_A, _LOCAL_FEATURE
+            // Folded keyword variants (base state emitted): FOG_LINEAR, LIGHTPROBE_SH, SHADOWS_SCREEN, VERTEXLIGHT_ON, _FEATURE_A, _FEATURE_B, _LOCAL_A, _LOCAL_B, _LOCAL_FEATURE, _MODE_A, _MODE_B, _MODE_C
             HLSLPROGRAM
             cbuffer _GlobalsCB_b0
             {

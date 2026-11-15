@@ -46,6 +46,7 @@
       "passes": [
         {
           "name": "",
+          "useName": "",
           "nameIndices": {
             "$Globals": 0,
             "UnityPerDraw": 1,
@@ -123,11 +124,17 @@
             }
           },
           "programs": {
-            "ProgVertex": {
-              "subProgramCount": 4
+            "Vertex": {
+              "subProgramCount": 1,
+              "blobIndices": [
+                1
+              ]
             },
-            "ProgFragment": {
-              "subProgramCount": 4
+            "Fragment": {
+              "subProgramCount": 1,
+              "blobIndices": [
+                3
+              ]
             }
           },
           "constantBuffers": [

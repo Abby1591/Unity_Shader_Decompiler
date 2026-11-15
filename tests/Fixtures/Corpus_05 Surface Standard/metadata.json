@@ -268,6 +268,7 @@
       "passes": [
         {
           "name": "",
+          "useName": "",
           "nameIndices": {
             "$Globals": 0,
             "UnityLighting": 16,
@@ -381,11 +382,27 @@
             }
           },
           "programs": {
-            "ProgVertex": {
-              "subProgramCount": 4
+            "Vertex": {
+              "subProgramCount": 8,
+              "blobIndices": [
+                6,
+                7,
+                8,
+                9,
+                10,
+                11,
+                12,
+                13
+              ]
             },
-            "ProgFragment": {
-              "subProgramCount": 4
+            "Fragment": {
+              "subProgramCount": 4,
+              "blobIndices": [
+                18,
+                19,
+                20,
+                21
+              ]
             }
           },
           "constantBuffers": [
@@ -717,6 +734,7 @@
         },
         {
           "name": "",
+          "useName": "",
           "nameIndices": {
             "$Globals": 6,
             "UnityLighting": 8,
@@ -806,11 +824,41 @@
             }
           },
           "programs": {
-            "ProgVertex": {
-              "subProgramCount": 4
+            "Vertex": {
+              "subProgramCount": 13,
+              "blobIndices": [
+                27,
+                28,
+                29,
+                30,
+                31,
+                32,
+                33,
+                34,
+                35,
+                36,
+                37,
+                38,
+                39
+              ]
             },
-            "ProgFragment": {
-              "subProgramCount": 4
+            "Fragment": {
+              "subProgramCount": 13,
+              "blobIndices": [
+                50,
+                51,
+                52,
+                53,
+                54,
+                55,
+                56,
+                57,
+                58,
+                59,
+                60,
+                61,
+                62
+              ]
             }
           },
           "constantBuffers": [
@@ -1068,6 +1116,7 @@
         },
         {
           "name": "",
+          "useName": "",
           "nameIndices": {
             "$Globals": 0,
             "UnityPerDraw": 1,
@@ -1160,11 +1209,23 @@
             }
           },
           "programs": {
-            "ProgVertex": {
-              "subProgramCount": 4
+            "Vertex": {
+              "subProgramCount": 4,
+              "blobIndices": [
+                65,
+                66,
+                67,
+                68
+              ]
             },
-            "ProgFragment": {
-              "subProgramCount": 4
+            "Fragment": {
+              "subProgramCount": 4,
+              "blobIndices": [
+                71,
+                72,
+                73,
+                74
+              ]
             }
           },
           "constantBuffers": [
@@ -1347,6 +1408,7 @@
         },
         {
           "name": "",
+          "useName": "",
           "nameIndices": {
             "$Globals": 0,
             "UnityLighting": 1,
@@ -1432,11 +1494,19 @@
             }
           },
           "programs": {
-            "ProgVertex": {
-              "subProgramCount": 4
+            "Vertex": {
+              "subProgramCount": 2,
+              "blobIndices": [
+                76,
+                77
+              ]
             },
-            "ProgFragment": {
-              "subProgramCount": 4
+            "Fragment": {
+              "subProgramCount": 2,
+              "blobIndices": [
+                79,
+                80
+              ]
             }
           },
           "constantBuffers": [

@@ -142,7 +142,16 @@ public static partial class HlslPrettyPrinter
             sb.Append("        LOD ").Append(lod).Append('\n');
 
         foreach (HlslPassNode pass in ss.Passes)
+        {
+            // UsePass references a pass in another shader instead of carrying
+            // its own program or state, so it is not wrapped in a Pass block.
+            if (!string.IsNullOrEmpty(pass.UsePass))
+            {
+                sb.Append("        UsePass \"").Append(pass.UsePass).Append("\"\n");
+                continue;
+            }
             PrintPass(sb, pass, fuseTemps, stripRegisterBindings);
+        }
 
         sb.Append("    }\n");
     }
@@ -711,8 +720,15 @@ public static partial class HlslPrettyPrinter
         }
         else
         {
-            string inParam = fn.InputStruct is null ? "" : $"{inType} i";
-            sb.Append("            ").Append(outType).Append(' ').Append(fn.Name).Append('(').Append(inParam).Append(")\n            {\n");
+            var parameters = new List<string>();
+            if (fn.InputStruct is not null)
+                parameters.Add($"{inType} i");
+            foreach (HlslFieldNode field in fn.PerPrimitiveInputs)
+                parameters.Add(field.Semantic.Length == 0
+                    ? $"{field.TypeHint} {field.Name}"
+                    : $"{field.TypeHint} {field.Name} : {field.Semantic}");
+            sb.Append("            ").Append(outType).Append(' ').Append(fn.Name).Append('(')
+              .Append(string.Join(", ", parameters)).Append(")\n            {\n");
         }
 
         // Filter the pass-wide cbuffer table down to the ones this stage

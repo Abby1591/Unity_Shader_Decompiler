@@ -145,11 +145,27 @@ class ShaderMetadata:
                 continue
             subprograms = (prog.get("m_PlayerSubPrograms")
                            or prog.get("m_SubPrograms") or [])
-            if subprograms:
-                programs[key[2:]] = {"subProgramCount": len(subprograms)}
+            # m_PlayerSubPrograms is one list per exported platform; the
+            # blob stores them in one flat array, and m_BlobIndex is the
+            # index into that array (verified against Corpus_33, where
+            # pass 0's vertex m_BlobIndex 1 is blob entry 1).
+            indices = []
+            def collect(items):
+                for item in items:
+                    if isinstance(item, list):
+                        collect(item)
+                    elif isinstance(item, dict) and "m_BlobIndex" in item:
+                        indices.append(item["m_BlobIndex"])
+            collect(subprograms)
+            if indices:
+                programs[key[len("m_Prog"):]] = {
+                    "subProgramCount": len(indices),
+                    "blobIndices": indices,
+                }
 
         return {
             "name": p.get("m_Name"),
+            "useName": p.get("m_UseName") or "",
             "nameIndices": name_to_index,
             "tags": self._tags(state.get("m_Tags", {})),
             "renderState": self._render_state(state),

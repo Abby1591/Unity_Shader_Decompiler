@@ -97,6 +97,7 @@
       "passes": [
         {
           "name": "",
+          "useName": "",
           "nameIndices": {
             "$Globals": 0,
             "UnityLighting": 1,
@@ -180,11 +181,19 @@
             }
           },
           "programs": {
-            "ProgVertex": {
-              "subProgramCount": 4
+            "Vertex": {
+              "subProgramCount": 2,
+              "blobIndices": [
+                1,
+                2
+              ]
             },
-            "ProgFragment": {
-              "subProgramCount": 4
+            "Fragment": {
+              "subProgramCount": 2,
+              "blobIndices": [
+                4,
+                5
+              ]
             }
           },
           "constantBuffers": [
@@ -302,6 +311,7 @@
         },
         {
           "name": "",
+          "useName": "",
           "nameIndices": {
             "UnityPerDraw": 0,
             "UnityPerFrame": 1,
@@ -375,11 +385,17 @@
             }
           },
           "programs": {
-            "ProgVertex": {
-              "subProgramCount": 4
+            "Vertex": {
+              "subProgramCount": 1,
+              "blobIndices": [
+                7
+              ]
             },
-            "ProgFragment": {
-              "subProgramCount": 4
+            "Fragment": {
+              "subProgramCount": 1,
+              "blobIndices": [
+                9
+              ]
             }
           },
           "constantBuffers": [
@@ -425,6 +441,7 @@
         },
         {
           "name": "",
+          "useName": "",
           "nameIndices": {
             "UnityPerDraw": 0,
             "UnityPerFrame": 1,
@@ -500,11 +517,17 @@
             }
           },
           "programs": {
-            "ProgVertex": {
-              "subProgramCount": 4
+            "Vertex": {
+              "subProgramCount": 1,
+              "blobIndices": [
+                10
+              ]
             },
-            "ProgFragment": {
-              "subProgramCount": 4
+            "Fragment": {
+              "subProgramCount": 1,
+              "blobIndices": [
+                11
+              ]
             }
           },
           "constantBuffers": [
@@ -566,6 +589,7 @@
         },
         {
           "name": "",
+          "useName": "",
           "nameIndices": {
             "UnityPerDraw": 0,
             "UnityPerFrame": 1,
@@ -639,11 +663,17 @@
             }
           },
           "programs": {
-            "ProgVertex": {
-              "subProgramCount": 4
+            "Vertex": {
+              "subProgramCount": 1,
+              "blobIndices": [
+                7
+              ]
             },
-            "ProgFragment": {
-              "subProgramCount": 4
+            "Fragment": {
+              "subProgramCount": 1,
+              "blobIndices": [
+                9
+              ]
             }
           },
           "constantBuffers": [

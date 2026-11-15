@@ -18,6 +18,7 @@ Shader "Corpus/13 Deferred"
             Cull Back
             ZTest LEqual
             ZWrite On
+            // Folded keyword variants (base state emitted): UNITY_HDR_ON, _DEFERRED_USE_ORTHOGRAPHIC_PROJECTION
             HLSLPROGRAM
             cbuffer _GlobalsCB_b0
             {
@@ -111,7 +112,7 @@ Shader "Corpus/13 Deferred"
             Cull Back
             ZTest LEqual
             ZWrite On
-            // Folded keyword variants (base state emitted): FOG_LINEAR, LIGHTPROBE_SH, SHADOWS_SCREEN
+            // Folded keyword variants (base state emitted): FOG_LINEAR, LIGHTPROBE_SH, SHADOWS_SCREEN, VERTEXLIGHT_ON
             HLSLPROGRAM
             cbuffer _GlobalsCB_b0
             {
