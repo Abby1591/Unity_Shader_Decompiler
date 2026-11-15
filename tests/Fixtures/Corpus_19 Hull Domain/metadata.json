@@ -81,6 +81,8 @@
         {
           "name": "",
           "useName": "",
+          "type": 0,
+          "textureName": "",
           "nameIndices": {
             "$Globals": 1,
             "UnityLighting": 2,

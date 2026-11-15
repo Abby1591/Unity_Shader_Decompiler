@@ -166,6 +166,8 @@ class ShaderMetadata:
         return {
             "name": p.get("m_Name"),
             "useName": p.get("m_UseName") or "",
+            "type": p.get("m_Type", 0),
+            "textureName": p.get("m_TextureName") or "",
             "nameIndices": name_to_index,
             "tags": self._tags(state.get("m_Tags", {})),
             "renderState": self._render_state(state),

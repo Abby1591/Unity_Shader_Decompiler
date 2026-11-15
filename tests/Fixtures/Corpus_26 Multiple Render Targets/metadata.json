@@ -47,6 +47,8 @@
         {
           "name": "",
           "useName": "",
+          "type": 0,
+          "textureName": "",
           "nameIndices": {
             "$Globals": 0,
             "UnityPerDraw": 1,

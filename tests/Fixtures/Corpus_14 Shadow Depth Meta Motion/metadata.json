@@ -98,6 +98,8 @@
         {
           "name": "",
           "useName": "",
+          "type": 0,
+          "textureName": "",
           "nameIndices": {
             "$Globals": 0,
             "UnityLighting": 1,
@@ -312,6 +314,8 @@
         {
           "name": "",
           "useName": "",
+          "type": 0,
+          "textureName": "",
           "nameIndices": {
             "UnityPerDraw": 0,
             "UnityPerFrame": 1,
@@ -442,6 +446,8 @@
         {
           "name": "",
           "useName": "",
+          "type": 0,
+          "textureName": "",
           "nameIndices": {
             "UnityPerDraw": 0,
             "UnityPerFrame": 1,
@@ -590,6 +596,8 @@
         {
           "name": "",
           "useName": "",
+          "type": 0,
+          "textureName": "",
           "nameIndices": {
             "UnityPerDraw": 0,
             "UnityPerFrame": 1,

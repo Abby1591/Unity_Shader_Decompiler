@@ -170,6 +170,13 @@ public sealed class PassMetadata
     // UsePass target ("Shader/Pass"); empty for an ordinary pass. The pass
     // has no programs of its own, so this is the only body it can emit.
     public string UsePass { get; init; } = "";
+
+    // Serialized pass type: 0 normal, 1 UsePass, 2 GrabPass.
+    public int Type { get; init; }
+
+    // GrabPass texture name; empty for other passes (and for a bare
+    // GrabPass, where Unity's default is _GrabTexture).
+    public string TextureName { get; init; } = "";
     public Dictionary<string, string> Tags { get; init; } = new();
     public JsonElement RenderState { get; init; }
 
@@ -190,6 +197,8 @@ public sealed class PassMetadata
         {
             Name = el.TryGetProperty("name", out var n) ? n.GetString() ?? "" : "",
             UsePass = el.TryGetProperty("useName", out var u) ? u.GetString() ?? "" : "",
+            Type = el.TryGetProperty("type", out var pt) && pt.ValueKind == JsonValueKind.Number ? pt.GetInt32() : 0,
+            TextureName = el.TryGetProperty("textureName", out var tn) ? tn.GetString() ?? "" : "",
             RenderState = el.TryGetProperty("renderState", out var rs) ? rs : default,
         };
 

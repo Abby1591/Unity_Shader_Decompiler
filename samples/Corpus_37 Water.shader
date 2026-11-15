@@ -19,22 +19,7 @@ Shader "Corpus/37 Water"
     {
         Tags { "IGNOREPROJECTOR"="true" "QUEUE"="Transparent" "RenderType"="Transparent" }
         LOD 0
-        Pass
-        {
-            Cull Off
-            ZTest Disabled
-            ZWrite Off
-            ZClip Off
-            Stencil
-            {
-                ReadMask 0
-                WriteMask 0
-                Comp Disabled
-                Pass Keep
-                Fail Keep
-                ZFail Keep
-            }
-        }
+        GrabPass { "_WaterGrab" }
         Pass
         {
             Tags { "IGNOREPROJECTOR"="true" "QUEUE"="Transparent" "RenderType"="Transparent" }
@@ -78,7 +63,7 @@ Shader "Corpus/37 Water"
             Texture2D _NormalMap;
             Texture2D _WaveMap;
             TextureCube _ReflectionCube;
-            Texture2D t3;
+            Texture2D _WaterGrab;
             Texture2D t4;
             struct program1Input
             {
@@ -243,7 +228,7 @@ Shader "Corpus/37 Water"
                 float r3_x_4 = r3_xyzw_4.x;
                 float r3_y_4 = r3_xyzw_4.y;
                 float r3_z_3 = r3_xyzw_4.z;
-                float4 r3_xyzw_6 = t3.Sample(sampler_linear_clamp2, (((float4(r3_x_4, r3_y_4, r3_x_4, r3_x_4) / r3_z_3.xxxx)).xyxx).xy);
+                float4 r3_xyzw_6 = _WaterGrab.Sample(sampler_linear_clamp2, (((float4(r3_x_4, r3_y_4, r3_x_4, r3_x_4) / r3_z_3.xxxx)).xyxx).xy);
                 float4 r2_xyzw_11 = mad(-_Color.xyzx, r3_xyzw_6.xyzx, r2_xyzw_10.xyzx);
                 float r2_x_11 = r2_xyzw_11.x;
                 float r2_y_11 = r2_xyzw_11.y;
