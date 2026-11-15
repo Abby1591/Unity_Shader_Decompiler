@@ -18,6 +18,7 @@ Shader "Corpus/47 Lightmap"
             ZWrite On
             // Folded keyword variants (base state emitted): DIRLIGHTMAP_SEPARATE, FOG_LINEAR
             HLSLPROGRAM
+            #pragma multi_compile _ DIRLIGHTMAP_SEPARATE FOG_LINEAR
             cbuffer _GlobalsCB_b0
             {
                 float4 _LightColor0 : packoffset(c2);

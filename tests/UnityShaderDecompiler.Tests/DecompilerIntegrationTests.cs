@@ -162,12 +162,13 @@ public class DecompilerIntegrationTests
     public void KeywordVariants_AreDocumentedInThePass()
     {
         // One ShaderLab pass with a base body; the keyword permutations that
-        // were compiled into separate subprograms are named, not silently
-        // dropped, so the missing states are visible in the source.
+        // were compiled into separate subprograms are named and declared, not
+        // silently dropped, so the missing states are visible in the source.
         var text = FixtureCache.Decompile("Corpus_04 Vertex Fragment").ShaderText;
 
         Assert.Contains("Folded keyword variants (base state emitted)", text);
         Assert.Contains("LIGHTPROBE_SH", text);
+        Assert.Contains("#pragma multi_compile _ FOG_LINEAR LIGHTPROBE_SH", text);
         Assert.Single(Regex.Matches(text, @"(?m)^        Pass$"));
     }
 

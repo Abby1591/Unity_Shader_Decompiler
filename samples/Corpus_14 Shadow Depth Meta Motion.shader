@@ -20,6 +20,7 @@ Shader "Corpus/14 Shadow Depth Meta Motion"
             ZWrite On
             // Folded keyword variants (base state emitted): SHADOWS_CUBE
             HLSLPROGRAM
+            #pragma multi_compile _ SHADOWS_CUBE
             cbuffer _GlobalsCB_b0
             {
                 float4 _MainTex_ST : packoffset(c2);
