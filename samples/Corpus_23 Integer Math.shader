@@ -18,6 +18,7 @@ Shader "Corpus/23 Integer Math"
             ZTest LEqual
             ZWrite On
             HLSLPROGRAM
+            #pragma target 4.5
             cbuffer _UnityPerDrawCB_b0
             {
                 float4x4 unity_ObjectToWorld;

@@ -17,6 +17,7 @@ Shader "Corpus/41 Global Arrays"
             ZTest LEqual
             ZWrite On
             HLSLPROGRAM
+            #pragma target 4.5
             cbuffer _GlobalsCB_b0
             {
                 float4 _MainTex_ST;

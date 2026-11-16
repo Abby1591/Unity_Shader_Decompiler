@@ -22,6 +22,7 @@ Shader "Corpus/04 Vertex Fragment"
             ZWrite On
             // Folded keyword variants (base state emitted): FOG_LINEAR, LIGHTPROBE_SH, SHADOWS_SCREEN, VERTEXLIGHT_ON
             HLSLPROGRAM
+            #pragma target 3.5
             #pragma multi_compile _ FOG_LINEAR LIGHTPROBE_SH SHADOWS_SCREEN VERTEXLIGHT_ON
             cbuffer _GlobalsCB_b0
             {

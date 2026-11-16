@@ -20,6 +20,7 @@ Shader "Corpus/14 Shadow Depth Meta Motion"
             ZWrite On
             // Folded keyword variants (base state emitted): SHADOWS_CUBE
             HLSLPROGRAM
+            #pragma target 3.5
             #pragma multi_compile _ SHADOWS_CUBE
             cbuffer _GlobalsCB_b0
             {
@@ -117,6 +118,7 @@ Shader "Corpus/14 Shadow Depth Meta Motion"
             ZWrite On
             ColorMask 0
             HLSLPROGRAM
+            #pragma target 3.5
             cbuffer _UnityPerDrawCB_b0
             {
                 float4x4 unity_ObjectToWorld : packoffset(c0);
@@ -170,6 +172,7 @@ Shader "Corpus/14 Shadow Depth Meta Motion"
             ZWrite On
             ColorMask RGB
             HLSLPROGRAM
+            #pragma target 3.5
             cbuffer _UnityPerDrawCB_b0
             {
                 float4x4 unity_ObjectToWorld : packoffset(c0);
@@ -239,6 +242,7 @@ Shader "Corpus/14 Shadow Depth Meta Motion"
             ZTest LEqual
             ZWrite On
             HLSLPROGRAM
+            #pragma target 3.5
             cbuffer _UnityPerDrawCB_b0
             {
                 float4x4 unity_ObjectToWorld : packoffset(c0);

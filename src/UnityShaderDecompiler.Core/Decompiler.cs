@@ -72,6 +72,10 @@ public sealed class DecompiledSubprogram
     // The keyword set this subprogram was compiled for. Variants of one pass
     // differ only here; the pass is decompiled from the base one.
     public required string[] Keywords { get; init; }
+
+    // Serialized program type (DX11VertexSM40, DX11HullSM50, ...); the shader
+    // model needed for the pass's #pragma target comes from this.
+    public required ShaderGpuProgramType ProgramType { get; init; }
     internal string Hash { get; set; } = "";
 }
 
@@ -344,6 +348,7 @@ public static class Decompiler
                         InputInterpolators = InterfaceInterpKey(dxbcFile.InputSignature?.Elements),
                         OutputInterpolators = InterfaceInterpKey(dxbcFile.OutputSignature?.Elements),
                         Keywords = sp.m_Keywords ?? Array.Empty<string>(),
+                        ProgramType = sp.m_ProgramType,
                     });
                     log.WriteLine($"Stage 2: collected {function.Stage} function '{function.Name}' (subprogram {i}).");
                 }
@@ -710,6 +715,22 @@ public static class Decompiler
             $"BuildVariantPasses: {totalPrograms} program(s) attached from per-pass metadata across {allPasses.Count} pass(es).");
     }
 
+    // The serialized #pragma target is not in the blob, so infer the floor
+    // from the compiled shader model: SM4.0 is Unity target 3.5, SM5.0 is 4.5,
+    // and the tessellation stages need 5.0.
+    // shortcut: a source target of 3.0 is emitted as 3.5 and 4.6 as 4.5;
+    // upgrade if the exact target (platform gating) has to be preserved.
+    private static HlslShaderTarget TargetFor(ShaderGpuProgramType type) => type switch
+    {
+        ShaderGpuProgramType.DX11HullSM50 or ShaderGpuProgramType.DX11DomainSM50
+            => HlslShaderTarget.Sm50,
+        ShaderGpuProgramType.DX11VertexSM40 or ShaderGpuProgramType.DX11PixelSM40
+            or ShaderGpuProgramType.DX11GeometrySM40
+            or ShaderGpuProgramType.DX10Level9Vertex or ShaderGpuProgramType.DX10Level9Pixel
+            => HlslShaderTarget.Sm35,
+        _ => HlslShaderTarget.Sm45,
+    };
+
     // Attaches one candidate's function, resources and structs to a pass,
     // unioning cbuffer members the way the previous streaming loop did.
     private static void AttachPassProgram(
@@ -718,6 +739,10 @@ public static class Decompiler
         Dictionary<uint, string>? textureNames,
         TextWriter log)
     {
+        HlslShaderTarget target = TargetFor(c.ProgramType);
+        if (target > pass.Target)
+            pass.Target = target;
+
         AttachFunction(pass, c.Function);
 
         var resources = HlslAstBuilder.BuildResources(

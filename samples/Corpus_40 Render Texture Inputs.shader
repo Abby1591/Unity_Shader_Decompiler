@@ -14,6 +14,7 @@ Shader "Corpus/40 Render Texture Inputs"
             ZTest Always
             ZWrite Off
             HLSLPROGRAM
+            #pragma target 3.5
             cbuffer _UnityPerDrawCB_b0
             {
                 float4x4 unity_ObjectToWorld : packoffset(c0);

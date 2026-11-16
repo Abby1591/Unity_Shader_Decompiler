@@ -210,6 +210,11 @@ public sealed class HlslPassNode
     // output so the missing keyword permutations are visible.
     public List<string> FoldedKeywords { get; } = new();
 
+    // Lowest Unity shader target that compiles the attached bytecode. The
+    // original #pragma target is not serialized, so this is inferred from the
+    // shader models of the programs themselves.
+    public HlslShaderTarget Target { get; set; } = HlslShaderTarget.None;
+
     // Cbuffer layout recovered from the ShaderLab metadata (per-pass
     // replacement for the stripped RDEF chunk), keyed by (register slot,
     // stage). Stages bind their own tables, so a slot number alone is
@@ -237,6 +242,10 @@ public sealed class HlslPassNode
         }
     }
 }
+
+// Unity "#pragma target" levels the emitted bytecode needs: SM4.0 is target
+// 3.5, SM5.0 is 4.5, and hull/domain need 5.0. Values are tenths (35 = 3.5).
+public enum HlslShaderTarget { None = 0, Sm35 = 35, Sm45 = 45, Sm50 = 50 }
 
 public enum HlslShaderStage
 {

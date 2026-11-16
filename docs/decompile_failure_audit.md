@@ -57,26 +57,24 @@ Impact: output is valid ShaderLab but is not the source form; pass count and
 structure differ. `test_source_fidelity.py` skips surface pass structure for
 this reason.
 
-## 3. Stage entry points, `#pragma target`, and compute
+## 3. Hull/domain attributes and compute are not emitted
 
 - `Corpus/19 Hull Domain` emits hull and domain functions but no
   `#pragma hull`/`#pragma domain`, `[domain(...)]`, `[partitioning(...)]`,
   `[outputtopology(...)]`, or `[patchconstantfunc(...)]`. The block is not a
-  valid Unity hull/domain shader.
+  valid Unity hull/domain shader. The hull body is also only partly
+  decompiled: `hs_fork_phase` is unhandled and the patch-constant function is
+  missing from the output.
 - No corpus shader is a compute shader, so `#pragma kernel` and
   `[numthreads(...)]` are untested. The printer has a compute path but nothing
   exercises it.
-- All 48 sources have `#pragma target` (75 lines total: 3.0 through 5.0);
-  output has none. The emitted HLSL uses SM4+ syntax (`Texture2D`,
-  `SamplerState`, `.Sample`, structured buffers), so reimporting without a
-  target pragma may compile for an older profile or fail. The target is not in
-  the serialized metadata, so it must be inferred from the constructs used.
 - 75 `#pragma only_renderers d3d11` lines in the sources are not emitted
   either, so the output no longer restricts itself to D3D11.
 
 Cause: hull/domain/compute functions are printed without their ShaderLab
-attributes (`HlslPrettyPrinter.cs:236`, comment: "not wired yet"). Nothing
-tracks the minimum shader model required by the emitted code.
+attributes (`HlslPrettyPrinter.cs:262`, comment: "not wired yet").
+Domain/partitioning/outputtopology are compile directives that are not in the
+bytecode, so they can only be inferred from the signatures or defaulted.
 
 ## 4. Build-stripped or unemitted metadata
 
@@ -90,7 +88,7 @@ Counts are from the 48 sources versus the 48 outputs:
 | Property attributes | 16 standalone lines | 22 | `Header`, `Space`, `Toggle`, `ToggleOff`, `Enum`, `PowerSlider`, `IntRange` recover; `PerRendererData` and `HideInInspector` do not |
 | `LOD` | 11 explicit | 49 | explicit values survive; unset LOD serializes `0` and is emitted as `LOD 0` (38 outputs) |
 | `Fog` | 0 in corpus | 0 | `fogMode` is parsed but never printed |
-| Separate front/back Stencil | 0 in corpus | 0 | only the single-face form is emitted (`shortcut:` at `HlslPrettyPrinter.cs:283`) |
+| Separate front/back Stencil | 0 in corpus | 0 | only the single-face form is emitted (`shortcut:` at `HlslPrettyPrinter.cs:335`) |
 | `Category { }` wrappers | 1 (`Corpus/44`) | 0 | flattened into SubShaders |
 
 The source-fidelity runner skips LOD, pass names, texture defaults, property
@@ -106,13 +104,15 @@ than observed failures:
 
 | Location | Gap |
 |---|---|
-| `Decompiler.cs:631` | A grab texture is matched to the lowest-slot anonymous `tN` resource; a pass binding several anonymous textures can pick the wrong one. |
-| `Decompiler.cs:757` | A variable declared in two cbuffers keeps the lowest slot's name; reads that resolve to the duplicate use the kept name and may read the wrong buffer value. |
-| `HlslAstBuilder.cs:150` | Hull/domain patch inputs are flattened to per-element `float4` parameters instead of `OutputPatch<T, N>`. |
-| `HlslAstBuilder.cs:249` | `SV_GSInstanceID` is not routed out of the per-vertex array (only `SV_PrimitiveID` is). |
-| `HlslAstBuilder.cs:446` | Structured buffer element type is guessed: `float4` for stride 16, `uint` otherwise. |
+| `Decompiler.cs:636` | A grab texture is matched to the lowest-slot anonymous `tN` resource; a pass binding several anonymous textures can pick the wrong one. |
+| `Decompiler.cs:721` | `#pragma target` is inferred from the program shader model (SM4.0→3.5, SM5.0→4.5, tessellation→5.0), not the source's value. |
+| `Decompiler.cs:813` | A variable declared in two cbuffers keeps the lowest slot's name; reads that resolve to the duplicate use the kept name and may read the wrong buffer value. |
+| `HlslAstBuilder.cs:153` | Hull/domain patch inputs are flattened to per-element `float4` parameters instead of `OutputPatch<T, N>`. |
+| `HlslAstBuilder.cs:252` | `SV_GSInstanceID` is not routed out of the per-vertex array (only `SV_PrimitiveID` is). |
+| `HlslAstBuilder.cs:449` | Structured buffer element type is guessed: `float4` for stride 16, `uint` otherwise. |
+| `HlslPrettyPrinter.cs:221` | Folded keywords become one `#pragma multi_compile` group per pass; `shader_feature`/`_local` and the original grouping are lost. |
 | `HlslPrettyPrinter.cs:94,103` | Range bounds and unknown property kinds fall back to `Float /* TODO ... */`. |
-| `HlslPrettyPrinter.cs:815` | Unrecognised macros emit `#define name(v) /* TODO ... */ (v)`. |
+| `HlslPrettyPrinter.cs:884` | Unrecognised macros emit `#define name(v) /* TODO ... */ (v)`. |
 | `HlslPrettyPrinter.Registers.cs:142` | Unhandled IR nodes emit `// TODO: unhandled IR node` (`hs_fork_phase`, `emitStream`/`cutStream`, ...). |
 | `HlslPrettyPrinter.Registers.cs:1131` | `bfe` sign-extend shift is UB for width 0 or 32 (DXBC does not emit it today). |
 | `HlslPrettyPrinter.Registers.cs:1260` | Abs-fold guard only covers `max(a, -a)`; other spellings can fail with X8000. |
@@ -183,6 +183,6 @@ At the time of writing this prints nothing: every emitted `Pass` has a body.
 
 ## Suggested fix order
 
-1. Keyword variants (item 1) — 16 shaders lose non-base behaviour.
-2. `#pragma target`/hull attributes (item 3) — needed for re-import.
+1. Keyword variant bodies (item 1) — 16 shaders lose non-base behaviour.
+2. Hull/domain attributes (item 3) — `Corpus/19` is not a valid hull shader.
 3. Surface reconstruction (item 2) — quality of life, not visual correctness.

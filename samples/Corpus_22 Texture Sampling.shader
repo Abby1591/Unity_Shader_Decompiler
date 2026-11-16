@@ -21,6 +21,7 @@ Shader "Corpus/22 Texture Sampling"
             ZTest LEqual
             ZWrite On
             HLSLPROGRAM
+            #pragma target 4.5
             cbuffer _UnityPerCameraCB_b0
             {
                 float _Bias : packoffset(c2.x);

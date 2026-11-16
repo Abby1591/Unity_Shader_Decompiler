@@ -16,6 +16,7 @@ Shader "Corpus/16 UsePass Base"
             ZTest LEqual
             ZWrite On
             HLSLPROGRAM
+            #pragma target 3.5
             cbuffer _GlobalsCB_b0
             {
                 float4 _MainTex_ST : packoffset(c2);

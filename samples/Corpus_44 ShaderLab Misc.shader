@@ -18,6 +18,7 @@ Shader "Corpus/44 ShaderLab Misc"
             ZTest LEqual
             ZWrite On
             HLSLPROGRAM
+            #pragma target 3.5
             cbuffer _GlobalsCB_b0
             {
                 float4 _MainTex_ST : packoffset(c2);
@@ -89,6 +90,7 @@ Shader "Corpus/44 ShaderLab Misc"
             ZWrite Off
             Blend SrcAlpha OneMinusSrcAlpha
             HLSLPROGRAM
+            #pragma target 3.5
             cbuffer _UnityPerDrawCB_b0
             {
                 float4x4 unity_ObjectToWorld : packoffset(c0);

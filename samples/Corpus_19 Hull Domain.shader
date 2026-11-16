@@ -18,6 +18,7 @@ Shader "Corpus/19 Hull Domain"
             ZTest LEqual
             ZWrite On
             HLSLPROGRAM
+            #pragma target 5.0
             cbuffer _GlobalsCB_b0
             {
                 float4 _MainTex_ST : packoffset(c2);

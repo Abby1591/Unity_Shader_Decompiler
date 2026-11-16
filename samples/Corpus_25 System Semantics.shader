@@ -16,6 +16,7 @@ Shader "Corpus/25 System Semantics"
             ZTest LEqual
             ZWrite On
             HLSLPROGRAM
+            #pragma target 4.5
             cbuffer _GlobalsCB_b0
             {
                 float4 _Color : packoffset(c2);

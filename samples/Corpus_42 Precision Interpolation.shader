@@ -17,6 +17,7 @@ Shader "Corpus/42 Precision Interpolation"
             ZTest LEqual
             ZWrite On
             HLSLPROGRAM
+            #pragma target 4.5
             cbuffer _GlobalsCB_b0
             {
                 float4 _MainTex_ST : packoffset(c2);

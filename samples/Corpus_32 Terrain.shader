@@ -27,6 +27,7 @@ Shader "Corpus/32 Terrain"
             ZWrite On
             // Folded keyword variants (base state emitted): FOG_LINEAR
             HLSLPROGRAM
+            #pragma target 3.5
             #pragma multi_compile _ FOG_LINEAR
             cbuffer _GlobalsCB_b0
             {

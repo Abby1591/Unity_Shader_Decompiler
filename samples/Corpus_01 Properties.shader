@@ -48,6 +48,7 @@ Shader "Corpus/01 Properties"
             ZTest LEqual
             ZWrite On
             HLSLPROGRAM
+            #pragma target 4.5
             cbuffer _GlobalsCB_b0
             {
                 float4 _BaseMap_ST : packoffset(c2);

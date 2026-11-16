@@ -20,6 +20,7 @@ Shader "Corpus/15 Grab Pass"
             ZWrite Off
             Blend SrcAlpha OneMinusSrcAlpha
             HLSLPROGRAM
+            #pragma target 3.5
             cbuffer _GlobalsCB_b0
             {
                 float4 _MainTex_ST : packoffset(c2);

@@ -18,6 +18,7 @@ Shader "Corpus/24 Flow Control"
             ZTest LEqual
             ZWrite On
             HLSLPROGRAM
+            #pragma target 3.5
             cbuffer _UnityPerDrawCB_b0
             {
                 float4x4 unity_ObjectToWorld : packoffset(c0);

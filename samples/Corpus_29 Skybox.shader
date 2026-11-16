@@ -20,6 +20,7 @@ Shader "Corpus/29 Skybox"
             ZTest LEqual
             ZWrite Off
             HLSLPROGRAM
+            #pragma target 3.5
             cbuffer _UnityPerDrawCB_b0
             {
                 float4x4 unity_ObjectToWorld : packoffset(c0);

@@ -23,6 +23,7 @@ Shader "Corpus/35 Hologram"
             ZWrite Off
             Blend One One
             HLSLPROGRAM
+            #pragma target 3.5
             cbuffer _GlobalsCB_b0
             {
                 float4 _MainTex_ST : packoffset(c2);

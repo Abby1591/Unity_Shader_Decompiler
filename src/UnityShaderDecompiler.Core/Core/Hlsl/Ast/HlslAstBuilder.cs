@@ -152,7 +152,7 @@ public static class HlslAstBuilder
             // the emitted hull/domain function is valid HLSL.
             // shortcut: the domain patch is flattened to per-element float4
             // parameters, not OutputPatch<T, N>; upgrade with the hull/domain
-            // attributes (docs/decompile_failure_audit.md item 5).
+            // attributes (docs/decompile_failure_audit.md item 3).
             var declared = new HashSet<string>();
             foreach (IRRegister reg in blocks
                          .SelectMany(b => b.Statements)

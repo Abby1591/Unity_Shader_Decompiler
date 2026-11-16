@@ -23,6 +23,7 @@ Shader "Corpus/31 Particles"
             ColorMask RGB
             // Folded keyword variants (base state emitted): FOG_LINEAR, SOFTPARTICLES_ON
             HLSLPROGRAM
+            #pragma target 3.5
             #pragma multi_compile _ FOG_LINEAR SOFTPARTICLES_ON
             cbuffer _GlobalsCB_b0
             {
