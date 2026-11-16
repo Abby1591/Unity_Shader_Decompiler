@@ -19,6 +19,7 @@ Shader "Corpus/33 Transparency"
             ZWrite Off
             Blend SrcAlpha OneMinusSrcAlpha
             HLSLPROGRAM
+            #pragma target 3.5
             cbuffer _GlobalsCB_b0
             {
                 float4 _MainTex_ST : packoffset(c2);
@@ -83,6 +84,7 @@ Shader "Corpus/33 Transparency"
             ZWrite On
             AlphaToMask On
             HLSLPROGRAM
+            #pragma target 3.5
             cbuffer _GlobalsCB_b0
             {
                 float4 _MainTex_ST : packoffset(c2);
@@ -149,6 +151,7 @@ Shader "Corpus/33 Transparency"
             ZWrite Off
             Blend One OneMinusSrcAlpha
             HLSLPROGRAM
+            #pragma target 3.5
             cbuffer _GlobalsCB_b0
             {
                 float4 _MainTex_ST : packoffset(c2);
@@ -215,6 +218,7 @@ Shader "Corpus/33 Transparency"
             ZWrite Off
             Blend One One
             HLSLPROGRAM
+            #pragma target 3.5
             cbuffer _GlobalsCB_b0
             {
                 float4 _MainTex_ST : packoffset(c2);
@@ -281,6 +285,7 @@ Shader "Corpus/33 Transparency"
             ZWrite Off
             Blend DstColor Zero
             HLSLPROGRAM
+            #pragma target 3.5
             cbuffer _GlobalsCB_b0
             {
                 float4 _MainTex_ST : packoffset(c2);

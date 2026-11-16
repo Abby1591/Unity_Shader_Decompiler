@@ -206,6 +206,14 @@ public static partial class HlslPrettyPrinter
 
         sb.Append("            HLSLPROGRAM\n");
 
+        // The source `#pragma target` is not serialized; this is the floor
+        // that compiles the attached bytecode.
+        if (pass.Target != HlslShaderTarget.None)
+        {
+            int value = (int)pass.Target;
+            sb.Append("            #pragma target ").Append(value / 10).Append('.').Append(value % 10).Append('\n');
+        }
+
         // Unity can't tell shader_feature from multi_compile in the blob, and
         // the original grouping is lost, so declare the pass's keywords as one
         // multi_compile set: every keyword name survives without inventing a

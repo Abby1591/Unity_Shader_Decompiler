@@ -16,6 +16,7 @@ Shader "Corpus/02 Render States"
             ZTest LEqual
             ZWrite On
             HLSLPROGRAM
+            #pragma target 3.5
             cbuffer _GlobalsCB_b0
             {
                 float4 _MainTex_ST : packoffset(c2);
@@ -80,6 +81,7 @@ Shader "Corpus/02 Render States"
             ZWrite Off
             Blend SrcAlpha OneMinusSrcAlpha
             HLSLPROGRAM
+            #pragma target 3.5
             cbuffer _GlobalsCB_b0
             {
                 float4 _MainTex_ST : packoffset(c2);
@@ -144,6 +146,7 @@ Shader "Corpus/02 Render States"
             ZWrite Off
             Blend One One
             HLSLPROGRAM
+            #pragma target 3.5
             cbuffer _GlobalsCB_b0
             {
                 float4 _MainTex_ST : packoffset(c2);
@@ -208,6 +211,7 @@ Shader "Corpus/02 Render States"
             ZWrite Off
             Blend One OneMinusSrcAlpha
             HLSLPROGRAM
+            #pragma target 3.5
             cbuffer _GlobalsCB_b0
             {
                 float4 _MainTex_ST : packoffset(c2);
@@ -274,6 +278,7 @@ Shader "Corpus/02 Render States"
             ZWrite Off
             Blend DstColor Zero
             HLSLPROGRAM
+            #pragma target 3.5
             cbuffer _GlobalsCB_b0
             {
                 float4 _MainTex_ST : packoffset(c2);
@@ -339,6 +344,7 @@ Shader "Corpus/02 Render States"
             Blend SrcAlpha OneMinusSrcAlpha, One OneMinusSrcAlpha
             BlendOp Add, Max
             HLSLPROGRAM
+            #pragma target 3.5
             cbuffer _GlobalsCB_b0
             {
                 float4 _MainTex_ST : packoffset(c2);
@@ -405,6 +411,7 @@ Shader "Corpus/02 Render States"
             Offset -1, -1
             ColorMask RG
             HLSLPROGRAM
+            #pragma target 3.5
             cbuffer _GlobalsCB_b0
             {
                 float4 _MainTex_ST : packoffset(c2);
@@ -469,6 +476,7 @@ Shader "Corpus/02 Render States"
             ZWrite On
             ColorMask 0
             HLSLPROGRAM
+            #pragma target 3.5
             cbuffer _UnityPerDrawCB_b0
             {
                 float4x4 unity_ObjectToWorld : packoffset(c0);

@@ -28,6 +28,7 @@ Shader "Corpus/03 Stencil"
                 ZFail Zero
             }
             HLSLPROGRAM
+            #pragma target 3.5
             cbuffer _UnityPerDrawCB_b0
             {
                 float4x4 unity_ObjectToWorld : packoffset(c0);
@@ -90,6 +91,7 @@ Shader "Corpus/03 Stencil"
                 ZFail DecrSat
             }
             HLSLPROGRAM
+            #pragma target 3.5
             cbuffer _UnityPerDrawCB_b0
             {
                 float4x4 unity_ObjectToWorld : packoffset(c0);
@@ -150,6 +152,7 @@ Shader "Corpus/03 Stencil"
                 ZFail DecrWrap
             }
             HLSLPROGRAM
+            #pragma target 3.5
             cbuffer _UnityPerDrawCB_b0
             {
                 float4x4 unity_ObjectToWorld : packoffset(c0);
@@ -210,6 +213,7 @@ Shader "Corpus/03 Stencil"
                 ZFail Keep
             }
             HLSLPROGRAM
+            #pragma target 3.5
             cbuffer _UnityPerDrawCB_b0
             {
                 float4x4 unity_ObjectToWorld : packoffset(c0);
@@ -270,6 +274,7 @@ Shader "Corpus/03 Stencil"
                 ZFail Keep
             }
             HLSLPROGRAM
+            #pragma target 3.5
             cbuffer _UnityPerDrawCB_b0
             {
                 float4x4 unity_ObjectToWorld : packoffset(c0);
@@ -330,6 +335,7 @@ Shader "Corpus/03 Stencil"
                 ZFail Keep
             }
             HLSLPROGRAM
+            #pragma target 3.5
             cbuffer _UnityPerDrawCB_b0
             {
                 float4x4 unity_ObjectToWorld : packoffset(c0);
@@ -390,6 +396,7 @@ Shader "Corpus/03 Stencil"
                 ZFail Keep
             }
             HLSLPROGRAM
+            #pragma target 3.5
             cbuffer _UnityPerDrawCB_b0
             {
                 float4x4 unity_ObjectToWorld : packoffset(c0);
@@ -450,6 +457,7 @@ Shader "Corpus/03 Stencil"
                 ZFail Keep
             }
             HLSLPROGRAM
+            #pragma target 3.5
             cbuffer _UnityPerDrawCB_b0
             {
                 float4x4 unity_ObjectToWorld : packoffset(c0);

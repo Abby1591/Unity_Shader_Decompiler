@@ -17,6 +17,7 @@ Shader "Corpus/20 Instancing"
             ZTest LEqual
             ZWrite On
             HLSLPROGRAM
+            #pragma target 3.5
             cbuffer _GlobalsCB_b0
             {
                 float4 _Color : packoffset(c0);

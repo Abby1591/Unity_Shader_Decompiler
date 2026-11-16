@@ -23,6 +23,7 @@ Shader "Corpus/06 Surface Standard Specular"
             ZWrite On
             // Folded keyword variants (base state emitted): FOG_LINEAR, LIGHTPROBE_SH, SHADOWS_SCREEN, VERTEXLIGHT_ON
             HLSLPROGRAM
+            #pragma target 4.5
             #pragma multi_compile _ FOG_LINEAR LIGHTPROBE_SH SHADOWS_SCREEN VERTEXLIGHT_ON
             cbuffer _GlobalsCB_b0
             {
@@ -374,6 +375,7 @@ Shader "Corpus/06 Surface Standard Specular"
             Blend One One
             // Folded keyword variants (base state emitted): DIRECTIONAL, DIRECTIONAL_COOKIE, FOG_LINEAR, POINT_COOKIE, SHADOWS_CUBE, SHADOWS_DEPTH, SHADOWS_SCREEN, SHADOWS_SOFT, SPOT
             HLSLPROGRAM
+            #pragma target 4.5
             #pragma multi_compile _ DIRECTIONAL DIRECTIONAL_COOKIE FOG_LINEAR POINT_COOKIE SHADOWS_CUBE SHADOWS_DEPTH SHADOWS_SCREEN SHADOWS_SOFT SPOT
             cbuffer _GlobalsCB_b0
             {
@@ -650,6 +652,7 @@ Shader "Corpus/06 Surface Standard Specular"
             ZWrite On
             // Folded keyword variants (base state emitted): LIGHTPROBE_SH, UNITY_HDR_ON
             HLSLPROGRAM
+            #pragma target 4.5
             #pragma multi_compile _ LIGHTPROBE_SH UNITY_HDR_ON
             cbuffer _GlobalsCB_b0
             {

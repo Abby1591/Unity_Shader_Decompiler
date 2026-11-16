@@ -24,6 +24,7 @@ Shader "Corpus/38 Tangent Space"
             ZTest LEqual
             ZWrite On
             HLSLPROGRAM
+            #pragma target 3.5
             cbuffer _GlobalsCB_b0
             {
                 float4 _LightColor0 : packoffset(c2);

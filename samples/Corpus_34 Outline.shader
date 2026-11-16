@@ -18,6 +18,7 @@ Shader "Corpus/34 Outline"
             ZTest LEqual
             ZWrite On
             HLSLPROGRAM
+            #pragma target 3.5
             cbuffer _GlobalsCB_b0
             {
                 float4 _OutlineColor : packoffset(c2);
@@ -85,6 +86,7 @@ Shader "Corpus/34 Outline"
             ZWrite On
             // Folded keyword variants (base state emitted): FOG_LINEAR, LIGHTPROBE_SH, SHADOWS_SCREEN, VERTEXLIGHT_ON
             HLSLPROGRAM
+            #pragma target 3.5
             #pragma multi_compile _ FOG_LINEAR LIGHTPROBE_SH SHADOWS_SCREEN VERTEXLIGHT_ON
             cbuffer _GlobalsCB_b0
             {

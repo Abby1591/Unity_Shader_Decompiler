@@ -22,6 +22,7 @@ Shader "Corpus/39 Vertex Animation"
             ZTest LEqual
             ZWrite On
             HLSLPROGRAM
+            #pragma target 3.5
             cbuffer _GlobalsCB_b0
             {
                 float4 _MainTex_ST : packoffset(c4);

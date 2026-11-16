@@ -158,6 +158,19 @@ public class DecompilerIntegrationTests
         Assert.Equal(expected, passes);
     }
 
+    [Theory]
+    [InlineData("Corpus_01 Properties", "#pragma target 4.5")]
+    [InlineData("Corpus_04 Vertex Fragment", "#pragma target 3.5")]
+    [InlineData("Corpus_19 Hull Domain", "#pragma target 5.0")]
+    public void Target_IsInferredFromTheProgramShaderModel(string fixture, string expected)
+    {
+        // The source #pragma target is not serialized; the emitted floor comes
+        // from the compiled shader model of the pass's programs.
+        var text = FixtureCache.Decompile(fixture).ShaderText;
+
+        Assert.Contains(expected, text);
+    }
+
     [Fact]
     public void KeywordVariants_AreDocumentedInThePass()
     {
