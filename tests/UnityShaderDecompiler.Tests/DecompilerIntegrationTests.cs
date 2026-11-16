@@ -174,15 +174,30 @@ public class DecompilerIntegrationTests
     [Fact]
     public void KeywordVariants_AreDocumentedInThePass()
     {
-        // One ShaderLab pass with a base body; the keyword permutations that
-        // were compiled into separate subprograms are named and declared, not
-        // silently dropped, so the missing states are visible in the source.
+        // More permutations than are worth re-emitting: the base body stays
+        // and the keywords are declared, so the missing states are visible.
         var text = FixtureCache.Decompile("Corpus_04 Vertex Fragment").ShaderText;
 
         Assert.Contains("Folded keyword variants (base state emitted)", text);
         Assert.Contains("LIGHTPROBE_SH", text);
-        Assert.Contains("#pragma multi_compile _ FOG_LINEAR LIGHTPROBE_SH", text);
+        Assert.Contains("#pragma multi_compile _ FOG_LINEAR LIGHTPROBE_SH SHADOWS_SCREEN VERTEXLIGHT_ON", text);
         Assert.Single(Regex.Matches(text, @"(?m)^        Pass$"));
+    }
+
+    [Fact]
+    public void KeywordVariants_EmitABranchPerCompiledBody()
+    {
+        // Four compiled permutations: one #if branch per body, most keywords
+        // first, with the base body in the #else.
+        var text = FixtureCache.Decompile("Corpus_05 Surface Standard").ShaderText;
+
+        Assert.Contains("#pragma multi_compile _ LIGHTPROBE_SH", text);
+        Assert.Contains("#pragma multi_compile _ UNITY_HDR_ON", text);
+        Assert.Contains("#if defined(LIGHTPROBE_SH) && defined(UNITY_HDR_ON)", text);
+        Assert.Contains("#elif defined(LIGHTPROBE_SH)", text);
+        Assert.Contains("#elif defined(UNITY_HDR_ON)", text);
+        Assert.Equal(2, Regex.Matches(text, @"(?m)^            #else$").Count);
+        Assert.Equal(2, Regex.Matches(text, @"(?m)^            #endif$").Count);
     }
 
     [Fact]
