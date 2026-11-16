@@ -3,9 +3,10 @@ Shader "Corpus/04 Vertex Fragment"
     Properties
     {
         _Color ("Color", Color) = (1,1,1,1)
-        _MainTex ("Albedo", 2D) = "" {}
-        _BumpMap ("Normal", 2D) = "" {}
-        _DetailTex ("Detail", 2D) = "" {}
+        _MainTex ("Albedo", 2D) = "white" {}
+        [Normal]
+        _BumpMap ("Normal", 2D) = "bump" {}
+        _DetailTex ("Detail", 2D) = "gray" {}
         _DetailScale ("Detail Scale", Float) = 4
         _Emission ("Emission", Color) = (0,0,0,0)
         _Cutoff ("Alpha Cutoff", Range(0, 1)) = 0.5
@@ -13,7 +14,6 @@ Shader "Corpus/04 Vertex Fragment"
     SubShader
     {
         Tags { "IGNOREPROJECTOR"="False" "QUEUE"="Geometry" "RenderType"="Opaque" }
-        LOD 0
         Pass
         {
             Tags { "IGNOREPROJECTOR"="False" "LIGHTMODE"="FORWARDBASE" "QUEUE"="Geometry" "RenderType"="Opaque" "SHADOWSUPPORT"="true" }

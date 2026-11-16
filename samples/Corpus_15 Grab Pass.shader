@@ -2,7 +2,7 @@ Shader "Corpus/15 Grab Pass"
 {
     Properties
     {
-        _MainTex ("Texture", 2D) = "" {}
+        _MainTex ("Texture", 2D) = "white" {}
         _Color ("Tint", Color) = (1,1,1,1)
         _Distortion ("Distortion", Range(0, 0.2)) = 0.05
         _Refraction ("Refraction", Range(0, 1)) = 0.5
@@ -10,7 +10,6 @@ Shader "Corpus/15 Grab Pass"
     SubShader
     {
         Tags { "IGNOREPROJECTOR"="true" "QUEUE"="Transparent" "RenderType"="Transparent" }
-        LOD 0
         GrabPass { "_GrabTexture" }
         Pass
         {

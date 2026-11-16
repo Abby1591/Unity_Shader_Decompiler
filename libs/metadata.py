@@ -61,7 +61,11 @@ class ShaderMetadata:
                     "z": p.get("m_DefValue_2_", 0),
                     "w": p.get("m_DefValue_3_", 0),
                 },
-                "defTexture": p.get("m_DefTexture"),
+                # m_DefTexture only matters for texture properties: the
+                # default texture name ("white"/"bump") and the serialized
+                # TextureDimension enum.
+                "defaultTextureName": self._get(p.get("m_DefTexture"), "m_DefaultName", ""),
+                "textureDimension": self._get(p.get("m_DefTexture"), "m_TexDim", 0),
                 "attributes": p.get("m_Attributes", []),
             })
         return out

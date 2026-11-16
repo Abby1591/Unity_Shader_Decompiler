@@ -3,15 +3,15 @@ Shader "Corpus/13 Deferred"
     Properties
     {
         _Color ("Color", Color) = (1,1,1,1)
-        _MainTex ("Albedo", 2D) = "" {}
+        _MainTex ("Albedo", 2D) = "white" {}
         _SpecColor ("Specular", Color) = (0.2,0.2,0.2,1)
         _Shininess ("Smoothness", Range(0, 1)) = 0.5
+        [HDR]
         _EmissionColor ("Emission", Color) = (0,0,0,1)
     }
     SubShader
     {
         Tags { "QUEUE"="Geometry" "RenderType"="Opaque" }
-        LOD 0
         Pass
         {
             Tags { "LIGHTMODE"="DEFERRED" "QUEUE"="Geometry" "RenderType"="Opaque" }

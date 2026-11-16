@@ -3,7 +3,7 @@ Shader "Corpus/44 ShaderLab Misc"
     Properties
     {
         _Color ("Color", Color) = (1,1,1,1)
-        _MainTex ("Texture", 2D) = "" {}
+        _MainTex ("Texture", 2D) = "white" {}
         _Mode ("Mode", Float) = 0
         _CategoryColor ("Category Color", Color) = (0.5,0.5,0.5,1)
     }

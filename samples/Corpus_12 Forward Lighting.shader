@@ -3,7 +3,7 @@ Shader "Corpus/12 Forward Lighting"
     Properties
     {
         _Color ("Color", Color) = (1,1,1,1)
-        _MainTex ("Albedo", 2D) = "" {}
+        _MainTex ("Albedo", 2D) = "white" {}
         _SpecColor ("Specular", Color) = (0.2,0.2,0.2,1)
         _Shininess ("Shininess", Range(0.01, 1)) = 0.1
         _Emission ("Emission", Color) = (0,0,0,0)
@@ -11,7 +11,6 @@ Shader "Corpus/12 Forward Lighting"
     SubShader
     {
         Tags { "QUEUE"="Geometry" "RenderType"="Opaque" }
-        LOD 0
         Pass
         {
             Tags { "LIGHTMODE"="FORWARDBASE" "QUEUE"="Geometry" "RenderType"="Opaque" "SHADOWSUPPORT"="true" }

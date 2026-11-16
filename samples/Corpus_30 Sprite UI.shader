@@ -2,26 +2,37 @@ Shader "Corpus/30 Sprite UI"
 {
     Properties
     {
-        _MainTex ("Sprite Texture", 2D) = "" {}
+        [PerRendererData]
+        _MainTex ("Sprite Texture", 2D) = "white" {}
         _Color ("Tint", Color) = (1,1,1,1)
         [MaterialToggle]
         PixelSnap ("Pixel Snap", Float) = 0
+        [HideInInspector]
         _RendererColor ("Renderer Color", Color) = (1,1,1,1)
+        [HideInInspector]
         _Flip ("Flip", Vector) = (1,1,1,1)
-        _AlphaTex ("External Alpha", 2D) = "" {}
+        [PerRendererData]
+        _AlphaTex ("External Alpha", 2D) = "white" {}
+        [PerRendererData]
         _EnableExternalAlpha ("Enable External Alpha", Float) = 0
+        [HideInInspector]
         _ClipRect ("Clip Rect", Vector) = (-32767,-32767,32767,32767)
+        [HideInInspector]
         _ColorMask ("Color Mask", Float) = 15
+        [HideInInspector]
         _Stencil ("Stencil ID", Float) = 0
+        [HideInInspector]
         _StencilOp ("Stencil Operation", Float) = 0
+        [HideInInspector]
         _StencilComp ("Stencil Comparison", Float) = 8
+        [HideInInspector]
         _StencilReadMask ("Stencil Read Mask", Float) = 255
+        [HideInInspector]
         _StencilWriteMask ("Stencil Write Mask", Float) = 255
     }
     SubShader
     {
         Tags { "CanUseSpriteAtlas"="true" "IGNOREPROJECTOR"="true" "PreviewType"="Plane" "QUEUE"="Transparent" "RenderType"="Transparent" }
-        LOD 0
         Pass
         {
             Tags { "CanUseSpriteAtlas"="true" "IGNOREPROJECTOR"="true" "PreviewType"="Plane" "QUEUE"="Transparent" "RenderType"="Transparent" }

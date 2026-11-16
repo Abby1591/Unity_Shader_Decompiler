@@ -105,7 +105,15 @@ public sealed class ShaderProperty
     public float[] DefaultComponents { get; init; } = Array.Empty<float>();
 
     public List<string> Attributes { get; init; } = new();
-    public JsonElement? DefaultTexture { get; init; }
+
+    // ShaderPropertyFlags bits (HideInInspector, Normal, HDR, ...) that have
+    // no m_Attributes entry.
+    public int Flags { get; init; }
+
+    // Texture properties only: m_DefTexture's default name ("white", "bump")
+    // and UnityEngine.Rendering.TextureDimension value.
+    public string? DefaultTextureName { get; init; }
+    public int? TextureDimension { get; init; }
 
     public static ShaderProperty From(JsonElement el) => new()
     {
@@ -117,7 +125,13 @@ public sealed class ShaderProperty
         Attributes = el.TryGetProperty("attributes", out var attrs) && attrs.ValueKind == JsonValueKind.Array
             ? attrs.EnumerateArray().Select(a => a.ToString()).ToList()
             : new List<string>(),
-        DefaultTexture = el.TryGetProperty("defaultTexture", out var dt) ? dt : null,
+        DefaultTextureName = el.TryGetProperty("defaultTextureName", out var tn) ? tn.GetString() : null,
+        TextureDimension = el.TryGetProperty("textureDimension", out var td) && td.ValueKind == JsonValueKind.Number
+            ? td.GetInt32()
+            : null,
+        Flags = el.TryGetProperty("flags", out var fl) && fl.ValueKind == JsonValueKind.Number
+            ? fl.GetInt32()
+            : 0,
     };
 
     private static float[] ParseDefaultComponents(JsonElement el)

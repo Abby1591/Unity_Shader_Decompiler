@@ -3,20 +3,19 @@ Shader "Corpus/38 Tangent Space"
     Properties
     {
         _Color ("Color", Color) = (1,1,1,1)
-        _MainTex ("Albedo", 2D) = "" {}
-        _BumpMap ("Normal", 2D) = "" {}
+        _MainTex ("Albedo", 2D) = "white" {}
+        _BumpMap ("Normal", 2D) = "bump" {}
         _BumpScale ("Normal Scale", Float) = 1
-        _ParallaxMap ("Height", 2D) = "" {}
+        _ParallaxMap ("Height", 2D) = "black" {}
         _Parallax ("Parallax", Range(0, 0.1)) = 0.02
-        _DetailMask ("Detail Mask", 2D) = "" {}
-        _DetailAlbedo ("Detail Albedo", 2D) = "" {}
-        _DetailNormal ("Detail Normal", 2D) = "" {}
+        _DetailMask ("Detail Mask", 2D) = "white" {}
+        _DetailAlbedo ("Detail Albedo", 2D) = "gray" {}
+        _DetailNormal ("Detail Normal", 2D) = "bump" {}
         _DetailScale ("Detail Scale", Float) = 4
     }
     SubShader
     {
         Tags { "QUEUE"="Geometry" "RenderType"="Opaque" }
-        LOD 0
         Pass
         {
             Tags { "QUEUE"="Geometry" "RenderType"="Opaque" }

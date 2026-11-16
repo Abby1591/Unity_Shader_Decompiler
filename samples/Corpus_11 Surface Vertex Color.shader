@@ -3,7 +3,7 @@ Shader "Corpus/11 Surface Vertex Color"
     Properties
     {
         _Color ("Color", Color) = (1,1,1,1)
-        _MainTex ("Albedo", 2D) = "" {}
+        _MainTex ("Albedo", 2D) = "white" {}
         _Wave ("Wave", Float) = 0.1
         _VertexColorBoost ("Vertex Color Boost", Range(0, 2)) = 0.5
     }

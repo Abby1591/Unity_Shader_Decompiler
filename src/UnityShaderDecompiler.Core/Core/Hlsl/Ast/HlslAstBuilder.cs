@@ -27,6 +27,22 @@ namespace UnityShaderDecompiler.Core.Hlsl.Ast;
 // loop.
 public static class HlslAstBuilder
 {
+    // ShaderPropertyFlags values, in Unity's enum order. These are unioned
+    // with the serialized m_Attributes (which already holds Header, Space,
+    // Toggle, Enum, ...).
+    private static readonly (int Bit, string Name)[] PropertyFlagAttributes =
+    {
+        (1, "HideInInspector"),
+        (2, "PerRendererData"),
+        (4, "NoScaleOffset"),
+        (8, "Normal"),
+        (16, "HDR"),
+        (32, "Gamma"),
+        (64, "NonModifiableTextureData"),
+        (128, "MainTexture"),
+        (256, "MainColor"),
+    };
+
     public static HlslShaderNode BuildShell(ShaderMetadata metadata)
     {
         var shader = new HlslShaderNode
@@ -40,17 +56,18 @@ public static class HlslAstBuilder
         foreach (ShaderProperty p in metadata.Properties)
         {
             HlslPropertyKind kind = ParsePropertyKind(p.Type);
-            HlslTextureDimension texDim = HlslTextureDimension.Unknown;
-
-            if (kind == HlslPropertyKind.Texture && p.DefaultTexture is { } dt
-                && dt.TryGetProperty("dimension", out var dimEl)
-                && dimEl.ValueKind == JsonValueKind.Number)
-            {
-                int dim = dimEl.GetInt32();
-                texDim = System.Enum.IsDefined(typeof(HlslTextureDimension), dim)
+            HlslTextureDimension texDim =
+                p.TextureDimension is { } dim && System.Enum.IsDefined(typeof(HlslTextureDimension), dim)
                     ? (HlslTextureDimension)dim
                     : HlslTextureDimension.Unknown;
-            }
+
+            // Flags have no m_Attributes entry, so translate them to the
+            // attributes the source spelled out.
+            var attributes = new List<string>();
+            foreach ((int bit, string name) in PropertyFlagAttributes)
+                if ((p.Flags & bit) != 0)
+                    attributes.Add(name);
+            attributes.AddRange(p.Attributes);
 
             shader.Properties.Add(new HlslPropertyNode
             {
@@ -59,7 +76,8 @@ public static class HlslAstBuilder
                 Type = p.Type,
                 Kind = kind,
                 TextureDimension = texDim,
-                Attributes = p.Attributes,
+                DefaultTextureName = p.DefaultTextureName,
+                Attributes = attributes,
                 DefaultValue = p.DefaultValue,
                 DefaultComponents = p.DefaultComponents,
                 // Range bounds are serialized into the same DefaultValue slot

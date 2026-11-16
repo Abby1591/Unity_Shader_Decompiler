@@ -3,12 +3,12 @@ Shader "Corpus/37 Water"
     Properties
     {
         _Color ("Water Color", Color) = (0.1,0.3,0.5,1)
-        _NormalMap ("Normal Map", 2D) = "" {}
+        _NormalMap ("Normal Map", 2D) = "bump" {}
         _NormalScale ("Normal Scale", Float) = 1
-        _WaveMap ("Wave Map", 2D) = "" {}
+        _WaveMap ("Wave Map", 2D) = "gray" {}
         _WaveSpeed ("Wave Speed", Vector) = (0.5,0.5,0,0)
         _WaveScale ("Wave Scale", Float) = 1
-        _ReflectionCube ("Reflection", 2D) = "" {}
+        _ReflectionCube ("Reflection", Cube) = "black" {}
         _ReflectionStrength ("Reflection Strength", Range(0, 1)) = 0.5
         _RefractionStrength ("Refraction Strength", Range(0, 0.2)) = 0.05
         _FresnelPower ("Fresnel Power", Range(0.1, 8)) = 4
@@ -18,7 +18,6 @@ Shader "Corpus/37 Water"
     SubShader
     {
         Tags { "IGNOREPROJECTOR"="true" "QUEUE"="Transparent" "RenderType"="Transparent" }
-        LOD 0
         GrabPass { "_WaterGrab" }
         Pass
         {

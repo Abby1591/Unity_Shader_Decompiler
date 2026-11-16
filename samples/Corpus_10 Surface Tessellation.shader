@@ -3,7 +3,7 @@ Shader "Corpus/10 Surface Tessellation"
     Properties
     {
         _Color ("Color", Color) = (1,1,1,1)
-        _MainTex ("Albedo", 2D) = "" {}
+        _MainTex ("Albedo", 2D) = "white" {}
         _Tess ("Tessellation", Range(1, 32)) = 4
         _Disp ("Displacement", Range(0, 1)) = 0.1
         _Phong ("Phong Strength", Range(0, 1)) = 0.5

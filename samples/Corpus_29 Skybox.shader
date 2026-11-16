@@ -2,7 +2,8 @@ Shader "Corpus/29 Skybox"
 {
     Properties
     {
-        _Tex ("Cubemap", 2D) = "" {}
+        [HDR]
+        _Tex ("Cubemap", Cube) = "" {}
         _Tint ("Tint", Color) = (0.5,0.5,0.5,0.5)
         _Exposure ("Exposure", Float) = 1
         _Rotation ("Rotation", Range(0, 360)) = 0
@@ -12,7 +13,6 @@ Shader "Corpus/29 Skybox"
     SubShader
     {
         Tags { "PreviewType"="Skybox" "QUEUE"="Background" "RenderType"="Background" }
-        LOD 0
         Pass
         {
             Tags { "PreviewType"="Skybox" "QUEUE"="Background" "RenderType"="Background" }

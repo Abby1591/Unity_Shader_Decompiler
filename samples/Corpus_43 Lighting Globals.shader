@@ -3,14 +3,13 @@ Shader "Corpus/43 Lighting Globals"
     Properties
     {
         _Color ("Color", Color) = (1,1,1,1)
-        _MainTex ("Texture", 2D) = "" {}
+        _MainTex ("Texture", 2D) = "white" {}
         _Smoothness ("Smoothness", Range(0, 1)) = 0.5
         _Specular ("Specular", Range(0, 1)) = 0.5
     }
     SubShader
     {
         Tags { "QUEUE"="Geometry" "RenderType"="Opaque" }
-        LOD 0
         Pass
         {
             Tags { "LIGHTMODE"="FORWARDBASE" "QUEUE"="Geometry" "RenderType"="Opaque" "SHADOWSUPPORT"="true" }

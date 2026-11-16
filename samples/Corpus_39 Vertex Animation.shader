@@ -2,7 +2,7 @@ Shader "Corpus/39 Vertex Animation"
 {
     Properties
     {
-        _MainTex ("Texture", 2D) = "" {}
+        _MainTex ("Texture", 2D) = "white" {}
         _Color ("Color", Color) = (1,1,1,1)
         _WaveAmplitude ("Wave Amplitude", Range(0, 1)) = 0.1
         _WaveFrequency ("Wave Frequency", Range(0, 20)) = 4
@@ -14,7 +14,6 @@ Shader "Corpus/39 Vertex Animation"
     SubShader
     {
         Tags { "QUEUE"="Geometry" "RenderType"="Opaque" }
-        LOD 0
         Pass
         {
             Tags { "QUEUE"="Geometry" "RenderType"="Opaque" }

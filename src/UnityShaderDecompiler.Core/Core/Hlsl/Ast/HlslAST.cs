@@ -41,17 +41,18 @@ public enum HlslPropertyKind
     Unknown = -1,
 }
 
-// Mirrors Unity's TextureDimension enum for m_DefTexture.m_TexDim.
+// Mirrors UnityEngine.Rendering.TextureDimension for m_DefTexture.m_TexDim.
 // Only meaningful when Kind == Texture.
 public enum HlslTextureDimension
 {
     Unknown = -1,
     None = 0,
-    Tex2D = 1,
-    Tex3D = 2,
-    Cube = 3,
-    Tex2DArray = 4,
-    CubeArray = 5,
+    Any = 1,
+    Tex2D = 2,
+    Tex3D = 3,
+    Cube = 4,
+    Tex2DArray = 5,
+    CubeArray = 6,
 }
 
 public sealed class HlslPropertyNode
@@ -65,6 +66,10 @@ public sealed class HlslPropertyNode
 
     public HlslPropertyKind Kind { get; init; } = HlslPropertyKind.Unknown;
     public HlslTextureDimension TextureDimension { get; init; } = HlslTextureDimension.Unknown;
+
+    // Texture default name from m_DefTexture.m_DefaultName ("white", "black",
+    // "bump", or "" when the property declared no default).
+    public string? DefaultTextureName { get; init; }
 
     // Raw attribute strings as Unity stored them (e.g. "HDR", "Toggle",
     // "NoScaleOffset") — not re-parsed/validated here, just carried

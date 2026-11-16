@@ -2,7 +2,7 @@ Shader "Corpus/45 Debug"
 {
     Properties
     {
-        _MainTex ("Texture", 2D) = "" {}
+        _MainTex ("Texture", 2D) = "white" {}
         _Color ("Color", Color) = (1,1,1,1)
         _DebugMode ("Debug Mode", Float) = 0
         _DebugScale ("Debug Scale", Float) = 1
@@ -10,7 +10,6 @@ Shader "Corpus/45 Debug"
     SubShader
     {
         Tags { "QUEUE"="Geometry" "RenderType"="Opaque" }
-        LOD 0
         Pass
         {
             Tags { "QUEUE"="Geometry" "RenderType"="Opaque" }

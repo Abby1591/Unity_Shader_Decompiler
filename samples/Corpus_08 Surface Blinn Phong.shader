@@ -3,8 +3,8 @@ Shader "Corpus/08 Surface Blinn Phong"
     Properties
     {
         _Color ("Color", Color) = (1,1,1,1)
-        _MainTex ("Albedo", 2D) = "" {}
-        _BumpMap ("Normal", 2D) = "" {}
+        _MainTex ("Albedo", 2D) = "white" {}
+        _BumpMap ("Normal", 2D) = "bump" {}
         _SpecColor ("Specular", Color) = (0.5,0.5,0.5,1)
         _Shininess ("Shininess", Range(0.01, 1)) = 0.078125
         _Gloss ("Gloss", Range(0, 1)) = 0.5

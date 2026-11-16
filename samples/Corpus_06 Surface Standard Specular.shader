@@ -3,12 +3,14 @@ Shader "Corpus/06 Surface Standard Specular"
     Properties
     {
         _Color ("Color", Color) = (1,1,1,1)
-        _MainTex ("Albedo", 2D) = "" {}
-        _BumpMap ("Normal", 2D) = "" {}
+        _MainTex ("Albedo", 2D) = "white" {}
+        [Normal]
+        _BumpMap ("Normal", 2D) = "bump" {}
         _SpecColor ("Specular", Color) = (0.2,0.2,0.2,1)
-        _SpecGlossMap ("Specular Map", 2D) = "" {}
+        _SpecGlossMap ("Specular Map", 2D) = "white" {}
         _Glossiness ("Smoothness", Range(0, 1)) = 0.5
-        _OcclusionMap ("Occlusion", 2D) = "" {}
+        _OcclusionMap ("Occlusion", 2D) = "white" {}
+        [HDR]
         _EmissionColor ("Emission", Color) = (0,0,0,1)
     }
     SubShader
