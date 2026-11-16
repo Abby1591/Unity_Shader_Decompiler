@@ -18,10 +18,9 @@ Shader "Corpus/14 Shadow Depth Meta Motion"
             Cull Back
             ZTest LEqual
             ZWrite On
-            // Folded keyword variants (base state emitted): SHADOWS_CUBE
             HLSLPROGRAM
             #pragma target 3.5
-            #pragma multi_compile _ SHADOWS_CUBE
+            #pragma multi_compile _ SHADOWS_DEPTH
             cbuffer _GlobalsCB_b0
             {
                 float4 _MainTex_ST : packoffset(c2);
@@ -46,6 +45,7 @@ Shader "Corpus/14 Shadow Depth Meta Motion"
             };
             SamplerState sampler_MainTex;
             Texture2D _MainTex;
+            #if defined(SHADOWS_DEPTH)
             struct program1Input
             {
                 float4 position0 : POSITION0;
@@ -108,6 +108,69 @@ Shader "Corpus/14 Shadow Depth Meta Motion"
                 o.sv_Target0.xyzw = float4(0, 0, 0, 0);
                 return o;
             }
+            #else
+            struct program2Input
+            {
+                float4 position0 : POSITION0;
+                float3 normal0 : NORMAL0;
+                float4 texcoord0 : TEXCOORD0;
+            };
+            struct program2Output
+            {
+                float4 sv_Position0 : SV_POSITION;
+                float2 texcoord1 : TEXCOORD1;
+            };
+            struct program5Input
+            {
+                float4 sv_Position0 : SV_POSITION;
+                float2 texcoord1 : TEXCOORD1;
+            };
+            struct program5Output
+            {
+                float4 sv_Target0 : SV_Target;
+            };
+            #pragma vertex vert
+            program2Output vert(program2Input i)
+            {
+                program2Output o = (program2Output)0;
+                float worldNormal_x_1 = dot(i.normal0.xyzx, unity_WorldToObject[0].xyzx);
+                float worldNormal_y_1 = dot(i.normal0.xyzx, unity_WorldToObject[1].xyzx);
+                float worldNormal_z_1 = dot(i.normal0.xyzx, unity_WorldToObject[2].xyzx);
+                float r0_w_1 = dot(float4(worldNormal_x_1, worldNormal_y_1, worldNormal_z_1, worldNormal_x_1), float4(worldNormal_x_1, worldNormal_y_1, worldNormal_z_1, worldNormal_x_1));
+                float r0_w_2 = rsqrt(r0_w_1);
+                float3 unitWorldNormal_xyz_2 = ((r0_w_2.xxxx * float4(worldNormal_x_1, worldNormal_y_1, worldNormal_z_1, worldNormal_x_1))).xyz;
+                float4 worldPos_xyzw_1 = (i.position0.yyyy * unity_ObjectToWorld[1]);
+                float4 worldPos_xyzw_2 = mad(unity_ObjectToWorld[0], i.position0.xxxx, worldPos_xyzw_1);
+                float4 worldPos_xyzw_3 = mad(unity_ObjectToWorld[2], i.position0.zzzz, worldPos_xyzw_2);
+                float4 worldPos_xyzw_4 = mad(unity_ObjectToWorld[3], i.position0.wwww, worldPos_xyzw_3);
+                float3 r2_xyz_1 = (mad(-worldPos_xyzw_4.xyzx, _WorldSpaceLightPos0.wwww, _WorldSpaceLightPos0.xyzx)).xyz;
+                float r0_w_3 = dot(r2_xyz_1.xyzx, r2_xyz_1.xyzx);
+                float r0_w_4 = rsqrt(r0_w_3);
+                float r0_w_5 = dot(unitWorldNormal_xyz_2.xyzx, ((r0_w_4.xxxx * r2_xyz_1.xyzx)).xyzx);
+                float r0_w_6 = mad(-r0_w_5, r0_w_5, 1);
+                float r0_w_7 = sqrt(r0_w_6);
+                float r0_w_8 = (r0_w_7 * unity_LightShadowBias.z);
+                float r0_w_9 = (unity_LightShadowBias.z != 0);
+                float3 unity_LightShadowBiasSelect_xyz_4 = ((r0_w_9.xxxx ? (mad(-unitWorldNormal_xyz_2.xyzx, r0_w_8.xxxx, worldPos_xyzw_4.xyzx)).xyzx : worldPos_xyzw_4.xyzx)).xyz;
+                float4 r2_xyzw_3 = (unity_LightShadowBiasSelect_xyz_4.yyyy * unity_MatrixVP[1]);
+                float4 r2_xyzw_4 = mad(unity_MatrixVP[0], unity_LightShadowBiasSelect_xyz_4.xxxx, r2_xyzw_3);
+                float4 r0_xyzw_5 = mad(unity_MatrixVP[2], unity_LightShadowBiasSelect_xyz_4.zzzz, r2_xyzw_4);
+                float4 r0_xyzw_6 = mad(unity_MatrixVP[3], worldPos_xyzw_4.wwww, r0_xyzw_5);
+                o.sv_Position0.z = mad(unity_LightShadowBias.y, (-r0_xyzw_6.z + min(r0_xyzw_6.w, r0_xyzw_6.z)), r0_xyzw_6.z);
+                o.sv_Position0.xyw = (r0_xyzw_6.xyxw).xyw;
+                o.texcoord1.xy = (mad(i.texcoord0.xyxx, _MainTex_ST.xyxx, _MainTex_ST.zwzz)).xy;
+                return o;
+            }
+            #pragma fragment frag
+            program5Output frag(program5Input i)
+            {
+                program5Output o = (program5Output)0;
+                float4 r0_xyzw_1 = _MainTex.Sample(sampler_MainTex, (i.texcoord1.xyxx).xy);
+                if ((((r0_xyzw_1.w + -_Cutoff) < 0)).x) discard;
+                o.sv_Target0.xyzw = float4(0, 0, 0, 0);
+                return o;
+            }
+            #endif
             ENDHLSL
         }
         Pass

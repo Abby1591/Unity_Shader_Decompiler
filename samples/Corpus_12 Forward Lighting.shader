@@ -225,10 +225,10 @@ Shader "Corpus/12 Forward Lighting"
             ZTest LEqual
             ZWrite Off
             Blend One One
-            // Folded keyword variants (base state emitted): DIRECTIONAL, DIRECTIONAL_COOKIE, FOG_LINEAR, POINT_COOKIE, SHADOWS_CUBE, SHADOWS_DEPTH, SHADOWS_SCREEN, SHADOWS_SOFT, SPOT
+            // Folded keyword variants (base state emitted): DIRECTIONAL_COOKIE, FOG_LINEAR, POINT, POINT_COOKIE, SHADOWS_CUBE, SHADOWS_DEPTH, SHADOWS_SCREEN, SHADOWS_SOFT, SPOT
             HLSLPROGRAM
             #pragma target 3.5
-            #pragma multi_compile _ DIRECTIONAL DIRECTIONAL_COOKIE FOG_LINEAR POINT_COOKIE SHADOWS_CUBE SHADOWS_DEPTH SHADOWS_SCREEN SHADOWS_SOFT SPOT
+            #pragma multi_compile _ DIRECTIONAL_COOKIE FOG_LINEAR POINT POINT_COOKIE SHADOWS_CUBE SHADOWS_DEPTH SHADOWS_SCREEN SHADOWS_SOFT SPOT
             cbuffer _GlobalsCB_b0
             {
                 float4 _LightColor0;
@@ -236,7 +236,7 @@ Shader "Corpus/12 Forward Lighting"
                 float4 _MainTex_ST;
                 float4 _Color;
                 float4 _Emission;
-                float4 cb0_values[10];
+                float4 cb0_values[6];
             };
             cbuffer _UnityPerDrawCB_b1
             {
@@ -257,116 +257,100 @@ Shader "Corpus/12 Forward Lighting"
                 float3 unity_ProbeVolumeMin : packoffset(c6);
             };
             SamplerState sampler_linear_clamp;
-            SamplerState sampler_linear_clamp1;
             SamplerState sampler_MainTex;
             Texture2D _MainTex;
-            Texture2D t1;
-            Texture3D t2;
-            struct program37Input
+            Texture3D t1;
+            struct program38Input
             {
                 float4 position0 : POSITION0;
                 float3 normal0 : NORMAL0;
                 float2 texcoord0 : TEXCOORD0;
             };
-            struct program37Output
+            struct program38Output
             {
                 float4 sv_Position0 : SV_POSITION;
                 float2 texcoord0 : TEXCOORD0;
                 float3 texcoord1 : TEXCOORD1;
                 float3 texcoord2 : TEXCOORD2;
-                float3 texcoord4 : TEXCOORD4;
                 float4 texcoord5 : TEXCOORD5;
             };
-            struct program81Input
+            struct program82Input
             {
                 float4 sv_Position0 : SV_POSITION;
                 float2 texcoord0 : TEXCOORD0;
                 float3 texcoord1 : TEXCOORD1;
                 float3 texcoord2 : TEXCOORD2;
-                float3 texcoord4 : TEXCOORD4;
                 float4 texcoord5 : TEXCOORD5;
             };
-            struct program81Output
+            struct program82Output
             {
                 float4 sv_Target0 : SV_Target;
             };
             #pragma vertex vert
-            program37Output vert(program37Input i)
+            program38Output vert(program38Input i)
             {
-                program37Output o = (program37Output)0;
+                program38Output o = (program38Output)0;
                 #define UnityObjectToClipPos(v) mul(unity_MatrixVP, v)
-                float4 worldPos_xyzw_2 = mad(unity_ObjectToWorld[0], i.position0.xxxx, (i.position0.yyyy * unity_ObjectToWorld[1]));
-                float4 worldPos_xyzw_3 = mad(unity_ObjectToWorld[2], i.position0.zzzz, worldPos_xyzw_2);
-                float4 worldPos_xyzw_1 = (worldPos_xyzw_3 + unity_ObjectToWorld[3]);
+                #define UnityObjectToWorldPos(v) mul(unity_ObjectToWorld, float4(v, 1.0))
+                float4 worldPos_xyzw_1 = UnityObjectToWorldPos(i.position0.xyz);
+                o.texcoord2.xyz = worldPos_xyzw_1.xyz;
                 o.sv_Position0.xyzw = UnityObjectToClipPos(worldPos_xyzw_1);
-                o.texcoord0.xy = (mad(i.texcoord0.xyxx, cb0_values[8].xyxx, cb0_values[8].zwzz)).xy;
-                float worldNormal_x_2 = dot(i.normal0.xyzx, unity_WorldToObject[0].xyzx);
-                float worldNormal_y_2 = dot(i.normal0.xyzx, unity_WorldToObject[1].xyzx);
-                float worldNormal_z_2 = dot(i.normal0.xyzx, unity_WorldToObject[2].xyzx);
-                float r1_w_2 = dot(float4(worldNormal_x_2, worldNormal_y_2, worldNormal_z_2, worldNormal_x_2), float4(worldNormal_x_2, worldNormal_y_2, worldNormal_z_2, worldNormal_x_2));
-                float r1_w_3 = rsqrt(r1_w_2);
-                o.texcoord1.xyz = ((r1_w_3.xxxx * float4(worldNormal_x_2, worldNormal_y_2, worldNormal_z_2, worldNormal_x_2))).xyz;
-                o.texcoord2.xyz = (mad(unity_ObjectToWorld[3].xyzx, i.position0.wwww, worldPos_xyzw_3.xyzx)).xyz;
-                float4 worldPos_xyzw_4 = mad(unity_ObjectToWorld[3], i.position0.wwww, worldPos_xyzw_3);
-                float3 clipPos_xyz_3 = ((worldPos_xyzw_4.yyyy * _Color.xyzx)).xyz;
-                float3 clipPos_xyz_4 = (mad(_MainTex_ST.xyzx, worldPos_xyzw_4.xxxx, clipPos_xyz_3.xyzx)).xyz;
-                float3 clipPos_xyz_5 = (mad(_Emission.xyzx, worldPos_xyzw_4.zzzz, clipPos_xyz_4.xyzx)).xyz;
-                o.texcoord4.xyz = (mad(cb0_values[7].xyzx, worldPos_xyzw_4.wwww, clipPos_xyz_5.xyzx)).xyz;
+                o.texcoord0.xy = (mad(i.texcoord0.xyxx, _MainTex_ST.xyxx, _MainTex_ST.zwzz)).xy;
+                float worldNormal_x_7 = dot(i.normal0.xyzx, unity_WorldToObject[0].xyzx);
+                float worldNormal_y_7 = dot(i.normal0.xyzx, unity_WorldToObject[1].xyzx);
+                float worldNormal_z_7 = dot(i.normal0.xyzx, unity_WorldToObject[2].xyzx);
+                float r0_w_7 = dot(float4(worldNormal_x_7, worldNormal_y_7, worldNormal_z_7, worldNormal_x_7), float4(worldNormal_x_7, worldNormal_y_7, worldNormal_z_7, worldNormal_x_7));
+                float r0_w_8 = rsqrt(r0_w_7);
+                o.texcoord1.xyz = ((r0_w_8.xxxx * float4(worldNormal_x_7, worldNormal_y_7, worldNormal_z_7, worldNormal_x_7))).xyz;
                 return o;
             }
             #pragma fragment frag
-            program81Output frag(program81Input i)
+            program82Output frag(program82Input i)
             {
-                program81Output o = (program81Output)0;
+                program82Output o = (program82Output)0;
                 float4 r0_xyzw_1 = _MainTex.Sample(sampler_MainTex, (i.texcoord0.xyxx).xy);
                 float3 unitWorldNormal_xyz_1 = normalize(i.texcoord1);
-                float3 r2_xyz_1 = ((-i.texcoord2.xyzx + _WorldSpaceLightPos0.xyzx)).xyz;
-                float3 r2_xyz_2 = normalize(r2_xyz_1);
+                float3 lightDir_xyz_1 = normalize(_WorldSpaceLightPos0);
                 float3 viewDir_xyz_1 = ((-i.texcoord2.xyzx + unity_WorldToObject[0].xyzx)).xyz;
                 float r0_w_6 = dot(viewDir_xyz_1.xyzx, viewDir_xyz_1.xyzx);
                 float r0_w_7 = rsqrt(r0_w_6);
-                float3 r3_xyz_2 = (mad(viewDir_xyz_1.xyzx, r0_w_7.xxxx, r2_xyz_2.xyzx)).xyz;
-                float r0_w_8 = dot(r3_xyz_2.xyzx, r3_xyz_2.xyzx);
-                float r0_w_9 = rsqrt(r0_w_8);
-                float3 r4_xyz_4 = (((mad(cb0_values[6].xyzx, i.texcoord2.zzzz, (mad(cb0_values[4].xyzx, i.texcoord2.xxxx, ((i.texcoord2.yyyy * cb0_values[5].xyzx)).xyzx)).xyzx)).xyzx + cb0_values[7].xyzx)).xyz;
+                float3 r3_xyz_2 = (mad(viewDir_xyz_1.xyzx, r0_w_7.xxxx, lightDir_xyz_1.xyzx)).xyz;
+                float3 halfVector_xyz_3 = normalize(r3_xyz_2);
                 float r0_w_10 = (unity_ProbeVolumeParams.x == 1);
-                float r5_x_10;
-                float r5_y_10;
-                float r5_z_10;
-                float r5_w_4;
+                float r4_x_10;
+                float r4_y_10;
+                float r4_z_10;
+                float r4_w_4;
                 if (r0_w_10)
                 {
                     float r0_w_11 = (unity_ProbeVolumeParams.y == 1);
-                    float3 r5_xyz_5 = (((mad(unity_ProbeVolumeWorldToObject[2].xyzx, i.texcoord2.zzzz, (mad(unity_ProbeVolumeWorldToObject[0].xyzx, i.texcoord2.xxxx, ((i.texcoord2.yyyy * unity_ProbeVolumeWorldToObject[1].xyzx)).xyzx)).xyzx)).xyzx + unity_ProbeVolumeWorldToObject[3].xyzx)).xyz;
-                    float3 unity_ProbeVolumeParamsSelect_xyz_6 = ((r0_w_11.xxxx ? r5_xyz_5.xyzx : i.texcoord2.xyzx)).xyz;
-                    float4 r5_xyzw_8 = (((unity_ProbeVolumeParamsSelect_xyz_6.xyzx + -unity_ProbeVolumeMin.xyzx)).xxyz * unity_ProbeVolumeSizeInv.xxyz);
-                    float r5_y_8 = r5_xyzw_8.y;
-                    float r5_z_8 = r5_xyzw_8.z;
-                    float r5_w_2 = r5_xyzw_8.w;
-                    float r0_w_12 = mad(r5_y_8, 0.25, 0.75);
+                    float3 r4_xyz_5 = (((mad(unity_ProbeVolumeWorldToObject[2].xyzx, i.texcoord2.zzzz, (mad(unity_ProbeVolumeWorldToObject[0].xyzx, i.texcoord2.xxxx, ((i.texcoord2.yyyy * unity_ProbeVolumeWorldToObject[1].xyzx)).xyzx)).xyzx)).xyzx + unity_ProbeVolumeWorldToObject[3].xyzx)).xyz;
+                    float3 unity_ProbeVolumeParamsSelect_xyz_6 = ((r0_w_11.xxxx ? r4_xyz_5.xyzx : i.texcoord2.xyzx)).xyz;
+                    float4 r4_xyzw_8 = (((unity_ProbeVolumeParamsSelect_xyz_6.xyzx + -unity_ProbeVolumeMin.xyzx)).xxyz * unity_ProbeVolumeSizeInv.xxyz);
+                    float r4_y_8 = r4_xyzw_8.y;
+                    float r4_z_8 = r4_xyzw_8.z;
+                    float r4_w_2 = r4_xyzw_8.w;
+                    float r0_w_12 = mad(r4_y_8, 0.25, 0.75);
                     float r1_w_1 = mad(unity_ProbeVolumeParams.z, 0.5, 0.75);
-                    float r5_x_8 = max(r0_w_12, r1_w_1);
-                    float4 r5_xyzw_9 = t2.Sample(sampler_linear_clamp, (float4(r5_x_8, r5_z_8, r5_w_2, r5_x_8)).xyz);
-                    r5_x_10 = r5_xyzw_9.x;
-                    r5_y_10 = r5_xyzw_9.y;
-                    r5_z_10 = r5_xyzw_9.z;
-                    r5_w_4 = r5_xyzw_9.w;
+                    float r4_x_8 = max(r0_w_12, r1_w_1);
+                    float4 r4_xyzw_9 = t1.Sample(sampler_linear_clamp, (float4(r4_x_8, r4_z_8, r4_w_2, r4_x_8)).xyz);
+                    r4_x_10 = r4_xyzw_9.x;
+                    r4_y_10 = r4_xyzw_9.y;
+                    r4_z_10 = r4_xyzw_9.z;
+                    r4_w_4 = r4_xyzw_9.w;
                 }
                 else
                 {
-                    float4 r5_xyzw_10 = float4(1, 1, 1, 1);
-                    r5_x_10 = r5_xyzw_10.x;
-                    r5_y_10 = r5_xyzw_10.y;
-                    r5_z_10 = r5_xyzw_10.z;
-                    r5_w_4 = r5_xyzw_10.w;
+                    float4 r4_xyzw_10 = float4(1, 1, 1, 1);
+                    r4_x_10 = r4_xyzw_10.x;
+                    r4_y_10 = r4_xyzw_10.y;
+                    r4_z_10 = r4_xyzw_10.z;
+                    r4_w_4 = r4_xyzw_10.w;
                 }
-                float r0_w_14 = saturate(dot(float4(r5_x_10, r5_y_10, r5_z_10, r5_w_4), unity_OcclusionMaskSelector));
-                float r1_w_3 = dot(r4_xyz_4.xyzx, r4_xyz_4.xyzx);
-                float4 r4_xyzw_5 = t1.Sample(sampler_linear_clamp1, (r1_w_3.xxxx).xy);
-                float r0_w_15 = (r0_w_14 * r4_xyzw_5.x);
-                float r1_w_4 = saturate(dot(unitWorldNormal_xyz_1.xyzx, r2_xyz_2.xyzx));
-                                float r1_x_6 = (pow(saturate(dot(unitWorldNormal_xyz_1.xyzx, ((r0_w_9.xxxx * r3_xyz_2.xyzx)).xyzx)), 64) * _SpecColor.x);
-                o.sv_Target0.xyz = ((r0_w_15.xxxx * (((mad(((r0_xyzw_1.xyzx * cb0_values[9].xyzx)).xyzx, r1_w_4.xxxx, r1_x_6.xxxx)).xyzx * _LightColor0.xyzx)).xyzx)).xyz;
+                float r0_w_14 = saturate(dot(float4(r4_x_10, r4_y_10, r4_z_10, r4_w_4), unity_OcclusionMaskSelector));
+                float r1_w_3 = saturate(dot(unitWorldNormal_xyz_1.xyzx, lightDir_xyz_1.xyzx));
+                                float r1_x_6 = (pow(saturate(dot(unitWorldNormal_xyz_1.xyzx, halfVector_xyz_3.xyzx)), 64) * _SpecColor.x);
+                o.sv_Target0.xyz = ((r0_w_14.xxxx * (((mad(((r0_xyzw_1.xyzx * cb0_values[5].xyzx)).xyzx, r1_w_3.xxxx, r1_x_6.xxxx)).xyzx * _LightColor0.xyzx)).xyzx)).xyz;
                 o.sv_Target0.w = 0;
                 return o;
             }
@@ -378,7 +362,6 @@ Shader "Corpus/12 Forward Lighting"
             Cull Back
             ZTest LEqual
             ZWrite On
-            // Folded keyword variants (base state emitted): FOG_LINEAR
             HLSLPROGRAM
             #pragma target 3.5
             #pragma multi_compile _ FOG_LINEAR
@@ -397,8 +380,9 @@ Shader "Corpus/12 Forward Lighting"
             };
             cbuffer _UnityPerDrawCB_b2
             {
-                float4x4 unity_ObjectToWorld : packoffset(c0);
-                float4x4 unity_WorldToObject : packoffset(c4);
+                float4x4 unity_ObjectToWorld;
+                float4x4 unity_WorldToObject;
+                float4 cb2_values[2];
             };
             cbuffer _UnityPerFrameCB_b3
             {
@@ -409,6 +393,118 @@ Shader "Corpus/12 Forward Lighting"
             };
             SamplerState sampler_MainTex;
             Texture2D _MainTex;
+            #if defined(FOG_LINEAR)
+            struct program109Input
+            {
+                float4 position0 : POSITION0;
+                float3 normal0 : NORMAL0;
+                float4 texcoord0 : TEXCOORD0;
+            };
+            struct program109Output
+            {
+                float4 sv_Position0 : SV_POSITION;
+                float2 texcoord0 : TEXCOORD0;
+                float texcoord1 : TEXCOORD1;
+                float4 color0 : COLOR0;
+            };
+            struct program113Input
+            {
+                float4 sv_Position0 : SV_POSITION;
+                float2 texcoord0 : TEXCOORD0;
+                float texcoord1 : TEXCOORD1;
+                float4 color0 : COLOR0;
+            };
+            struct program113Output
+            {
+                float4 sv_Target0 : SV_Target;
+            };
+            #pragma vertex vert
+            program109Output vert(program109Input i)
+            {
+                program109Output o = (program109Output)0;
+                #define UnityObjectToWorldPos(v) mul(unity_ObjectToWorld, float4(v, 1.0))
+                float3 r0_xyz_4 = (mad(unity_WorldToObject[3].xyzx, unity_MatrixInvV[0].wwww, (mad(unity_WorldToObject[2].xyzx, unity_MatrixInvV[0].zzzz, (mad(unity_WorldToObject[0].xyzx, unity_MatrixInvV[0].xxxx, ((unity_WorldToObject[1].xyzx * unity_MatrixInvV[0].yyyy)).xyzx)).xyzx)).xyzx)).xyz;
+                float3 r1_xyz_4 = (mad(unity_WorldToObject[3].xyzx, unity_MatrixInvV[1].wwww, (mad(unity_WorldToObject[2].xyzx, unity_MatrixInvV[1].zzzz, (mad(unity_WorldToObject[0].xyzx, unity_MatrixInvV[1].xxxx, ((unity_WorldToObject[1].xyzx * unity_MatrixInvV[1].yyyy)).xyzx)).xyzx)).xyzx)).xyz;
+                float3 r2_xyz_4 = (mad(unity_WorldToObject[3].xyzx, unity_MatrixInvV[2].wwww, (mad(unity_WorldToObject[2].xyzx, unity_MatrixInvV[2].zzzz, (mad(unity_WorldToObject[0].xyzx, unity_MatrixInvV[2].xxxx, ((unity_WorldToObject[1].xyzx * unity_MatrixInvV[2].yyyy)).xyzx)).xyzx)).xyzx)).xyz;
+                float4 worldPos_xyzw_4 = UnityObjectToWorldPos(i.position0.xyz);
+                float4 clipPos_xyzw_1 = (worldPos_xyzw_4.yyyy * unity_MatrixVP[1]);
+                float4 clipPos_xyzw_2 = mad(unity_MatrixVP[0], worldPos_xyzw_4.xxxx, clipPos_xyzw_1);
+                float4 clipPos_xyzw_3 = mad(unity_MatrixVP[2], worldPos_xyzw_4.zzzz, clipPos_xyzw_2);
+                float4 clipPos_xyzw_4 = mad(unity_MatrixVP[3], worldPos_xyzw_4.wwww, clipPos_xyzw_3);
+                o.texcoord0.xy = (mad(i.texcoord0.xyxx, _MainTex_ST.xyxx, _MainTex_ST.zwzz)).xy;
+                float3 clipPos_xyz_1 = ((worldPos_xyzw_4.yyyy * unity_MatrixV[1].xyzx)).xyz;
+                float3 clipPos_xyz_2 = (mad(unity_MatrixV[0].xyzx, worldPos_xyzw_4.xxxx, clipPos_xyz_1.xyzx)).xyz;
+                float3 clipPos_xyz_5 = (mad(unity_MatrixV[2].xyzx, worldPos_xyzw_4.zzzz, clipPos_xyz_2.xyzx)).xyz;
+                float3 clipPos_xyz_6 = (mad(unity_MatrixV[3].xyzx, worldPos_xyzw_4.wwww, clipPos_xyz_5.xyzx)).xyz;
+                float r0_x_5 = dot(r0_xyz_4.xyzx, i.normal0.xyzx);
+                float r0_y_5 = dot(r1_xyz_4.xyzx, i.normal0.xyzx);
+                float r0_z_5 = dot(r2_xyz_4.xyzx, i.normal0.xyzx);
+                float r0_w_1 = dot(float4(r0_x_5, r0_y_5, r0_z_5, r0_x_5), float4(r0_x_5, r0_y_5, r0_z_5, r0_x_5));
+                float r0_w_2 = rsqrt(r0_w_1);
+                float3 r0_xyz_6 = ((r0_w_2.xxxx * float4(r0_x_5, r0_y_5, r0_z_5, r0_x_5))).xyz;
+                float r0_w_3 = 0;
+                float r0_w_4 = r0_w_3;
+                float3 r2_xyz_6 = (((glstate_lightmodel_ambient.xyzx + glstate_lightmodel_ambient.xyzx)).xyzx).xyz;
+                float r1_w_2;
+                float3 r5_xyz_4;
+                float r1_w_3;
+                float r1_w_4;
+                float r2_w_1;
+                float3 r5_xyz_5;
+                float r1_w_5;
+                float r1_w_6;
+                float r2_w_2;
+                float r2_w_3;
+                float r2_w_4;
+                float r2_w_5;
+                float r1_w_7;
+                float r2_w_6;
+                float r2_w_7;
+                float r1_w_8;
+                float r0_w_5;
+                [loop]
+                while (true)
+                {
+                    r1_w_2 = (r0_w_4 >= 4);
+                    if (r1_w_2) break;
+                    r5_xyz_4 = (mad(-clipPos_xyz_6.xyzx, cb1_values[r0_w_4 + 15].wwww, cb1_values[r0_w_4 + 15].xyzx)).xyz;
+                    r1_w_3 = dot(r5_xyz_4.xyzx, r5_xyz_4.xyzx);
+                    r1_w_4 = max(r1_w_3, 1E-06);
+                    r2_w_1 = rsqrt(r1_w_4);
+                    r5_xyz_5 = ((r2_w_1.xxxx * r5_xyz_4.xyzx)).xyz;
+                    r1_w_5 = mad(r1_w_4, cb1_values[r0_w_4 + 23].z, 1);
+                    r1_w_6 = ((float4(1, 1, 1, 1) / r1_w_5)).w;
+                    r2_w_2 = dot(r5_xyz_5.xyzx, cb1_values[r0_w_4 + 31].xyzx);
+                    r2_w_3 = max(r2_w_2, 0);
+                    r2_w_4 = (r2_w_3 + -cb1_values[r0_w_4 + 23].x);
+                    r2_w_5 = saturate((r2_w_4 * cb1_values[r0_w_4 + 23].y));
+                    r1_w_7 = (r1_w_6 * r2_w_5);
+                    r2_w_6 = dot(r0_xyz_6.xyzx, r5_xyz_5.xyzx);
+                    r2_w_7 = max(r2_w_6, 0);
+                    r1_w_8 = (r1_w_7 * r2_w_7);
+                    r0_w_5 = (r0_w_4 + 1);
+                    r0_w_4 = r0_w_5;
+                    r2_xyz_6 = (mad(cb1_values[r0_w_4 + 7].xyzx, r1_w_8.xxxx, r2_xyz_6.xyzx)).xyz;
+                }
+                o.color0.xyz = r2_xyz_6.xyz;
+                o.sv_Position0.xyzw = clipPos_xyzw_4;
+                o.color0.w = 1;
+                o.texcoord1.x = clipPos_xyzw_4.z;
+                return o;
+            }
+            #pragma fragment frag
+            program113Output frag(program113Input i)
+            {
+                program113Output o = (program113Output)0;
+                float r0_x_5 = saturate(mad(max((((i.texcoord1.x / cb1_values[5].y) + 1) * cb1_values[5].z), 0), cb2_values[1].z, cb2_values[1].w));
+                float4 r1_xyzw_1 = _MainTex.Sample(sampler_MainTex, (i.texcoord0.xyxx).xy);
+                float4 r1_xyzw_2 = (r1_xyzw_1 * _Color);
+                float3 r0_yzw_1 = (mad(r1_xyzw_2.xxyz, i.color0.xxyz, -cb2_values[0].xxyz)).yzw;
+                o.sv_Target0.w = (r1_xyzw_2.w * i.color0.w);
+                o.sv_Target0.xyz = (mad(r0_x_5.xxxx, r0_yzw_1.xyzx, cb2_values[0].xyzx)).xyz;
+                return o;
+            }
+            #else
             struct program108Input
             {
                 float4 position0 : POSITION0;
@@ -508,6 +604,7 @@ Shader "Corpus/12 Forward Lighting"
                 o.sv_Target0.xyzw = ((r0_xyzw_1 * _Color) * i.color0.xyzw);
                 return o;
             }
+            #endif
             ENDHLSL
         }
     }

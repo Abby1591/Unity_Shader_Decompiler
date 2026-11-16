@@ -18,10 +18,10 @@ Shader "Corpus/13 Deferred"
             Cull Back
             ZTest LEqual
             ZWrite On
-            // Folded keyword variants (base state emitted): UNITY_HDR_ON, _DEFERRED_USE_ORTHOGRAPHIC_PROJECTION
             HLSLPROGRAM
             #pragma target 4.5
-            #pragma multi_compile _ UNITY_HDR_ON _DEFERRED_USE_ORTHOGRAPHIC_PROJECTION
+            #pragma multi_compile _ UNITY_HDR_ON
+            #pragma multi_compile _ _DEFERRED_USE_ORTHOGRAPHIC_PROJECTION
             cbuffer _GlobalsCB_b0
             {
                 float4 _MainTex_ST : packoffset(c2);
@@ -41,6 +41,205 @@ Shader "Corpus/13 Deferred"
             };
             SamplerState sampler_MainTex;
             Texture2D _MainTex;
+            #if defined(UNITY_HDR_ON) && defined(_DEFERRED_USE_ORTHOGRAPHIC_PROJECTION)
+            struct program4Input
+            {
+                float4 position0 : POSITION0;
+                float3 normal0 : NORMAL0;
+                float2 texcoord0 : TEXCOORD0;
+            };
+            struct program4Output
+            {
+                float4 sv_Position0 : SV_POSITION;
+                float2 texcoord0 : TEXCOORD0;
+                float3 texcoord1 : TEXCOORD1;
+                float3 texcoord2 : TEXCOORD2;
+            };
+            struct program9Input
+            {
+                float4 sv_Position0 : SV_POSITION;
+                float2 texcoord0 : TEXCOORD0;
+                float3 texcoord1 : TEXCOORD1;
+                float3 texcoord2 : TEXCOORD2;
+            };
+            struct program9Output
+            {
+                float4 sv_Target0 : SV_Target;
+                float4 sv_Target1 : SV_Target1;
+                float4 sv_Target2 : SV_Target2;
+                float4 sv_Target3 : SV_Target3;
+            };
+            #pragma vertex vert
+            program4Output vert(program4Input i)
+            {
+                program4Output o = (program4Output)0;
+                #define UnityObjectToClipPos(v) mul(unity_MatrixVP, v)
+                #define UnityObjectToWorldPos(v) mul(unity_ObjectToWorld, float4(v, 1.0))
+                float4 worldPos_xyzw_1 = UnityObjectToWorldPos(i.position0.xyz);
+                o.texcoord2.xyz = worldPos_xyzw_1.xyz;
+                o.sv_Position0.xyzw = UnityObjectToClipPos(worldPos_xyzw_1);
+                o.texcoord0.xy = (mad(i.texcoord0.xyxx, _MainTex_ST.xyxx, _MainTex_ST.zwzz)).xy;
+                float worldNormal_x_7 = dot(i.normal0.xyzx, unity_WorldToObject[0].xyzx);
+                float worldNormal_y_7 = dot(i.normal0.xyzx, unity_WorldToObject[1].xyzx);
+                float worldNormal_z_7 = dot(i.normal0.xyzx, unity_WorldToObject[2].xyzx);
+                float r0_w_7 = dot(float4(worldNormal_x_7, worldNormal_y_7, worldNormal_z_7, worldNormal_x_7), float4(worldNormal_x_7, worldNormal_y_7, worldNormal_z_7, worldNormal_x_7));
+                float r0_w_8 = rsqrt(r0_w_7);
+                o.texcoord1.xyz = ((r0_w_8.xxxx * float4(worldNormal_x_7, worldNormal_y_7, worldNormal_z_7, worldNormal_x_7))).xyz;
+                return o;
+            }
+            #pragma fragment frag
+            program9Output frag(program9Input i)
+            {
+                program9Output o = (program9Output)0;
+                float3 r0_xyz_1 = (_MainTex.Sample(sampler_MainTex, (i.texcoord0.xyxx).xy)).xyz;
+                float3 r0_xyz_2 = ((r0_xyz_1.xyzx * _Color.xyzx)).xyz;
+                o.sv_Target0.xyz = r0_xyz_2.xyz;
+                o.sv_Target3.xyz = ((r0_xyz_2.xyzx * _EmissionColor.xyzx)).xyz;
+                o.sv_Target0.w = 1;
+                o.sv_Target1.xyz = _SpecColor.xyz;
+                o.sv_Target1.w = _Shininess;
+                float4 unitWorldNormal_xyzw_5 = ((rsqrt(dot(i.texcoord1.xyzx, i.texcoord1.xyzx))).xxxx * i.texcoord1.xyzx);
+                float unitWorldNormal_x_5 = unitWorldNormal_xyzw_5.x;
+                float unitWorldNormal_y_3 = unitWorldNormal_xyzw_5.y;
+                float unitWorldNormal_z_3 = unitWorldNormal_xyzw_5.z;
+                o.sv_Target2.xyz = (mad(float4(unitWorldNormal_x_5, unitWorldNormal_y_3, unitWorldNormal_z_3, unitWorldNormal_x_5), float4(0.5, 0.5, 0.5, 0), float4(0.5, 0.5, 0.5, 0))).xyz;
+                o.sv_Target2.w = 1;
+                o.sv_Target3.w = 1;
+                return o;
+            }
+            #elif defined(UNITY_HDR_ON)
+            struct program3Input
+            {
+                float4 position0 : POSITION0;
+                float3 normal0 : NORMAL0;
+                float2 texcoord0 : TEXCOORD0;
+            };
+            struct program3Output
+            {
+                float4 sv_Position0 : SV_POSITION;
+                float2 texcoord0 : TEXCOORD0;
+                float3 texcoord1 : TEXCOORD1;
+                float3 texcoord2 : TEXCOORD2;
+            };
+            struct program8Input
+            {
+                float4 sv_Position0 : SV_POSITION;
+                float2 texcoord0 : TEXCOORD0;
+                float3 texcoord1 : TEXCOORD1;
+                float3 texcoord2 : TEXCOORD2;
+            };
+            struct program8Output
+            {
+                float4 sv_Target0 : SV_Target;
+                float4 sv_Target1 : SV_Target1;
+                float4 sv_Target2 : SV_Target2;
+                float4 sv_Target3 : SV_Target3;
+            };
+            #pragma vertex vert
+            program3Output vert(program3Input i)
+            {
+                program3Output o = (program3Output)0;
+                #define UnityObjectToClipPos(v) mul(unity_MatrixVP, v)
+                #define UnityObjectToWorldPos(v) mul(unity_ObjectToWorld, float4(v, 1.0))
+                float4 worldPos_xyzw_1 = UnityObjectToWorldPos(i.position0.xyz);
+                o.texcoord2.xyz = worldPos_xyzw_1.xyz;
+                o.sv_Position0.xyzw = UnityObjectToClipPos(worldPos_xyzw_1);
+                o.texcoord0.xy = (mad(i.texcoord0.xyxx, _MainTex_ST.xyxx, _MainTex_ST.zwzz)).xy;
+                float worldNormal_x_7 = dot(i.normal0.xyzx, unity_WorldToObject[0].xyzx);
+                float worldNormal_y_7 = dot(i.normal0.xyzx, unity_WorldToObject[1].xyzx);
+                float worldNormal_z_7 = dot(i.normal0.xyzx, unity_WorldToObject[2].xyzx);
+                float r0_w_7 = dot(float4(worldNormal_x_7, worldNormal_y_7, worldNormal_z_7, worldNormal_x_7), float4(worldNormal_x_7, worldNormal_y_7, worldNormal_z_7, worldNormal_x_7));
+                float r0_w_8 = rsqrt(r0_w_7);
+                o.texcoord1.xyz = ((r0_w_8.xxxx * float4(worldNormal_x_7, worldNormal_y_7, worldNormal_z_7, worldNormal_x_7))).xyz;
+                return o;
+            }
+            #pragma fragment frag
+            program8Output frag(program8Input i)
+            {
+                program8Output o = (program8Output)0;
+                float3 r0_xyz_1 = (_MainTex.Sample(sampler_MainTex, (i.texcoord0.xyxx).xy)).xyz;
+                float3 r0_xyz_2 = ((r0_xyz_1.xyzx * _Color.xyzx)).xyz;
+                o.sv_Target0.xyz = r0_xyz_2.xyz;
+                o.sv_Target3.xyz = ((r0_xyz_2.xyzx * _EmissionColor.xyzx)).xyz;
+                o.sv_Target0.w = 1;
+                o.sv_Target1.xyz = _SpecColor.xyz;
+                o.sv_Target1.w = _Shininess;
+                float4 unitWorldNormal_xyzw_5 = ((rsqrt(dot(i.texcoord1.xyzx, i.texcoord1.xyzx))).xxxx * i.texcoord1.xyzx);
+                float unitWorldNormal_x_5 = unitWorldNormal_xyzw_5.x;
+                float unitWorldNormal_y_3 = unitWorldNormal_xyzw_5.y;
+                float unitWorldNormal_z_3 = unitWorldNormal_xyzw_5.z;
+                o.sv_Target2.xyz = (mad(float4(unitWorldNormal_x_5, unitWorldNormal_y_3, unitWorldNormal_z_3, unitWorldNormal_x_5), float4(0.5, 0.5, 0.5, 0), float4(0.5, 0.5, 0.5, 0))).xyz;
+                o.sv_Target2.w = 1;
+                o.sv_Target3.w = 1;
+                return o;
+            }
+            #elif defined(_DEFERRED_USE_ORTHOGRAPHIC_PROJECTION)
+            struct program2Input
+            {
+                float4 position0 : POSITION0;
+                float3 normal0 : NORMAL0;
+                float2 texcoord0 : TEXCOORD0;
+            };
+            struct program2Output
+            {
+                float4 sv_Position0 : SV_POSITION;
+                float2 texcoord0 : TEXCOORD0;
+                float3 texcoord1 : TEXCOORD1;
+                float3 texcoord2 : TEXCOORD2;
+            };
+            struct program7Input
+            {
+                float4 sv_Position0 : SV_POSITION;
+                float2 texcoord0 : TEXCOORD0;
+                float3 texcoord1 : TEXCOORD1;
+                float3 texcoord2 : TEXCOORD2;
+            };
+            struct program7Output
+            {
+                float4 sv_Target0 : SV_Target;
+                float4 sv_Target1 : SV_Target1;
+                float4 sv_Target2 : SV_Target2;
+                float4 sv_Target3 : SV_Target3;
+            };
+            #pragma vertex vert
+            program2Output vert(program2Input i)
+            {
+                program2Output o = (program2Output)0;
+                #define UnityObjectToClipPos(v) mul(unity_MatrixVP, v)
+                #define UnityObjectToWorldPos(v) mul(unity_ObjectToWorld, float4(v, 1.0))
+                float4 worldPos_xyzw_1 = UnityObjectToWorldPos(i.position0.xyz);
+                o.texcoord2.xyz = worldPos_xyzw_1.xyz;
+                o.sv_Position0.xyzw = UnityObjectToClipPos(worldPos_xyzw_1);
+                o.texcoord0.xy = (mad(i.texcoord0.xyxx, _MainTex_ST.xyxx, _MainTex_ST.zwzz)).xy;
+                float worldNormal_x_7 = dot(i.normal0.xyzx, unity_WorldToObject[0].xyzx);
+                float worldNormal_y_7 = dot(i.normal0.xyzx, unity_WorldToObject[1].xyzx);
+                float worldNormal_z_7 = dot(i.normal0.xyzx, unity_WorldToObject[2].xyzx);
+                float r0_w_7 = dot(float4(worldNormal_x_7, worldNormal_y_7, worldNormal_z_7, worldNormal_x_7), float4(worldNormal_x_7, worldNormal_y_7, worldNormal_z_7, worldNormal_x_7));
+                float r0_w_8 = rsqrt(r0_w_7);
+                o.texcoord1.xyz = ((r0_w_8.xxxx * float4(worldNormal_x_7, worldNormal_y_7, worldNormal_z_7, worldNormal_x_7))).xyz;
+                return o;
+            }
+            #pragma fragment frag
+            program7Output frag(program7Input i)
+            {
+                program7Output o = (program7Output)0;
+                float3 r0_xyz_1 = (_MainTex.Sample(sampler_MainTex, (i.texcoord0.xyxx).xy)).xyz;
+                float3 r0_xyz_2 = ((r0_xyz_1.xyzx * _Color.xyzx)).xyz;
+                o.sv_Target0.xyz = r0_xyz_2.xyz;
+                o.sv_Target3.xyz = ((r0_xyz_2.xyzx * _EmissionColor.xyzx)).xyz;
+                o.sv_Target0.w = 1;
+                o.sv_Target1.xyz = _SpecColor.xyz;
+                o.sv_Target1.w = _Shininess;
+                float4 unitWorldNormal_xyzw_5 = ((rsqrt(dot(i.texcoord1.xyzx, i.texcoord1.xyzx))).xxxx * i.texcoord1.xyzx);
+                float unitWorldNormal_x_5 = unitWorldNormal_xyzw_5.x;
+                float unitWorldNormal_y_3 = unitWorldNormal_xyzw_5.y;
+                float unitWorldNormal_z_3 = unitWorldNormal_xyzw_5.z;
+                o.sv_Target2.xyz = (mad(float4(unitWorldNormal_x_5, unitWorldNormal_y_3, unitWorldNormal_z_3, unitWorldNormal_x_5), float4(0.5, 0.5, 0.5, 0), float4(0.5, 0.5, 0.5, 0))).xyz;
+                o.sv_Target2.w = 1;
+                o.sv_Target3.w = 1;
+                return o;
+            }
+            #else
             struct program1Input
             {
                 float4 position0 : POSITION0;
@@ -106,6 +305,7 @@ Shader "Corpus/13 Deferred"
                 o.sv_Target3.w = 1;
                 return o;
             }
+            #endif
             ENDHLSL
         }
         Pass

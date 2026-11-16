@@ -488,10 +488,10 @@ Shader "Corpus/05 Surface Standard"
             ZTest LEqual
             ZWrite Off
             Blend One One
-            // Folded keyword variants (base state emitted): DIRECTIONAL, DIRECTIONAL_COOKIE, POINT_COOKIE, SHADOWS_CUBE, SHADOWS_DEPTH, SHADOWS_SCREEN, SHADOWS_SOFT, SPOT
+            // Folded keyword variants (base state emitted): DIRECTIONAL_COOKIE, POINT, POINT_COOKIE, SHADOWS_CUBE, SHADOWS_DEPTH, SHADOWS_SCREEN, SHADOWS_SOFT, SPOT
             HLSLPROGRAM
             #pragma target 4.5
-            #pragma multi_compile _ DIRECTIONAL DIRECTIONAL_COOKIE POINT_COOKIE SHADOWS_CUBE SHADOWS_DEPTH SHADOWS_SCREEN SHADOWS_SOFT SPOT
+            #pragma multi_compile _ DIRECTIONAL_COOKIE POINT POINT_COOKIE SHADOWS_CUBE SHADOWS_DEPTH SHADOWS_SCREEN SHADOWS_SOFT SPOT
             cbuffer _GlobalsCB_b0
             {
                 float4 _LightColor0;
@@ -510,7 +510,7 @@ Shader "Corpus/05 Surface Standard"
                 float4 _DetailMask_ST;
                 float4 _DetailAlbedo_ST;
                 float4 _DetailNormal_ST;
-                float4 cb0_values[19];
+                float4 cb0_values[7];
             };
             cbuffer _UnityPerDrawCB_b1
             {
@@ -531,7 +531,6 @@ Shader "Corpus/05 Surface Standard"
                 float3 unity_ProbeVolumeSizeInv : packoffset(c5);
                 float3 unity_ProbeVolumeMin : packoffset(c6);
             };
-            SamplerState sampler_DetailNormal;
             SamplerState sampler_DetailAlbedo;
             SamplerState sampler_MainTex;
             SamplerState sampler_EmissionMap;
@@ -545,9 +544,8 @@ Shader "Corpus/05 Surface Standard"
             Texture2D _OcclusionMap;
             Texture2D _EmissionMap;
             Texture2D _DetailMask;
-            Texture2D _DetailAlbedo;
-            Texture3D _DetailNormal;
-            struct program27Input
+            Texture3D _DetailAlbedo;
+            struct program28Input
             {
                 float4 position0 : POSITION0;
                 float4 tangent0 : TANGENT0;
@@ -558,7 +556,7 @@ Shader "Corpus/05 Surface Standard"
                 float4 texcoord3 : TEXCOORD3;
                 float4 color0 : COLOR0;
             };
-            struct program27Output
+            struct program28Output
             {
                 float4 sv_Position0 : SV_POSITION;
                 float4 texcoord0 : TEXCOORD0;
@@ -570,10 +568,9 @@ Shader "Corpus/05 Surface Standard"
                 float3 texcoord6 : TEXCOORD6;
                 float3 texcoord7 : TEXCOORD7;
                 float4 color0 : COLOR0;
-                float3 texcoord8 : TEXCOORD8;
                 float4 texcoord9 : TEXCOORD9;
             };
-            struct program50Input
+            struct program51Input
             {
                 float4 sv_Position0 : SV_POSITION;
                 float4 texcoord0 : TEXCOORD0;
@@ -585,272 +582,246 @@ Shader "Corpus/05 Surface Standard"
                 float3 texcoord6 : TEXCOORD6;
                 float3 texcoord7 : TEXCOORD7;
                 float4 color0 : COLOR0;
-                float3 texcoord8 : TEXCOORD8;
                 float4 texcoord9 : TEXCOORD9;
             };
-            struct program50Output
+            struct program51Output
             {
                 float4 sv_Target0 : SV_Target;
             };
             #pragma vertex vert
-            program27Output vert(program27Input i)
+            program28Output vert(program28Input i)
             {
-                program27Output o = (program27Output)0;
+                program28Output o = (program28Output)0;
                 #define UnityObjectToClipPos(v) mul(unity_MatrixVP, v)
-                float4 worldPos_xyzw_2 = mad(unity_ObjectToWorld[0], i.position0.xxxx, (i.position0.yyyy * unity_ObjectToWorld[1]));
-                float4 worldPos_xyzw_3 = mad(unity_ObjectToWorld[2], i.position0.zzzz, worldPos_xyzw_2);
-                float4 worldPos_xyzw_1 = (worldPos_xyzw_3 + unity_ObjectToWorld[3]);
+                #define UnityObjectToWorldPos(v) mul(unity_ObjectToWorld, float4(v, 1.0))
+                float4 worldPos_xyzw_1 = UnityObjectToWorldPos(i.position0.xyz);
+                o.texcoord7.xyz = worldPos_xyzw_1.xyz;
                 o.sv_Position0.xyzw = UnityObjectToClipPos(worldPos_xyzw_1);
-                o.texcoord0.xy = (mad(i.texcoord0.xyxx, _EmissionMap_ST.xyxx, _EmissionMap_ST.zwzz)).xy;
-                o.texcoord0.zw = (mad(i.texcoord0.xxxy, _DetailMask_ST.xxxy, _DetailMask_ST.zzzw)).zw;
-                o.texcoord1.xy = (mad(i.texcoord0.xyxx, _DetailAlbedo_ST.xyxx, _DetailAlbedo_ST.zwzz)).xy;
-                o.texcoord1.zw = (mad(i.texcoord0.xxxy, _DetailNormal_ST.xxxy, _DetailNormal_ST.zzzw)).zw;
-                o.texcoord2.xy = (mad(i.texcoord0.xyxx, cb0_values[16].xyxx, cb0_values[16].zwzz)).xy;
-                o.texcoord2.zw = (mad(i.texcoord0.xxxy, cb0_values[17].xxxy, cb0_values[17].zzzw)).zw;
-                o.texcoord3.xy = (mad(i.texcoord0.xyxx, cb0_values[18].xyxx, cb0_values[18].zwzz)).xy;
-                float worldNormal_y_2 = dot(i.normal0.xyzx, unity_WorldToObject[0].xyzx);
-                float worldNormal_z_2 = dot(i.normal0.xyzx, unity_WorldToObject[1].xyzx);
-                float worldNormal_x_2 = dot(i.normal0.xyzx, unity_WorldToObject[2].xyzx);
-                float r1_w_2 = dot(float4(worldNormal_x_2, worldNormal_y_2, worldNormal_z_2, worldNormal_x_2), float4(worldNormal_x_2, worldNormal_y_2, worldNormal_z_2, worldNormal_x_2));
-                float r1_w_3 = rsqrt(r1_w_2);
-                float3 unitWorldNormal_xyz_3 = ((r1_w_3.xxxx * float4(worldNormal_x_2, worldNormal_y_2, worldNormal_z_2, worldNormal_x_2))).xyz;
-                float3 worldTangent_xyz_4 = ((i.tangent0.yyyy * unity_ObjectToWorld[1].yzxy)).xyz;
-                float3 worldTangent_xyz_5 = (mad(unity_ObjectToWorld[0].yzxy, i.tangent0.xxxx, worldTangent_xyz_4.xyzx)).xyz;
-                float3 worldTangent_xyz_6 = (mad(unity_ObjectToWorld[2].yzxy, i.tangent0.zzzz, worldTangent_xyz_5.xyzx)).xyz;
-                float3 unitWorldTangent_xyz_7 = normalize(worldTangent_xyz_6);
-                float r1_w_6 = (i.tangent0.w * unity_WorldTransformParams.w);
-                float3 r3_xyz_3 = ((r1_w_6.xxxx * (mad(unitWorldNormal_xyz_3.zxyz, unitWorldTangent_xyz_7.yzxy, ((unitWorldNormal_xyz_3.xyzx * unitWorldTangent_xyz_7.xyzx)).xyzx)).xyzx)).xyz;
-                o.texcoord4.y = r3_xyz_3.x;
-                o.texcoord4.x = unitWorldTangent_xyz_7.z;
-                o.texcoord4.z = unitWorldNormal_xyz_3.y;
-                o.texcoord5.x = unitWorldTangent_xyz_7.x;
-                o.texcoord6.x = unitWorldTangent_xyz_7.y;
-                o.texcoord5.z = unitWorldNormal_xyz_3.z;
-                o.texcoord6.z = unitWorldNormal_xyz_3.x;
-                o.texcoord5.y = r3_xyz_3.y;
-                o.texcoord6.y = r3_xyz_3.z;
-                o.texcoord7.xyz = (mad(unity_ObjectToWorld[3].xyzx, i.position0.wwww, worldPos_xyzw_3.xyzx)).xyz;
-                float4 worldPos_xyzw_4 = mad(unity_ObjectToWorld[3], i.position0.wwww, worldPos_xyzw_3);
+                o.texcoord0.xy = (mad(i.texcoord0.xyxx, _MainTex_ST.xyxx, _MainTex_ST.zwzz)).xy;
+                o.texcoord0.zw = (mad(i.texcoord0.xxxy, _BumpMap_ST.xxxy, _BumpMap_ST.zzzw)).zw;
+                o.texcoord1.xy = (mad(i.texcoord0.xyxx, _MetallicGlossMap_ST.xyxx, _MetallicGlossMap_ST.zwzz)).xy;
+                o.texcoord1.zw = (mad(i.texcoord0.xxxy, _OcclusionMap_ST.xxxy, _OcclusionMap_ST.zzzw)).zw;
+                o.texcoord2.xy = (mad(i.texcoord0.xyxx, _EmissionMap_ST.xyxx, _EmissionMap_ST.zwzz)).xy;
+                o.texcoord2.zw = (mad(i.texcoord0.xxxy, _DetailMask_ST.xxxy, _DetailMask_ST.zzzw)).zw;
+                o.texcoord3.xy = (mad(i.texcoord0.xyxx, _DetailAlbedo_ST.xyxx, _DetailAlbedo_ST.zwzz)).xy;
+                float worldNormal_y_7 = dot(i.normal0.xyzx, unity_WorldToObject[0].xyzx);
+                float worldNormal_z_7 = dot(i.normal0.xyzx, unity_WorldToObject[1].xyzx);
+                float worldNormal_x_7 = dot(i.normal0.xyzx, unity_WorldToObject[2].xyzx);
+                float r0_w_7 = dot(float4(worldNormal_x_7, worldNormal_y_7, worldNormal_z_7, worldNormal_x_7), float4(worldNormal_x_7, worldNormal_y_7, worldNormal_z_7, worldNormal_x_7));
+                float r0_w_8 = rsqrt(r0_w_7);
+                float3 unitWorldNormal_xyz_8 = ((r0_w_8.xxxx * float4(worldNormal_x_7, worldNormal_y_7, worldNormal_z_7, worldNormal_x_7))).xyz;
+                float3 worldTangent_xyz_2 = ((i.tangent0.yyyy * unity_ObjectToWorld[1].yzxy)).xyz;
+                float3 worldTangent_xyz_3 = (mad(unity_ObjectToWorld[0].yzxy, i.tangent0.xxxx, worldTangent_xyz_2.xyzx)).xyz;
+                float3 worldTangent_xyz_4 = (mad(unity_ObjectToWorld[2].yzxy, i.tangent0.zzzz, worldTangent_xyz_3.xyzx)).xyz;
+                float3 unitWorldTangent_xyz_5 = normalize(worldTangent_xyz_4);
+                float r0_w_11 = (i.tangent0.w * unity_WorldTransformParams.w);
+                float3 r2_xyz_3 = ((r0_w_11.xxxx * (mad(unitWorldNormal_xyz_8.zxyz, unitWorldTangent_xyz_5.yzxy, ((unitWorldNormal_xyz_8.xyzx * unitWorldTangent_xyz_5.xyzx)).xyzx)).xyzx)).xyz;
+                o.texcoord4.y = r2_xyz_3.x;
+                o.texcoord4.x = unitWorldTangent_xyz_5.z;
+                o.texcoord4.z = unitWorldNormal_xyz_8.y;
+                o.texcoord5.x = unitWorldTangent_xyz_5.x;
+                o.texcoord6.x = unitWorldTangent_xyz_5.y;
+                o.texcoord5.z = unitWorldNormal_xyz_8.z;
+                o.texcoord6.z = unitWorldNormal_xyz_8.x;
+                o.texcoord5.y = r2_xyz_3.y;
+                o.texcoord6.y = r2_xyz_3.z;
                 o.color0.xyzw = i.color0.xyzw;
-                float3 clipPos_xyz_4 = ((worldPos_xyzw_4.yyyy * cb0_values[5].xyzx)).xyz;
-                float3 clipPos_xyz_5 = (mad(_Color.xyzx, worldPos_xyzw_4.zzzz, (mad(cb0_values[4].xyzx, worldPos_xyzw_4.xxxx, clipPos_xyz_4.xyzx)).xyzx)).xyz;
-                o.texcoord8.xyz = (mad(_EmissionColor.xyzx, worldPos_xyzw_4.wwww, clipPos_xyz_5.xyzx)).xyz;
                 o.texcoord9.xyzw = float4(0, 0, 0, 0);
                 return o;
             }
             #pragma fragment frag
-            program50Output frag(program50Input i)
+            program51Output frag(program51Input i)
             {
-                program50Output o = (program50Output)0;
-                float3 r0_xyz_1 = ((-i.texcoord7.xyzx + _WorldSpaceLightPos0.xyzx)).xyz;
-                float r0_w_1 = dot(r0_xyz_1.xyzx, r0_xyz_1.xyzx);
-                float r0_w_2 = rsqrt(r0_w_1);
-                float3 r1_xyz_1 = ((r0_w_2.xxxx * r0_xyz_1.xyzx)).xyz;
+                program51Output o = (program51Output)0;
                 float3 viewDir_xyz_1 = ((-i.texcoord7.xyzx + unity_WorldToObject[0].xyzx)).xyz;
-                float3 unitViewDir_xyz_2 = normalize(viewDir_xyz_1);
-                float4 r3_xyzw_1 = _MainTex.Sample(sampler_MainTex, (i.texcoord0.xyxx).xy);
-                float3 r3_xyz_2 = ((r3_xyzw_1.xyzx * cb0_values[10].xyzx)).xyz;
-                float r1_w_3 = (_BumpMap.Sample(sampler_BumpMap, (i.texcoord2.xyxx).xy)).w;
-                float3 r4_xyz_1 = (_MetallicGlossMap.Sample(sampler_MetallicGlossMap, (i.texcoord2.zwzz).xy)).xyz;
-                float3 r4_xyz_3 = (mad(r1_w_3.xxxx, (mad(r4_xyz_1.xyzx, float4(2, 2, 2, 0), float4(-2, -2, -2, 0))).xyzx, float4(1, 1, 1, 0))).xyz;
-                float2 r6_xy_1 = (_OcclusionMap.Sample(sampler_OcclusionMap, (i.texcoord1.xyxx).xy)).xy;
-                float3 r7_xyz_1 = (_EmissionMap.Sample(sampler_EmissionMap, (i.texcoord0.zwzz).xy)).xyz;
+                float r0_w_1 = dot(viewDir_xyz_1.xyzx, viewDir_xyz_1.xyzx);
+                float r0_w_2 = rsqrt(r0_w_1);
+                float3 unitViewDir_xyz_1 = ((r0_w_2.xxxx * viewDir_xyz_1.xyzx)).xyz;
+                float4 r2_xyzw_1 = _MainTex.Sample(sampler_MainTex, (i.texcoord0.xyxx).xy);
+                float3 r2_xyz_2 = ((r2_xyzw_1.xyzx * cb0_values[6].xyzx)).xyz;
+                float r1_w_1 = (_BumpMap.Sample(sampler_BumpMap, (i.texcoord2.xyxx).xy)).w;
+                float3 r3_xyz_1 = (_MetallicGlossMap.Sample(sampler_MetallicGlossMap, (i.texcoord2.zwzz).xy)).xyz;
+                float3 r3_xyz_3 = (mad(r1_w_1.xxxx, (mad(r3_xyz_1.xyzx, float4(2, 2, 2, 0), float4(-2, -2, -2, 0))).xyzx, float4(1, 1, 1, 0))).xyz;
+                float2 r5_xy_1 = (_OcclusionMap.Sample(sampler_OcclusionMap, (i.texcoord1.xyxx).xy)).xy;
+                float3 r6_xyz_1 = (_EmissionMap.Sample(sampler_EmissionMap, (i.texcoord0.zwzz).xy)).xyz;
+                float r6_x_2 = (r6_xyz_1.z * r6_xyz_1.x);
+                float2 r5_zw_1 = (mad(float4(r6_x_2, r6_x_2, r6_x_2, r6_xyz_1.y), float4(0, 0, 2, 2), float4(0, 0, -1, -1))).zw;
+                float4 r6_xyzw_3 = (r5_zw_1.xyxx * cb0_values[4].xxxx);
+                float r6_x_3 = r6_xyzw_3.x;
+                float r6_y_2 = r6_xyzw_3.y;
+                float r3_w_1 = dot(float4(r6_x_3, r6_y_2, r6_x_3, r6_x_3), float4(r6_x_3, r6_y_2, r6_x_3, r6_x_3));
+                float r3_w_2 = min(r3_w_1, 1);
+                float r3_w_3 = (-r3_w_2 + 1);
+                float r6_z_2 = sqrt(r3_w_3);
+                float3 r7_xyz_1 = (_DetailMask.Sample(sampler_DetailMask, (i.texcoord3.xyxx).xy)).xyz;
                 float r7_x_2 = (r7_xyz_1.z * r7_xyz_1.x);
-                float2 r6_zw_1 = (mad(float4(r7_x_2, r7_x_2, r7_x_2, r7_xyz_1.y), float4(0, 0, 2, 2), float4(0, 0, -1, -1))).zw;
-                float4 r7_xyzw_3 = (r6_zw_1.xyxx * cb0_values[8].xxxx);
+                float2 r5_zw_2 = (mad(float4(r7_x_2, r7_x_2, r7_x_2, r7_xyz_1.y), float4(0, 0, 2, 2), float4(0, 0, -1, -1))).zw;
+                float4 r7_xyzw_3 = (r5_zw_2.xyxx * cb0_values[4].xxxx);
                 float r7_x_3 = r7_xyzw_3.x;
                 float r7_y_2 = r7_xyzw_3.y;
-                float r2_w_1 = dot(float4(r7_x_3, r7_y_2, r7_x_3, r7_x_3), float4(r7_x_3, r7_y_2, r7_x_3, r7_x_3));
-                float r2_w_2 = min(r2_w_1, 1);
-                float r2_w_3 = (-r2_w_2 + 1);
-                float r7_z_2 = sqrt(r2_w_3);
-                float3 r8_xyz_1 = (_DetailMask.Sample(sampler_DetailMask, (i.texcoord3.xyxx).xy)).xyz;
-                float r8_x_2 = (r8_xyz_1.z * r8_xyz_1.x);
-                float2 r6_zw_2 = (mad(float4(r8_x_2, r8_x_2, r8_x_2, r8_xyz_1.y), float4(0, 0, 2, 2), float4(0, 0, -1, -1))).zw;
-                float4 r8_xyzw_3 = (r6_zw_2.xyxx * cb0_values[8].xxxx);
-                float r8_x_3 = r8_xyzw_3.x;
-                float r8_y_2 = r8_xyzw_3.y;
-                float r2_w_4 = dot(float4(r8_x_3, r8_y_2, r8_x_3, r8_x_3), float4(r8_x_3, r8_y_2, r8_x_3, r8_x_3));
-                float r2_w_5 = min(r2_w_4, 1);
-                float r2_w_6 = (-r2_w_5 + 1);
-                float r8_z_2 = sqrt(r2_w_6);
-                float4 r7_xyzw_4 = mad(float4(r8_x_3, r8_y_2, r8_z_2, r8_x_3), r1_w_3.xxxx, float4(r7_x_3, r7_y_2, r7_z_2, r7_x_3));
-                float r7_x_4 = r7_xyzw_4.x;
-                float r7_y_3 = r7_xyzw_4.y;
-                float r7_z_3 = r7_xyzw_4.z;
-                float r1_w_4 = dot(float4(r7_x_4, r7_y_3, r7_z_3, r7_x_4), float4(r7_x_4, r7_y_3, r7_z_3, r7_x_4));
-                float r1_w_5 = rsqrt(r1_w_4);
-                float4 r7_xyzw_5 = (r1_w_5.xxxx * float4(r7_x_4, r7_y_3, r7_z_3, r7_x_4));
-                float r7_x_5 = r7_xyzw_5.x;
-                float r7_y_4 = r7_xyzw_5.y;
-                float r7_z_4 = r7_xyzw_5.z;
-                float r1_w_6 = (r6_xy_1.x * cb0_values[8].y);
-                float r2_w_7 = mad(r3_xyzw_1.w, cb0_values[10].w, -cb0_values[9].x);
-                float r2_w_8 = (r2_w_7 < 0);
-                if (r2_w_8) discard;
-                float4 r6_xyzw_2 = (i.texcoord7.yyyy * cb0_values[5].xxyz);
-                float r6_x_2 = r6_xyzw_2.x;
-                float r6_z_3 = r6_xyzw_2.z;
-                float r6_w_3 = r6_xyzw_2.w;
-                float4 r6_xyzw_3 = mad(cb0_values[4].xxyz, i.texcoord7.xxxx, float4(r6_x_2, r6_x_2, r6_z_3, r6_w_3));
-                float r6_x_3 = r6_xyzw_3.x;
-                float r6_z_4 = r6_xyzw_3.z;
-                float r6_w_4 = r6_xyzw_3.w;
-                float4 r6_xyzw_4 = mad(cb0_values[6].xxyz, i.texcoord7.zzzz, float4(r6_x_3, r6_x_3, r6_z_4, r6_w_4));
+                float r3_w_4 = dot(float4(r7_x_3, r7_y_2, r7_x_3, r7_x_3), float4(r7_x_3, r7_y_2, r7_x_3, r7_x_3));
+                float r3_w_5 = min(r3_w_4, 1);
+                float r3_w_6 = (-r3_w_5 + 1);
+                float r7_z_2 = sqrt(r3_w_6);
+                float4 r6_xyzw_4 = mad(float4(r7_x_3, r7_y_2, r7_z_2, r7_x_3), r1_w_1.xxxx, float4(r6_x_3, r6_y_2, r6_z_2, r6_x_3));
                 float r6_x_4 = r6_xyzw_4.x;
-                float r6_z_5 = r6_xyzw_4.z;
-                float r6_w_5 = r6_xyzw_4.w;
-                float4 r6_xyzw_5 = (float4(r6_x_4, r6_x_4, r6_z_5, r6_w_5) + cb0_values[7].xxyz);
+                float r6_y_3 = r6_xyzw_4.y;
+                float r6_z_3 = r6_xyzw_4.z;
+                float r1_w_2 = dot(float4(r6_x_4, r6_y_3, r6_z_3, r6_x_4), float4(r6_x_4, r6_y_3, r6_z_3, r6_x_4));
+                float r1_w_3 = rsqrt(r1_w_2);
+                float4 r6_xyzw_5 = (r1_w_3.xxxx * float4(r6_x_4, r6_y_3, r6_z_3, r6_x_4));
                 float r6_x_5 = r6_xyzw_5.x;
-                float r6_z_6 = r6_xyzw_5.z;
-                float r6_w_6 = r6_xyzw_5.w;
-                float r2_w_9 = (unity_ProbeVolumeParams.x == 1);
-                float r8_x_13;
-                float r8_y_12;
-                float r8_z_12;
-                float r8_w_4;
-                if (r2_w_9)
+                float r6_y_4 = r6_xyzw_5.y;
+                float r6_z_4 = r6_xyzw_5.z;
+                float r1_w_4 = (r5_xy_1.x * cb0_values[4].y);
+                float r2_w_2 = mad(r2_xyzw_1.w, cb0_values[6].w, -cb0_values[5].x);
+                float r2_w_3 = (r2_w_2 < 0);
+                if (r2_w_3) discard;
+                float r2_w_4 = (unity_ProbeVolumeParams.x == 1);
+                float r7_x_7;
+                float r7_y_6;
+                float r7_z_6;
+                float r7_w_4;
+                if (r2_w_4)
                 {
-                    float r2_w_10 = (unity_ProbeVolumeParams.y == 1);
-                    float4 r8_xyzw_5 = (i.texcoord7.yyyy * unity_ProbeVolumeWorldToObject[1].xyzx);
-                    float r8_x_5 = r8_xyzw_5.x;
-                    float r8_y_4 = r8_xyzw_5.y;
-                    float r8_z_4 = r8_xyzw_5.z;
-                    float4 r8_xyzw_6 = mad(unity_ProbeVolumeWorldToObject[0].xyzx, i.texcoord7.xxxx, float4(r8_x_5, r8_y_4, r8_z_4, r8_x_5));
-                    float r8_x_6 = r8_xyzw_6.x;
-                    float r8_y_5 = r8_xyzw_6.y;
-                    float r8_z_5 = r8_xyzw_6.z;
-                    float4 r8_xyzw_7 = mad(unity_ProbeVolumeWorldToObject[2].xyzx, i.texcoord7.zzzz, float4(r8_x_6, r8_y_5, r8_z_5, r8_x_6));
-                    float r8_x_7 = r8_xyzw_7.x;
-                    float r8_y_6 = r8_xyzw_7.y;
-                    float r8_z_6 = r8_xyzw_7.z;
-                    float4 r8_xyzw_8 = (float4(r8_x_7, r8_y_6, r8_z_6, r8_x_7) + unity_ProbeVolumeWorldToObject[3].xyzx);
-                    float r8_x_8 = r8_xyzw_8.x;
-                    float r8_y_7 = r8_xyzw_8.y;
-                    float r8_z_7 = r8_xyzw_8.z;
-                    float4 unity_ProbeVolumeParamsSelect_xyzw_9 = (r2_w_10.xxxx ? float4(r8_x_8, r8_y_7, r8_z_7, r8_x_8) : i.texcoord7.xyzx);
-                    float unity_ProbeVolumeParamsSelect_x_9 = unity_ProbeVolumeParamsSelect_xyzw_9.x;
-                    float unity_ProbeVolumeParamsSelect_y_8 = unity_ProbeVolumeParamsSelect_xyzw_9.y;
-                    float unity_ProbeVolumeParamsSelect_z_8 = unity_ProbeVolumeParamsSelect_xyzw_9.z;
-                    float4 r8_xyzw_10 = (float4(unity_ProbeVolumeParamsSelect_x_9, unity_ProbeVolumeParamsSelect_y_8, unity_ProbeVolumeParamsSelect_z_8, unity_ProbeVolumeParamsSelect_x_9) + -unity_ProbeVolumeMin.xyzx);
-                    float r8_x_10 = r8_xyzw_10.x;
-                    float r8_y_9 = r8_xyzw_10.y;
-                    float r8_z_9 = r8_xyzw_10.z;
-                    float r8_y_10 = ((float4(r8_x_10, r8_x_10, r8_y_9, r8_z_9) * unity_ProbeVolumeSizeInv.xxyz)).y;
-                    float r8_z_10 = ((float4(r8_x_10, r8_x_10, r8_y_9, r8_z_9) * unity_ProbeVolumeSizeInv.xxyz)).z;
-                    float r8_w_2 = ((float4(r8_x_10, r8_x_10, r8_y_9, r8_z_9) * unity_ProbeVolumeSizeInv.xxyz)).w;
-                    float r2_w_11 = mad(r8_y_10, 0.25, 0.75);
-                    float r3_w_2 = mad(unity_ProbeVolumeParams.z, 0.5, 0.75);
-                    float r8_x_11 = max(r2_w_11, r3_w_2);
-                    float4 r8_xyzw_12 = _DetailNormal.Sample(sampler_DetailNormal, (float4(r8_x_11, r8_z_10, r8_w_2, r8_x_11)).xyz);
-                    r8_x_13 = r8_xyzw_12.x;
-                    r8_y_12 = r8_xyzw_12.y;
-                    r8_z_12 = r8_xyzw_12.z;
-                    r8_w_4 = r8_xyzw_12.w;
+                    float r2_w_5 = (unity_ProbeVolumeParams.y == 1);
+                    float4 r5_xyzw_2 = (i.texcoord7.yyyy * unity_ProbeVolumeWorldToObject[1].xxyz);
+                    float r5_x_2 = r5_xyzw_2.x;
+                    float r5_z_3 = r5_xyzw_2.z;
+                    float r5_w_3 = r5_xyzw_2.w;
+                    float4 r5_xyzw_3 = mad(unity_ProbeVolumeWorldToObject[0].xxyz, i.texcoord7.xxxx, float4(r5_x_2, r5_x_2, r5_z_3, r5_w_3));
+                    float r5_x_3 = r5_xyzw_3.x;
+                    float r5_z_4 = r5_xyzw_3.z;
+                    float r5_w_4 = r5_xyzw_3.w;
+                    float4 r5_xyzw_4 = mad(unity_ProbeVolumeWorldToObject[2].xxyz, i.texcoord7.zzzz, float4(r5_x_3, r5_x_3, r5_z_4, r5_w_4));
+                    float r5_x_4 = r5_xyzw_4.x;
+                    float r5_z_5 = r5_xyzw_4.z;
+                    float r5_w_5 = r5_xyzw_4.w;
+                    float4 r5_xyzw_5 = (float4(r5_x_4, r5_x_4, r5_z_5, r5_w_5) + unity_ProbeVolumeWorldToObject[3].xxyz);
+                    float r5_x_5 = r5_xyzw_5.x;
+                    float r5_z_6 = r5_xyzw_5.z;
+                    float r5_w_6 = r5_xyzw_5.w;
+                    float4 unity_ProbeVolumeParamsSelect_xyzw_6 = (r2_w_5.xxxx ? float4(r5_x_5, r5_x_5, r5_z_6, r5_w_6) : i.texcoord7.xxyz);
+                    float unity_ProbeVolumeParamsSelect_x_6 = unity_ProbeVolumeParamsSelect_xyzw_6.x;
+                    float unity_ProbeVolumeParamsSelect_z_7 = unity_ProbeVolumeParamsSelect_xyzw_6.z;
+                    float unity_ProbeVolumeParamsSelect_w_7 = unity_ProbeVolumeParamsSelect_xyzw_6.w;
+                    float4 r5_xyzw_7 = (float4(unity_ProbeVolumeParamsSelect_x_6, unity_ProbeVolumeParamsSelect_x_6, unity_ProbeVolumeParamsSelect_z_7, unity_ProbeVolumeParamsSelect_w_7) + -unity_ProbeVolumeMin.xxyz);
+                    float r5_x_7 = r5_xyzw_7.x;
+                    float r5_z_8 = r5_xyzw_7.z;
+                    float r5_w_8 = r5_xyzw_7.w;
+                    float4 r7_xyzw_4 = (float4(r5_x_7, r5_x_7, r5_z_8, r5_w_8) * unity_ProbeVolumeSizeInv.xxyz);
+                    float r7_y_4 = r7_xyzw_4.y;
+                    float r7_z_4 = r7_xyzw_4.z;
+                    float r7_w_2 = r7_xyzw_4.w;
+                    float r2_w_6 = mad(r7_y_4, 0.25, 0.75);
+                    float r3_w_7 = mad(unity_ProbeVolumeParams.z, 0.5, 0.75);
+                    float r7_x_5 = max(r2_w_6, r3_w_7);
+                    float4 r7_xyzw_6 = _DetailAlbedo.Sample(sampler_DetailAlbedo, (float4(r7_x_5, r7_z_4, r7_w_2, r7_x_5)).xyz);
+                    r7_x_7 = r7_xyzw_6.x;
+                    r7_y_6 = r7_xyzw_6.y;
+                    r7_z_6 = r7_xyzw_6.z;
+                    r7_w_4 = r7_xyzw_6.w;
                 }
                 else
                 {
-                    float4 r8_xyzw_4 = float4(1, 1, 1, 1);
-                    r8_x_13 = r8_xyzw_4.x;
-                    r8_y_12 = r8_xyzw_4.y;
-                    r8_z_12 = r8_xyzw_4.z;
-                    r8_w_4 = r8_xyzw_4.w;
+                    float r7_x_4 = (float4(1, 1, 1, 1)).x;
+                    float r7_y_3 = (float4(1, 1, 1, 1)).y;
+                    float r7_z_3 = (float4(1, 1, 1, 1)).z;
+                    float r7_w_1 = (float4(1, 1, 1, 1)).w;
+                    r7_x_7 = r7_x_4;
+                    r7_y_6 = r7_y_3;
+                    r7_z_6 = r7_z_3;
+                    r7_w_4 = r7_w_1;
                 }
-                float r2_w_13 = saturate(dot(float4(r8_x_13, r8_y_12, r8_z_12, r8_w_4), unity_OcclusionMaskSelector));
-                float r3_w_4 = dot(float4(r6_x_5, r6_z_6, r6_w_6, r6_x_5), float4(r6_x_5, r6_z_6, r6_w_6, r6_x_5));
-                float r3_w_5 = (_DetailAlbedo.Sample(sampler_DetailAlbedo, (r3_w_4.xxxx).xy)).w;
-                float r2_w_14 = (r2_w_13 * r3_w_5);
-                float r8_x_14 = dot(i.texcoord4.xyzx, float4(r7_x_5, r7_y_4, r7_z_4, r7_x_5));
-                float r8_y_13 = dot(i.texcoord5.xyzx, float4(r7_x_5, r7_y_4, r7_z_4, r7_x_5));
-                float r8_z_13 = dot(i.texcoord6.xyzx, float4(r7_x_5, r7_y_4, r7_z_4, r7_x_5));
-                float r3_w_6 = dot(float4(r8_x_14, r8_y_13, r8_z_13, r8_x_14), float4(r8_x_14, r8_y_13, r8_z_13, r8_x_14));
-                float r3_w_7 = rsqrt(r3_w_6);
-                float4 r6_xyzw_6 = (r3_w_7.xxxx * float4(r8_x_14, r8_x_14, r8_y_13, r8_z_13));
+                float r2_w_8 = saturate(dot(float4(r7_x_7, r7_y_6, r7_z_6, r7_w_4), unity_OcclusionMaskSelector));
+                float r7_x_8 = dot(i.texcoord4.xyzx, float4(r6_x_5, r6_y_4, r6_z_4, r6_x_5));
+                float r7_y_7 = dot(i.texcoord5.xyzx, float4(r6_x_5, r6_y_4, r6_z_4, r6_x_5));
+                float r7_z_7 = dot(i.texcoord6.xyzx, float4(r6_x_5, r6_y_4, r6_z_4, r6_x_5));
+                float r3_w_9 = dot(float4(r7_x_8, r7_y_7, r7_z_7, r7_x_8), float4(r7_x_8, r7_y_7, r7_z_7, r7_x_8));
+                float r3_w_10 = rsqrt(r3_w_9);
+                float4 r5_xyzw_9 = (r3_w_10.xxxx * float4(r7_x_8, r7_x_8, r7_y_7, r7_z_7));
+                float r5_x_9 = r5_xyzw_9.x;
+                float r5_z_10 = r5_xyzw_9.z;
+                float r5_w_10 = r5_xyzw_9.w;
+                float4 r6_xyzw_6 = (r2_w_8.xxxx * _LightColor0.xyzx);
                 float r6_x_6 = r6_xyzw_6.x;
-                float r6_z_7 = r6_xyzw_6.z;
-                float r6_w_7 = r6_xyzw_6.w;
-                float4 r7_xyzw_6 = (r2_w_14.xxxx * _LightColor0.xyzx);
-                float r7_x_6 = r7_xyzw_6.x;
-                float r7_y_5 = r7_xyzw_6.y;
-                float r7_z_5 = r7_xyzw_6.z;
-                float3 r3_xyz_4 = (mad(r1_w_6.xxxx, (mad(r3_xyz_2.xyzx, r4_xyz_3.xyzx, float4(-0.04, -0.04, -0.04, 0))).xyzx, float4(0.04, 0.04, 0.04, 0))).xyz;
-                float r1_w_7 = mad(-r1_w_6, 0.96, 0.96);
-                float r1_w_8 = mad(-r6_xy_1.y, cb0_values[8].z, 1);
-                float3 r0_xyz_2 = (mad(r0_xyz_1.xyzx, r0_w_2.xxxx, unitViewDir_xyz_2.xyzx)).xyz;
+                float r6_y_5 = r6_xyzw_6.y;
+                float r6_z_5 = r6_xyzw_6.z;
+                float3 r2_xyz_4 = (mad(r1_w_4.xxxx, (mad(r2_xyz_2.xyzx, r3_xyz_3.xyzx, float4(-0.04, -0.04, -0.04, 0))).xyzx, float4(0.04, 0.04, 0.04, 0))).xyz;
+                float r1_w_5 = mad(-r1_w_4, 0.96, 0.96);
+                float r1_w_6 = mad(-r5_xy_1.y, cb0_values[4].z, 1);
+                float3 r0_xyz_2 = (mad(viewDir_xyz_1.xyzx, r0_w_2.xxxx, _WorldSpaceLightPos0.xyzx)).xyz;
                 float r0_w_3 = dot(r0_xyz_2.xyzx, r0_xyz_2.xyzx);
                 float r0_w_4 = max(r0_w_3, 0.001);
                 float r0_w_5 = rsqrt(r0_w_4);
                 float3 r0_xyz_3 = ((r0_w_5.xxxx * r0_xyz_2.xyzx)).xyz;
-                float r0_w_6 = dot(float4(r6_x_6, r6_z_7, r6_w_7, r6_x_6), unitViewDir_xyz_2.xyzx);
-                float r2_x_3 = saturate(dot(float4(r6_x_6, r6_z_7, r6_w_7, r6_x_6), r1_xyz_1.xyzx));
-                float r2_y_3 = saturate(dot(float4(r6_x_6, r6_z_7, r6_w_7, r6_x_6), r0_xyz_3.xyzx));
-                float r0_x_4 = saturate(dot(r1_xyz_1.xyzx, r0_xyz_3.xyzx));
+                float r0_w_6 = dot(float4(r5_x_9, r5_z_10, r5_w_10, r5_x_9), unitViewDir_xyz_1.xyzx);
+                float r1_x_2 = saturate(dot(float4(r5_x_9, r5_z_10, r5_w_10, r5_x_9), _WorldSpaceLightPos0.xyzx));
+                float r1_y_2 = saturate(dot(float4(r5_x_9, r5_z_10, r5_w_10, r5_x_9), r0_xyz_3.xyzx));
+                float r0_x_4 = saturate(dot(_WorldSpaceLightPos0.xyzx, r0_xyz_3.xyzx));
                 float r0_y_4 = (r0_x_4 * r0_x_4);
-                float r0_y_5 = dot(r0_y_4.xxxx, r1_w_8.xxxx);
+                float r0_y_5 = dot(r0_y_4.xxxx, r1_w_6.xxxx);
                 float r0_y_6 = (r0_y_5 + -0.5);
-                float r0_z_4 = (-r2_x_3 + 1);
-                float r1_x_2 = (r0_z_4 * r0_z_4);
-                float r0_z_5 = (r0_z_4 * (r1_x_2 * r1_x_2));
+                float r0_z_4 = (-r1_x_2 + 1);
+                float r1_z_2 = (r0_z_4 * r0_z_4);
+                float r1_z_3 = (r1_z_2 * r1_z_2);
+                float r0_z_5 = (r0_z_4 * r1_z_3);
                 float r0_z_6 = mad(r0_y_6, r0_z_5, 1);
-                float r1_x_4 = (-abs(r0_w_6) + 1);
-                float r1_y_2 = (r1_x_4 * r1_x_4);
-                float r1_y_3 = (r1_y_2 * r1_y_2);
-                float r0_y_7 = mad(r0_y_6, (r1_x_4 * r1_y_3), 1);
+                float r1_z_4 = (-abs(r0_w_6) + 1);
+                float r2_w_9 = (r1_z_4 * r1_z_4);
+                float r2_w_10 = (r2_w_9 * r2_w_9);
+                float r1_z_5 = (r1_z_4 * r2_w_10);
+                float r0_y_7 = mad(r0_y_6, r1_z_5, 1);
                 float r0_y_8 = (r0_y_7 * r0_z_6);
-                float r0_z_7 = (r1_w_8 * r1_w_8);
+                float r0_z_7 = (r1_w_6 * r1_w_6);
                 float r0_z_8 = max(r0_z_7, 0.002);
-                float r1_x_6 = (-r0_z_8 + 1);
-                float r1_y_4 = mad(abs(r0_w_6), r1_x_6, r0_z_8);
-                float r0_w_7 = (abs(r0_w_6) * mad(r2_x_3, r1_x_6, r0_z_8));
-                float r0_w_8 = mad(r2_x_3, r1_y_4, r0_w_7);
+                float r1_z_6 = (-r0_z_8 + 1);
+                float r1_w_7 = mad(abs(r0_w_6), r1_z_6, r0_z_8);
+                float r1_z_7 = mad(r1_x_2, r1_z_6, r0_z_8);
+                float r0_w_7 = (abs(r0_w_6) * r1_z_7);
+                float r0_w_8 = mad(r1_x_2, r1_w_7, r0_w_7);
                 float r0_w_9 = (r0_w_8 + 1E-05);
                 float r0_w_10 = (0.5 / r0_w_9);
                 float r0_z_9 = (r0_z_8 * r0_z_8);
-                float r1_x_9 = mad(mad(r2_y_3, r0_z_9, -r2_y_3), r2_y_3, 1);
+                float r1_z_8 = mad(r1_y_2, r0_z_9, -r1_y_2);
+                float r1_y_3 = mad(r1_z_8, r1_y_2, 1);
                 float r0_z_10 = (r0_z_9 * 0.31830987);
-                float r0_z_11 = (r0_z_10 / mad(r1_x_9, r1_x_9, 1E-07));
+                float r1_y_4 = mad(r1_y_3, r1_y_3, 1E-07);
+                float r0_z_11 = (r0_z_10 / r1_y_4);
                 float r0_z_12 = (r0_z_11 * r0_w_10);
                 float r0_z_13 = (r0_z_12 * 3.1415927);
-                float4 r0_xyzw_9 = (r2_x_3.xxxx * float4(r0_y_8, r0_y_8, r0_z_13, r0_y_8));
+                float4 r0_xyzw_9 = (r1_x_2.xxxx * float4(r0_y_8, r0_y_8, r0_z_13, r0_y_8));
                 float r0_y_9 = r0_xyzw_9.y;
                 float r0_z_14 = r0_xyzw_9.z;
                 float r0_z_15 = max(r0_z_14, 0);
-                float r0_w_11 = dot(r3_xyz_4.xyzx, r3_xyz_4.xyzx);
+                float r0_w_11 = dot(r2_xyz_4.xyzx, r2_xyz_4.xyzx);
                 float r0_w_12 = (r0_w_11 != 0);
                 float r0_w_13 = asfloat(asint(r0_w_12) & asint(1065353216));
                 float r0_z_16 = (r0_w_13 * r0_z_15);
-                float4 r1_xyzw_11 = (r0_y_9.xxxx * float4(r7_x_6, r7_y_5, r7_z_5, r7_x_6));
-                float r1_x_11 = r1_xyzw_11.x;
-                float r1_y_5 = r1_xyzw_11.y;
-                float r1_z_2 = r1_xyzw_11.z;
-                float4 r0_xyzw_10 = (float4(r7_x_6, r7_x_6, r7_y_5, r7_z_5) * r0_z_16.xxxx);
+                float4 r1_xyzw_3 = (r0_y_9.xxxx * float4(r6_x_6, r6_y_5, r6_z_5, r6_x_6));
+                float r1_x_3 = r1_xyzw_3.x;
+                float r1_y_5 = r1_xyzw_3.y;
+                float r1_z_9 = r1_xyzw_3.z;
+                float4 r0_xyzw_10 = (float4(r6_x_6, r6_x_6, r6_y_5, r6_z_5) * r0_z_16.xxxx);
                 float r0_y_10 = r0_xyzw_10.y;
                 float r0_z_17 = r0_xyzw_10.z;
                 float r0_w_14 = r0_xyzw_10.w;
                 float r0_x_5 = (-r0_x_4 + 1);
-                float r1_w_9 = (r0_x_5 * r0_x_5);
-                float r1_w_10 = (r1_w_9 * r1_w_9);
-                float4 r2_xyzw_4 = (-r3_xyz_4.xyzx + float4(1, 1, 1, 0));
-                float r2_x_4 = r2_xyzw_4.x;
-                float r2_y_4 = r2_xyzw_4.y;
-                float r2_z_3 = r2_xyzw_4.z;
-                float4 r2_xyzw_5 = mad(float4(r2_x_4, r2_y_4, r2_z_3, r2_x_4), ((r0_x_5 * r1_w_10)).xxxx, r3_xyz_4.xyzx);
-                float r2_x_5 = r2_xyzw_5.x;
-                float r2_y_5 = r2_xyzw_5.y;
-                float r2_z_4 = r2_xyzw_5.z;
-                float4 r0_xyzw_7 = (float4(r0_y_10, r0_z_17, r0_w_14, r0_y_10) * float4(r2_x_5, r2_y_5, r2_z_4, r2_x_5));
+                float r1_w_8 = (r0_x_5 * r0_x_5);
+                float r1_w_9 = (r1_w_8 * r1_w_8);
+                float4 r0_xyzw_7 = (float4(r0_y_10, r0_z_17, r0_w_14, r0_y_10) * (mad(((-r2_xyz_4.xyzx + float4(1, 1, 1, 0))).xyzx, ((r0_x_5 * r1_w_9)).xxxx, r2_xyz_4.xyzx)).xyzx);
                 float r0_x_7 = r0_xyzw_7.x;
                 float r0_y_11 = r0_xyzw_7.y;
                 float r0_z_18 = r0_xyzw_7.z;
-                float4 r0_xyzw_8 = mad(((r1_w_7.xxxx * ((r3_xyz_2.xyzx * r4_xyz_3.xyzx)).xyzx)).xyzx, float4(r1_x_11, r1_y_5, r1_z_2, r1_x_11), float4(r0_x_7, r0_y_11, r0_z_18, r0_x_7));
+                float4 r0_xyzw_8 = mad(((r1_w_5.xxxx * ((r2_xyz_2.xyzx * r3_xyz_3.xyzx)).xyzx)).xyzx, float4(r1_x_3, r1_y_5, r1_z_9, r1_x_3), float4(r0_x_7, r0_y_11, r0_z_18, r0_x_7));
                 float r0_x_8 = r0_xyzw_8.x;
                 float r0_y_12 = r0_xyzw_8.y;
                 float r0_z_19 = r0_xyzw_8.z;
-                float4 r1_xyzw_12 = mad(float4(r0_x_8, r0_y_12, r0_z_19, r0_x_8), i.color0.xyzx, -float4(r0_x_8, r0_y_12, r0_z_19, r0_x_8));
-                float r1_x_12 = r1_xyzw_12.x;
-                float r1_y_6 = r1_xyzw_12.y;
-                float r1_z_3 = r1_xyzw_12.z;
-                o.sv_Target0.xyz = (mad(float4(r1_x_12, r1_y_6, r1_z_3, r1_x_12), float4(0.1, 0.1, 0.1, 0), float4(r0_x_8, r0_y_12, r0_z_19, r0_x_8))).xyz;
+                float4 r1_xyzw_4 = mad(float4(r0_x_8, r0_y_12, r0_z_19, r0_x_8), i.color0.xyzx, -float4(r0_x_8, r0_y_12, r0_z_19, r0_x_8));
+                float r1_x_4 = r1_xyzw_4.x;
+                float r1_y_6 = r1_xyzw_4.y;
+                float r1_z_10 = r1_xyzw_4.z;
+                o.sv_Target0.xyz = (mad(float4(r1_x_4, r1_y_6, r1_z_10, r1_x_4), float4(0.1, 0.1, 0.1, 0), float4(r0_x_8, r0_y_12, r0_z_19, r0_x_8))).xyz;
                 o.sv_Target0.w = 1;
                 return o;
             }
@@ -862,10 +833,10 @@ Shader "Corpus/05 Surface Standard"
             Cull Back
             ZTest LEqual
             ZWrite On
-            // Folded keyword variants (base state emitted): LIGHTPROBE_SH, UNITY_HDR_ON
             HLSLPROGRAM
             #pragma target 4.5
-            #pragma multi_compile _ LIGHTPROBE_SH UNITY_HDR_ON
+            #pragma multi_compile _ LIGHTPROBE_SH
+            #pragma multi_compile _ UNITY_HDR_ON
             cbuffer _GlobalsCB_b0
             {
                 float _BumpScale : packoffset(c4.x);
@@ -886,13 +857,15 @@ Shader "Corpus/05 Surface Standard"
             };
             cbuffer _UnityPerDrawCB_b1
             {
-                float4x4 unity_ObjectToWorld : packoffset(c0);
-                float4x4 unity_WorldToObject : packoffset(c4);
-                float4 unity_WorldTransformParams : packoffset(c9);
+                float4x4 unity_ObjectToWorld;
+                float4x4 unity_WorldToObject;
+                float4 unity_WorldTransformParams;
+                float4 cb1_values[46];
             };
             cbuffer _UnityPerFrameCB_b2
             {
-                float4x4 unity_MatrixVP : packoffset(c17);
+                float4x4 unity_MatrixVP;
+                float4 cb2_values[10];
             };
             SamplerState sampler_MainTex;
             SamplerState sampler_EmissionMap;
@@ -910,6 +883,598 @@ Shader "Corpus/05 Surface Standard"
             Texture2D _DetailMask;
             Texture2D _DetailAlbedo;
             Texture2D _DetailNormal;
+            cbuffer cb3 : register(b3)
+            {
+                float4 cb3_values[21];
+            };
+            SamplerState sampler_DetailMask8;
+            Texture3D t8;
+            #if defined(LIGHTPROBE_SH) && defined(UNITY_HDR_ON)
+            struct program68Input
+            {
+                float4 position0 : POSITION0;
+                float4 tangent0 : TANGENT0;
+                float3 normal0 : NORMAL0;
+                float4 texcoord0 : TEXCOORD0;
+                float4 texcoord1 : TEXCOORD1;
+                float4 texcoord2 : TEXCOORD2;
+                float4 texcoord3 : TEXCOORD3;
+                float4 color0 : COLOR0;
+            };
+            struct program68Output
+            {
+                float4 sv_Position0 : SV_POSITION;
+                float4 texcoord0 : TEXCOORD0;
+                float4 texcoord1 : TEXCOORD1;
+                float4 texcoord2 : TEXCOORD2;
+                float4 texcoord3 : TEXCOORD3;
+                float4 texcoord4 : TEXCOORD4;
+                float4 texcoord5 : TEXCOORD5;
+                float4 texcoord6 : TEXCOORD6;
+                float4 color0 : COLOR0;
+                float4 texcoord8 : TEXCOORD8;
+                float3 texcoord9 : TEXCOORD9;
+            };
+            struct program74Input
+            {
+                float4 sv_Position0 : SV_POSITION;
+                float4 texcoord0 : TEXCOORD0;
+                float4 texcoord1 : TEXCOORD1;
+                float4 texcoord2 : TEXCOORD2;
+                float4 texcoord3 : TEXCOORD3;
+                float4 texcoord4 : TEXCOORD4;
+                float4 texcoord5 : TEXCOORD5;
+                float4 texcoord6 : TEXCOORD6;
+                float4 color0 : COLOR0;
+                float4 texcoord8 : TEXCOORD8;
+                float3 texcoord9 : TEXCOORD9;
+            };
+            struct program74Output
+            {
+                float4 sv_Target0 : SV_Target;
+                float4 sv_Target1 : SV_Target1;
+                float4 sv_Target2 : SV_Target2;
+                float4 sv_Target3 : SV_Target3;
+            };
+            #pragma vertex vert
+            program68Output vert(program68Input i)
+            {
+                program68Output o = (program68Output)0;
+                float4 worldPos_xyzw_2 = mad(cb2_values[0].xyzw, i.position0.xxxx, (i.position0.yyyy * cb2_values[1].xyzw));
+                float4 worldPos_xyzw_3 = mad(cb2_values[2].xyzw, i.position0.zzzz, worldPos_xyzw_2);
+                float4 worldPos_xyzw_1 = (worldPos_xyzw_3 + cb2_values[3].xyzw);
+                float3 r0_xyz_4 = (mad(cb2_values[3].xyzx, i.position0.wwww, worldPos_xyzw_3.xyzx)).xyz;
+                o.sv_Position0.xyzw = mul(float4x4(cb3_values[17], cb3_values[18], cb3_values[19], cb3_values[20]), worldPos_xyzw_1);
+                o.texcoord0.xy = (mad(i.texcoord0.xyxx, _MainTex_ST.xyxx, _MainTex_ST.zwzz)).xy;
+                o.texcoord0.zw = (mad(i.texcoord0.xxxy, _BumpMap_ST.xxxy, _BumpMap_ST.zzzw)).zw;
+                o.texcoord1.xy = (mad(i.texcoord0.xyxx, _MetallicGlossMap_ST.xyxx, _MetallicGlossMap_ST.zwzz)).xy;
+                o.texcoord1.zw = (mad(i.texcoord0.xxxy, _OcclusionMap_ST.xxxy, _OcclusionMap_ST.zzzw)).zw;
+                o.texcoord2.xy = (mad(i.texcoord0.xyxx, _EmissionMap_ST.xyxx, _EmissionMap_ST.zwzz)).xy;
+                o.texcoord2.zw = (mad(i.texcoord0.xxxy, _DetailMask_ST.xxxy, _DetailMask_ST.zzzw)).zw;
+                o.texcoord3.xy = (mad(i.texcoord0.xyxx, _DetailAlbedo_ST.xyxx, _DetailAlbedo_ST.zwzz)).xy;
+                o.texcoord3.zw = (mad(i.texcoord0.xxxy, _DetailNormal_ST.xxxy, _DetailNormal_ST.zzzw)).zw;
+                o.texcoord4.w = r0_xyz_4.x;
+                float3 worldTangent_xyz_2 = ((i.tangent0.yyyy * cb2_values[1].yzxy)).xyz;
+                float3 worldTangent_xyz_3 = (mad(cb2_values[0].yzxy, i.tangent0.xxxx, worldTangent_xyz_2.xyzx)).xyz;
+                float3 worldTangent_xyz_4 = (mad(cb2_values[2].yzxy, i.tangent0.zzzz, worldTangent_xyz_3.xyzx)).xyz;
+                float3 unitWorldTangent_xyz_5 = (((rsqrt(dot(worldTangent_xyz_4.xyzx, worldTangent_xyz_4.xyzx))).xxxx * worldTangent_xyz_4.xyzx)).xyz;
+                o.texcoord4.x = unitWorldTangent_xyz_5.z;
+                float worldNormal_x_4 = dot(i.normal0.xyzx, cb2_values[4].xyzx);
+                float worldNormal_y_4 = dot(i.normal0.xyzx, cb2_values[5].xyzx);
+                float worldNormal_z_4 = dot(i.normal0.xyzx, cb2_values[6].xyzx);
+                float4 unitWorldNormal_xyzw_5 = ((rsqrt(dot(float4(worldNormal_x_4, worldNormal_y_4, worldNormal_z_4, worldNormal_x_4), float4(worldNormal_x_4, worldNormal_y_4, worldNormal_z_4, worldNormal_x_4)))).xxxx * float4(worldNormal_x_4, worldNormal_y_4, worldNormal_z_4, worldNormal_z_4));
+                float3 r3_xyz_3 = ((((i.tangent0.w * cb2_values[9].w)).xxxx * (mad(unitWorldNormal_xyzw_5.ywxy, unitWorldTangent_xyz_5.yzxy, ((unitWorldTangent_xyz_5.xyzx * unitWorldNormal_xyzw_5.wxyw)).xyzx)).xyzx)).xyz;
+                o.texcoord4.y = r3_xyz_3.x;
+                o.texcoord4.z = unitWorldNormal_xyzw_5.x;
+                o.texcoord5.x = unitWorldTangent_xyz_5.x;
+                o.texcoord6.x = unitWorldTangent_xyz_5.y;
+                o.texcoord5.w = r0_xyz_4.y;
+                o.texcoord6.w = r0_xyz_4.z;
+                o.texcoord5.y = r3_xyz_3.y;
+                o.texcoord6.y = r3_xyz_3.z;
+                o.texcoord5.z = unitWorldNormal_xyzw_5.y;
+                o.texcoord6.z = unitWorldNormal_xyzw_5.w;
+                o.color0.xyzw = i.color0.xyzw;
+                o.texcoord8.xyzw = float4(0, 0, 0, 0);
+                float4 r1_xyzw_6 = (unitWorldNormal_xyzw_5.ywzx * unitWorldNormal_xyzw_5);
+                float r2_x_6 = dot(cb1_values[42].xyzw, r1_xyzw_6);
+                float r2_y_6 = dot(cb1_values[43].xyzw, r1_xyzw_6);
+                float r2_z_6 = dot(cb1_values[44].xyzw, r1_xyzw_6);
+                o.texcoord9.xyz = (mad(cb1_values[45].xyzx, (mad(unitWorldNormal_xyzw_5.x, unitWorldNormal_xyzw_5.x, (unitWorldNormal_xyzw_5.y * unitWorldNormal_xyzw_5.y))).xxxx, float4(r2_x_6, r2_y_6, r2_z_6, r2_x_6))).xyz;
+                return o;
+            }
+            #pragma fragment frag
+            program74Output frag(program74Input i)
+            {
+                program74Output o = (program74Output)0;
+                float4 r0_xyzw_1 = _MainTex.Sample(sampler_EmissionMap, (i.texcoord0.xyxx).xy);
+                float3 r0_xyz_2 = ((r0_xyzw_1.xyzx * _Color.xyzx)).xyz;
+                float r1_x_1 = (_BumpMap.Sample(sampler_MetallicGlossMap, (i.texcoord2.zwzz).xy)).x;
+                float3 r1_yzw_1 = (_MetallicGlossMap.Sample(sampler_DetailMask, (i.texcoord3.xyxx).xy)).yzw;
+                float3 r1_yzw_2 = (mad(r1_yzw_1.xxyz, float4(0, 2, 2, 2), float4(0, -2, -2, -2))).yzw;
+                float3 r1_yzw_3 = (mad(r1_x_1.xxxx, r1_yzw_2.xxyz, float4(0, 1, 1, 1))).yzw;
+                float2 r3_xy_1 = (_OcclusionMap.Sample(sampler_DetailAlbedo, (i.texcoord1.xyxx).xy)).xy;
+                float3 r4_xyz_1 = (_EmissionMap.Sample(sampler_OcclusionMap, (i.texcoord0.zwzz).xy)).xyz;
+                float r4_x_2 = (r4_xyz_1.z * r4_xyz_1.x);
+                float2 r3_zw_1 = (mad(float4(r4_x_2, r4_x_2, r4_x_2, r4_xyz_1.y), float4(0, 0, 2, 2), float4(0, 0, -1, -1))).zw;
+                float4 r4_xyzw_3 = (r3_zw_1.xyxx * _BumpScale.xxxx);
+                float r4_x_3 = r4_xyzw_3.x;
+                float r4_y_2 = r4_xyzw_3.y;
+                float r2_w_1 = dot(float4(r4_x_3, r4_y_2, r4_x_3, r4_x_3), float4(r4_x_3, r4_y_2, r4_x_3, r4_x_3));
+                float r2_w_2 = min(r2_w_1, 1);
+                float r2_w_3 = (-r2_w_2 + 1);
+                float r4_z_2 = sqrt(r2_w_3);
+                float3 r5_xyz_1 = (_DetailMask.Sample(sampler_DetailMask8, (i.texcoord3.zwzz).xy)).xyz;
+                float r5_x_2 = (r5_xyz_1.z * r5_xyz_1.x);
+                float2 r3_zw_2 = (mad(float4(r5_x_2, r5_x_2, r5_x_2, r5_xyz_1.y), float4(0, 0, 2, 2), float4(0, 0, -1, -1))).zw;
+                float4 r5_xyzw_3 = (r3_zw_2.xyxx * _BumpScale.xxxx);
+                float r5_x_3 = r5_xyzw_3.x;
+                float r5_y_2 = r5_xyzw_3.y;
+                float r2_w_4 = dot(float4(r5_x_3, r5_y_2, r5_x_3, r5_x_3), float4(r5_x_3, r5_y_2, r5_x_3, r5_x_3));
+                float r2_w_5 = min(r2_w_4, 1);
+                float r2_w_6 = (-r2_w_5 + 1);
+                float r5_z_2 = sqrt(r2_w_6);
+                float4 r4_xyzw_4 = mad(float4(r5_x_3, r5_y_2, r5_z_2, r5_x_3), r1_x_1.xxxx, float4(r4_x_3, r4_y_2, r4_z_2, r4_x_3));
+                float r4_x_4 = r4_xyzw_4.x;
+                float r4_y_3 = r4_xyzw_4.y;
+                float r4_z_3 = r4_xyzw_4.z;
+                float4 r4_xyzw_5 = ((rsqrt(dot(float4(r4_x_4, r4_y_3, r4_z_3, r4_x_4), float4(r4_x_4, r4_y_3, r4_z_3, r4_x_4)))).xxxx * float4(r4_x_4, r4_y_3, r4_z_3, r4_x_4));
+                float r4_x_5 = r4_xyzw_5.x;
+                float r4_y_4 = r4_xyzw_5.y;
+                float r4_z_4 = r4_xyzw_5.z;
+                float r1_x_4 = (r3_xy_1.x * _Metallic);
+                o.sv_Target1.w = (r3_xy_1.y * _Glossiness);
+                float r2_w_7 = (_DetailAlbedo.Sample(sampler_DetailNormal, (i.texcoord1.zwzz).xy)).w;
+                float r2_w_8 = (r2_w_7 + -1);
+                float r3_w_3 = mad(_OcclusionStrength, r2_w_8, 1);
+                float4 r5_xyzw_4 = _DetailNormal.Sample(sampler_BumpMap, (i.texcoord2.xyxx).xy);
+                float r5_x_4 = r5_xyzw_4.x;
+                float r5_y_3 = r5_xyzw_4.y;
+                float r5_z_3 = r5_xyzw_4.z;
+                float r0_w_2 = mad(r0_xyzw_1.w, _Color.w, -_Cutoff);
+                float r0_w_3 = (r0_w_2 < 0);
+                if (r0_w_3) discard;
+                float r6_x_1 = dot(i.texcoord4.xyzx, float4(r4_x_5, r4_y_4, r4_z_4, r4_x_5));
+                float r6_y_1 = dot(i.texcoord5.xyzx, float4(r4_x_5, r4_y_4, r4_z_4, r4_x_5));
+                float r6_z_1 = dot(i.texcoord6.xyzx, float4(r4_x_5, r4_y_4, r4_z_4, r4_x_5));
+                float r0_w_4 = dot(float4(r6_x_1, r6_y_1, r6_z_1, r6_x_1), float4(r6_x_1, r6_y_1, r6_z_1, r6_x_1));
+                float r0_w_5 = rsqrt(r0_w_4);
+                float4 r4_xyzw_6 = (r0_w_5.xxxx * float4(r6_x_1, r6_y_1, r6_z_1, r6_x_1));
+                float r4_x_6 = r4_xyzw_6.x;
+                float r4_y_5 = r4_xyzw_6.y;
+                float r4_z_5 = r4_xyzw_6.z;
+                float r0_w_6 = (cb2_values[0].x == 1);
+                float r7_x_4;
+                float r7_y_5;
+                float r7_z_5;
+                if (r0_w_6)
+                {
+                    float r0_w_7 = (cb2_values[0].y == 1);
+                    float3 r6_xyz_5 = (((mad(cb2_values[3].xyzx, i.texcoord6.wwww, (mad(cb2_values[1].xyzx, i.texcoord4.wwww, ((i.texcoord5.wwww * cb2_values[2].xyzx)).xyzx)).xyzx)).xyzx + cb2_values[4].xyzx)).xyz;
+                    float TEXCOORD4_y_2 = i.texcoord4.w;
+                    float TEXCOORD5_z_2 = i.texcoord5.w;
+                    float TEXCOORD6_w_1 = i.texcoord6.w;
+                    float4 r6_xyzw_8 = (((((r0_w_7.xxxx ? r6_xyz_5.xyzx : float4(TEXCOORD4_y_2, TEXCOORD5_z_2, TEXCOORD6_w_1, TEXCOORD4_y_2))).xyzx + -cb2_values[6].xyzx)).xxyz * cb2_values[5].xxyz);
+                    float r6_y_8 = r6_xyzw_8.y;
+                    float r6_z_8 = r6_xyzw_8.z;
+                    float r6_w_1 = r6_xyzw_8.w;
+                    float r0_w_8 = (r6_y_8 * 0.25);
+                    float r2_w_9 = (cb2_values[0].z * 0.5);
+                    float r5_w_1 = mad(-cb2_values[0].z, 0.5, 0.25);
+                    float r0_w_9 = max(r0_w_8, r2_w_9);
+                    float r6_x_8 = min(r5_w_1, r0_w_9);
+                    float4 r7_xyzw_2 = t8.Sample(sampler_MainTex, (float4(r6_x_8, r6_z_8, r6_w_1, r6_x_8)).xyz);
+                    float4 r8_xyzw_2 = t8.Sample(sampler_MainTex, (((float4(r6_x_8, r6_z_8, r6_w_1, r6_x_8) + float4(0.25, 0, 0, 0))).xyzx).xyz);
+                    float4 r6_xyzw_10 = t8.Sample(sampler_MainTex, (((float4(r6_x_8, r6_z_8, r6_w_1, r6_x_8) + float4(0.5, 0, 0, 0))).xyzx).xyz);
+                    float r4_w_2 = 1;
+                    float r7_x_3 = dot(r7_xyzw_2, float4(r4_x_6, r4_y_5, r4_z_5, r4_w_2));
+                    float r7_y_4 = dot(r8_xyzw_2, float4(r4_x_6, r4_y_5, r4_z_5, r4_w_2));
+                    float r7_z_4 = dot(r6_xyzw_10, float4(r4_x_6, r4_y_5, r4_z_5, r4_w_2));
+                    r7_x_4 = r7_x_3;
+                    r7_y_5 = r7_y_4;
+                    r7_z_5 = r7_z_4;
+                }
+                else
+                {
+                    float r4_w_1 = 1;
+                    float r7_x_1 = dot(cb1_values[39].xyzw, float4(r4_x_6, r4_y_5, r4_z_5, r4_w_1));
+                    float r7_y_1 = dot(cb1_values[40].xyzw, float4(r4_x_6, r4_y_5, r4_z_5, r4_w_1));
+                    float r7_z_1 = dot(cb1_values[41].xyzw, float4(r4_x_6, r4_y_5, r4_z_5, r4_w_1));
+                    r7_x_4 = r7_x_1;
+                    r7_y_5 = r7_y_1;
+                    r7_z_5 = r7_z_1;
+                }
+                o.sv_Target1.xyz = (mad(r1_x_4.xxxx, (mad(r0_xyz_2.xyzx, r1_yzw_3.xyzx, float4(-0.04, -0.04, -0.04, 0))).xyzx, float4(0.04, 0.04, 0.04, 0))).xyz;
+                float4 r3_xyzw_2 = ((mad(-r1_x_4, 0.96, 0.96)).xxxx * ((r0_xyz_2.xyzx * r1_yzw_3.xyzx)).xyzx);
+                float r3_x_2 = r3_xyzw_2.x;
+                float r3_y_2 = r3_xyzw_2.y;
+                float r3_z_3 = r3_xyzw_2.z;
+                float4 r0_xyzw_5 = (((r3_w_3.xxxx * (max(((float4(r7_x_4, r7_y_5, r7_z_5, r7_x_4) + i.texcoord9.xyzx)).xyzx, float4(0, 0, 0, 0))).xyzx)).xyzx * float4(r3_x_2, r3_y_2, r3_z_3, r3_x_2));
+                float r0_x_5 = r0_xyzw_5.x;
+                float r0_y_4 = r0_xyzw_5.y;
+                float r0_z_4 = r0_xyzw_5.z;
+                o.sv_Target2.xyz = (mad(float4(r4_x_6, r4_y_5, r4_z_5, r4_x_6), float4(0.5, 0.5, 0.5, 0), float4(0.5, 0.5, 0.5, 0))).xyz;
+                o.sv_Target3.xyz = (mad(float4(r5_x_4, r5_y_3, r5_z_3, r5_x_4), _EmissionColor.xyzx, float4(r0_x_5, r0_y_4, r0_z_4, r0_x_5))).xyz;
+                o.sv_Target0.xyzw = float4(r3_x_2, r3_y_2, r3_z_3, r3_w_3);
+                o.sv_Target2.w = 1;
+                o.sv_Target3.w = 1;
+                return o;
+            }
+            #elif defined(LIGHTPROBE_SH)
+            struct program66Input
+            {
+                float4 position0 : POSITION0;
+                float4 tangent0 : TANGENT0;
+                float3 normal0 : NORMAL0;
+                float4 texcoord0 : TEXCOORD0;
+                float4 texcoord1 : TEXCOORD1;
+                float4 texcoord2 : TEXCOORD2;
+                float4 texcoord3 : TEXCOORD3;
+                float4 color0 : COLOR0;
+            };
+            struct program66Output
+            {
+                float4 sv_Position0 : SV_POSITION;
+                float4 texcoord0 : TEXCOORD0;
+                float4 texcoord1 : TEXCOORD1;
+                float4 texcoord2 : TEXCOORD2;
+                float4 texcoord3 : TEXCOORD3;
+                float4 texcoord4 : TEXCOORD4;
+                float4 texcoord5 : TEXCOORD5;
+                float4 texcoord6 : TEXCOORD6;
+                float4 color0 : COLOR0;
+                float4 texcoord8 : TEXCOORD8;
+                float3 texcoord9 : TEXCOORD9;
+            };
+            struct program72Input
+            {
+                float4 sv_Position0 : SV_POSITION;
+                float4 texcoord0 : TEXCOORD0;
+                float4 texcoord1 : TEXCOORD1;
+                float4 texcoord2 : TEXCOORD2;
+                float4 texcoord3 : TEXCOORD3;
+                float4 texcoord4 : TEXCOORD4;
+                float4 texcoord5 : TEXCOORD5;
+                float4 texcoord6 : TEXCOORD6;
+                float4 color0 : COLOR0;
+                float4 texcoord8 : TEXCOORD8;
+                float3 texcoord9 : TEXCOORD9;
+            };
+            struct program72Output
+            {
+                float4 sv_Target0 : SV_Target;
+                float4 sv_Target1 : SV_Target1;
+                float4 sv_Target2 : SV_Target2;
+                float4 sv_Target3 : SV_Target3;
+            };
+            #pragma vertex vert
+            program66Output vert(program66Input i)
+            {
+                program66Output o = (program66Output)0;
+                float4 worldPos_xyzw_2 = mad(cb2_values[0].xyzw, i.position0.xxxx, (i.position0.yyyy * cb2_values[1].xyzw));
+                float4 worldPos_xyzw_3 = mad(cb2_values[2].xyzw, i.position0.zzzz, worldPos_xyzw_2);
+                float4 worldPos_xyzw_1 = (worldPos_xyzw_3 + cb2_values[3].xyzw);
+                float3 r0_xyz_4 = (mad(cb2_values[3].xyzx, i.position0.wwww, worldPos_xyzw_3.xyzx)).xyz;
+                o.sv_Position0.xyzw = mul(float4x4(cb3_values[17], cb3_values[18], cb3_values[19], cb3_values[20]), worldPos_xyzw_1);
+                o.texcoord0.xy = (mad(i.texcoord0.xyxx, _MainTex_ST.xyxx, _MainTex_ST.zwzz)).xy;
+                o.texcoord0.zw = (mad(i.texcoord0.xxxy, _BumpMap_ST.xxxy, _BumpMap_ST.zzzw)).zw;
+                o.texcoord1.xy = (mad(i.texcoord0.xyxx, _MetallicGlossMap_ST.xyxx, _MetallicGlossMap_ST.zwzz)).xy;
+                o.texcoord1.zw = (mad(i.texcoord0.xxxy, _OcclusionMap_ST.xxxy, _OcclusionMap_ST.zzzw)).zw;
+                o.texcoord2.xy = (mad(i.texcoord0.xyxx, _EmissionMap_ST.xyxx, _EmissionMap_ST.zwzz)).xy;
+                o.texcoord2.zw = (mad(i.texcoord0.xxxy, _DetailMask_ST.xxxy, _DetailMask_ST.zzzw)).zw;
+                o.texcoord3.xy = (mad(i.texcoord0.xyxx, _DetailAlbedo_ST.xyxx, _DetailAlbedo_ST.zwzz)).xy;
+                o.texcoord3.zw = (mad(i.texcoord0.xxxy, _DetailNormal_ST.xxxy, _DetailNormal_ST.zzzw)).zw;
+                o.texcoord4.w = r0_xyz_4.x;
+                float3 worldTangent_xyz_2 = ((i.tangent0.yyyy * cb2_values[1].yzxy)).xyz;
+                float3 worldTangent_xyz_3 = (mad(cb2_values[0].yzxy, i.tangent0.xxxx, worldTangent_xyz_2.xyzx)).xyz;
+                float3 worldTangent_xyz_4 = (mad(cb2_values[2].yzxy, i.tangent0.zzzz, worldTangent_xyz_3.xyzx)).xyz;
+                float3 unitWorldTangent_xyz_5 = (((rsqrt(dot(worldTangent_xyz_4.xyzx, worldTangent_xyz_4.xyzx))).xxxx * worldTangent_xyz_4.xyzx)).xyz;
+                o.texcoord4.x = unitWorldTangent_xyz_5.z;
+                float worldNormal_x_4 = dot(i.normal0.xyzx, cb2_values[4].xyzx);
+                float worldNormal_y_4 = dot(i.normal0.xyzx, cb2_values[5].xyzx);
+                float worldNormal_z_4 = dot(i.normal0.xyzx, cb2_values[6].xyzx);
+                float4 unitWorldNormal_xyzw_5 = ((rsqrt(dot(float4(worldNormal_x_4, worldNormal_y_4, worldNormal_z_4, worldNormal_x_4), float4(worldNormal_x_4, worldNormal_y_4, worldNormal_z_4, worldNormal_x_4)))).xxxx * float4(worldNormal_x_4, worldNormal_y_4, worldNormal_z_4, worldNormal_z_4));
+                float3 r3_xyz_3 = ((((i.tangent0.w * cb2_values[9].w)).xxxx * (mad(unitWorldNormal_xyzw_5.ywxy, unitWorldTangent_xyz_5.yzxy, ((unitWorldTangent_xyz_5.xyzx * unitWorldNormal_xyzw_5.wxyw)).xyzx)).xyzx)).xyz;
+                o.texcoord4.y = r3_xyz_3.x;
+                o.texcoord4.z = unitWorldNormal_xyzw_5.x;
+                o.texcoord5.x = unitWorldTangent_xyz_5.x;
+                o.texcoord6.x = unitWorldTangent_xyz_5.y;
+                o.texcoord5.w = r0_xyz_4.y;
+                o.texcoord6.w = r0_xyz_4.z;
+                o.texcoord5.y = r3_xyz_3.y;
+                o.texcoord6.y = r3_xyz_3.z;
+                o.texcoord5.z = unitWorldNormal_xyzw_5.y;
+                o.texcoord6.z = unitWorldNormal_xyzw_5.w;
+                o.color0.xyzw = i.color0.xyzw;
+                o.texcoord8.xyzw = float4(0, 0, 0, 0);
+                float4 r1_xyzw_6 = (unitWorldNormal_xyzw_5.ywzx * unitWorldNormal_xyzw_5);
+                float r2_x_6 = dot(cb1_values[42].xyzw, r1_xyzw_6);
+                float r2_y_6 = dot(cb1_values[43].xyzw, r1_xyzw_6);
+                float r2_z_6 = dot(cb1_values[44].xyzw, r1_xyzw_6);
+                o.texcoord9.xyz = (mad(cb1_values[45].xyzx, (mad(unitWorldNormal_xyzw_5.x, unitWorldNormal_xyzw_5.x, (unitWorldNormal_xyzw_5.y * unitWorldNormal_xyzw_5.y))).xxxx, float4(r2_x_6, r2_y_6, r2_z_6, r2_x_6))).xyz;
+                return o;
+            }
+            #pragma fragment frag
+            program72Output frag(program72Input i)
+            {
+                program72Output o = (program72Output)0;
+                float4 r0_xyzw_1 = _MainTex.Sample(sampler_EmissionMap, (i.texcoord0.xyxx).xy);
+                float3 r0_xyz_2 = ((r0_xyzw_1.xyzx * _Color.xyzx)).xyz;
+                float r1_x_1 = (_BumpMap.Sample(sampler_MetallicGlossMap, (i.texcoord2.zwzz).xy)).x;
+                float3 r1_yzw_1 = (_MetallicGlossMap.Sample(sampler_DetailMask, (i.texcoord3.xyxx).xy)).yzw;
+                float3 r1_yzw_2 = (mad(r1_yzw_1.xxyz, float4(0, 2, 2, 2), float4(0, -2, -2, -2))).yzw;
+                float3 r1_yzw_3 = (mad(r1_x_1.xxxx, r1_yzw_2.xxyz, float4(0, 1, 1, 1))).yzw;
+                float2 r3_xy_1 = (_OcclusionMap.Sample(sampler_DetailAlbedo, (i.texcoord1.xyxx).xy)).xy;
+                float3 r4_xyz_1 = (_EmissionMap.Sample(sampler_OcclusionMap, (i.texcoord0.zwzz).xy)).xyz;
+                float r4_x_2 = (r4_xyz_1.z * r4_xyz_1.x);
+                float2 r3_zw_1 = (mad(float4(r4_x_2, r4_x_2, r4_x_2, r4_xyz_1.y), float4(0, 0, 2, 2), float4(0, 0, -1, -1))).zw;
+                float4 r4_xyzw_3 = (r3_zw_1.xyxx * _BumpScale.xxxx);
+                float r4_x_3 = r4_xyzw_3.x;
+                float r4_y_2 = r4_xyzw_3.y;
+                float r2_w_1 = dot(float4(r4_x_3, r4_y_2, r4_x_3, r4_x_3), float4(r4_x_3, r4_y_2, r4_x_3, r4_x_3));
+                float r2_w_2 = min(r2_w_1, 1);
+                float r2_w_3 = (-r2_w_2 + 1);
+                float r4_z_2 = sqrt(r2_w_3);
+                float3 r5_xyz_1 = (_DetailMask.Sample(sampler_DetailMask8, (i.texcoord3.zwzz).xy)).xyz;
+                float r5_x_2 = (r5_xyz_1.z * r5_xyz_1.x);
+                float2 r3_zw_2 = (mad(float4(r5_x_2, r5_x_2, r5_x_2, r5_xyz_1.y), float4(0, 0, 2, 2), float4(0, 0, -1, -1))).zw;
+                float4 r5_xyzw_3 = (r3_zw_2.xyxx * _BumpScale.xxxx);
+                float r5_x_3 = r5_xyzw_3.x;
+                float r5_y_2 = r5_xyzw_3.y;
+                float r2_w_4 = dot(float4(r5_x_3, r5_y_2, r5_x_3, r5_x_3), float4(r5_x_3, r5_y_2, r5_x_3, r5_x_3));
+                float r2_w_5 = min(r2_w_4, 1);
+                float r2_w_6 = (-r2_w_5 + 1);
+                float r5_z_2 = sqrt(r2_w_6);
+                float4 r4_xyzw_4 = mad(float4(r5_x_3, r5_y_2, r5_z_2, r5_x_3), r1_x_1.xxxx, float4(r4_x_3, r4_y_2, r4_z_2, r4_x_3));
+                float r4_x_4 = r4_xyzw_4.x;
+                float r4_y_3 = r4_xyzw_4.y;
+                float r4_z_3 = r4_xyzw_4.z;
+                float4 r4_xyzw_5 = ((rsqrt(dot(float4(r4_x_4, r4_y_3, r4_z_3, r4_x_4), float4(r4_x_4, r4_y_3, r4_z_3, r4_x_4)))).xxxx * float4(r4_x_4, r4_y_3, r4_z_3, r4_x_4));
+                float r4_x_5 = r4_xyzw_5.x;
+                float r4_y_4 = r4_xyzw_5.y;
+                float r4_z_4 = r4_xyzw_5.z;
+                float r1_x_4 = (r3_xy_1.x * _Metallic);
+                o.sv_Target1.w = (r3_xy_1.y * _Glossiness);
+                float r2_w_7 = (_DetailAlbedo.Sample(sampler_DetailNormal, (i.texcoord1.zwzz).xy)).w;
+                float r2_w_8 = (r2_w_7 + -1);
+                float r3_w_3 = mad(_OcclusionStrength, r2_w_8, 1);
+                float4 r5_xyzw_4 = _DetailNormal.Sample(sampler_BumpMap, (i.texcoord2.xyxx).xy);
+                float r5_x_4 = r5_xyzw_4.x;
+                float r5_y_3 = r5_xyzw_4.y;
+                float r5_z_3 = r5_xyzw_4.z;
+                float r0_w_2 = mad(r0_xyzw_1.w, _Color.w, -_Cutoff);
+                float r0_w_3 = (r0_w_2 < 0);
+                if (r0_w_3) discard;
+                float r6_x_1 = dot(i.texcoord4.xyzx, float4(r4_x_5, r4_y_4, r4_z_4, r4_x_5));
+                float r6_y_1 = dot(i.texcoord5.xyzx, float4(r4_x_5, r4_y_4, r4_z_4, r4_x_5));
+                float r6_z_1 = dot(i.texcoord6.xyzx, float4(r4_x_5, r4_y_4, r4_z_4, r4_x_5));
+                float r0_w_4 = dot(float4(r6_x_1, r6_y_1, r6_z_1, r6_x_1), float4(r6_x_1, r6_y_1, r6_z_1, r6_x_1));
+                float r0_w_5 = rsqrt(r0_w_4);
+                float4 r4_xyzw_6 = (r0_w_5.xxxx * float4(r6_x_1, r6_y_1, r6_z_1, r6_x_1));
+                float r4_x_6 = r4_xyzw_6.x;
+                float r4_y_5 = r4_xyzw_6.y;
+                float r4_z_5 = r4_xyzw_6.z;
+                float r0_w_6 = (cb2_values[0].x == 1);
+                float r7_x_4;
+                float r7_y_5;
+                float r7_z_5;
+                if (r0_w_6)
+                {
+                    float r0_w_7 = (cb2_values[0].y == 1);
+                    float3 r6_xyz_5 = (((mad(cb2_values[3].xyzx, i.texcoord6.wwww, (mad(cb2_values[1].xyzx, i.texcoord4.wwww, ((i.texcoord5.wwww * cb2_values[2].xyzx)).xyzx)).xyzx)).xyzx + cb2_values[4].xyzx)).xyz;
+                    float TEXCOORD4_y_2 = i.texcoord4.w;
+                    float TEXCOORD5_z_2 = i.texcoord5.w;
+                    float TEXCOORD6_w_1 = i.texcoord6.w;
+                    float4 r6_xyzw_8 = (((((r0_w_7.xxxx ? r6_xyz_5.xyzx : float4(TEXCOORD4_y_2, TEXCOORD5_z_2, TEXCOORD6_w_1, TEXCOORD4_y_2))).xyzx + -cb2_values[6].xyzx)).xxyz * cb2_values[5].xxyz);
+                    float r6_y_8 = r6_xyzw_8.y;
+                    float r6_z_8 = r6_xyzw_8.z;
+                    float r6_w_1 = r6_xyzw_8.w;
+                    float r0_w_8 = (r6_y_8 * 0.25);
+                    float r2_w_9 = (cb2_values[0].z * 0.5);
+                    float r5_w_1 = mad(-cb2_values[0].z, 0.5, 0.25);
+                    float r0_w_9 = max(r0_w_8, r2_w_9);
+                    float r6_x_8 = min(r5_w_1, r0_w_9);
+                    float4 r7_xyzw_2 = t8.Sample(sampler_MainTex, (float4(r6_x_8, r6_z_8, r6_w_1, r6_x_8)).xyz);
+                    float4 r8_xyzw_2 = t8.Sample(sampler_MainTex, (((float4(r6_x_8, r6_z_8, r6_w_1, r6_x_8) + float4(0.25, 0, 0, 0))).xyzx).xyz);
+                    float4 r6_xyzw_10 = t8.Sample(sampler_MainTex, (((float4(r6_x_8, r6_z_8, r6_w_1, r6_x_8) + float4(0.5, 0, 0, 0))).xyzx).xyz);
+                    float r4_w_2 = 1;
+                    float r7_x_3 = dot(r7_xyzw_2, float4(r4_x_6, r4_y_5, r4_z_5, r4_w_2));
+                    float r7_y_4 = dot(r8_xyzw_2, float4(r4_x_6, r4_y_5, r4_z_5, r4_w_2));
+                    float r7_z_4 = dot(r6_xyzw_10, float4(r4_x_6, r4_y_5, r4_z_5, r4_w_2));
+                    r7_x_4 = r7_x_3;
+                    r7_y_5 = r7_y_4;
+                    r7_z_5 = r7_z_4;
+                }
+                else
+                {
+                    float r4_w_1 = 1;
+                    float r7_x_1 = dot(cb1_values[39].xyzw, float4(r4_x_6, r4_y_5, r4_z_5, r4_w_1));
+                    float r7_y_1 = dot(cb1_values[40].xyzw, float4(r4_x_6, r4_y_5, r4_z_5, r4_w_1));
+                    float r7_z_1 = dot(cb1_values[41].xyzw, float4(r4_x_6, r4_y_5, r4_z_5, r4_w_1));
+                    r7_x_4 = r7_x_1;
+                    r7_y_5 = r7_y_1;
+                    r7_z_5 = r7_z_1;
+                }
+                o.sv_Target1.xyz = (mad(r1_x_4.xxxx, (mad(r0_xyz_2.xyzx, r1_yzw_3.xyzx, float4(-0.04, -0.04, -0.04, 0))).xyzx, float4(0.04, 0.04, 0.04, 0))).xyz;
+                float4 r3_xyzw_2 = ((mad(-r1_x_4, 0.96, 0.96)).xxxx * ((r0_xyz_2.xyzx * r1_yzw_3.xyzx)).xyzx);
+                float r3_x_2 = r3_xyzw_2.x;
+                float r3_y_2 = r3_xyzw_2.y;
+                float r3_z_3 = r3_xyzw_2.z;
+                float4 r0_xyzw_5 = (((r3_w_3.xxxx * (max(((float4(r7_x_4, r7_y_5, r7_z_5, r7_x_4) + i.texcoord9.xyzx)).xyzx, float4(0, 0, 0, 0))).xyzx)).xyzx * float4(r3_x_2, r3_y_2, r3_z_3, r3_x_2));
+                float r0_x_5 = r0_xyzw_5.x;
+                float r0_y_4 = r0_xyzw_5.y;
+                float r0_z_4 = r0_xyzw_5.z;
+                o.sv_Target2.xyz = (mad(float4(r4_x_6, r4_y_5, r4_z_5, r4_x_6), float4(0.5, 0.5, 0.5, 0), float4(0.5, 0.5, 0.5, 0))).xyz;
+                float4 r0_xyzw_6 = mad(float4(r5_x_4, r5_y_3, r5_z_3, r5_x_4), _EmissionColor.xyzx, float4(r0_x_5, r0_y_4, r0_z_4, r0_x_5));
+                float r0_x_6 = r0_xyzw_6.x;
+                float r0_y_5 = r0_xyzw_6.y;
+                float r0_z_5 = r0_xyzw_6.z;
+                o.sv_Target3.xyz = (exp2(-float4(r0_x_6, r0_y_5, r0_z_5, r0_x_6))).xyz;
+                o.sv_Target0.xyzw = float4(r3_x_2, r3_y_2, r3_z_3, r3_w_3);
+                o.sv_Target2.w = 1;
+                o.sv_Target3.w = 1;
+                return o;
+            }
+            #elif defined(UNITY_HDR_ON)
+            struct program67Input
+            {
+                float4 position0 : POSITION0;
+                float4 tangent0 : TANGENT0;
+                float3 normal0 : NORMAL0;
+                float4 texcoord0 : TEXCOORD0;
+                float4 texcoord1 : TEXCOORD1;
+                float4 texcoord2 : TEXCOORD2;
+                float4 texcoord3 : TEXCOORD3;
+                float4 color0 : COLOR0;
+            };
+            struct program67Output
+            {
+                float4 sv_Position0 : SV_POSITION;
+                float4 texcoord0 : TEXCOORD0;
+                float4 texcoord1 : TEXCOORD1;
+                float4 texcoord2 : TEXCOORD2;
+                float4 texcoord3 : TEXCOORD3;
+                float4 texcoord4 : TEXCOORD4;
+                float4 texcoord5 : TEXCOORD5;
+                float4 texcoord6 : TEXCOORD6;
+                float4 color0 : COLOR0;
+                float4 texcoord8 : TEXCOORD8;
+            };
+            struct program73Input
+            {
+                float4 sv_Position0 : SV_POSITION;
+                float4 texcoord0 : TEXCOORD0;
+                float4 texcoord1 : TEXCOORD1;
+                float4 texcoord2 : TEXCOORD2;
+                float4 texcoord3 : TEXCOORD3;
+                float4 texcoord4 : TEXCOORD4;
+                float4 texcoord5 : TEXCOORD5;
+                float4 texcoord6 : TEXCOORD6;
+                float4 color0 : COLOR0;
+                float4 texcoord8 : TEXCOORD8;
+            };
+            struct program73Output
+            {
+                float4 sv_Target0 : SV_Target;
+                float4 sv_Target1 : SV_Target1;
+                float4 sv_Target2 : SV_Target2;
+                float4 sv_Target3 : SV_Target3;
+            };
+            #pragma vertex vert
+            program67Output vert(program67Input i)
+            {
+                program67Output o = (program67Output)0;
+                #define UnityObjectToClipPos(v) mul(unity_MatrixVP, v)
+                #define UnityObjectToWorldPos(v) mul(unity_ObjectToWorld, float4(v, 1.0))
+                float4 worldPos_xyzw_1 = UnityObjectToWorldPos(i.position0.xyz);
+                float3 worldPos_xyz_4 = worldPos_xyzw_1.xyz;
+                o.sv_Position0.xyzw = UnityObjectToClipPos(worldPos_xyzw_1);
+                o.texcoord0.xy = (mad(i.texcoord0.xyxx, _MainTex_ST.xyxx, _MainTex_ST.zwzz)).xy;
+                o.texcoord0.zw = (mad(i.texcoord0.xxxy, _BumpMap_ST.xxxy, _BumpMap_ST.zzzw)).zw;
+                o.texcoord1.xy = (mad(i.texcoord0.xyxx, _MetallicGlossMap_ST.xyxx, _MetallicGlossMap_ST.zwzz)).xy;
+                o.texcoord1.zw = (mad(i.texcoord0.xxxy, _OcclusionMap_ST.xxxy, _OcclusionMap_ST.zzzw)).zw;
+                o.texcoord2.xy = (mad(i.texcoord0.xyxx, _EmissionMap_ST.xyxx, _EmissionMap_ST.zwzz)).xy;
+                o.texcoord2.zw = (mad(i.texcoord0.xxxy, _DetailMask_ST.xxxy, _DetailMask_ST.zzzw)).zw;
+                o.texcoord3.xy = (mad(i.texcoord0.xyxx, _DetailAlbedo_ST.xyxx, _DetailAlbedo_ST.zwzz)).xy;
+                o.texcoord3.zw = (mad(i.texcoord0.xxxy, _DetailNormal_ST.xxxy, _DetailNormal_ST.zzzw)).zw;
+                o.texcoord4.w = worldPos_xyz_4.x;
+                float worldNormal_y_2 = dot(i.normal0.xyzx, unity_WorldToObject[0].xyzx);
+                float worldNormal_z_2 = dot(i.normal0.xyzx, unity_WorldToObject[1].xyzx);
+                float worldNormal_x_2 = dot(i.normal0.xyzx, unity_WorldToObject[2].xyzx);
+                float3 unitWorldNormal_xyz_3 = (((rsqrt(dot(float4(worldNormal_x_2, worldNormal_y_2, worldNormal_z_2, worldNormal_x_2), float4(worldNormal_x_2, worldNormal_y_2, worldNormal_z_2, worldNormal_x_2)))).xxxx * float4(worldNormal_x_2, worldNormal_y_2, worldNormal_z_2, worldNormal_x_2))).xyz;
+                float3 worldTangent_xyz_4 = ((i.tangent0.yyyy * unity_ObjectToWorld[1].yzxy)).xyz;
+                float3 worldTangent_xyz_5 = (mad(unity_ObjectToWorld[0].yzxy, i.tangent0.xxxx, worldTangent_xyz_4.xyzx)).xyz;
+                float3 worldTangent_xyz_6 = (mad(unity_ObjectToWorld[2].yzxy, i.tangent0.zzzz, worldTangent_xyz_5.xyzx)).xyz;
+                float3 unitWorldTangent_xyz_7 = (((rsqrt(dot(worldTangent_xyz_6.xyzx, worldTangent_xyz_6.xyzx))).xxxx * worldTangent_xyz_6.xyzx)).xyz;
+                float3 r3_xyz_3 = ((((i.tangent0.w * unity_WorldTransformParams.w)).xxxx * (mad(unitWorldNormal_xyz_3.zxyz, unitWorldTangent_xyz_7.yzxy, ((unitWorldNormal_xyz_3.xyzx * unitWorldTangent_xyz_7.xyzx)).xyzx)).xyzx)).xyz;
+                o.texcoord4.y = r3_xyz_3.x;
+                o.texcoord4.x = unitWorldTangent_xyz_7.z;
+                o.texcoord4.z = unitWorldNormal_xyz_3.y;
+                o.texcoord5.x = unitWorldTangent_xyz_7.x;
+                o.texcoord6.x = unitWorldTangent_xyz_7.y;
+                o.texcoord5.z = unitWorldNormal_xyz_3.z;
+                o.texcoord6.z = unitWorldNormal_xyz_3.x;
+                o.texcoord5.w = worldPos_xyz_4.y;
+                o.texcoord6.w = worldPos_xyz_4.z;
+                o.texcoord5.y = r3_xyz_3.y;
+                o.texcoord6.y = r3_xyz_3.z;
+                o.color0.xyzw = i.color0.xyzw;
+                o.texcoord8.xyzw = float4(0, 0, 0, 0);
+                return o;
+            }
+            #pragma fragment frag
+            program73Output frag(program73Input i)
+            {
+                program73Output o = (program73Output)0;
+                float4 r0_xyzw_1 = _MainTex.Sample(sampler_MainTex, (i.texcoord0.xyxx).xy);
+                float r0_w_2 = mad(r0_xyzw_1.w, _Color.w, -_Cutoff);
+                float3 r0_xyz_2 = ((r0_xyzw_1.xyzx * _Color.xyzx)).xyz;
+                float r0_w_3 = (r0_w_2 < 0);
+                if (r0_w_3) discard;
+                float r0_w_4 = (_DetailAlbedo.Sample(sampler_DetailAlbedo, (i.texcoord1.zwzz).xy)).w;
+                float r0_w_5 = (r0_w_4 + -1);
+                o.sv_Target0.w = mad(_OcclusionStrength, r0_w_5, 1);
+                float3 r1_xyz_1 = (_MetallicGlossMap.Sample(sampler_MetallicGlossMap, (i.texcoord3.xyxx).xy)).xyz;
+                float r0_w_6 = (_BumpMap.Sample(sampler_BumpMap, (i.texcoord2.zwzz).xy)).w;
+                float3 r1_xyz_3 = (mad(r0_w_6.xxxx, (mad(r1_xyz_1.xyzx, float4(2, 2, 2, 0), float4(-2, -2, -2, 0))).xyzx, float4(1, 1, 1, 0))).xyz;
+                float2 r1_xy_4 = (_OcclusionMap.Sample(sampler_OcclusionMap, (i.texcoord1.xyxx).xy)).xy;
+                float r1_x_5 = (r1_xy_4.x * _Metallic);
+                o.sv_Target1.w = (r1_xy_4.y * _Glossiness);
+                float r1_y_5 = mad(-r1_x_5, 0.96, 0.96);
+                o.sv_Target1.xyz = (mad(r1_x_5.xxxx, (mad(r0_xyz_2.xyzx, r1_xyz_3.xyzx, float4(-0.04, -0.04, -0.04, 0))).xyzx, float4(0.04, 0.04, 0.04, 0))).xyz;
+                o.sv_Target0.xyz = ((r1_y_5.xxxx * ((r0_xyz_2.xyzx * r1_xyz_3.xyzx)).xyzx)).xyz;
+                float3 r0_xyz_4 = (_EmissionMap.Sample(sampler_EmissionMap, (i.texcoord0.zwzz).xy)).xyz;
+                float r0_x_5 = (r0_xyz_4.z * r0_xyz_4.x);
+                float4 r0_xyzw_6 = mad(float4(r0_x_5, r0_xyz_4.y, r0_x_5, r0_x_5), float4(2, 2, 0, 0), float4(-1, -1, 0, 0));
+                float r0_x_6 = r0_xyzw_6.x;
+                float r0_y_5 = r0_xyzw_6.y;
+                float4 r0_xyzw_7 = (float4(r0_x_6, r0_y_5, r0_x_6, r0_x_6) * _BumpScale.xxxx);
+                float r0_x_7 = r0_xyzw_7.x;
+                float r0_y_6 = r0_xyzw_7.y;
+                float r0_z_5 = sqrt((min(dot(float4(r0_x_7, r0_y_6, r0_x_7, r0_x_7), float4(r0_x_7, r0_y_6, r0_x_7, r0_x_7)), 1) + 1));
+                float4 r1_xyzw_9 = _DetailMask.Sample(sampler_DetailMask, (i.texcoord3.zwzz).xy);
+                float r1_x_9 = r1_xyzw_9.x;
+                float r1_y_6 = r1_xyzw_9.y;
+                float r1_z_4 = r1_xyzw_9.z;
+                float r1_x_10 = (r1_z_4 * r1_x_9);
+                float4 r1_xyzw_11 = mad(float4(r1_x_10, r1_y_6, r1_x_10, r1_x_10), float4(2, 2, 0, 0), float4(-1, -1, 0, 0));
+                float r1_x_11 = r1_xyzw_11.x;
+                float r1_y_7 = r1_xyzw_11.y;
+                float4 r1_xyzw_12 = (float4(r1_x_11, r1_y_7, r1_x_11, r1_x_11) * _BumpScale.xxxx);
+                float r1_x_12 = r1_xyzw_12.x;
+                float r1_y_8 = r1_xyzw_12.y;
+                float r1_w_1 = dot(float4(r1_x_12, r1_y_8, r1_x_12, r1_x_12), float4(r1_x_12, r1_y_8, r1_x_12, r1_x_12));
+                float r1_w_2 = min(r1_w_1, 1);
+                float r1_w_3 = (-r1_w_2 + 1);
+                float r1_z_5 = sqrt(r1_w_3);
+                float4 r0_xyzw_8 = mad(float4(r1_x_12, r1_y_8, r1_z_5, r1_x_12), r0_w_6.xxxx, float4(r0_x_7, r0_y_6, r0_z_5, r0_x_7));
+                float r0_x_8 = r0_xyzw_8.x;
+                float r0_y_7 = r0_xyzw_8.y;
+                float r0_z_6 = r0_xyzw_8.z;
+                float r0_w_7 = dot(float4(r0_x_8, r0_y_7, r0_z_6, r0_x_8), float4(r0_x_8, r0_y_7, r0_z_6, r0_x_8));
+                float r0_w_8 = rsqrt(r0_w_7);
+                float4 r0_xyzw_9 = (r0_w_8.xxxx * float4(r0_x_8, r0_y_7, r0_z_6, r0_x_8));
+                float r0_x_9 = r0_xyzw_9.x;
+                float r0_y_8 = r0_xyzw_9.y;
+                float r0_z_7 = r0_xyzw_9.z;
+                float r1_x_13 = dot(i.texcoord4.xyzx, float4(r0_x_9, r0_y_8, r0_z_7, r0_x_9));
+                float r1_y_9 = dot(i.texcoord5.xyzx, float4(r0_x_9, r0_y_8, r0_z_7, r0_x_9));
+                float r1_z_6 = dot(i.texcoord6.xyzx, float4(r0_x_9, r0_y_8, r0_z_7, r0_x_9));
+                float4 r0_xyzw_12 = ((rsqrt(dot(float4(r1_x_13, r1_y_9, r1_z_6, r1_x_13), float4(r1_x_13, r1_y_9, r1_z_6, r1_x_13)))).xxxx * float4(r1_x_13, r1_y_9, r1_z_6, r1_x_13));
+                float r0_x_12 = r0_xyzw_12.x;
+                float r0_y_9 = r0_xyzw_12.y;
+                float r0_z_8 = r0_xyzw_12.z;
+                o.sv_Target2.xyz = (mad(float4(r0_x_12, r0_y_9, r0_z_8, r0_x_12), float4(0.5, 0.5, 0.5, 0), float4(0.5, 0.5, 0.5, 0))).xyz;
+                o.sv_Target2.w = 1;
+                float4 r0_xyzw_13 = _DetailNormal.Sample(sampler_DetailNormal, (i.texcoord2.xyxx).xy);
+                float r0_x_13 = r0_xyzw_13.x;
+                float r0_y_10 = r0_xyzw_13.y;
+                float r0_z_9 = r0_xyzw_13.z;
+                o.sv_Target3.xyz = ((float4(r0_x_13, r0_y_10, r0_z_9, r0_x_13) * _EmissionColor.xyzx)).xyz;
+                o.sv_Target3.w = 1;
+                return o;
+            }
+            #else
             struct program65Input
             {
                 float4 position0 : POSITION0;
@@ -1072,6 +1637,7 @@ Shader "Corpus/05 Surface Standard"
                 o.sv_Target3.w = 1;
                 return o;
             }
+            #endif
             ENDHLSL
         }
         Pass
@@ -1080,10 +1646,9 @@ Shader "Corpus/05 Surface Standard"
             Cull Back
             ZTest LEqual
             ZWrite On
-            // Folded keyword variants (base state emitted): SHADOWS_CUBE
             HLSLPROGRAM
             #pragma target 4.5
-            #pragma multi_compile _ SHADOWS_CUBE
+            #pragma multi_compile _ SHADOWS_DEPTH
             cbuffer _GlobalsCB_b0
             {
                 float _Cutoff : packoffset(c5.x);
@@ -1109,6 +1674,7 @@ Shader "Corpus/05 Surface Standard"
             };
             SamplerState sampler_MainTex;
             Texture2D _MainTex;
+            #if defined(SHADOWS_DEPTH)
             struct program76Input
             {
                 float4 position0 : POSITION0;
@@ -1191,6 +1757,80 @@ Shader "Corpus/05 Surface Standard"
                 o.sv_Target0.xyzw = float4(0, 0, 0, 0);
                 return o;
             }
+            #else
+            struct program77Input
+            {
+                float4 position0 : POSITION0;
+                float4 tangent0 : TANGENT0;
+                float3 normal0 : NORMAL0;
+                float4 texcoord0 : TEXCOORD0;
+                float4 texcoord1 : TEXCOORD1;
+                float4 texcoord2 : TEXCOORD2;
+                float4 texcoord3 : TEXCOORD3;
+                float4 color0 : COLOR0;
+            };
+            struct program77Output
+            {
+                float4 sv_Position0 : SV_POSITION;
+                float2 texcoord1 : TEXCOORD1;
+                float3 texcoord2 : TEXCOORD2;
+            };
+            struct program80Input
+            {
+                float4 sv_Position0 : SV_POSITION;
+                float2 texcoord1 : TEXCOORD1;
+                float3 texcoord2 : TEXCOORD2;
+            };
+            struct program80Output
+            {
+                float4 sv_Target0 : SV_Target;
+            };
+            #pragma vertex vert
+            program77Output vert(program77Input i)
+            {
+                program77Output o = (program77Output)0;
+                float worldNormal_x_1 = dot(i.normal0.xyzx, unity_WorldToObject[0].xyzx);
+                float worldNormal_y_1 = dot(i.normal0.xyzx, unity_WorldToObject[1].xyzx);
+                float worldNormal_z_1 = dot(i.normal0.xyzx, unity_WorldToObject[2].xyzx);
+                float r0_w_1 = dot(float4(worldNormal_x_1, worldNormal_y_1, worldNormal_z_1, worldNormal_x_1), float4(worldNormal_x_1, worldNormal_y_1, worldNormal_z_1, worldNormal_x_1));
+                float r0_w_2 = rsqrt(r0_w_1);
+                float3 unitWorldNormal_xyz_2 = ((r0_w_2.xxxx * float4(worldNormal_x_1, worldNormal_y_1, worldNormal_z_1, worldNormal_x_1))).xyz;
+                float4 worldPos_xyzw_1 = (i.position0.yyyy * unity_ObjectToWorld[1]);
+                float4 worldPos_xyzw_2 = mad(unity_ObjectToWorld[0], i.position0.xxxx, worldPos_xyzw_1);
+                float4 worldPos_xyzw_3 = mad(unity_ObjectToWorld[2], i.position0.zzzz, worldPos_xyzw_2);
+                float4 worldPos_xyzw_4 = mad(unity_ObjectToWorld[3], i.position0.wwww, worldPos_xyzw_3);
+                float3 r2_xyz_1 = (mad(-worldPos_xyzw_4.xyzx, _WorldSpaceLightPos0.wwww, _WorldSpaceLightPos0.xyzx)).xyz;
+                float r0_w_3 = dot(r2_xyz_1.xyzx, r2_xyz_1.xyzx);
+                float r0_w_4 = rsqrt(r0_w_3);
+                float r0_w_5 = dot(unitWorldNormal_xyz_2.xyzx, ((r0_w_4.xxxx * r2_xyz_1.xyzx)).xyzx);
+                float r0_w_6 = mad(-r0_w_5, r0_w_5, 1);
+                float r0_w_7 = sqrt(r0_w_6);
+                float r0_w_8 = (r0_w_7 * unity_LightShadowBias.z);
+                float r0_w_9 = (unity_LightShadowBias.z != 0);
+                float3 unity_LightShadowBiasSelect_xyz_4 = ((r0_w_9.xxxx ? (mad(-unitWorldNormal_xyz_2.xyzx, r0_w_8.xxxx, worldPos_xyzw_4.xyzx)).xyzx : worldPos_xyzw_4.xyzx)).xyz;
+                float4 r2_xyzw_3 = (unity_LightShadowBiasSelect_xyz_4.yyyy * unity_MatrixVP[1]);
+                float4 r2_xyzw_4 = mad(unity_MatrixVP[0], unity_LightShadowBiasSelect_xyz_4.xxxx, r2_xyzw_3);
+                float4 r0_xyzw_5 = mad(unity_MatrixVP[2], unity_LightShadowBiasSelect_xyz_4.zzzz, r2_xyzw_4);
+                float4 r0_xyzw_6 = mad(unity_MatrixVP[3], worldPos_xyzw_4.wwww, r0_xyzw_5);
+                o.sv_Position0.z = mad(unity_LightShadowBias.y, (-r0_xyzw_6.z + min(r0_xyzw_6.w, r0_xyzw_6.z)), r0_xyzw_6.z);
+                o.sv_Position0.xyw = (r0_xyzw_6.xyxw).xyw;
+                o.texcoord1.xy = (mad(i.texcoord0.xyxx, _MainTex_ST.xyxx, _MainTex_ST.zwzz)).xy;
+                float3 worldPos_xyz_7 = ((i.position0.yyyy * unity_ObjectToWorld[1].xyzx)).xyz;
+                float3 worldPos_xyz_8 = (mad(unity_ObjectToWorld[0].xyzx, i.position0.xxxx, worldPos_xyz_7.xyzx)).xyz;
+                float3 worldPos_xyz_9 = (mad(unity_ObjectToWorld[2].xyzx, i.position0.zzzz, worldPos_xyz_8.xyzx)).xyz;
+                o.texcoord2.xyz = (mad(unity_ObjectToWorld[3].xyzx, i.position0.wwww, worldPos_xyz_9.xyzx)).xyz;
+                return o;
+            }
+            #pragma fragment frag
+            program80Output frag(program80Input i)
+            {
+                program80Output o = (program80Output)0;
+                float r0_x_1 = (_MainTex.Sample(sampler_MainTex, (i.texcoord1.xyxx).xy)).x;
+                if ((mad(r0_x_1, _Color.w, -_Cutoff) < 0)) discard;
+                o.sv_Target0.xyzw = float4(0, 0, 0, 0);
+                return o;
+            }
+            #endif
             ENDHLSL
         }
     }

@@ -659,6 +659,12 @@ public static class Decompiler
         }
     }
 
+    // A pass can carry hundreds of keyword permutations (Corpus_27 has 768
+    // vertex programs for one pass), so only passes with a small hand-written
+    // set get a body per variant.
+    // shortcut: larger passes keep one body and a merged multi_compile list.
+    private const int MaxEmittedVariantBodies = 4;
+
     // Attaches each pass's own serialized subprograms. A vertex program can
     // serve several passes (Corpus_02 has seven passes sharing one vertex and
     // one fragment), so this follows the per-pass references instead of
@@ -674,46 +680,98 @@ public static class Decompiler
 
         foreach (HlslPassNode pass in allPasses)
         {
-            int attached = 0;
+            // Per stage: every serialized program of that stage. A pass can
+            // serialize several keyword permutations of one stage.
+            var stageVariants = new Dictionary<HlslShaderStage, List<DecompiledSubprogram>>();
             foreach (var (stageName, indices) in pass.ProgramIndices)
             {
                 if (!Enum.TryParse(stageName, out HlslShaderStage stage))
                     continue;
-
-                // Several variants of one stage can be serialized for a pass
-                // (keyword sets); the base body is the one with the fewest
-                // keywords and the rest are folded into a comment.
                 var variants = indices
                     .Select(i => byIndex.GetValueOrDefault(i))
                     .Where(c => c is not null && c.Stage == stage)
                     .Select(c => c!)
                     .OrderBy(c => c.Keywords.Length)
+                    .ThenBy(c => KeywordKey(c.Keywords), StringComparer.Ordinal)
                     .ToList();
-                if (variants.Count == 0)
-                    continue;
-
-                DecompiledSubprogram baseVariant = variants[0];
-                AttachPassProgram(pass, baseVariant, textureNames, log);
-                attached++;
-                totalPrograms++;
-
-                var baseKeywords = baseVariant.Keywords.ToHashSet(StringComparer.Ordinal);
-                foreach (string keyword in variants.Skip(1)
-                             .SelectMany(c => c.Keywords)
-                             .Where(k => !baseKeywords.Contains(k))
-                             .Distinct(StringComparer.Ordinal)
-                             .OrderBy(k => k, StringComparer.Ordinal))
-                    if (!pass.FoldedKeywords.Contains(keyword))
-                        pass.FoldedKeywords.Add(keyword);
+                if (variants.Count > 0)
+                    stageVariants[stage] = variants;
             }
 
-            if (attached == 0 && string.IsNullOrEmpty(pass.UsePass))
-                log.WriteLine($"  Pass '{pass.Name}': no serialized subprogram, left empty.");
+            if (stageVariants.Count == 0)
+            {
+                if (string.IsNullOrEmpty(pass.UsePass))
+                    log.WriteLine($"  Pass '{pass.Name}': no serialized subprogram, left empty.");
+                continue;
+            }
+
+            // One keyword set per compiled permutation, shared across stages.
+            var keywordSets = stageVariants.Values
+                .SelectMany(v => v)
+                .GroupBy(c => KeywordKey(c.Keywords), StringComparer.Ordinal)
+                .ToDictionary(g => g.Key, g => g.First().Keywords, StringComparer.Ordinal);
+
+            // Base body: the permutation with the fewest keywords (ties by
+            // name, so the output is deterministic).
+            string baseKey = keywordSets.Keys
+                .OrderBy(k => keywordSets[k].Length)
+                .ThenBy(k => k, StringComparer.Ordinal)
+                .First();
+            string[] baseKeywords = keywordSets[baseKey];
+
+            foreach (var (_, variants) in stageVariants)
+            {
+                DecompiledSubprogram chosen =
+                    variants.FirstOrDefault(c => KeywordKey(c.Keywords) == baseKey) ?? variants[0];
+                AttachPassProgram(pass, chosen, textureNames, log);
+                totalPrograms++;
+            }
+
+            bool emitBodies = keywordSets.Count <= MaxEmittedVariantBodies;
+            foreach (var (key, keywords) in keywordSets)
+            {
+                if (key == baseKey)
+                    continue;
+
+                List<string> extra = keywords
+                    .Where(k => !baseKeywords.Contains(k, StringComparer.Ordinal))
+                    .OrderBy(k => k, StringComparer.Ordinal)
+                    .ToList();
+                foreach (string keyword in extra)
+                    if (!pass.FoldedKeywords.Contains(keyword))
+                        pass.FoldedKeywords.Add(keyword);
+
+                if (!emitBodies || extra.Count == 0)
+                    continue;
+
+                // A branch needs a body for every stage the base body has; a
+                // permutation missing one keeps the base body.
+                if (stageVariants.Keys.Any(stage =>
+                        !stageVariants[stage].Any(c => KeywordKey(c.Keywords) == key)))
+                    continue;
+
+                var variant = new HlslPassVariant();
+                variant.Keywords.AddRange(extra);
+                foreach (var (_, variants) in stageVariants)
+                {
+                    AttachPassProgram(pass,
+                        variants.First(c => KeywordKey(c.Keywords) == key),
+                        textureNames, log, variant);
+                    totalPrograms++;
+                }
+                pass.Variants.Add(variant);
+            }
+
+            pass.FoldedKeywords.Sort(StringComparer.Ordinal);
         }
 
         log.WriteLine(
             $"BuildVariantPasses: {totalPrograms} program(s) attached from per-pass metadata across {allPasses.Count} pass(es).");
     }
+
+    // Order-independent identity for one compiled keyword set.
+    private static string KeywordKey(IEnumerable<string> keywords) =>
+        string.Join('\0', keywords.OrderBy(k => k, StringComparer.Ordinal));
 
     // The serialized #pragma target is not in the blob, so infer the floor
     // from the compiled shader model: SM4.0 is Unity target 3.5, SM5.0 is 4.5,
@@ -732,18 +790,21 @@ public static class Decompiler
     };
 
     // Attaches one candidate's function, resources and structs to a pass,
-    // unioning cbuffer members the way the previous streaming loop did.
+    // unioning cbuffer members the way the previous streaming loop did. When
+    // variant is non-null the function and structs become that variant's body
+    // instead (resources stay pass-wide).
     private static void AttachPassProgram(
         HlslPassNode pass,
         DecompiledSubprogram c,
         Dictionary<uint, string>? textureNames,
-        TextWriter log)
+        TextWriter log,
+        HlslPassVariant? variant = null)
     {
         HlslShaderTarget target = TargetFor(c.ProgramType);
         if (target > pass.Target)
             pass.Target = target;
 
-        AttachFunction(pass, c.Function);
+        AttachFunction(pass, variant, c.Function);
 
         var resources = HlslAstBuilder.BuildResources(
             c.Pipeline.Program.Declarations,
@@ -758,10 +819,11 @@ public static class Decompiler
             // Cbuffers merge by slot: vert and frag subprograms of the same
             // pass touch the same constant-buffer slots, so union the
             // members (keeping the largest array size for any fallback).
+            // Match by slot only: two samplers that serve the same texture
+            // carry the same name but live in different registers, and
+            // dropping one leaves the body's sN reference undeclared.
             HlslResourceNode? existing = pass.Resources.FirstOrDefault(r =>
-                r.Kind == res.Kind && (res.Kind == HlslResourceKind.ConstantBuffer
-                    ? r.Slot == res.Slot
-                    : r.Slot == res.Slot || r.Name == res.Name));
+                r.Kind == res.Kind && r.Slot == res.Slot);
 
             if (existing is null)
             {
@@ -817,9 +879,16 @@ public static class Decompiler
                 HlslCBufferVariable v = cb.Variables[i];
                 if (cbVars.Add(v.Name))
                     continue;
+                // The same variant can be attached more than once, so the
+                // suffixed name has to stay unique too.
+                string baseName = $"{v.Name}_b{cb.Slot}";
+                string name = baseName;
+                for (int n = 2; cbVars.Contains(name); n++)
+                    name = $"{baseName}_{n}";
+                cbVars.Add(name);
                 cb.Variables[i] = new HlslCBufferVariable
                 {
-                    Name = $"{v.Name}_b{cb.Slot}",
+                    Name = name,
                     TypeName = v.TypeName,
                     Offset = v.Offset,
                     Size = v.Size,
@@ -833,8 +902,8 @@ public static class Decompiler
         pass.Resources.RemoveAll(r =>
             r.Kind == HlslResourceKind.ConstantBuffer && r.Variables.Count == 0);
 
-        if (c.Function.InputStruct is not null) pass.Structs.Add(c.Function.InputStruct);
-        if (c.Function.OutputStruct is not null) pass.Structs.Add(c.Function.OutputStruct);
+        if (c.Function.InputStruct is not null) (variant?.Structs ?? pass.Structs).Add(c.Function.InputStruct);
+        if (c.Function.OutputStruct is not null) (variant?.Structs ?? pass.Structs).Add(c.Function.OutputStruct);
 
         // Cross-check the compiler-proven header extents against the
         // metadata/IR-derived slot layout for THIS stage. resources was
@@ -863,16 +932,28 @@ public static class Decompiler
             $"resources+{pass.Resources.Count})");
     }
 
-    private static void AttachFunction(HlslPassNode pass, HlslFunctionNode function)
+    private static void AttachFunction(HlslPassNode pass, HlslPassVariant? variant, HlslFunctionNode function)
     {
         switch (function.Stage)
         {
-            case HlslShaderStage.Vertex: pass.VertexFunction = function; break;
-            case HlslShaderStage.Fragment: pass.FragmentFunction = function; break;
-            case HlslShaderStage.Geometry: pass.GeometryFunction = function; break;
-            case HlslShaderStage.Hull: pass.HullFunction = function; break;
-            case HlslShaderStage.Domain: pass.DomainFunction = function; break;
-            case HlslShaderStage.Compute: pass.ComputeFunction = function; break;
+            case HlslShaderStage.Vertex:
+                if (variant is null) pass.VertexFunction = function; else variant.VertexFunction = function;
+                break;
+            case HlslShaderStage.Fragment:
+                if (variant is null) pass.FragmentFunction = function; else variant.FragmentFunction = function;
+                break;
+            case HlslShaderStage.Geometry:
+                if (variant is null) pass.GeometryFunction = function; else variant.GeometryFunction = function;
+                break;
+            case HlslShaderStage.Hull:
+                if (variant is null) pass.HullFunction = function; else variant.HullFunction = function;
+                break;
+            case HlslShaderStage.Domain:
+                if (variant is null) pass.DomainFunction = function; else variant.DomainFunction = function;
+                break;
+            case HlslShaderStage.Compute:
+                if (variant is null) pass.ComputeFunction = function; else variant.ComputeFunction = function;
+                break;
         }
     }
 

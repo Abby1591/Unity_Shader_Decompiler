@@ -1,6 +1,6 @@
 # Corpus decompile gap audit
 
-Measured on `master` (2026-11-15) against the 48 corpus shaders in
+Measured on `master` (2026-11-16) against the 48 corpus shaders in
 `shaders_json/` and their original sources in `tests/Sources/`. On this commit
 the gates are green:
 
@@ -9,35 +9,50 @@ the gates are green:
 | `tests/e2e/test_faithfulness.py` | 48/48 |
 | `tests/e2e/test_source_fidelity.py` | 48/48 |
 | `tests/e2e/test_corpus_shaders.py` | 48/48 |
-| `dotnet test --filter "Category!=D3D"` | 126/126 |
+| `dotnet test --filter "Category!=D3D"` | 132/132 |
 
 Everything below is outside what those runners assert. Counts are shader
 instances, not lines of code.
 
-## 1. Keyword variant bodies are not reconstructed
+## 1. Keyword variant bodies beyond 4 permutations are not reconstructed
 
 Sources contain 38 `#pragma multi_compile*` lines (including 7
 `multi_compile_instancing`) and 2 `#pragma shader_feature` lines across 16
-shaders. The keyword names now survive as one `#pragma multi_compile` line per
-pass, but every variant compiles the base variant's body, and the pragma is a
-single group rather than the source's groups:
+shaders. A pass whose compiled subprograms group into at most 4 distinct
+keyword sets now emits one body per set, most keywords first, with the
+fewest-keyword set as the `#else` fallback and one
+`#pragma multi_compile _ <keyword>` line per keyword:
 
 ```hlsl
-// Folded keyword variants (base state emitted): ETC1_EXTERNAL_ALPHA, PIXELSNAP_ON
-#pragma multi_compile _ ETC1_EXTERNAL_ALPHA PIXELSNAP_ON
+#pragma multi_compile _ LIGHTPROBE_SH
+#pragma multi_compile _ UNITY_HDR_ON
+#if defined(LIGHTPROBE_SH) && defined(UNITY_HDR_ON)
+...
+#elif defined(LIGHTPROBE_SH)
+...
+#elif defined(UNITY_HDR_ON)
+...
+#else
+...
+#endif
 ```
 
-Impact: a re-imported shader keeps its keyword interface (material keyword
-toggles compile), but every non-base permutation still renders the base
-behaviour. `Corpus/30 Sprite UI`, `Corpus/27 Keywords`, `Corpus/31 Particles`
-and the other 13 keyword shaders differ from their source only in the variant
-bodies. Whether a keyword came from `shader_feature`, `*_local`, or a built-in
-group (`multi_compile_fwdbase`, `multi_compile_fog`, ...) is not recoverable
-from the blob.
+16 passes are covered (2-4 sets). Larger passes keep one base body and a single
+merged `#pragma multi_compile` line: one pass in `Corpus/27 Keywords` compiled
+768 vertex / 384 fragment permutations, and 11 passes have 16 sets (the
+forward-base lighting cross-product). Emitting those would multiply a single
+pass into hundreds of bodies.
 
-Fix (remaining): emit one body per compiled variant, each under the `#if`
-condition for its keyword set. The variant list per pass already exists; the
-work is emitting several bodies per pass instead of one.
+Impact for the uncovered passes: a re-imported shader keeps the keyword
+interface (material keyword toggles compile), but every permutation beyond the
+first 4 renders the base behaviour. Which keywords came from
+`shader_feature`, `*_local`, or a built-in group (`multi_compile_fwdbase`,
+`multi_compile_fog`, ...) is not recoverable from the blob, so the original
+pragma grouping is lost for every pass; the emitted set is always
+`multi_compile` with one group per uncovered keyword.
+
+Shortcut: `MaxEmittedVariantBodies = 4` in `Decompiler.cs`; raise it only if
+the generated file size is acceptable for the 16-set lighting passes.
 
 ## 2. Surface-shader reconstruction matches 0 of 8
 
@@ -72,7 +87,7 @@ this reason.
   either, so the output no longer restricts itself to D3D11.
 
 Cause: hull/domain/compute functions are printed without their ShaderLab
-attributes (`HlslPrettyPrinter.cs:262`, comment: "not wired yet").
+attributes (`HlslPrettyPrinter.cs:320`, comment: "not wired yet").
 Domain/partitioning/outputtopology are compile directives that are not in the
 bytecode, so they can only be inferred from the signatures or defaulted.
 
@@ -85,7 +100,7 @@ Counts are from the 48 sources versus the 48 outputs:
 |---|---:|---:|---|
 | Pass `Name "..."` | 66 | 0 | `m_Name` serializes as `""` |
 | `Fog` | 0 in corpus | 0 | `fogMode` is parsed but never printed |
-| Separate front/back Stencil | 0 in corpus | 0 | only the single-face form is emitted (`shortcut:` at `HlslPrettyPrinter.cs:337`) |
+| Separate front/back Stencil | 0 in corpus | 0 | only the single-face form is emitted (`shortcut:` at `HlslPrettyPrinter.cs:390`) |
 | `Category { }` wrappers | 1 (`Corpus/44`) | 0 | flattened into SubShaders |
 
 The source-fidelity runner skips pass names and `[Property]` refs. Texture
@@ -101,14 +116,14 @@ than observed failures:
 | Location | Gap |
 |---|---|
 | `Decompiler.cs:636` | A grab texture is matched to the lowest-slot anonymous `tN` resource; a pass binding several anonymous textures can pick the wrong one. |
-| `Decompiler.cs:721` | `#pragma target` is inferred from the program shader model (SM4.0→3.5, SM5.0→4.5, tessellation→5.0), not the source's value. |
-| `Decompiler.cs:813` | A variable declared in two cbuffers keeps the lowest slot's name; reads that resolve to the duplicate use the kept name and may read the wrong buffer value. |
+| `Decompiler.cs:779` | `#pragma target` is inferred from the program shader model (SM4.0→3.5, SM5.0→4.5, tessellation→5.0), not the source's value. |
+| `Decompiler.cs:875` | A variable declared in two cbuffers keeps the lowest slot's name; reads that resolve to the duplicate use the kept name and may read the wrong buffer value. |
 | `HlslAstBuilder.cs:172` | Hull/domain patch inputs are flattened to per-element `float4` parameters instead of `OutputPatch<T, N>`. |
 | `HlslAstBuilder.cs:270` | `SV_GSInstanceID` is not routed out of the per-vertex array (only `SV_PrimitiveID` is). |
 | `HlslAstBuilder.cs:467` | Structured buffer element type is guessed: `float4` for stride 16, `uint` otherwise. |
-| `HlslPrettyPrinter.cs:223` | Folded keywords become one `#pragma multi_compile` group per pass; `shader_feature`/`_local` and the original grouping are lost. |
+| `HlslPrettyPrinter.cs:233` | Keywords beyond the 4 emitted permutations become one merged `#pragma multi_compile` line per pass; `shader_feature`/`_local` and the original grouping are lost. |
 | `HlslPrettyPrinter.cs:94,103` | Range bounds and unknown property kinds fall back to `Float /* TODO ... */`. |
-| `HlslPrettyPrinter.cs:886` | Unrecognised macros emit `#define name(v) /* TODO ... */ (v)`. |
+| `HlslPrettyPrinter.cs:939` | Unrecognised macros emit `#define name(v) /* TODO ... */ (v)`. |
 | `HlslPrettyPrinter.Registers.cs:142` | Unhandled IR nodes emit `// TODO: unhandled IR node` (`hs_fork_phase`, `emitStream`/`cutStream`, ...). |
 | `HlslPrettyPrinter.Registers.cs:1131` | `bfe` sign-extend shift is UB for width 0 or 32 (DXBC does not emit it today). |
 | `HlslPrettyPrinter.Registers.cs:1260` | Abs-fold guard only covers `max(a, -a)`; other spellings can fail with X8000. |
@@ -179,6 +194,7 @@ At the time of writing this prints nothing: every emitted `Pass` has a body.
 
 ## Suggested fix order
 
-1. Keyword variant bodies (item 1) — 16 shaders lose non-base behaviour.
+1. Keyword variant bodies beyond 4 permutations (item 1) — 16 passes emit
+   per-variant bodies; larger passes still lose non-base behaviour.
 2. Hull/domain attributes (item 3) — `Corpus/19` is not a valid hull shader.
 3. Surface reconstruction (item 2) — quality of life, not visual correctness.

@@ -211,9 +211,15 @@ public sealed class HlslPassNode
     public List<HlslStructNode> Structs { get; } = new();
 
     // Keywords of the compiled variants this pass was folded from, beyond the
-    // base state. The body is the base variant; these are documented in the
-    // output so the missing keyword permutations are visible.
+    // base state. Declared with #pragma multi_compile; the bodies live in
+    // Variants when that list is non-empty.
     public List<string> FoldedKeywords { get; } = new();
+
+    // Compiled keyword permutations that carry their own body (each Keyword
+    // is one this variant enables that the base body does not). Empty when
+    // the pass has too many permutations to re-emit, in which case the base
+    // body covers every keyword state.
+    public List<HlslPassVariant> Variants { get; } = new();
 
     // Lowest Unity shader target that compiles the attached bytecode. The
     // original #pragma target is not serialized, so this is inferred from the
@@ -246,6 +252,20 @@ public sealed class HlslPassNode
                 yield return f;
         }
     }
+}
+
+// A compiled keyword permutation of a pass, beyond the base body. Keywords
+// are the ones it enables that the base body does not.
+public sealed class HlslPassVariant
+{
+    public List<string> Keywords { get; } = new();
+    public HlslFunctionNode? VertexFunction { get; set; }
+    public HlslFunctionNode? FragmentFunction { get; set; }
+    public HlslFunctionNode? GeometryFunction { get; set; }
+    public HlslFunctionNode? HullFunction { get; set; }
+    public HlslFunctionNode? DomainFunction { get; set; }
+    public HlslFunctionNode? ComputeFunction { get; set; }
+    public List<HlslStructNode> Structs { get; } = new();
 }
 
 // Unity "#pragma target" levels the emitted bytecode needs: SM4.0 is target

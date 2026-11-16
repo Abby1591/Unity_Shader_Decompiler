@@ -198,7 +198,7 @@ public static partial class HlslPrettyPrinter
             return;
         }
 
-        if (pass.FoldedKeywords.Count > 0)
+        if (pass.Variants.Count == 0 && pass.FoldedKeywords.Count > 0)
         {
             // Say what was lost: the keywords are declared so a re-import keeps
             // the interface, but every variant compiles the base body.
@@ -216,20 +216,25 @@ public static partial class HlslPrettyPrinter
             sb.Append("            #pragma target ").Append(value / 10).Append('.').Append(value % 10).Append('\n');
         }
 
-        // Unity can't tell shader_feature from multi_compile in the blob, and
-        // the original grouping is lost, so declare the pass's keywords as one
-        // multi_compile set: every keyword name survives without inventing a
-        // variant count.
-        // shortcut: shader_feature/_local declarations and their grouping are
-        // not recovered; upgrade if variant stripping matters.
-        if (pass.FoldedKeywords.Count > 0)
+        if (pass.Variants.Count > 0)
+        {
+            // One group per keyword: a single multi_compile line would make
+            // the keywords mutually exclusive and the branches below
+            // unreachable.
+            foreach (string keyword in pass.FoldedKeywords)
+                sb.Append("            #pragma multi_compile _ ").Append(keyword).Append('\n');
+        }
+        else if (pass.FoldedKeywords.Count > 0)
+        {
+            // Unity can't tell shader_feature from multi_compile in the blob,
+            // and the original grouping is lost, so declare the pass's
+            // keywords as one multi_compile set: every keyword name survives
+            // without inventing a variant count.
+            // shortcut: shader_feature/_local declarations and their grouping
+            // are not recovered; upgrade if variant stripping matters.
             sb.Append("            #pragma multi_compile _ ")
               .Append(string.Join(" ", pass.FoldedKeywords)).Append('\n');
-
-        // Interpolator hand-off map: the vertex stage records which semantic
-        // fields carry named values (worldPos, worldNormal, ...) so the
-        // fragment stage can seed the matching input registers.
-        var stageInterpolators = new Dictionary<string, string>();
+        }
 
         // Build cross-stage cbuffer variable rename mapping: when vert and
         // frag have different variables at the same byte offset within a
@@ -240,34 +245,82 @@ public static partial class HlslPrettyPrinter
         foreach (HlslResourceNode res in pass.Resources)
             PrintResource(sb, res, stripRegisterBindings, cbufferRenames);
 
-        foreach (HlslStructNode s in pass.Structs)
+        // Each compiled permutation gets its own body, most keywords first so
+        // a superset branch is never shadowed by its subset. The base body is
+        // the fallback for keyword states the build did not compile.
+        List<HlslPassVariant> variants = pass.Variants
+            .OrderByDescending(v => v.Keywords.Count)
+            .ThenBy(v => string.Join(" ", v.Keywords), StringComparer.Ordinal)
+            .ToList();
+        for (int i = 0; i < variants.Count; i++)
+        {
+            sb.Append("            ").Append(i == 0 ? "#if " : "#elif ")
+              .Append(string.Join(" && ", variants[i].Keywords.Select(k => $"defined({k})")))
+              .Append('\n');
+            PrintVariantBody(sb, variants[i], pass, fuseTemps, cbufferRenames);
+        }
+
+        if (variants.Count > 0)
+            sb.Append("            #else\n");
+        PrintStageFunctions(sb,
+            pass.VertexFunction, pass.FragmentFunction, pass.GeometryFunction,
+            pass.HullFunction, pass.DomainFunction, pass.ComputeFunction,
+            pass.Structs, pass, fuseTemps, cbufferRenames);
+        if (variants.Count > 0)
+            sb.Append("            #endif\n");
+
+        sb.Append("            ENDHLSL\n");
+        sb.Append("        }\n");
+    }
+
+    private static void PrintVariantBody(
+        StringBuilder sb, HlslPassVariant variant, HlslPassNode pass,
+        bool fuseTemps, Dictionary<string, string> cbufferRenames) =>
+        PrintStageFunctions(sb,
+            variant.VertexFunction, variant.FragmentFunction, variant.GeometryFunction,
+            variant.HullFunction, variant.DomainFunction, variant.ComputeFunction,
+            variant.Structs, pass, fuseTemps, cbufferRenames);
+
+    // Structs and entry points of one body. The interpolator hand-off map is
+    // per body: each variant's vertex stage seeds its own fragment stage.
+    private static void PrintStageFunctions(
+        StringBuilder sb,
+        HlslFunctionNode? vertex, HlslFunctionNode? fragment,
+        HlslFunctionNode? geometry, HlslFunctionNode? hull,
+        HlslFunctionNode? domain, HlslFunctionNode? compute,
+        List<HlslStructNode> structs, HlslPassNode pass,
+        bool fuseTemps, Dictionary<string, string> cbufferRenames)
+    {
+        // Interpolator hand-off map: the vertex stage records which semantic
+        // fields carry named values (worldPos, worldNormal, ...) so the
+        // fragment stage can seed the matching input registers.
+        var stageInterpolators = new Dictionary<string, string>();
+
+        foreach (HlslStructNode s in structs)
             PrintStruct(sb, s);
 
-        if (pass.VertexFunction is not null)
+        if (vertex is not null)
         {
             sb.Append("            #pragma vertex vert\n");
-            PrintFunction(sb, pass.VertexFunction, pass.Cbuffers, fuseTemps, stageOutputs: stageInterpolators, resources: pass.Resources, cbufferRenames: cbufferRenames);
+            PrintFunction(sb, vertex, pass.Cbuffers, fuseTemps, stageOutputs: stageInterpolators, resources: pass.Resources, cbufferRenames: cbufferRenames);
         }
-        if (pass.FragmentFunction is not null)
+        if (fragment is not null)
         {
             sb.Append("            #pragma fragment frag\n");
-            PrintFunction(sb, pass.FragmentFunction, pass.Cbuffers, fuseTemps, stageInputs: stageInterpolators, resources: pass.Resources, cbufferRenames: cbufferRenames);
+            PrintFunction(sb, fragment, pass.Cbuffers, fuseTemps, stageInputs: stageInterpolators, resources: pass.Resources, cbufferRenames: cbufferRenames);
         }
-        if (pass.GeometryFunction is not null)
+        if (geometry is not null)
         {
             sb.Append("            #pragma geometry geom\n");
-            PrintFunction(sb, pass.GeometryFunction, pass.Cbuffers, fuseTemps, resources: pass.Resources, cbufferRenames: cbufferRenames);
+            PrintFunction(sb, geometry, pass.Cbuffers, fuseTemps, resources: pass.Resources, cbufferRenames: cbufferRenames);
         }
 
         // Hull/domain/compute blocks stay pragma-less: their entry points need
         // ShaderLab attributes (domain/partitioning/outputtopology) that are
         // not wired yet.
-        foreach (HlslFunctionNode? f in new[] { pass.HullFunction, pass.DomainFunction, pass.ComputeFunction })
+        foreach (HlslFunctionNode? f in new[] { hull, domain, compute })
             if (f is not null)
                 PrintFunction(sb, f, pass.Cbuffers, fuseTemps, resources: pass.Resources, cbufferRenames: cbufferRenames);
-
-        sb.Append("            ENDHLSL\n");
-        sb.Append("        }\n");
     }
 
     private static void PrintRenderState(StringBuilder sb, HlslRenderState s)
