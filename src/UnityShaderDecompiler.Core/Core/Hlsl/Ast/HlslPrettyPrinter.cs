@@ -106,7 +106,7 @@ public static partial class HlslPrettyPrinter
     private static string PropertyDefaultText(HlslPropertyNode p)
     {
         if (p.Kind == HlslPropertyKind.Texture)
-            return "\"\" {}";
+            return $"\"{p.DefaultTextureName ?? ""}\" {{}}";
 
         // Typed default (Metadata layer, float[4] — the same {x,y,z,w} the
         // printer used to read out of the raw JsonElement below).
@@ -138,8 +138,10 @@ public static partial class HlslPrettyPrinter
     {
         sb.Append("    SubShader\n    {\n");
         PrintTags(sb, ss.Tags, indent: "        ");
-        if (ss.Lod is { } lod)
-            sb.Append("        LOD ").Append(lod).Append('\n');
+        // m_LOD serializes 0 when the source sets no LOD (the default), so
+        // only a positive value was written explicitly.
+        if (ss.Lod is > 0)
+            sb.Append("        LOD ").Append(ss.Lod.Value).Append('\n');
 
         foreach (HlslPassNode pass in ss.Passes)
         {

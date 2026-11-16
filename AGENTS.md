@@ -65,12 +65,13 @@ python tests/e2e/test_source_fidelity.py --keep --filter Corpus_02
 Compares the decompiled output against the original `.shader` sources copied to
 `tests/Sources/` (from `ShaderCorpus/Assets/ShaderCorpus/Shaders/`), so a Stage-0
 extraction bug cannot hide behind matching metadata. Checks name, properties
-(name/description/type/numeric default), fallback, SubShader count and tags, pass
-count, and per-pass render state (Cull, ZWrite, ZTest, ZClip, Blend, BlendOp,
-ColorMask, Offset, AlphaToMask, Lighting, Stencil). Deliberately skipped because
-the player build does not carry them: LOD, pass names, property attributes,
-texture default strings, `[Property]` state references, and surface-shader pass
-expansion. Defaults to the Debug parser; pass `--parser` to override.
+(name/description/type/numeric and texture default/attributes), fallback,
+SubShader count, tags and LOD, pass count, and per-pass render state (Cull,
+ZWrite, ZTest, ZClip, Blend, BlendOp, ColorMask, Offset, AlphaToMask, Lighting,
+Stencil). Deliberately skipped because the player build does not carry them:
+pass names, `[Property]` state references, Int/UInt property types (serialized
+as Float), and surface-shader pass expansion. Defaults to the Debug parser;
+pass `--parser` to override.
 
 ### Verification/analysis modes (C# CLI flags, run after build)
 - `--run-spec-tests` — offline spec vectors (no D3D needed)

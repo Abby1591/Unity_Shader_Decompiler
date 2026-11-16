@@ -10,7 +10,6 @@ Shader "Corpus/46 Procedural"
     SubShader
     {
         Tags { "QUEUE"="Geometry" "RenderType"="Opaque" }
-        LOD 0
         Pass
         {
             Tags { "QUEUE"="Geometry" "RenderType"="Opaque" }

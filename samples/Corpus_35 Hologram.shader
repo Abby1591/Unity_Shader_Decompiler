@@ -2,7 +2,7 @@ Shader "Corpus/35 Hologram"
 {
     Properties
     {
-        _MainTex ("Texture", 2D) = "" {}
+        _MainTex ("Texture", 2D) = "white" {}
         _Color ("Color", Color) = (0.1,0.8,1,1)
         _FresnelPower ("Fresnel Power", Range(0.1, 8)) = 3
         _ScanlineDensity ("Scanline Density", Range(1, 200)) = 80
@@ -14,7 +14,6 @@ Shader "Corpus/35 Hologram"
     SubShader
     {
         Tags { "IGNOREPROJECTOR"="true" "QUEUE"="Transparent" "RenderType"="Transparent" }
-        LOD 0
         Pass
         {
             Tags { "IGNOREPROJECTOR"="true" "QUEUE"="Transparent" "RenderType"="Transparent" }

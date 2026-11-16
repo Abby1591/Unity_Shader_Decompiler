@@ -8,7 +8,6 @@ Shader "Corpus/25 System Semantics"
     SubShader
     {
         Tags { "QUEUE"="Geometry" "RenderType"="Opaque" }
-        LOD 0
         Pass
         {
             Tags { "QUEUE"="Geometry" "RenderType"="Opaque" }

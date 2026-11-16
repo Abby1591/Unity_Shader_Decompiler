@@ -3,15 +3,15 @@ Shader "Corpus/14 Shadow Depth Meta Motion"
     Properties
     {
         _Color ("Color", Color) = (1,1,1,1)
-        _MainTex ("Albedo", 2D) = "" {}
+        _MainTex ("Albedo", 2D) = "white" {}
         _SpecColor ("Specular", Color) = (0.2,0.2,0.2,1)
+        [HDR]
         _Emission ("Emission", Color) = (0,0,0,1)
         _Cutoff ("Alpha Cutoff", Range(0, 1)) = 0.5
     }
     SubShader
     {
         Tags { "QUEUE"="Geometry" "RenderType"="Opaque" }
-        LOD 0
         Pass
         {
             Tags { "LIGHTMODE"="SHADOWCASTER" "QUEUE"="Geometry" "RenderType"="Opaque" "SHADOWSUPPORT"="true" }

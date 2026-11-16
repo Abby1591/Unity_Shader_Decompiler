@@ -84,17 +84,13 @@ Counts are from the 48 sources versus the 48 outputs:
 | Fact | Source | Output | Notes |
 |---|---:|---:|---|
 | Pass `Name "..."` | 66 | 0 | `m_Name` serializes as `""` |
-| Named texture defaults (`"white"`, `"black"`, `"bump"`) | 79 | 0 | all emitted as `"" {}` |
-| Property attributes | 16 standalone lines | 22 | `Header`, `Space`, `Toggle`, `ToggleOff`, `Enum`, `PowerSlider`, `IntRange` recover; `PerRendererData` and `HideInInspector` do not |
-| `LOD` | 11 explicit | 49 | explicit values survive; unset LOD serializes `0` and is emitted as `LOD 0` (38 outputs) |
 | `Fog` | 0 in corpus | 0 | `fogMode` is parsed but never printed |
-| Separate front/back Stencil | 0 in corpus | 0 | only the single-face form is emitted (`shortcut:` at `HlslPrettyPrinter.cs:335`) |
+| Separate front/back Stencil | 0 in corpus | 0 | only the single-face form is emitted (`shortcut:` at `HlslPrettyPrinter.cs:337`) |
 | `Category { }` wrappers | 1 (`Corpus/44`) | 0 | flattened into SubShaders |
 
-The source-fidelity runner skips LOD, pass names, texture defaults, property
-attributes, and `[Property]` refs. Its docstring says LOD is "serialized as
-0", which is only true when the source does not set it; 11 subshaders carry
-real LOD values.
+The source-fidelity runner skips pass names and `[Property]` refs. Texture
+defaults, property attributes (including the ones derived from
+`ShaderPropertyFlags`) and LOD are now recovered and compared.
 
 ## 5. Emitter fallbacks and latent paths
 
@@ -107,12 +103,12 @@ than observed failures:
 | `Decompiler.cs:636` | A grab texture is matched to the lowest-slot anonymous `tN` resource; a pass binding several anonymous textures can pick the wrong one. |
 | `Decompiler.cs:721` | `#pragma target` is inferred from the program shader model (SM4.0→3.5, SM5.0→4.5, tessellation→5.0), not the source's value. |
 | `Decompiler.cs:813` | A variable declared in two cbuffers keeps the lowest slot's name; reads that resolve to the duplicate use the kept name and may read the wrong buffer value. |
-| `HlslAstBuilder.cs:153` | Hull/domain patch inputs are flattened to per-element `float4` parameters instead of `OutputPatch<T, N>`. |
-| `HlslAstBuilder.cs:252` | `SV_GSInstanceID` is not routed out of the per-vertex array (only `SV_PrimitiveID` is). |
-| `HlslAstBuilder.cs:449` | Structured buffer element type is guessed: `float4` for stride 16, `uint` otherwise. |
-| `HlslPrettyPrinter.cs:221` | Folded keywords become one `#pragma multi_compile` group per pass; `shader_feature`/`_local` and the original grouping are lost. |
+| `HlslAstBuilder.cs:172` | Hull/domain patch inputs are flattened to per-element `float4` parameters instead of `OutputPatch<T, N>`. |
+| `HlslAstBuilder.cs:270` | `SV_GSInstanceID` is not routed out of the per-vertex array (only `SV_PrimitiveID` is). |
+| `HlslAstBuilder.cs:467` | Structured buffer element type is guessed: `float4` for stride 16, `uint` otherwise. |
+| `HlslPrettyPrinter.cs:223` | Folded keywords become one `#pragma multi_compile` group per pass; `shader_feature`/`_local` and the original grouping are lost. |
 | `HlslPrettyPrinter.cs:94,103` | Range bounds and unknown property kinds fall back to `Float /* TODO ... */`. |
-| `HlslPrettyPrinter.cs:884` | Unrecognised macros emit `#define name(v) /* TODO ... */ (v)`. |
+| `HlslPrettyPrinter.cs:886` | Unrecognised macros emit `#define name(v) /* TODO ... */ (v)`. |
 | `HlslPrettyPrinter.Registers.cs:142` | Unhandled IR nodes emit `// TODO: unhandled IR node` (`hs_fork_phase`, `emitStream`/`cutStream`, ...). |
 | `HlslPrettyPrinter.Registers.cs:1131` | `bfe` sign-extend shift is UB for width 0 or 32 (DXBC does not emit it today). |
 | `HlslPrettyPrinter.Registers.cs:1260` | Abs-fold guard only covers `max(a, -a)`; other spellings can fail with X8000. |
@@ -123,7 +119,7 @@ than observed failures:
 ## 6. Platform coverage
 
 Only DX11 SM4/5 subprograms are decoded. Everything else is logged and
-skipped (`Decompiler.cs:196`):
+skipped (`Decompiler.cs:200`):
 
 ```
 SubProgram Type not supported: GLES3
@@ -143,10 +139,10 @@ code is never emitted.
   input/output signatures plus metadata. It does not compare instructions or
   rendered results, so a semantically wrong body still passes.
 - `test_source_fidelity.py` compares name, properties (name/description/type/
-  numeric default), fallback, SubShader count/tags, pass count, and per-pass
-  render state. It skips LOD, pass names, texture defaults, property
-  attributes, `[Property]` state refs, surface-shader structure, and all HLSL
-  text.
+  numeric and texture default/attributes), fallback, SubShader count/tags/LOD,
+  pass count, and per-pass render state. It skips pass names, `[Property]`
+  state refs, surface-shader structure, and all HLSL text. Int/UInt property
+  types are compared as Float because the build stores them as `m_Type` 2.
 - No corpus shader covers compute, hull/domain attributes, separate stencil
   faces, `Fog`, `SetTexture`, or MRT blend targets.
 - The xUnit golden test compares only the 8 fixtures in

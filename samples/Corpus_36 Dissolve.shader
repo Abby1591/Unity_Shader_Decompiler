@@ -3,10 +3,11 @@ Shader "Corpus/36 Dissolve"
     Properties
     {
         _Color ("Color", Color) = (1,1,1,1)
-        _MainTex ("Albedo", 2D) = "" {}
-        _DissolveMap ("Dissolve Map", 2D) = "" {}
+        _MainTex ("Albedo", 2D) = "white" {}
+        _DissolveMap ("Dissolve Map", 2D) = "gray" {}
         _Cutoff ("Dissolve", Range(0, 1)) = 0.5
         _EdgeWidth ("Edge Width", Range(0, 0.5)) = 0.05
+        [HDR]
         _EdgeColor ("Edge Color", Color) = (1,0.3,0,1)
         _Metallic ("Metallic", Range(0, 1)) = 0
         _Smoothness ("Smoothness", Range(0, 1)) = 0.5
@@ -14,7 +15,6 @@ Shader "Corpus/36 Dissolve"
     SubShader
     {
         Tags { "QUEUE"="Geometry" "RenderType"="Opaque" }
-        LOD 0
         Pass
         {
             Tags { "LIGHTMODE"="FORWARDBASE" "QUEUE"="Geometry" "RenderType"="Opaque" "SHADOWSUPPORT"="true" }

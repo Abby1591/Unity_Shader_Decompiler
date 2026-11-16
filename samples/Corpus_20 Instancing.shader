@@ -3,13 +3,12 @@ Shader "Corpus/20 Instancing"
     Properties
     {
         _Color ("Color", Color) = (1,1,1,1)
-        _MainTex ("Texture", 2D) = "" {}
+        _MainTex ("Texture", 2D) = "white" {}
         _Scale ("Per Instance Scale", Range(0, 2)) = 1
     }
     SubShader
     {
         Tags { "QUEUE"="Geometry" "RenderType"="Opaque" }
-        LOD 0
         Pass
         {
             Tags { "QUEUE"="Geometry" "RenderType"="Opaque" }

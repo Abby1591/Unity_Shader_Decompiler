@@ -2,7 +2,7 @@ Shader "Corpus/31 Particles"
 {
     Properties
     {
-        _MainTex ("Particle Texture", 2D) = "" {}
+        _MainTex ("Particle Texture", 2D) = "white" {}
         _TintColor ("Tint Color", Color) = (0.5,0.5,0.5,0.5)
         _InvFade ("Soft Particles Factor", Range(0.01, 3)) = 1
         _SoftParticleFactor ("Soft Particle Factor", Range(0, 1)) = 1
@@ -12,7 +12,6 @@ Shader "Corpus/31 Particles"
     SubShader
     {
         Tags { "IGNOREPROJECTOR"="true" "PreviewType"="Plane" "QUEUE"="Transparent" "RenderType"="Transparent" }
-        LOD 0
         Pass
         {
             Tags { "IGNOREPROJECTOR"="true" "PreviewType"="Plane" "QUEUE"="Transparent" "RenderType"="Transparent" }

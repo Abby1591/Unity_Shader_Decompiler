@@ -2,7 +2,7 @@ Shader "Corpus/24 Flow Control"
 {
     Properties
     {
-        _MainTex ("Texture", 2D) = "" {}
+        _MainTex ("Texture", 2D) = "white" {}
         _Iterations ("Iterations", Float) = 8
         _Threshold ("Threshold", Range(0, 1)) = 0.5
         _Mode ("Mode", Float) = 0
@@ -10,7 +10,6 @@ Shader "Corpus/24 Flow Control"
     SubShader
     {
         Tags { "QUEUE"="Geometry" "RenderType"="Opaque" }
-        LOD 0
         Pass
         {
             Tags { "QUEUE"="Geometry" "RenderType"="Opaque" }

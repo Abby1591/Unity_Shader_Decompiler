@@ -11,19 +11,19 @@ ShaderCorpus/Assets/ShaderCorpus/Shaders) as an independent oracle for the
 facts that survive compilation:
 
   - shader name
-  - properties (name, description, type, numeric default)
+  - properties (name, description, type, numeric default, texture default,
+    attributes)
   - fallback
-  - SubShader count and SubShader-level tags
+  - SubShader count, SubShader-level tags and LOD
   - pass count
   - per-pass render state: Cull, ZWrite, ZTest, ZClip, Blend, BlendOp,
     ColorMask, Offset, AlphaToMask, Lighting, Stencil
 
 Facts the shipped build does not carry are deliberately not compared:
 
-  - LOD: serialized as 0 (stripped from the player build)
   - Pass Name: serialized as ""
-  - property attributes ([Header], [Enum], ...): not serialized
-  - texture defaults ("white"/"black"/"bump"): serialized as ""
+  - Int/UInt property types: serialized as Float (m_Type 2), so only the
+    source's spelling distinguishes them
   - Stencil Ref/ReadMask/WriteMask written as [Property]: the build stores
     the unresolved value 0
   - surface shaders: Unity expands one surface pass into several passes,
@@ -146,14 +146,22 @@ def top_level_tags(subshader):
 
 
 def parse_properties(text):
-    match = re.search(r"\bProperties\b[ \t]*\{", text)
+    match = re.search(r"\bProperties\b\s*\{", text)
     if not match:
         return {}
     body, _ = block_after(text, match.end() - 1)
     props = {}
+    pending = []
     for line in body.splitlines():
+        stripped = line.strip()
+        # The decompiler prints attributes on their own lines; the source
+        # usually keeps them on the property line.
+        if re.fullmatch(r"(?:\[[^\]]*\][ \t]*)+", stripped):
+            pending += re.findall(r"\[([^\]]*)\]", stripped)
+            continue
         prop = PROP_RE.match(line)
         if not prop:
+            pending = []
             continue
         name, declaration, default = prop.group(1), prop.group(2), prop.group(3)
         fields = [f.strip() for f in split_top_level(declaration)]
@@ -161,12 +169,22 @@ def parse_properties(text):
             "description": fields[0].strip('"'),
             "type": fields[-1],
             "default": default,
+            "attributes": pending + re.findall(r"\[([^\]]*)\]", line[:prop.start(1)]),
         }
+        pending = []
     return props
 
 
 def type_key(type_name):
-    return re.sub(r"\s*\(.*$", "", type_name).strip().lower()
+    key = re.sub(r"\s*\(.*$", "", type_name).strip().lower()
+    # Unity serializes Int/UInt properties as m_Type 2 (Float); the source
+    # spelling is the only place they differ.
+    return "float" if key in ("int", "uint") else key
+
+
+def texture_default(value):
+    match = re.match(r'\s*"([^"]*)"', value)
+    return match.group(1) if match else None
 
 
 def numeric_default(value):
@@ -299,8 +317,14 @@ def compare_properties(source, output, errors):
             errors.append(f"property {name}: description {out['description']!r} != {src['description']!r}")
         if type_key(src["type"]) != type_key(out["type"]):
             errors.append(f"property {name}: type {out['type']} != {src['type']}")
+        if sorted(src["attributes"]) != sorted(out["attributes"]):
+            errors.append(f"property {name}: attributes {out['attributes']} != {src['attributes']}")
         if type_key(src["type"]) in TEXTURE_TYPES:
-            continue  # texture defaults are stripped from the build
+            src_name = texture_default(src["default"])
+            out_name = texture_default(out["default"])
+            if src_name is not None and src_name != out_name:
+                errors.append(f"property {name}: texture default {out_name!r} != {src_name!r}")
+            continue
         src_default = numeric_default(src["default"])
         out_default = numeric_default(out["default"])
         if src_default is not None and out_default is not None:
@@ -345,6 +369,13 @@ def compare_shader(source, output, errors):
     out_fallback = first_value(output, r'^\s*Fallback\s+"([^"]*)"')
     if src_fallback != out_fallback:
         errors.append(f"fallback {out_fallback!r} != {src_fallback!r}")
+
+    # Unset LOD serializes 0 and is not emitted, so compare the first
+    # SubShader's value with an absent-equals-0 default.
+    src_lod = first_value(source, r'^\s*LOD\s+(\d+)', "0")
+    out_lod = first_value(output, r'^\s*LOD\s+(\d+)', "0")
+    if src_lod != out_lod:
+        errors.append(f"LOD {out_lod} != {src_lod}")
 
     src_subshaders = subshader_blocks(source)
     out_subshaders = subshader_blocks(output)

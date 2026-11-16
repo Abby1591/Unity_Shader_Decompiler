@@ -2,12 +2,11 @@ Shader "Corpus/40 Render Texture Inputs"
 {
     Properties
     {
-        _MainTex ("Source", 2D) = "" {}
+        _MainTex ("Source", 2D) = "white" {}
         _Intensity ("Intensity", Range(0, 4)) = 1
     }
     SubShader
     {
-        LOD 0
         Pass
         {
             Cull Off

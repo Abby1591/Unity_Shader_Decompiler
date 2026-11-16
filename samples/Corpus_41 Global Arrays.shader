@@ -3,13 +3,12 @@ Shader "Corpus/41 Global Arrays"
     Properties
     {
         _Color ("Color", Color) = (1,1,1,1)
-        _MainTex ("Texture", 2D) = "" {}
+        _MainTex ("Texture", 2D) = "white" {}
         _ArrayCount ("Array Count", Float) = 4
     }
     SubShader
     {
         Tags { "QUEUE"="Geometry" "RenderType"="Opaque" }
-        LOD 0
         Pass
         {
             Tags { "QUEUE"="Geometry" "RenderType"="Opaque" }

@@ -198,6 +198,28 @@ public class DecompilerIntegrationTests
     }
 
     [Fact]
+    public void Properties_EmitFlagAttributesTextureDefaultsAndDimensions()
+    {
+        // ShaderPropertyFlags have no m_Attributes entry, and m_DefTexture
+        // carries the texture default name and dimension.
+        var text = FixtureCache.Decompile("Corpus_01 Properties").ShaderText;
+
+        Assert.Contains("[HideInInspector]", text);
+        Assert.Contains("[MainColor]", text);
+        Assert.Contains("_BaseMap (\"Base Map\", 2D) = \"white\" {}", text);
+        Assert.Contains("_Tex3D (\"3D\", 3D) = \"black\" {}", text);
+        Assert.Contains("_TexCubeArray (\"Cube Array\", CubeArray) = \"black\" {}", text);
+    }
+
+    [Fact]
+    public void Lod_IsEmittedOnlyWhenSet()
+    {
+        // m_LOD serializes 0 when the source sets none.
+        Assert.Contains("LOD 100", FixtureCache.Decompile("Corpus_01 Properties").ShaderText);
+        Assert.DoesNotContain("LOD 0", FixtureCache.Decompile("Corpus_04 Vertex Fragment").ShaderText);
+    }
+
+    [Fact]
     public void SurfaceStandard_EmitsLightingMembersUsedByBytecode()
     {
         // Metadata lists _LightColor0/_WorldSpaceLightPos0 for the lighting

@@ -2,7 +2,7 @@ Shader "Corpus/17 Image Effect"
 {
     Properties
     {
-        _MainTex ("Source", 2D) = "" {}
+        _MainTex ("Source", 2D) = "white" {}
         _Intensity ("Intensity", Range(0, 4)) = 1
         _BlurSize ("Blur Size", Range(0, 8)) = 1
         _DepthStrength ("Depth Strength", Range(0, 4)) = 1
@@ -10,7 +10,6 @@ Shader "Corpus/17 Image Effect"
     }
     SubShader
     {
-        LOD 0
         Pass
         {
             Cull Off

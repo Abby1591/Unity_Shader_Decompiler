@@ -12,10 +12,8 @@
         "z": 1,
         "w": 1
       },
-      "defTexture": {
-        "m_DefaultName": "",
-        "m_TexDim": 1
-      },
+      "defaultTextureName": "",
+      "textureDimension": 1,
       "attributes": []
     },
     {
@@ -29,10 +27,8 @@
         "z": 0,
         "w": 0
       },
-      "defTexture": {
-        "m_DefaultName": "white",
-        "m_TexDim": 2
-      },
+      "defaultTextureName": "white",
+      "textureDimension": 2,
       "attributes": []
     }
   ],

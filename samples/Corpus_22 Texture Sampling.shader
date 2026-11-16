@@ -2,18 +2,17 @@ Shader "Corpus/22 Texture Sampling"
 {
     Properties
     {
-        _Tex2D ("2D", 2D) = "" {}
-        _Tex3D ("3D", 2D) = "" {}
-        _TexCube ("Cube", 2D) = "" {}
-        _Tex2DArray ("2D Array", 2D) = "" {}
-        _TexCubeArray ("Cube Array", 2D) = "" {}
+        _Tex2D ("2D", 2D) = "white" {}
+        _Tex3D ("3D", 3D) = "black" {}
+        _TexCube ("Cube", Cube) = "black" {}
+        _Tex2DArray ("2D Array", 2DArray) = "white" {}
+        _TexCubeArray ("Cube Array", CubeArray) = "black" {}
         _Bias ("Bias", Range(0, 4)) = 0
         _Lod ("Lod", Range(0, 8)) = 0
     }
     SubShader
     {
         Tags { "QUEUE"="Geometry" "RenderType"="Opaque" }
-        LOD 0
         Pass
         {
             Tags { "QUEUE"="Geometry" "RenderType"="Opaque" }

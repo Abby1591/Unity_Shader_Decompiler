@@ -2,15 +2,15 @@ Shader "Corpus/32 Terrain"
 {
     Properties
     {
-        _Control ("Splat Control", 2D) = "" {}
-        _Splat0 ("Splat 0", 2D) = "" {}
-        _Splat1 ("Splat 1", 2D) = "" {}
-        _Splat2 ("Splat 2", 2D) = "" {}
-        _Splat3 ("Splat 3", 2D) = "" {}
-        _Normal0 ("Normal 0", 2D) = "" {}
-        _Normal1 ("Normal 1", 2D) = "" {}
-        _Normal2 ("Normal 2", 2D) = "" {}
-        _Normal3 ("Normal 3", 2D) = "" {}
+        _Control ("Splat Control", 2D) = "white" {}
+        _Splat0 ("Splat 0", 2D) = "white" {}
+        _Splat1 ("Splat 1", 2D) = "white" {}
+        _Splat2 ("Splat 2", 2D) = "white" {}
+        _Splat3 ("Splat 3", 2D) = "white" {}
+        _Normal0 ("Normal 0", 2D) = "bump" {}
+        _Normal1 ("Normal 1", 2D) = "bump" {}
+        _Normal2 ("Normal 2", 2D) = "bump" {}
+        _Normal3 ("Normal 3", 2D) = "bump" {}
         _Metallic ("Metallic", Range(0, 1)) = 0
         _Smoothness ("Smoothness", Range(0, 1)) = 0.2
         _HeightBlend ("Height Blend", Range(0, 1)) = 0.5
@@ -18,7 +18,6 @@ Shader "Corpus/32 Terrain"
     SubShader
     {
         Tags { "QUEUE"="Geometry" "RenderType"="Opaque" "TerrainCompatible"="true" }
-        LOD 0
         Pass
         {
             Tags { "QUEUE"="Geometry" "RenderType"="Opaque" "TerrainCompatible"="true" }

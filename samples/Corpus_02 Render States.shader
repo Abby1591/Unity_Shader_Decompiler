@@ -3,12 +3,11 @@ Shader "Corpus/02 Render States"
     Properties
     {
         _Color ("Color", Color) = (1,1,1,1)
-        _MainTex ("Texture", 2D) = "" {}
+        _MainTex ("Texture", 2D) = "white" {}
     }
     SubShader
     {
         Tags { "QUEUE"="Transparent" "RenderType"="Transparent" }
-        LOD 0
         Pass
         {
             Tags { "QUEUE"="Transparent" "RenderType"="Transparent" }

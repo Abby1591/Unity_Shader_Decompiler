@@ -12,10 +12,8 @@
         "z": 0,
         "w": 0
       },
-      "defTexture": {
-        "m_DefaultName": "",
-        "m_TexDim": 1
-      },
+      "defaultTextureName": "",
+      "textureDimension": 1,
       "attributes": [
         "Header(Header Label)"
       ]
@@ -31,10 +29,8 @@
         "z": 0,
         "w": 0
       },
-      "defTexture": {
-        "m_DefaultName": "",
-        "m_TexDim": 1
-      },
+      "defaultTextureName": "",
+      "textureDimension": 1,
       "attributes": [
         "Space(12)"
       ]
@@ -50,10 +46,8 @@
         "z": 0,
         "w": 0
       },
-      "defTexture": {
-        "m_DefaultName": "",
-        "m_TexDim": 1
-      },
+      "defaultTextureName": "",
+      "textureDimension": 1,
       "attributes": [
         "Toggle"
       ]
@@ -69,10 +63,8 @@
         "z": 0,
         "w": 0
       },
-      "defTexture": {
-        "m_DefaultName": "",
-        "m_TexDim": 1
-      },
+      "defaultTextureName": "",
+      "textureDimension": 1,
       "attributes": [
         "ToggleOff"
       ]
@@ -88,10 +80,8 @@
         "z": 0,
         "w": 0
       },
-      "defTexture": {
-        "m_DefaultName": "",
-        "m_TexDim": 1
-      },
+      "defaultTextureName": "",
+      "textureDimension": 1,
       "attributes": [
         "Enum(UnityEngine.Rendering.CullMode)"
       ]
@@ -107,10 +97,8 @@
         "z": 0,
         "w": 0
       },
-      "defTexture": {
-        "m_DefaultName": "",
-        "m_TexDim": 1
-      },
+      "defaultTextureName": "",
+      "textureDimension": 1,
       "attributes": [
         "Enum(Off,0,On,1)"
       ]
@@ -126,10 +114,8 @@
         "z": 1,
         "w": 0
       },
-      "defTexture": {
-        "m_DefaultName": "",
-        "m_TexDim": 1
-      },
+      "defaultTextureName": "",
+      "textureDimension": 1,
       "attributes": [
         "PowerSlider(3.0)"
       ]
@@ -145,10 +131,8 @@
         "z": 10,
         "w": 0
       },
-      "defTexture": {
-        "m_DefaultName": "",
-        "m_TexDim": 1
-      },
+      "defaultTextureName": "",
+      "textureDimension": 1,
       "attributes": [
         "IntRange"
       ]
@@ -164,10 +148,8 @@
         "z": 0,
         "w": 0
       },
-      "defTexture": {
-        "m_DefaultName": "white",
-        "m_TexDim": 2
-      },
+      "defaultTextureName": "white",
+      "textureDimension": 2,
       "attributes": []
     },
     {
@@ -181,10 +163,8 @@
         "z": 0,
         "w": 0
       },
-      "defTexture": {
-        "m_DefaultName": "bump",
-        "m_TexDim": 2
-      },
+      "defaultTextureName": "bump",
+      "textureDimension": 2,
       "attributes": []
     },
     {
@@ -198,10 +178,8 @@
         "z": 1,
         "w": 1
       },
-      "defTexture": {
-        "m_DefaultName": "",
-        "m_TexDim": 1
-      },
+      "defaultTextureName": "",
+      "textureDimension": 1,
       "attributes": []
     },
     {
@@ -215,10 +193,8 @@
         "z": 0.5,
         "w": 1
       },
-      "defTexture": {
-        "m_DefaultName": "",
-        "m_TexDim": 1
-      },
+      "defaultTextureName": "",
+      "textureDimension": 1,
       "attributes": []
     },
     {
@@ -232,10 +208,8 @@
         "z": 1,
         "w": 1
       },
-      "defTexture": {
-        "m_DefaultName": "",
-        "m_TexDim": 1
-      },
+      "defaultTextureName": "",
+      "textureDimension": 1,
       "attributes": []
     },
     {
@@ -249,10 +223,8 @@
         "z": 0,
         "w": 0
       },
-      "defTexture": {
-        "m_DefaultName": "white",
-        "m_TexDim": 2
-      },
+      "defaultTextureName": "white",
+      "textureDimension": 2,
       "attributes": []
     },
     {
@@ -266,10 +238,8 @@
         "z": 1,
         "w": 1
       },
-      "defTexture": {
-        "m_DefaultName": "",
-        "m_TexDim": 1
-      },
+      "defaultTextureName": "",
+      "textureDimension": 1,
       "attributes": []
     },
     {
@@ -283,10 +253,8 @@
         "z": 0,
         "w": 0
       },
-      "defTexture": {
-        "m_DefaultName": "",
-        "m_TexDim": 1
-      },
+      "defaultTextureName": "",
+      "textureDimension": 1,
       "attributes": []
     },
     {
@@ -300,10 +268,8 @@
         "z": 0,
         "w": 0
       },
-      "defTexture": {
-        "m_DefaultName": "",
-        "m_TexDim": 1
-      },
+      "defaultTextureName": "",
+      "textureDimension": 1,
       "attributes": []
     },
     {
@@ -317,10 +283,8 @@
         "z": 0,
         "w": 0
       },
-      "defTexture": {
-        "m_DefaultName": "",
-        "m_TexDim": 1
-      },
+      "defaultTextureName": "",
+      "textureDimension": 1,
       "attributes": []
     },
     {
@@ -334,10 +298,8 @@
         "z": 1,
         "w": 1
       },
-      "defTexture": {
-        "m_DefaultName": "",
-        "m_TexDim": 1
-      },
+      "defaultTextureName": "",
+      "textureDimension": 1,
       "attributes": []
     },
     {
@@ -351,10 +313,8 @@
         "z": 3,
         "w": 4
       },
-      "defTexture": {
-        "m_DefaultName": "",
-        "m_TexDim": 1
-      },
+      "defaultTextureName": "",
+      "textureDimension": 1,
       "attributes": []
     },
     {
@@ -368,10 +328,8 @@
         "z": 5,
         "w": 0
       },
-      "defTexture": {
-        "m_DefaultName": "",
-        "m_TexDim": 1
-      },
+      "defaultTextureName": "",
+      "textureDimension": 1,
       "attributes": []
     },
     {
@@ -385,10 +343,8 @@
         "z": 0,
         "w": 0
       },
-      "defTexture": {
-        "m_DefaultName": "white",
-        "m_TexDim": 2
-      },
+      "defaultTextureName": "white",
+      "textureDimension": 2,
       "attributes": []
     },
     {
@@ -402,10 +358,8 @@
         "z": 0,
         "w": 0
       },
-      "defTexture": {
-        "m_DefaultName": "black",
-        "m_TexDim": 3
-      },
+      "defaultTextureName": "black",
+      "textureDimension": 3,
       "attributes": []
     },
     {
@@ -419,10 +373,8 @@
         "z": 0,
         "w": 0
       },
-      "defTexture": {
-        "m_DefaultName": "black",
-        "m_TexDim": 4
-      },
+      "defaultTextureName": "black",
+      "textureDimension": 4,
       "attributes": []
     },
     {
@@ -436,10 +388,8 @@
         "z": 0,
         "w": 0
       },
-      "defTexture": {
-        "m_DefaultName": "white",
-        "m_TexDim": 5
-      },
+      "defaultTextureName": "white",
+      "textureDimension": 5,
       "attributes": []
     },
     {
@@ -453,10 +403,8 @@
         "z": 0,
         "w": 0
       },
-      "defTexture": {
-        "m_DefaultName": "black",
-        "m_TexDim": 6
-      },
+      "defaultTextureName": "black",
+      "textureDimension": 6,
       "attributes": []
     }
   ],

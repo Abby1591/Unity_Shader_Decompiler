@@ -18,24 +18,32 @@ Shader "Corpus/01 Properties"
         _Power ("Power", Range(0.01, 1)) = 0.5
         [IntRange]
         _IntRange ("Int Range", Range(0, 10)) = 5
-        _NoScaleTex ("No Scale", 2D) = "" {}
-        _NormalMap ("Normal Map", 2D) = "" {}
+        [NoScaleOffset]
+        _NoScaleTex ("No Scale", 2D) = "white" {}
+        [Normal]
+        _NormalMap ("Normal Map", 2D) = "bump" {}
+        [HDR]
         _HdrColor ("HDR Color", Color) = (1,1,1,1)
+        [Gamma]
         _GammaColor ("Gamma Color", Color) = (0.5,0.5,0.5,1)
+        [PerRendererData]
         _PerRendererColor ("Per Renderer Color", Color) = (1,1,1,1)
-        _BaseMap ("Base Map", 2D) = "" {}
+        [MainTexture]
+        _BaseMap ("Base Map", 2D) = "white" {}
+        [MainColor]
         _BaseColor ("Base Color", Color) = (1,1,1,1)
+        [HideInInspector]
         _Hidden ("Hidden", Float) = 0
         _Float ("Float", Float) = 1.5
         _Int ("Int", Float) = 3
         _Color ("Color", Color) = (1,0,1,1)
         _Vector ("Vector", Vector) = (1,2,3,4)
         _Range ("Range", Range(-5, 5)) = 2
-        _Tex2D ("2D", 2D) = "" {}
-        _Tex3D ("3D", 2D) = "" {}
-        _TexCube ("Cube", 2D) = "" {}
-        _Tex2DArray ("2D Array", 2D) = "" {}
-        _TexCubeArray ("Cube Array", 2D) = "" {}
+        _Tex2D ("2D", 2D) = "white" {}
+        _Tex3D ("3D", 3D) = "black" {}
+        _TexCube ("Cube", Cube) = "black" {}
+        _Tex2DArray ("2D Array", 2DArray) = "white" {}
+        _TexCubeArray ("Cube Array", CubeArray) = "black" {}
     }
     SubShader
     {

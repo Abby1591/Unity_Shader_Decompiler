@@ -2,7 +2,7 @@ Shader "Corpus/33 Transparency"
 {
     Properties
     {
-        _MainTex ("Texture", 2D) = "" {}
+        _MainTex ("Texture", 2D) = "white" {}
         _Color ("Color", Color) = (1,1,1,1)
         _Cutoff ("Cutoff", Range(0, 1)) = 0.5
         _InvFade ("Soft Fade", Range(0.01, 3)) = 1
@@ -10,7 +10,6 @@ Shader "Corpus/33 Transparency"
     SubShader
     {
         Tags { "IGNOREPROJECTOR"="true" "QUEUE"="Transparent" "RenderType"="Transparent" }
-        LOD 0
         Pass
         {
             Tags { "IGNOREPROJECTOR"="true" "QUEUE"="Transparent" "RenderType"="Transparent" }

@@ -3,7 +3,7 @@ Shader "Corpus/27 Keywords"
     Properties
     {
         _Color ("Color", Color) = (1,1,1,1)
-        _MainTex ("Texture", 2D) = "" {}
+        _MainTex ("Texture", 2D) = "white" {}
         [Toggle(_MODE_A)]
         _ModeA ("Mode A", Float) = 0
         [Toggle(_MODE_B)]
@@ -22,7 +22,6 @@ Shader "Corpus/27 Keywords"
     SubShader
     {
         Tags { "QUEUE"="Geometry" "RenderType"="Opaque" }
-        LOD 0
         Pass
         {
             Tags { "LIGHTMODE"="FORWARDBASE" "QUEUE"="Geometry" "RenderType"="Opaque" "SHADOWSUPPORT"="true" }

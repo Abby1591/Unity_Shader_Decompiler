@@ -2,15 +2,14 @@ Shader "Corpus/28 Unity Macros"
 {
     Properties
     {
-        _MainTex ("Texture", 2D) = "" {}
-        _BumpMap ("Normal", 2D) = "" {}
+        _MainTex ("Texture", 2D) = "white" {}
+        _BumpMap ("Normal", 2D) = "bump" {}
         _Color ("Color", Color) = (1,1,1,1)
         _BumpScale ("Bump Scale", Float) = 1
     }
     SubShader
     {
         Tags { "QUEUE"="Geometry" "RenderType"="Opaque" }
-        LOD 0
         Pass
         {
             Tags { "QUEUE"="Geometry" "RenderType"="Opaque" }
