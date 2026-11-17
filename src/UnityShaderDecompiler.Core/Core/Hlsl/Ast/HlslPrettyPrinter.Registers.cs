@@ -483,6 +483,15 @@ public static partial class HlslPrettyPrinter
         _ => "",
     };
 
+    // Hull/domain system-value IDs are scalar uints in HLSL, so a register
+    // mask/swizzle suffix (`id.x`) would not compile. Cast to float first
+    // when the read wants a component or a splat.
+    private static string ScalarSystemValue(string name, IRRegister reg)
+    {
+        string suffix = MaskOrSwizzleSuffix(reg);
+        return suffix is "" or ".x" ? name : $"((float){name}){suffix}";
+    }
+
     // Central dispatch for reading ANY register on the RHS of an
     // expression — routes to struct-field access for input/output,
     // direct (already-valid) bound names for cbuffer/resource/sampler,
@@ -508,11 +517,30 @@ public static partial class HlslPrettyPrinter
                 ? HlslAstBuilder.ToFieldName("SV_PrimitiveID0")
                 : "i." + HlslAstBuilder.ToFieldName("SV_PrimitiveID0"),
 
-            // Hull/domain implicit inputs are declared as function parameters
-            // (see HlslAstBuilder.BuildFunction), not struct fields.
-            RegisterType.InputForkInstanceID or RegisterType.InputJoinInstanceID
-                or RegisterType.InputDomainPoint or RegisterType.InputControlPoint =>
-                HlslAstBuilder.ImplicitInputName(reg) + MaskOrSwizzleSuffix(reg),
+            // Hull/domain implicit inputs come from the entry-point
+            // parameters (patch / id / bary / forkID) declared by the
+            // printer, not from struct fields.
+            RegisterType.InputControlPoint =>
+                RenderControlPointRead(reg, ctx),
+
+            RegisterType.InputDomainPoint =>
+                "bary" + MaskOrSwizzleSuffix(reg),
+
+            // Domain patch-constant inputs: the vpc register number is the
+            // signature register, so map it straight to the CONST member.
+            RegisterType.InputPatchConstant =>
+                RenderPatchConstantRead(reg, ctx),
+
+            RegisterType.OutputControlPointID =>
+                ScalarSystemValue("id", reg),
+
+            RegisterType.InputForkInstanceID =>
+                ScalarSystemValue(
+                    ctx.IsPatchConstantFunction ? "forkID" : HlslAstBuilder.ImplicitInputName(reg),
+                    reg),
+
+            RegisterType.InputJoinInstanceID =>
+                ScalarSystemValue(HlslAstBuilder.ImplicitInputName(reg), reg),
 
             RegisterType.ConstantBuffer =>
                 RenderCbufferRead(reg, ctx),
@@ -559,6 +587,66 @@ public static partial class HlslPrettyPrinter
         return $"i[{index}]";
     }
 
+    // Hull/domain control-point reads index the patch parameter:
+    // vicp[cp][element] becomes patch[cp].<signature field>.
+    private static string RenderControlPointRead(IRRegister reg, PrintContext ctx)
+    {
+        uint controlPoint = reg.Indices.Count > 0 ? reg.Indices[0] : reg.Index;
+        uint element = reg.Indices.Count > 1 ? reg.Indices[1] : 0;
+
+        string index;
+        if (ctx.Stage == HlslShaderStage.Hull && !ctx.IsPatchConstantFunction)
+            index = "id";
+        else if (reg.RelativeIndices.Length > 0 && reg.RelativeIndices[0] is { } relative)
+            index = RenderExpression(relative, ctx);
+        else
+            index = controlPoint.ToString();
+
+        string field = element.ToString();
+        if (ctx.InputElements.TryGetValue(element, out List<SignatureElement>? elements)
+            && elements.Count > 0)
+            field = ElementFieldName(elements[0]);
+
+        return $"patch[{index}].{field}" + MaskOrSwizzleSuffix(reg);
+    }
+
+    // A domain patch-constant input (`vpcN`) names its signature register
+    // directly, so the field lookup is by that register with no offset.
+    private static string RenderPatchConstantRead(IRRegister reg, PrintContext ctx)
+    {
+        if (!ctx.PatchConstantFields.TryGetValue(reg.Index, out HlslPatchConstantField field))
+            return "CONST" + MaskOrSwizzleSuffix(reg);
+
+        string target = field.IsArray
+            ? $"CONST.{field.Field}[{field.Index}]"
+            : $"CONST.{field.Field}";
+        return target + MaskOrSwizzleSuffix(reg);
+    }
+
+    // A fork/join output register maps to a patch-constant field instead of
+    // the control-point output field with the same register number.
+    private static string RenderPatchConstantTarget(
+        IRRegister reg, HlslPatchConstantField field, PrintContext ctx)
+    {
+        string target = $"o.{field.Field}";
+        if (field.IsArray)
+        {
+            IRExpression? relative = reg.RelativeIndices.Length > 0 ? reg.RelativeIndices[0] : null;
+            uint offset = reg.Indices.Count > 0 ? reg.Indices[0] : 0;
+            int baseIndex = field.Index + (int)offset;
+            if (relative is not null)
+            {
+                string index = RenderExpression(relative, ctx);
+                target += "[" + (baseIndex == 0 ? index : $"{index} + {baseIndex}") + "]";
+            }
+            else
+            {
+                target += $"[{baseIndex}]";
+            }
+        }
+        return target + MaskOrSwizzleSuffix(reg);
+    }
+
     private static string FieldNameFor(IRRegister reg, PrintContext ctx)
     {
         string semantic = reg.SymbolicName ?? BaseIdentifier(reg, ctx);
@@ -589,6 +677,11 @@ public static partial class HlslPrettyPrinter
     // constructor; multi-element writes are split by RenderOutputWrite.
     private static string RenderSignatureField(IRRegister reg, string prefix, Dictionary<uint, List<SignatureElement>> byRegister, PrintContext ctx)
     {
+        if (reg.RegisterType == RegisterType.Output
+            && ctx.IsPatchConstantFunction
+            && ctx.PatchConstantFields.TryGetValue(reg.Index, out HlslPatchConstantField patchField))
+            return RenderPatchConstantTarget(reg, patchField, ctx);
+
         List<int> positions = ActiveComponents(reg);
         if (byRegister.TryGetValue(reg.Index, out List<SignatureElement>? elements) && elements.Count > 1)
         {
@@ -652,6 +745,13 @@ public static partial class HlslPrettyPrinter
     // lanes straight off the full-width expression.
     private static IEnumerable<string> RenderOutputWrite(IRRegister dest, string rhs, string rawRhs, PrintContext ctx)
     {
+        if (ctx.IsPatchConstantFunction
+            && ctx.PatchConstantFields.TryGetValue(dest.Index, out HlslPatchConstantField patchField))
+        {
+            yield return $"{RenderPatchConstantTarget(dest, patchField, ctx)} = {rhs};";
+            yield break;
+        }
+
         List<int> active = MaskIndices(dest.Mask);
         if (active.Count == 0)
             active = new List<int> { 0 };

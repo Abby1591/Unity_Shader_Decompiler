@@ -326,7 +326,8 @@ public static class Decompiler
                     pipelineResult.Program.Declarations,
                     pipelineResult.Blocks,
                     dxbcFile.InputSignature,
-                    dxbcFile.OutputSignature);
+                    dxbcFile.OutputSignature,
+                    dxbcFile.PatchConstantSignature);
 
                 if (function is null)
                 {
@@ -904,6 +905,7 @@ public static class Decompiler
 
         if (c.Function.InputStruct is not null) (variant?.Structs ?? pass.Structs).Add(c.Function.InputStruct);
         if (c.Function.OutputStruct is not null) (variant?.Structs ?? pass.Structs).Add(c.Function.OutputStruct);
+        if (c.Function.PatchConstantStruct is not null) (variant?.Structs ?? pass.Structs).Add(c.Function.PatchConstantStruct);
 
         // Cross-check the compiler-proven header extents against the
         // metadata/IR-derived slot layout for THIS stage. resources was

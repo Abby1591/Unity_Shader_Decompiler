@@ -122,7 +122,7 @@ public class DxbcFile
             PatchConstantSignature = new OsgnChunk();
             PatchConstantSignature.Read(r, hasStreamIndex: false);
         }
-        else if (chunk.Name == FourCC.PCON)
+        else if (chunk.Name == FourCC.PCON || chunk.Name == FourCC.PCSG)
         {
             using var ms = new MemoryStream(chunk.Data);
             using var r = new BinaryReader(ms);

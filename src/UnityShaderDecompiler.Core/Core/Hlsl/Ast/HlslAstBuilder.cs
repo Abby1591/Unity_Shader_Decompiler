@@ -134,7 +134,8 @@ public static class HlslAstBuilder
         List<IRDeclaration> declarations,
         List<IRBlock> blocks,
         IsgnChunk? inputSignature = null,
-        OsgnChunk? outputSignature = null)
+        OsgnChunk? outputSignature = null,
+        OsgnChunk? patchConstantSignature = null)
     {
         HlslShaderStage? stage = StageFromProgramType(programType);
         if (stage is null)
@@ -164,28 +165,10 @@ public static class HlslAstBuilder
         }
         else if (stage.Value is HlslShaderStage.Hull or HlslShaderStage.Domain)
         {
-            // Hull fork/join instance IDs and the domain point/control-point
-            // patch are implicit stage inputs (registers, not signature
-            // elements). Declare the ones this program reads as parameters so
-            // the emitted hull/domain function is valid HLSL.
-            // shortcut: the domain patch is flattened to per-element float4
-            // parameters, not OutputPatch<T, N>; upgrade with the hull/domain
-            // attributes (docs/decompile_failure_audit.md item 3).
-            var declared = new HashSet<string>();
-            foreach (IRRegister reg in blocks
-                         .SelectMany(b => b.Statements)
-                         .SelectMany(s => s.Uses)
-                         .Where(r => IsImplicitStageInput(r.RegisterType)))
-            {
-                string name = ImplicitInputName(reg);
-                if (declared.Add(name))
-                    function.PerPrimitiveInputs.Add(new HlslFieldNode
-                    {
-                        Name = name,
-                        TypeHint = reg.RegisterType is RegisterType.InputForkInstanceID
-                            or RegisterType.InputJoinInstanceID ? "uint" : "float4",
-                    });
-            }
+            // Hull/domain entry points take their patch/control-point input
+            // as InputPatch<T, N> / OutputPatch<T, N> plus the stage's system
+            // values, so no per-register parameters are needed here.
+            ApplyTessellationInfo(function, declarations);
         }
 
         function.InputStruct = inputElements is not null
@@ -217,8 +200,197 @@ public static class HlslAstBuilder
 
         if (stage.Value == HlslShaderStage.Geometry)
             ApplyGeometryInfo(function, declarations);
+        else if (stage.Value == HlslShaderStage.Hull)
+            SplitHullPhases(function, declarations, patchConstantSignature);
+        else if (stage.Value == HlslShaderStage.Domain)
+            function.PatchConstantStruct = BuildPatchConstantStruct(
+                $"{sourceName}PatchConstant", patchConstantSignature, function.PatchConstantFields);
+        else if (stage.Value == HlslShaderStage.Compute)
+            ApplyThreadGroup(function, declarations);
 
         return function;
+    }
+
+    // Hull and domain compile directives that survive in the bytecode stream.
+    private static void ApplyTessellationInfo(HlslFunctionNode function, List<IRDeclaration> declarations)
+    {
+        function.TessellationDomain = declarations
+            .OfType<IRDeclaration.IRDomainDeclaration>()
+            .LastOrDefault()?.Domain switch
+        {
+            IRDeclaration.TessellatorDomain.Tri => "tri",
+            IRDeclaration.TessellatorDomain.Quad => "quad",
+            IRDeclaration.TessellatorDomain.Isoline => "isoline",
+            _ => null,
+        };
+        function.TessellationPartitioning = declarations
+            .OfType<IRDeclaration.IRPartitioningDeclaration>()
+            .LastOrDefault()?.Partitioning switch
+        {
+            IRDeclaration.TessellatorPartitioning.Integer => "integer",
+            IRDeclaration.TessellatorPartitioning.Pow2 => "pow2",
+            IRDeclaration.TessellatorPartitioning.FractionalOdd => "fractional_odd",
+            IRDeclaration.TessellatorPartitioning.FractionalEven => "fractional_even",
+            _ => null,
+        };
+        function.TessellationOutputTopology = declarations
+            .OfType<IRDeclaration.IROutputTopologyDeclaration>()
+            .LastOrDefault()?.Topology switch
+        {
+            IRDeclaration.TessellatorOutputPrimitive.Point => "point",
+            IRDeclaration.TessellatorOutputPrimitive.Line => "line",
+            IRDeclaration.TessellatorOutputPrimitive.TriangleClockwise => "triangle_cw",
+            IRDeclaration.TessellatorOutputPrimitive.TriangleCounterclockwise => "triangle_ccw",
+            _ => null,
+        };
+        function.TessellationInputControlPoints = (int)(declarations
+            .OfType<IRDeclaration.IRInputControlPointCountDeclaration>()
+            .LastOrDefault()?.Count ?? 0);
+        function.TessellationOutputControlPoints = (int)(declarations
+            .OfType<IRDeclaration.IROutputControlPointCountDeclaration>()
+            .LastOrDefault()?.Count ?? 0);
+        function.TessellationMaxFactor = declarations
+            .OfType<IRDeclaration.IRMaxTessFactorDeclaration>()
+            .LastOrDefault()?.Value;
+    }
+
+    private static void ApplyThreadGroup(HlslFunctionNode function, List<IRDeclaration> declarations)
+    {
+        IRDeclaration.IRThreadGroupDeclaration? group = declarations
+            .OfType<IRDeclaration.IRThreadGroupDeclaration>()
+            .LastOrDefault();
+        if (group is null)
+            return;
+        function.ThreadGroupX = group.X;
+        function.ThreadGroupY = group.Y;
+        function.ThreadGroupZ = group.Z;
+    }
+
+    // A hull program is split into its control-point program (the entry
+    // point) and its fork/join program (the patch-constant function). Unity
+    // can omit the control-point phase when it is a pure pass-through; the
+    // entry point is then synthesized from the matching signature fields.
+    private static void SplitHullPhases(
+        HlslFunctionNode hull,
+        List<IRDeclaration> declarations,
+        OsgnChunk? patchConstantSignature)
+    {
+        hull.ForkInstanceCount = Math.Max(1, (int)(declarations
+            .OfType<IRDeclaration.IRHSForkPhaseInstanceCountDeclaration>()
+            .LastOrDefault()?.Count ?? 1));
+
+        var controlPoint = new List<IRStatement>();
+        var patch = new List<IRStatement>();
+        var phase = IRStatement.HullShaderPhaseKind.ControlPoint;
+        foreach (IRStatement stmt in hull.Body)
+        {
+            if (stmt is IRStatement.IRPhase marker)
+            {
+                phase = marker.Kind;
+                continue;
+            }
+            // Each phase ends in its own `ret`; the emitted functions return
+            // through their normal return statement.
+            if (stmt is IRStatement.IRReturn)
+                continue;
+            (phase == IRStatement.HullShaderPhaseKind.ControlPoint ? controlPoint : patch).Add(stmt);
+        }
+
+        if (controlPoint.Count == 0 && patch.Count > 0)
+        {
+            hull.SynthesizedControlPointPhase = true;
+            hull.Statements = new HlslBlockStatement();
+        }
+        else
+        {
+            hull.Statements = HlslStatementBuilder.Build(controlPoint);
+            HlslNameRecovery.Apply(hull.Statements);
+        }
+
+        HlslStructNode? patchStruct = BuildPatchConstantStruct(
+            $"{hull.SourceName}PatchConstant", patchConstantSignature, hull.PatchConstantFields);
+        if (patchStruct is null)
+            return;
+        hull.PatchConstantStruct = patchStruct;
+
+        // shortcut: fork and join statements both run inside the emitted
+        // fork-instance loop; join writes are idempotent, and no corpus
+        // shader uses a join phase.
+        var patchFunction = new HlslFunctionNode
+        {
+            Name = "hull_const",
+            SourceName = hull.SourceName,
+            Stage = HlslShaderStage.Hull,
+            IsPatchConstantFunction = true,
+            InputStruct = hull.InputStruct,
+            OutputStruct = patchStruct,
+            ForkInstanceCount = hull.ForkInstanceCount,
+            TessellationInputControlPoints = hull.TessellationInputControlPoints,
+        };
+        foreach (var (register, field) in hull.PatchConstantFields)
+            patchFunction.PatchConstantFields[register] = field;
+        foreach (var (register, elements) in hull.InputElementsByRegister)
+            patchFunction.InputElementsByRegister[register] = elements;
+        if (patchConstantSignature is not null)
+            GroupSignatureByRegister(patchFunction.OutputElementsByRegister, patchConstantSignature.Elements);
+        patchFunction.Statements = HlslStatementBuilder.Build(patch);
+        HlslNameRecovery.Apply(patchFunction.Statements);
+        hull.PatchConstantFunction = patchFunction;
+    }
+    // Patch-constant output struct: SV_TessFactor becomes the required
+    // `float edges[N] : SV_TessFactor` array, SV_InsideTessFactor a scalar,
+    // anything else a normal field. The field map lets the printer route the
+    // fork/join output registers into the right member.
+    private static HlslStructNode? BuildPatchConstantStruct(
+        string name,
+        OsgnChunk? signature,
+        Dictionary<uint, HlslPatchConstantField>? fields)
+    {
+        if (signature is null || signature.Elements.Count == 0)
+            return null;
+
+        var s = new HlslStructNode { Name = name };
+        List<SignatureElement> tess = signature.Elements
+            .Where(e => e.SemanticName == "SV_TessFactor").ToList();
+        if (tess.Count > 0)
+        {
+            s.Fields.Add(new HlslFieldNode
+            {
+                Name = "edges",
+                Semantic = "SV_TessFactor",
+                TypeHint = "float",
+                ArraySize = tess.Max(e => (int)e.SemanticIndex) + 1,
+            });
+            if (fields is not null)
+                foreach (SignatureElement el in tess)
+                    fields[el.Register] = new HlslPatchConstantField(
+                        "edges", IsArray: true, (int)el.SemanticIndex);
+        }
+
+        SignatureElement? inside = signature.Elements
+            .FirstOrDefault(e => e.SemanticName == "SV_InsideTessFactor");
+        if (inside is not null)
+        {
+            s.Fields.Add(new HlslFieldNode
+            {
+                Name = "inside",
+                Semantic = "SV_InsideTessFactor",
+                TypeHint = "float",
+            });
+            if (fields is not null)
+                fields[inside.Register] = new HlslPatchConstantField("inside", IsArray: false, 0);
+        }
+
+        foreach (SignatureElement el in signature.Elements.Where(e =>
+                     e.SemanticName is not "SV_TessFactor" and not "SV_InsideTessFactor"))
+        {
+            HlslFieldNode field = BuildField(el);
+            s.Fields.Add(field);
+            if (fields is not null)
+                fields[el.Register] = new HlslPatchConstantField(field.Name, IsArray: false, 0);
+        }
+
+        return s;
     }
 
     // dcl_inputprimitive/dcl_maxout are the only geometry metadata that
@@ -271,10 +443,6 @@ public static class HlslAstBuilder
     // has no register type yet, so it stays on the per-vertex input struct.
     private static bool IsPerPrimitiveSystemValue(SignatureElement el) =>
         el.SystemValue is (uint)SignatureSystemValue.PrimitiveId;
-
-    private static bool IsImplicitStageInput(RegisterType type) => type is
-        RegisterType.InputForkInstanceID or RegisterType.InputJoinInstanceID
-        or RegisterType.InputDomainPoint or RegisterType.InputControlPoint;
 
     // Stable identifier shared with the printer: the function parameter this
     // implicit stage input is declared as.

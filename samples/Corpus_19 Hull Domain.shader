@@ -74,6 +74,11 @@ Shader "Corpus/19 Hull Domain"
                 float3 normal0 : NORMAL0;
                 float2 texcoord0 : TEXCOORD0;
             };
+            struct program5PatchConstant
+            {
+                float edges[3] : SV_TessFactor;
+                float inside : SV_InsideTessFactor;
+            };
             struct program7Input
             {
                 float4 sv_Position0 : SV_Position;
@@ -85,6 +90,11 @@ Shader "Corpus/19 Hull Domain"
                 float4 sv_Position0 : SV_POSITION;
                 float3 texcoord0 : TEXCOORD0;
                 float2 texcoord1 : TEXCOORD1;
+            };
+            struct program7PatchConstant
+            {
+                float edges[3] : SV_TessFactor;
+                float inside : SV_InsideTessFactor;
             };
             #pragma vertex vert
             program1Output vert(program1Input i)
@@ -110,22 +120,41 @@ Shader "Corpus/19 Hull Domain"
                 o.sv_Target0.w = r1_xyzw_3.w;
                 return o;
             }
-            program5Output hull(program5Input i, uint inputforkinstanceid0)
+            program5PatchConstant hull_const(InputPatch<program5Input, 3> patch)
             {
-                program5Output o = (program5Output)0;
-                // TODO: unhandled IR node — hs_fork_phase
-                float r0_x_1 = inputforkinstanceid0.x;
-                o.sv_Position0.x = _Tess;
+                program5PatchConstant o = (program5PatchConstant)0;
+                for (uint forkID = 0; forkID < 3; forkID++)
+                {
+                    float r0_x_1 = forkID;
+                    o.edges[r0_x_1].x = _Tess;
+                    o.inside.x = _Tess;
+                }
                 return o;
             }
-            program7Output domain(program7Input i, float4 inputdomainpoint0, float4 inputcontrolpoint1_0, float4 inputcontrolpoint0_0, float4 inputcontrolpoint2_0, float4 inputcontrolpoint0_1, float4 inputcontrolpoint2_1, float4 inputcontrolpoint1_2, float4 inputcontrolpoint0_2, float4 inputcontrolpoint2_2)
+            #pragma hull hull
+            [domain("tri")]
+            [partitioning("fractional_odd")]
+            [outputtopology("triangle_cw")]
+            [outputcontrolpoints(3)]
+            [patchconstantfunc("hull_const")]
+            program5Output hull(InputPatch<program5Input, 3> patch, uint id : SV_OutputControlPointID)
+            {
+                program5Output o = (program5Output)0;
+                o.sv_Position0 = patch[id].sv_Position0;
+                o.normal0 = patch[id].normal0;
+                o.texcoord0 = patch[id].texcoord0;
+                return o;
+            }
+            #pragma domain domain
+            [domain("tri")]
+            program7Output domain(program7PatchConstant CONST, OutputPatch<program7Input, 3> patch, float3 bary : SV_DomainLocation)
             {
                 program7Output o = (program7Output)0;
-                float3 r0_xyz_1 = ((inputdomainpoint0.yyyy * inputcontrolpoint1_0.xyzx)).xyz;
-                float3 r0_xyz_3 = (mad(inputcontrolpoint2_0.xyzx, inputdomainpoint0.zzzz, (mad(inputcontrolpoint0_0.xyzx, inputdomainpoint0.xxxx, r0_xyz_1.xyzx)).xyzx)).xyz;
+                float3 r0_xyz_1 = ((bary.yyyy * patch[1].sv_Position0.xyzx)).xyz;
+                float3 r0_xyz_3 = (mad(patch[2].sv_Position0.xyzx, bary.zzzz, (mad(patch[0].sv_Position0.xyzx, bary.xxxx, r0_xyz_1.xyzx)).xyzx)).xyz;
                 float r0_w_1 = mad(r0_xyz_3.x, 8, _WorldSpaceLightPos0.y);
                 float r0_w_2 = sin(r0_w_1);
-                float3 r1_xyz_3 = (mad(inputcontrolpoint2_1.xyzx, inputdomainpoint0.zzzz, (mad(inputcontrolpoint0_1.xyzx, inputdomainpoint0.xxxx, (r0_xyz_1).xyzx)).xyzx)).xyz;
+                float3 r1_xyz_3 = (mad(patch[2].normal0.xyzx, bary.zzzz, (mad(patch[0].normal0.xyzx, bary.xxxx, (r0_xyz_1).xyzx)).xyzx)).xyz;
                 float3 r1_xyz_4 = normalize(r1_xyz_3);
                 float3 r0_xyz_4 = (mad(((r0_w_2.xxxx * r1_xyz_4.xyzx)).xyzx, _Displacement.xxxx, r0_xyz_3.xyzx)).xyz;
                 float4 r2_xyzw_2 = (r0_xyz_4.yyyy * unity_ObjectToWorld[1]);
@@ -142,7 +171,7 @@ Shader "Corpus/19 Hull Domain"
                 float r0_w_5 = dot(float4(r0_x_7, r0_y_7, r0_z_7, r0_x_7), float4(r0_x_7, r0_y_7, r0_z_7, r0_x_7));
                 float r0_w_6 = rsqrt(r0_w_5);
                 o.texcoord0.xyz = ((r0_w_6.xxxx * float4(r0_x_7, r0_y_7, r0_z_7, r0_x_7))).xyz;
-                o.texcoord1.xy = (mad((mad(inputcontrolpoint2_2.xyxx, inputdomainpoint0.zzzz, (mad(inputcontrolpoint0_2.xyxx, inputdomainpoint0.xxxx, ((inputdomainpoint0.yyyy * inputcontrolpoint1_2.xyxx)).xyxx)).xyxx)).xyxx, _MainTex_ST.xyxx, _MainTex_ST.zwzz)).xy;
+                o.texcoord1.xy = (mad((mad(patch[2].texcoord0.xyxx, bary.zzzz, (mad(patch[0].texcoord0.xyxx, bary.xxxx, ((bary.yyyy * patch[1].texcoord0.xyxx)).xyxx)).xyxx)).xyxx, _MainTex_ST.xyxx, _MainTex_ST.zwzz)).xy;
                 return o;
             }
             ENDHLSL

@@ -268,8 +268,29 @@ public class DecompilerIntegrationTests
     {
         var text = FixtureCache.Decompile("Corpus_19 Hull Domain").ShaderText;
 
-        Assert.Contains(" hull(", text);
-        Assert.Contains(" domain(", text);
+        // Entry points, stage pragmas and the tessellation attributes that
+        // only survive as dcl_tessellator_* declarations in the bytecode.
+        Assert.Contains("#pragma hull hull", text);
+        Assert.Contains("#pragma domain domain", text);
+        Assert.Contains("[domain(\"tri\")]", text);
+        Assert.Contains("[partitioning(\"fractional_odd\")]", text);
+        Assert.Contains("[outputtopology(\"triangle_cw\")]", text);
+        Assert.Contains("[outputcontrolpoints(3)]", text);
+        Assert.Contains("[patchconstantfunc(\"hull_const\")]", text);
+        Assert.Contains("InputPatch<program5Input, 3> patch", text);
+        Assert.Contains("OutputPatch<program7Input, 3> patch", text);
+        Assert.Contains("float3 bary : SV_DomainLocation", text);
+        Assert.Contains("patch[id].sv_Position0", text);
+        Assert.Contains("patch[0].sv_Position0", text);
+
+        // The fork phase becomes the patch-constant function named above.
+        Assert.Contains("struct program5PatchConstant", text);
+        Assert.Contains("float edges[3] : SV_TessFactor", text);
+        Assert.Contains("float inside : SV_InsideTessFactor", text);
+        Assert.Contains("program5PatchConstant hull_const(InputPatch<program5Input, 3> patch)", text);
+        Assert.Contains("for (uint forkID = 0; forkID < 3; forkID++)", text);
+        Assert.Contains("o.edges[", text);
+        Assert.DoesNotContain("unhandled IR node", text);
     }
 
     [Fact]

@@ -124,6 +124,12 @@ public static class IRControlFlowGraphBuilder
         if (blocks.Count == 0)
             return;
 
+        // A hull program is several sub-programs (control-point, fork, join),
+        // each ending with its own `ret`. They are not mutually exclusive
+        // control flow, so a return must not cut the next phase off from the
+        // graph — CFG cleanup would delete it as unreachable.
+        bool hasPhases = blocks.Any(b => b.Statements.Any(s => s is IRStatement.IRPhase));
+
         var ifStack = new Stack<int>();
         var ifHasElse = new HashSet<int>();
         // ifIdx -> block index of the true-body's last block, so its
@@ -270,7 +276,7 @@ public static class IRControlFlowGraphBuilder
                 if (cont.Condition is null)
                     continue; // unconditional: no fallthrough
             }
-            else if (last is IRStatement.IRReturn ret && ret.Condition is null)
+            else if (last is IRStatement.IRReturn ret && ret.Condition is null && !hasPhases)
             {
                 continue; // unconditional return: no fallthrough, no successors
             }

@@ -299,6 +299,38 @@ public sealed class HlslFunctionNode
     public HlslStructNode? InputStruct { get; set; }
     public HlslStructNode? OutputStruct { get; set; }
 
+    // Hull/domain entry-point metadata recovered from the dcl_* declarations.
+    // These were compile directives in the source, so only the values that
+    // survive in the bytecode can be reproduced.
+    public string? TessellationDomain { get; set; }            // tri/quad/isoline
+    public string? TessellationPartitioning { get; set; }      // integer/pow2/fractional_odd/fractional_even
+    public string? TessellationOutputTopology { get; set; }    // point/line/triangle_cw/triangle_ccw
+    public int TessellationInputControlPoints { get; set; }
+    public int TessellationOutputControlPoints { get; set; }
+    public float? TessellationMaxFactor { get; set; }
+
+    // dcl_thread_group for compute entry points.
+    public uint ThreadGroupX { get; set; }
+    public uint ThreadGroupY { get; set; }
+    public uint ThreadGroupZ { get; set; }
+
+    // A hull program with only a fork phase has no control-point program to
+    // decompile; the entry point is emitted as a pass-through of the
+    // matching fields instead.
+    public bool SynthesizedControlPointPhase { get; set; }
+
+    // The patch-constant program of a hull shader (fork/join phase), emitted
+    // as the function named by [patchconstantfunc(...)].
+    public HlslFunctionNode? PatchConstantFunction { get; set; }
+    public HlslStructNode? PatchConstantStruct { get; set; }
+    public bool IsPatchConstantFunction { get; set; }
+    public int ForkInstanceCount { get; set; } = 1;
+
+    // Output-register index -> patch-constant struct field, so fork/join
+    // writes land in `edges[i]` / `inside` instead of the control-point
+    // output fields of the same register numbers.
+    public Dictionary<uint, HlslPatchConstantField> PatchConstantFields { get; } = new();
+
     // Geometry stage entry-point metadata, recovered from the declaration
     // stream (dcl_inputprimitive / dcl_maxout / dcl_outputtopology). The
     // SFI0 chunk that also carries these is stripped from shipped blobs.
@@ -391,4 +423,12 @@ public sealed class HlslFieldNode
     // float vs int vs uint) — left as a hint for Stage 8 to firm up, not
     // invented here.
     public string TypeHint { get; init; } = "float4";
+
+    // Non-zero for an array field such as the tess-factor array
+    // `float edges[3] : SV_TessFactor`.
+    public int ArraySize { get; init; }
 }
+
+// One patch-constant output chunk: the field it writes plus, for array
+// fields (SV_TessFactor), the element it starts at.
+public readonly record struct HlslPatchConstantField(string Field, bool IsArray, int Index);
