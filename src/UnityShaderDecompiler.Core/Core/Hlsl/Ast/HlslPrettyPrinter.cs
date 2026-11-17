@@ -314,13 +314,25 @@ public static partial class HlslPrettyPrinter
             sb.Append("            #pragma geometry geom\n");
             PrintFunction(sb, geometry, pass.Cbuffers, fuseTemps, resources: pass.Resources, cbufferRenames: cbufferRenames);
         }
-
-        // Hull/domain/compute blocks stay pragma-less: their entry points need
-        // ShaderLab attributes (domain/partitioning/outputtopology) that are
-        // not wired yet.
-        foreach (HlslFunctionNode? f in new[] { hull, domain, compute })
-            if (f is not null)
-                PrintFunction(sb, f, pass.Cbuffers, fuseTemps, resources: pass.Resources, cbufferRenames: cbufferRenames);
+        if (hull is not null)
+        {
+            // The patch-constant program must be defined before the hull
+            // entry point that names it in [patchconstantfunc].
+            if (hull.PatchConstantFunction is { } patchConstant)
+                PrintFunction(sb, patchConstant, pass.Cbuffers, fuseTemps, resources: pass.Resources, cbufferRenames: cbufferRenames);
+            sb.Append("            #pragma hull hull\n");
+            PrintFunction(sb, hull, pass.Cbuffers, fuseTemps, resources: pass.Resources, cbufferRenames: cbufferRenames);
+        }
+        if (domain is not null)
+        {
+            sb.Append("            #pragma domain domain\n");
+            PrintFunction(sb, domain, pass.Cbuffers, fuseTemps, resources: pass.Resources, cbufferRenames: cbufferRenames);
+        }
+        if (compute is not null)
+        {
+            sb.Append("            #pragma kernel comp\n");
+            PrintFunction(sb, compute, pass.Cbuffers, fuseTemps, resources: pass.Resources, cbufferRenames: cbufferRenames);
+        }
     }
 
     private static void PrintRenderState(StringBuilder sb, HlslRenderState s)
@@ -738,8 +750,12 @@ public static partial class HlslPrettyPrinter
     {
         sb.Append("            struct ").Append(s.Name).Append("\n            {\n");
         foreach (HlslFieldNode f in s.Fields)
-            sb.Append("                ").Append(f.TypeHint).Append(' ').Append(f.Name)
-              .Append(" : ").Append(f.Semantic).Append(";\n");
+        {
+            sb.Append("                ").Append(f.TypeHint).Append(' ').Append(f.Name);
+            if (f.ArraySize > 0)
+                sb.Append('[').Append(f.ArraySize).Append(']');
+            sb.Append(" : ").Append(f.Semantic).Append(";\n");
+        }
         sb.Append("            };\n");
     }
 
@@ -782,6 +798,12 @@ public static partial class HlslPrettyPrinter
         // a register is packed with multiple disjoint-mask elements.
         public Dictionary<uint, List<SignatureElement>> InputElements { get; init; } = new();
         public Dictionary<uint, List<SignatureElement>> OutputElements { get; init; } = new();
+
+        // Patch-constant output routing: the same output register numbers
+        // carry tess factors in a hull fork/join phase, not the control-point
+        // output fields named by OSGN.
+        public Dictionary<uint, HlslPatchConstantField> PatchConstantFields { get; init; } = new();
+        public bool IsPatchConstantFunction { get; init; }
 
         // Unity source macros whose recognized bytecode idioms were reverted
         // to macro calls (e.g. UnityObjectToClipPos). The printer emits a
@@ -842,6 +864,45 @@ public static partial class HlslPrettyPrinter
             sb.Append("            void ").Append(fn.Name).Append('(')
               .Append(string.Join(", ", parameters)).Append(")\n            {\n");
         }
+        else if (fn.IsPatchConstantFunction)
+        {
+            sb.Append("            ").Append(outType).Append(' ').Append(fn.Name)
+              .Append("(InputPatch<").Append(inType).Append(", ")
+              .Append(Math.Max(1, fn.TessellationInputControlPoints)).Append("> patch)\n            {\n");
+        }
+        else if (fn.Stage == HlslShaderStage.Hull)
+        {
+            if (fn.TessellationDomain is { } domainName)
+                sb.Append("            [domain(\"").Append(domainName).Append("\")]\n");
+            if (fn.TessellationPartitioning is { } partitioning)
+                sb.Append("            [partitioning(\"").Append(partitioning).Append("\")]\n");
+            if (fn.TessellationOutputTopology is { } topology)
+                sb.Append("            [outputtopology(\"").Append(topology).Append("\")]\n");
+            sb.Append("            [outputcontrolpoints(")
+              .Append(Math.Max(1, fn.TessellationOutputControlPoints)).Append(")]\n");
+            if (fn.TessellationMaxFactor is { } maxFactor)
+                sb.Append("            [maxtessfactor(")
+                  .Append(maxFactor.ToString("0.###", System.Globalization.CultureInfo.InvariantCulture))
+                  .Append(")]\n");
+            if (fn.PatchConstantFunction is { } patchConstant)
+                sb.Append("            [patchconstantfunc(\"").Append(patchConstant.Name).Append("\")]\n");
+            sb.Append("            ").Append(outType).Append(' ').Append(fn.Name)
+              .Append("(InputPatch<").Append(inType).Append(", ")
+              .Append(Math.Max(1, fn.TessellationInputControlPoints))
+              .Append("> patch, uint id : SV_OutputControlPointID)\n            {\n");
+        }
+        else if (fn.Stage == HlslShaderStage.Domain)
+        {
+            if (fn.TessellationDomain is { } domainName)
+                sb.Append("            [domain(\"").Append(domainName).Append("\")]\n");
+            var parameters = new List<string>();
+            if (fn.PatchConstantStruct is { } patchConstant)
+                parameters.Add($"{patchConstant.Name} CONST");
+            parameters.Add($"OutputPatch<{inType}, {Math.Max(1, fn.TessellationInputControlPoints)}> patch");
+            parameters.Add("float3 bary : SV_DomainLocation");
+            sb.Append("            ").Append(outType).Append(' ').Append(fn.Name).Append('(')
+              .Append(string.Join(", ", parameters)).Append(")\n            {\n");
+        }
         else
         {
             var parameters = new List<string>();
@@ -851,6 +912,9 @@ public static partial class HlslPrettyPrinter
                 parameters.Add(field.Semantic.Length == 0
                     ? $"{field.TypeHint} {field.Name}"
                     : $"{field.TypeHint} {field.Name} : {field.Semantic}");
+            if (fn.Stage == HlslShaderStage.Compute)
+                sb.Append("            [numthreads(").Append(fn.ThreadGroupX).Append(", ")
+                  .Append(fn.ThreadGroupY).Append(", ").Append(fn.ThreadGroupZ).Append(")]\n");
             sb.Append("            ").Append(outType).Append(' ').Append(fn.Name).Append('(')
               .Append(string.Join(", ", parameters)).Append(")\n            {\n");
         }
@@ -870,6 +934,8 @@ public static partial class HlslPrettyPrinter
             Stage = fn.Stage,
             InputElements = fn.InputElementsByRegister,
             OutputElements = fn.OutputElementsByRegister,
+            PatchConstantFields = fn.PatchConstantFields,
+            IsPatchConstantFunction = fn.IsPatchConstantFunction,
         };
         if (cbufferRenames is not null)
             foreach (var (old, fresh) in cbufferRenames)
@@ -899,7 +965,29 @@ public static partial class HlslPrettyPrinter
         // use them. Preprocessor directives are legal anywhere in a
         // function body, so the standalone-compile contract is preserved.
         var body = new StringBuilder();
-        PrintBlock(body, fn.Statements, indent: 4, ctx);
+        if (fn.SynthesizedControlPointPhase && fn.InputStruct is not null && fn.OutputStruct is not null)
+        {
+            // No control-point phase in the bytecode: the original entry point
+            // copied the patch through unchanged, so replay that per field.
+            foreach (HlslFieldNode field in fn.OutputStruct.Fields)
+                if (fn.InputStruct.Fields.Any(f => f.Name == field.Name))
+                    body.Append("                o.").Append(field.Name)
+                        .Append(" = patch[id].").Append(field.Name).Append(";\n");
+        }
+        else if (fn.IsPatchConstantFunction)
+        {
+            // The fork phase runs once per fork instance; the instance ID is
+            // the loop counter the body's relative output index reads.
+            body.Append("                for (uint forkID = 0; forkID < ")
+                .Append(Math.Max(1, fn.ForkInstanceCount)).Append("; forkID++)\n");
+            body.Append("                {\n");
+            PrintBlock(body, fn.Statements, indent: 5, ctx);
+            body.Append("                }\n");
+        }
+        else
+        {
+            PrintBlock(body, fn.Statements, indent: 4, ctx);
+        }
 
         // DXBC functions return through a `ret` instruction; a switch (or an
         // if whose merge tail got attached to the last case) can leave the

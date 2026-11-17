@@ -50,4 +50,5 @@ public readonly struct FourCC : IEquatable<FourCC>
     public static readonly FourCC ISG1 = new("ISG1");
     public static readonly FourCC SFI0 = new("SFI0");
     public static readonly FourCC PCON = new("PCON");
+    public static readonly FourCC PCSG = new("PCSG");
 }

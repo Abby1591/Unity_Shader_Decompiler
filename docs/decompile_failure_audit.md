@@ -1,6 +1,6 @@
 # Corpus decompile gap audit
 
-Measured on `master` (2026-11-16) against the 48 corpus shaders in
+Measured on `master` (2026-11-17) against the 48 corpus shaders in
 `shaders_json/` and their original sources in `tests/Sources/`. On this commit
 the gates are green:
 
@@ -72,24 +72,28 @@ Impact: output is valid ShaderLab but is not the source form; pass count and
 structure differ. `test_source_fidelity.py` skips surface pass structure for
 this reason.
 
-## 3. Hull/domain attributes and compute are not emitted
+## 3. Hull/domain and compute entry points
 
-- `Corpus/19 Hull Domain` emits hull and domain functions but no
-  `#pragma hull`/`#pragma domain`, `[domain(...)]`, `[partitioning(...)]`,
-  `[outputtopology(...)]`, or `[patchconstantfunc(...)]`. The block is not a
-  valid Unity hull/domain shader. The hull body is also only partly
-  decompiled: `hs_fork_phase` is unhandled and the patch-constant function is
-  missing from the output.
-- No corpus shader is a compute shader, so `#pragma kernel` and
-  `[numthreads(...)]` are untested. The printer has a compute path but nothing
-  exercises it.
-- 75 `#pragma only_renderers d3d11` lines in the sources are not emitted
-  either, so the output no longer restricts itself to D3D11.
+Hull/domain are now emitted as a valid Unity tessellation shader.
+`Corpus/19 Hull Domain` carries `#pragma hull hull` / `#pragma domain domain`,
+the `[domain("tri")]`, `[partitioning("fractional_odd")]`,
+`[outputtopology("triangle_cw")]`, `[outputcontrolpoints(3)]` and
+`[patchconstantfunc("hull_const")]` attributes, `InputPatch`/`OutputPatch`
+parameters, the domain's `CONST` patch-constant parameter, and the fork phase
+as the patch-constant function `hull_const` returning a struct with
+`float edges[3] : SV_TessFactor` / `float inside : SV_InsideTessFactor`.
+A domain shader that reads the tess factors (`vpcN`) routes them to `CONST`.
+The hull's control-point phase is synthesized as a pass-through because the
+shipped bytecode contains only the fork phase. Both entry points compile with
+`d3dcompiler_47` (`hs_5_0`, `ds_5_0`).
 
-Cause: hull/domain/compute functions are printed without their ShaderLab
-attributes (`HlslPrettyPrinter.cs:320`, comment: "not wired yet").
-Domain/partitioning/outputtopology are compile directives that are not in the
-bytecode, so they can only be inferred from the signatures or defaulted.
+Remaining gaps in this area:
+
+- No corpus shader is a compute shader and no serialized subprogram type maps
+  to compute, so the printer's `#pragma kernel` / `[numthreads(...)]` path is
+  unreachable from a Shader asset.
+- 75 `#pragma only_renderers d3d11` lines in the sources are not emitted; the
+  renderer restriction is not recoverable from a player build.
 
 ## 4. Build-stripped or unemitted metadata
 
@@ -100,7 +104,7 @@ Counts are from the 48 sources versus the 48 outputs:
 |---|---:|---:|---|
 | Pass `Name "..."` | 66 | 0 | `m_Name` serializes as `""` |
 | `Fog` | 0 in corpus | 0 | `fogMode` is parsed but never printed |
-| Separate front/back Stencil | 0 in corpus | 0 | only the single-face form is emitted (`shortcut:` at `HlslPrettyPrinter.cs:390`) |
+| Separate front/back Stencil | 0 in corpus | 0 | only the single-face form is emitted (`shortcut:` at `HlslPrettyPrinter.cs:402`) |
 | `Category { }` wrappers | 1 (`Corpus/44`) | 0 | flattened into SubShaders |
 
 The source-fidelity runner skips pass names and `[Property]` refs. Texture
@@ -115,20 +119,20 @@ than observed failures:
 
 | Location | Gap |
 |---|---|
-| `Decompiler.cs:636` | A grab texture is matched to the lowest-slot anonymous `tN` resource; a pass binding several anonymous textures can pick the wrong one. |
-| `Decompiler.cs:779` | `#pragma target` is inferred from the program shader model (SM4.0→3.5, SM5.0→4.5, tessellation→5.0), not the source's value. |
-| `Decompiler.cs:875` | A variable declared in two cbuffers keeps the lowest slot's name; reads that resolve to the duplicate use the kept name and may read the wrong buffer value. |
-| `HlslAstBuilder.cs:172` | Hull/domain patch inputs are flattened to per-element `float4` parameters instead of `OutputPatch<T, N>`. |
-| `HlslAstBuilder.cs:270` | `SV_GSInstanceID` is not routed out of the per-vertex array (only `SV_PrimitiveID` is). |
-| `HlslAstBuilder.cs:467` | Structured buffer element type is guessed: `float4` for stride 16, `uint` otherwise. |
+| `Decompiler.cs:637` | A grab texture is matched to the lowest-slot anonymous `tN` resource; a pass binding several anonymous textures can pick the wrong one. |
+| `Decompiler.cs:780` | `#pragma target` is inferred from the program shader model (SM4.0→3.5, SM5.0→4.5, tessellation→5.0), not the source's value. |
+| `Decompiler.cs:876` | A variable declared in two cbuffers keeps the lowest slot's name; reads that resolve to the duplicate use the kept name and may read the wrong buffer value. |
+| `HlslAstBuilder.cs:316` | Hull fork and join statements both run inside the emitted fork-instance loop; join writes are idempotent, and no corpus shader has a join phase. |
+| `HlslAstBuilder.cs:442` | `SV_GSInstanceID` is not routed out of the per-vertex array (only `SV_PrimitiveID` is). |
+| `HlslAstBuilder.cs:635` | Structured buffer element type is guessed: `float4` for stride 16, `uint` otherwise. |
 | `HlslPrettyPrinter.cs:233` | Keywords beyond the 4 emitted permutations become one merged `#pragma multi_compile` line per pass; `shader_feature`/`_local` and the original grouping are lost. |
 | `HlslPrettyPrinter.cs:94,103` | Range bounds and unknown property kinds fall back to `Float /* TODO ... */`. |
-| `HlslPrettyPrinter.cs:939` | Unrecognised macros emit `#define name(v) /* TODO ... */ (v)`. |
-| `HlslPrettyPrinter.Registers.cs:142` | Unhandled IR nodes emit `// TODO: unhandled IR node` (`hs_fork_phase`, `emitStream`/`cutStream`, ...). |
-| `HlslPrettyPrinter.Registers.cs:1131` | `bfe` sign-extend shift is UB for width 0 or 32 (DXBC does not emit it today). |
-| `HlslPrettyPrinter.Registers.cs:1260` | Abs-fold guard only covers `max(a, -a)`; other spellings can fail with X8000. |
-| `HlslPrettyPrinter.Registers.cs:1391,1403,1409,1532` | Unmapped intrinsics/texture ops (`DistanceVector`, `MaskedSumOfAbsoluteDifferences`, `Eval*`, unknown texture ops) and empty matrices fall back to `TODO` text. |
-| `HlslPrettyPrinter.Registers.cs:1428` | ResInfo maps 2D/3D/cube; multisampled targets omit the mip parameter and exotic resource types fall back to 3. |
+| `HlslPrettyPrinter.cs:1027` | Unrecognised macros emit `#define name(v) /* TODO ... */ (v)`. |
+| `HlslPrettyPrinter.Registers.cs:142` | Unhandled IR nodes emit `// TODO: unhandled IR node` (`emitStream`/`cutStream`, ...). |
+| `HlslPrettyPrinter.Registers.cs:1231` | `bfe` sign-extend shift is UB for width 0 or 32 (DXBC does not emit it today). |
+| `HlslPrettyPrinter.Registers.cs:1360` | Abs-fold guard only covers `max(a, -a)`; other spellings can fail with X8000. |
+| `HlslPrettyPrinter.Registers.cs:1503,1509,1632` | Unmapped intrinsics/texture ops (`DistanceVector`, `MaskedSumOfAbsoluteDifferences`, `Eval*`, unknown texture ops) and empty matrices fall back to `TODO` text. |
+| `HlslPrettyPrinter.Registers.cs:1528` | ResInfo maps 2D/3D/cube; multisampled targets omit the mip parameter and exotic resource types fall back to 3. |
 | `HlslSurfaceShaderRecognizer.cs:186` | Surface `Input` struct recovers only vertex colour, not `uv_*` fields. |
 
 ## 6. Platform coverage
@@ -158,8 +162,9 @@ code is never emitted.
   pass count, and per-pass render state. It skips pass names, `[Property]`
   state refs, surface-shader structure, and all HLSL text. Int/UInt property
   types are compared as Float because the build stores them as `m_Type` 2.
-- No corpus shader covers compute, hull/domain attributes, separate stencil
-  faces, `Fog`, `SetTexture`, or MRT blend targets.
+- No corpus shader covers compute, separate stencil faces, `Fog`,
+  `SetTexture`, or MRT blend targets. Hull/domain is covered by
+  `Corpus/19`, including `hs_5_0`/`ds_5_0` recompilation in the D3D test tier.
 - The xUnit golden test compares only the 8 fixtures in
   `tests/UnityShaderDecompiler.Tests/GoldenMetadataTests.cs`; the other 40
   samples are refreshed manually.
@@ -196,5 +201,4 @@ At the time of writing this prints nothing: every emitted `Pass` has a body.
 
 1. Keyword variant bodies beyond 4 permutations (item 1) — 16 passes emit
    per-variant bodies; larger passes still lose non-base behaviour.
-2. Hull/domain attributes (item 3) — `Corpus/19` is not a valid hull shader.
-3. Surface reconstruction (item 2) — quality of life, not visual correctness.
+2. Surface reconstruction (item 2) — quality of life, not visual correctness.

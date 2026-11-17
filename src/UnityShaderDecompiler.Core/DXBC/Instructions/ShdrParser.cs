@@ -722,6 +722,16 @@ private RegisterType DecodeRegisterType(uint type)
                     break;
 
                 //----------------------------------------------------------
+                // dcl_input_control_point_count / dcl_output_control_point_count
+                // - count is packed into opcode-specific control bits (11+),
+                //   same pattern as the tessellator declarations below.
+                //----------------------------------------------------------
+                case 147: // dcl_input_control_point_count, bits 11-17
+                case 148: // dcl_output_control_point_count, bits 11-17
+                    instruction.ExtraData.Add((token >> 11) & 0x7F);
+                    break;
+
+                //----------------------------------------------------------
                 // dcl_globalFlags
                 //----------------------------------------------------------
                 //----------------------------------------------------------
