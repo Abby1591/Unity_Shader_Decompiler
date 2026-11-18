@@ -1,377 +1,708 @@
-# UnityShaderCompiler.exe — RDEF Information Extraction & Recoverability Analysis
+# UnityShaderCompiler.exe — compilation pipeline analysis
 
-Target: `UnityShaderCompiler.exe` (image base `0x140000000`, program `/UnityShaderCompiler.exe`)
-Ghidra project: `C:\Users\Abby\Software\Ghidra Projects\UnityShaderCompiler\Unityshadercompiler`
-Date: 2026-08-13
+Target: `UnityShaderCompiler.exe` (Unity 6), image base `0x140000000`.
+Ghidra project: `C:\Users\Abby\Software\Ghidra Projects\UnityShaderCompiler\Unityshadercompiler`,
+program `/UnityShaderCompiler.exe`.
+
+Scope: the compilation path only — how a request enters the worker, how source is
+prepared, which compiler backend runs, how the result is reflected, stripped and
+sent back. Library internals (hlslcc, glslang, SPIRV-Cross, DXC itself) are out of
+scope and only named where they are reached.
+
+Evidence markers used throughout:
+
+- **[V]** verified in this build: read from the decompiler, a string xref or a
+  vtable dump during this analysis.
+- **[I]** inferred from the surrounding structure; plausible but not proven.
+
+Addresses are file offsets in this build. An older revision of this document used
+a different build (`FUN_140022fb0`, `FUN_1400b8a50`, …); those addresses do not
+exist in the current dispatch chain and have been replaced.
+
+---
 
 ## 0. Executive summary
 
-Unity compiles HLSL via `D3DCompile`, extracts shader metadata via `D3DReflect`
-BEFORE stripping, then runs `D3DStripShader(flags=7)` to remove the RDEF/debug
-chunks from the DXBC that is sent to the editor and shipped in players.
+A request arrives over a loopback IPC stream as one line of text
+(`Cmd: compileSnippet …`). `FUN_1400cc6d0` dispatches on the command name to one of
+eight handlers. Every handler then runs the same five stages:
 
-The strip is PROVEN on both code paths:
+1. **Prepare** — keyword macros, `UNITY_VERSION`, `SHADER_STAGE_*`,
+   `SHADER_AVAILABLE_*` availability macros, and (for CGPROGRAM blocks with
+   `#pragma surface`) a full source-to-source expansion of the surface shader.
+2. **Split** — `#pragma` directives are parsed into a `ShaderPragmaSet`, the block
+   is cut into per-stage sources (`// SHADER_STAGE_x_begin` … `_end`), and the
+   stage set is validated.
+3. **Compile** — a language index picks one of four frontends (D3D/HLSL, GLSL,
+   Metal, D3D/HLSL). The D3D frontend drives either `D3DCompile` (FXC) or the
+   packaged DXC through the plugin interface at `0x140578000`.
+4. **Reflect + strip** — before the blob leaves the process, FXC results are
+   reflected through `FUN_1400218e0` (signatures, cbuffers, resources) and then
+   passed through `D3DStripShader` with flags `7` (reflection+debug+test blobs) or
+   `6` (debug+test blobs only, reflection kept). Compute kernels are stripped with
+   `7` unless the caller asks to keep reflection **[V]**.
+5. **Collect** — `FUN_1400b1150` walks the per-program results and appends each
+   `{name, bytecode}` pair to the response; the editor stores the bytecode next to
+   the reflection data it just received.
 
-- **D3D11 non-compute** (`FUN_140022fb0`): D3DStripShader via wrapper vtable
-  slot 0x40 with flags `(local_res10^1)+6` (== 6 or 7). The final payload is
-  `[0x02][4 binding-count bytes][flag byte][0x20 zeros][STRIPPED DXBC]` placed at
-  `ShaderCompileOutputData+0x40`.
-- **Compute** (`FUN_1400b77f0`): reflection first, then
-  `(**(code**)(*param_1 + 0x40))(param_1, blob, size, 7, &out)` — D3DStripShader
-  flags=7 — then the STRIPPED blob is copied into the output. Serialized via
-  `FUN_1400b5e10` into `+0x40`.
+Because reflection runs **before** stripping, the metadata a player build loses
+(cbuffer names, variable layout, resource bindings) is still serialized by the
+editor next to the bytecode. That is exactly the `constantBuffers` array this
+decompiler reads from the AssetStudio JSON, and it is why the DXBC blob alone is
+not the whole story.
 
-Both paths therefore ship DXBC with the RDEF chunk removed. Any metadata Unity
-wants to keep must be (a) re-derived from the stripped DXBC (signatures live in
-the ISGN/OSGN chunks and survive stripping), (b) encoded into the small
-non-compute header (4 per-class binding counts + 1 flag byte), or (c) serialized
-verbatim into the compute reflection blob.
+---
 
-## 1. Wire protocol (PROVEN)
+## 1. Process model and IPC
 
-Every packet over the named-pipe IPC is:
-
-```
-[4-byte magic 0x0C0BD1E4 (LE bytes e4 d1 0b 0c)]  @ DAT_1402f46c4
-[u64 LE size]
-[payload of `size` bytes]
-```
-
-- Sender chain: `FUN_1400b5b10` (blob `{ptr,size}`) / `FUN_1400b4fb0` (raw
-  blob) / `FUN_1400b5dc0` (SSO string) -> `FUN_1400b4fe0` ->
-  `FUN_1400b5160` (writes magic; "Protocol error - failed to send magic
-  number") + `FUN_1400b4d70` -> `FUN_1400e36f0` (WriteFile).
-- `FUN_1400b5f50` = send UInt32: magic + 4-byte LE value ("Failed to write
-  UInt32").
-- Receiver: `FUN_1400b42f0` (read + verify 4-byte magic == 0x0C0BD1E4;
-  "Protocol error - failed to read/magic number match") + `FUN_1400b3f50`
-  (receive packet: read 8-byte size then payload; "Failed to receive packet
-  size"/"Failed to receive packet") via `FUN_1400b3cf0` (pipe read; IPC ctx
-  param_1+0x08 read handle, +0x10 write handle, +0x18 timeout ms; "IPC not
-  initialized").
-
-### String encoding (`FUN_1400b5cf0`)
-`[i32 LE length][length raw bytes]`; SSO flag byte @+0x1c == 1 means the
-string is stored inline: length = `0x18 - byte@+0x18`, data at object base.
-Else length = `u32@+0x10`, data ptr @+0x00.
-
-### Master serializer (`FUN_1400b5e10`) output layout
-```
-u64 0xFFFFFFFFFFFFFFFF          (sentinel)
-u64 1                           (version)
-FUN_1400b5220 block             (CB/resource list; see below)
-FUN_1400b53d0 block             (param list)
-FUN_1400b5760 block             (ShaderInfoStruct array; embeds DXBC)
-u8  param_1[0xd]                (trailing flag bytes)
-```
-Callers: `FUN_140006710` (compute), `FUN_1400f2e30` (DXIL), `FUN_140026c40`,
-`FUN_140027890`.
-
-#### CB/resource list block (`FUN_1400b5220`)
-```
-u64 count
-per entry (9 qwords = 0x48 bytes):
-    string        (name)
-    u64 innerCount
-    per inner (10 qwords = 0x50 bytes):
-        string
-        string
-trailing qword (param_1 + 0x60)
-```
-
-#### Param list block (`FUN_1400b53d0`)
-```
-u64 count            (param_1[2])
-per entry (4 qwords):
-    u64 count
-    per inner (10 qwords):
-        string
-        u32
-        u64
-        per sub (8 qwords):
-            string
-            u32 x5
-```
-
-#### ShaderInfoStruct array block (`FUN_1400b5760`) — 0xf8-byte entries
-```
-u64 count                     (param_1 + 0x30)
-per entry (0xf8 bytes / 0x1f qwords):
-    string name               @ +0x00
-    list @ +0x28              (u64 count + per 0x60-byte entry {string,string,u32,u32,u32})
-    list @ +0x48
-    uint-pair list @ +0x68    (count @ +0x78)
-    list @ +0x88
-    list @ +0xa8
-    DXBC data                 @ +0xc8
-    u64 DXBC size             @ +0xd8
-    u32 thread group size     @ +0xe8
-    u32                       @ +0xec
-    u32                       @ +0xf0
-```
-The 0x60-byte list entries are emitted by `FUN_1400b5b40`; 0x58-byte entries
-by `FUN_14007b2e0`/`FUN_1400882e0` (used on the non-compute serialization
-path).
-
-## 2. ShaderCompileOutputData (`FUN_14000f170` ctor; 0xa0-byte object)
+`FUN_1400d0770` is the worker loop **[V]**: it connects a loopback stream
+(`"127.0.0.1"`, `"Couldn't create IPC stream\n"`,
+`"Couldn't connect IPC stream\n"`), reads commands, and on EOF reports
+`"IPC connection closed"`.
 
 ```
-+0x00  ShaderCompileOutputData::vftable
-+0x08  shader type
-+0x10  platform
-+0x40  output blob        (header+STRIPPED DXBC for non-compute; serialized
-                           shader-info with embedded DXBC for compute)
-+0x90  serialized shader-info / error string slot
+// FUN_1400d0770 - worker main
+void WorkerMain() {
+    IpcStream stream = ConnectLoopback("127.0.0.1");   // fatal on failure
+    for (;;) {
+        CommandLine cmd = stream.ReadCommand();        // "Error reading command"
+        if (cmd.IsEof) Fatal("IPC connection closed");
+        DispatchCommand(stream, cmd);                  // FUN_1400cc6d0
+    }
+}
 ```
 
-## 3. D3D11 non-compute path (PROVEN)
+Each frame on the stream starts with a magic + length header **[V]**
+(`FUN_1400c7ea0` receives and validates it, `FUN_1400c8c30` writes it,
+`FUN_1400c76e0` / `FUN_1400c8820` are the byte-level read/write helpers; all four
+raise `"IPC not initialized"` when the stream is unbound):
 
-Dispatch: `FUN_140006600` (fp-table entry 6 @ `1402e64e0`) selects DXIL
-(`FUN_1400f9320`) when type==4 + flags, else `FUN_140022fb0` (its ONLY
-function-level caller).
+```
+struct IpcFrame {          // little endian
+    uint32 magic;          // 0x0C0BD1E4  ("Protocol error - failed to match magic number")
+    uint64 size;           // payload byte count
+    byte   payload[size];
+};
+```
 
-`FUN_140022fb0` flow:
-1. Create `ShaderCompileOutputData`.
-2. "D3D shader compiler could not be loaded" check.
-3. `D3DCompile` (wrapper vtable slot 0x18, `FUN_14007c730`).
-4. On success: `FUN_140019550(blob, size, name, type, param_1[1],
-   param_1[2], +0x90, &local_198, &local_220)` — reflection (section 5).
-5. Optional `D3DStripShader` (vtable slot 0x40, flags `(local_res10^1)+6`).
-6. Build output at `+0x40`:
-   ```
-   u8   0x02
-   u8   texture count   = max(bindpoint+1) over type-class {2,5,7}
-   u8   cb count        = max(bindpoint+1) over type-class {0}
-   u8   sampler count   = max(bindpoint+1) over type-class {3}
-   u8   uav count       = max(bindpoint+1) over type-class {4,6,8,9,10,0xb}
-   u8   flag            = from param_1[7] bit 26 (local_220)
-   u8[0x20] zeros
-   <STRIPPED DXBC>
-   ```
-   Total header = 0x26 bytes (0x02 + 4 counts + 1 flag + 0x20 zeros).
+`magic` is compared as a raw 32-bit value inside `FUN_1400c7ea0`; a mismatch is
+fatal, not recoverable.
 
-## 4. Compute path (PROVEN)
+The payload is a text command whose fields are separated by the `Cmd: ` dispatch
+keys and `key=value` pairs. Handlers answer with the same framing, sometimes
+prefixed with a label such as `"computeData: "` or `"rayTracingData: "` **[V]**.
 
-Dispatch: `FUN_140006710` (fp-table entry 8).
-1. Create `ShaderCompileOutputData`.
-2. `FUN_1400b77f0(plVar3, param_2, &local_78, &local_58, +0x90)` — compile +
-   reflect.
-3. `FUN_1400b5e10(&local_78, +0x40)` — serialize into the output blob slot.
+---
 
-`FUN_1400b77f0`:
-- Reads CB/resource counts through the reflection vtable
-  (`*param_2` slots +0x50/+0x30/+0x28/+0x08/+0x00/+0x68/+0x58/+0x78/+0x90/
-  +0x80).
-- Calls `FUN_1400be960` (compute reflection, section 5).
-- Strips: `(**(code**)(*param_1 + 0x40))(param_1, blob, size, 7, &out)`.
-- Copies STRIPPED blob into output at `+0xc8`/`+0xd8` (size).
-- D3DStripShader is skipped when `(param_2[7] & 0x1004) != 0`.
+## 2. Command dispatch
 
-## 5. Reflection extraction (pre-strip)
+`FUN_1400cc6d0` is a large `if/else` chain over the command string **[V]**.
+All nine command names and all eight handlers were confirmed to be referenced
+from this function:
 
-Reflection interface is `ID3D11ShaderReflection` — IID PROVEN:
-`DAT_1403aa6c8` = `{8D536CA1-0CCA-4956-A837-786963755584}` (IID_ID3D11ShaderReflection),
-`DAT_1402fb898` = older-SDK `{8BA5FB08-5195-40E2-AC58-0D989C3A0102}` (DXIL
-path only). vtable slots: 0x18 GetDesc, 0x20 GetConstantBufferByIndex, 0x28
-GetConstantBufferByName, 0x30 GetResourceBindingDesc, 0x38
-GetInputParameterDesc (D3D11_SIGNATURE_PARAMETER_DESC), 0x40
-GetOutputParameterDesc, 0x48 GetPatchConstantParameterDesc, 0x50
-GetVariableByName, 0x58 GetResourceBindingDescByName, 0xA0 GetThreadGroupSize.
-D3DReflect entry: `FUN_14007cb80` (delayed load); wrapper global `1403acff0`,
-vtable `1402f5c60`, D3DCompiler global `DAT_1403b82c0`.
+```
+// FUN_1400cc6d0 - command dispatcher
+void DispatchCommand(IpcStream& stream, Utf8String cmd) {
+    if (cmd == "Cmd: shutdown")                  ShutdownWorker();
+    else if (cmd == "Cmd: preprocess")           HandlePreprocess(stream);              // FUN_1400b7db0
+    else if (cmd == "Cmd: disassembleShader")    HandleDisassemble(stream);             // FUN_1400b5680
+    else if (cmd == "Cmd: compileSnippet")       HandleCompileSnippet(stream);          // FUN_1400b4e40
+    else if (cmd == "Cmd: initializeCompiler")   HandleInitializeCompiler(stream);      // FUN_1400b5080
+    else if (cmd == "Cmd: preprocessCompute")    HandlePreprocessCompute(stream);       // FUN_1400b6370
+    else if (cmd == "Cmd: compileComputeKernel") HandleCompileComputeKernel(stream);    // FUN_1400b4100
+    else if (cmd == "Cmd: compileRayTracingShader")  HandleCompileRayTracing(stream);   // FUN_1400b4760
+    else if (cmd == "Cmd: preprocessRayTracingShader") HandlePreprocessRayTracing(stream); // FUN_1400b7270
+    else ReportError(stream, "Unknown command: " + cmd);
+}
+```
 
-### 5a. Non-compute (`FUN_140019550`)
-- Vertex semantics (param_4 == 0): POSITION->0, NORMAL->1, TANGENT->2,
-  COLOR->3, TEXCOORDn->4+n (n<8), BLENDWEIGHTS->0xc, BLENDINDICES->0xd,
-  SV_POSITION->warn. Written via param_5+8(channel,value).
-- Constant buffers: name, type 0/3 allowed, size < 0x10000, variable loop
-  filtering `(uFlags & 2) == D3D_SVF_USED`; type class 5 (STRUCT) + name
-  "UnityInstancing" -> instancing path via param_5+0x18 + `FUN_140037600`.
-- Resources: loop mask 0xa4, types {2,5,7} into 0x40-byte entries (local_218);
-  **param_8 = verbatim full 0x28-byte `D3D11_SHADER_INPUT_BIND_DESC` for ALL
-  BoundResources** — the highest-fidelity capture in the binary.
-- Samplers: Type==3.
-- Dispatch cases 0/2-0xb route to param_5+0x20 (name,bindpoint,bindcount) /
-  +0x28 (map {4,6}->2, {5,7}->5, 8->3, 9->4, 10->6) / +0x30 sampler /
-  +0x38 texture binding; +0x48 stats.
-- param_9 = GetDesc.cNumTotalThreads (desc+0x78) when param_4==4.
-- Param_5 builder vtable methods: +8 semantic, +0x10 CB name, +0x18
-  instancing, +0x20 CB binding, +0x28 UAV binding, +0x30 sampler, +0x38
-  texture binding, +0x48 stats.
+| Command | Handler | Purpose |
+|---|---|---|
+| `preprocess` | `FUN_1400b7db0` | expand macros/includes only; returns source |
+| `disassembleShader` | `FUN_1400b5680` | DXBC → text disassembly |
+| `compileSnippet` | `FUN_1400b4e40` | compile one CGPROGRAM block into per-stage blobs |
+| `initializeCompiler` | `FUN_1400b5080` | load/validate compiler libraries, report capabilities |
+| `preprocessCompute` | `FUN_1400b6370` | compute preprocess (multi-kernel aware) |
+| `compileComputeKernel` | `FUN_1400b4100` | compile named `#pragma kernel` entry points |
+| `compileRayTracingShader` | `FUN_1400b4760` | compile a raytracing library |
+| `preprocessRayTracingShader` | `FUN_1400b7270` | raytracing preprocess |
 
-### 5b. Compute (`FUN_1400be960`)
-- `GetThreadGroupSize` -> 3 uints at ShaderInfoStruct+0xe8.
-- CB count = desc+0x14, resource count = desc+0x18.
-- Variable loop filters D3D_SVF_USED; D3D_SVT->Unity type map
-  1->2, 2->1, 3->0, 0x13->5, 0x36->0.
-- 0x40-byte variable entries -> local_208; CB records appended to param_6 as
-  0x50-byte entries via `FUN_14000e640`; `FUN_1400b7620` links vars to CBs.
-- Resource cases: 0->param_5+0x28, 2->+0x88/+0x48, {4,6,8,9,10,0xb}->+0xa8
-  (0x60-byte entries), {5,7}->+0x88.
-- Samplers: Type==3 -> bindpoint@+0x54 or +0x68 via `FUN_1400af960`/
-  `FUN_140042370`.
+---
 
-## 6. Dispatcher message inventory (`FUN_1400b8a50`; PROVEN)
+## 3. Stage 1 — preparing source
 
-19 `FUN_1400b5b10` (string/blob) sends + 4 `FUN_1400b4fb0` (raw blob) sends.
+### 3.1 Macro setup
 
-Raw-blob sends (what carries compiled shader bytes to the editor):
-1. **compileSnippet** (stmt #601-#602): `"shader: %c"` label
-   (`1402f6cf8`) -> UInt32 (`FUN_1400b5f50`, local_6a0) -> raw blob
-   `FUN_1400b4fb0(param_1, local_788, uStack_780-local_788)` = the
-   `+0x40` output blob.
-2. **compute** (stmt #1102): `"computeData: "` label (`1402f6e24`-area,
-   stmt #1096) -> raw blob (serialized shader-info).
-3. **ray tracing** (stmt #1204): `"rayTracingData: "` label -> raw blob.
-4. **echo** (stmt #1283): receive packet then send it back (handshake).
+Before preprocessing, the frontends build the keyword macro list and add the
+engine's own defines **[V]**:
 
-Label strings (PROVEN at addresses): `1402f6bf4` " ok=", `1402f6c00`
-"shader: %c %c %c", `1402f6c18` " outsizE=", `1402f6c68` "disasm: %c",
-`1402f6cf8` "shader: %c", `1402f6d38` "computeKeywordsUserGlobal: %i",
-`1402f6d58` "computeKeywordsUserLocal: %i", `1402f6d78`
-"computeKeywordsDynamic:", `1402f6d90` "kernel: %s %i", `1402f6da0`
-"requirements:", `1402f6db0` "endKernels: %llu %i %i %i %i %i",
-`1402f6ea8` "params: %i %i %i %i %i %i %i"; plus "Cmd: disassembleShader",
-"Cmd: compileSnippet", "Cmd: initializeCompiler", "Cmd:
-preprocessCompute...", "Cmd: compileComputeKernel", "name=", "platform=",
-"insizE=", "pass=", " ok=true", "Unknown command", "Cannot dispatch invalid
-command", "Couldn't create IPC stream\n".
+```
+// FUN_1400b9770 (D3D frontend) and siblings
+struct Macro { Utf8String name; Utf8String value; };
 
-Commands: compileSnippet -> `FUN_1400a14a0` (dispatch table `local_38[4]` =
-{FUN_1400a51e0, FUN_1400a41e0, FUN_1400a5ed0, FUN_1400a51e0} indexed by
-param_17); compute kernels -> `FUN_1400a0a90` (routes via
-`DAT_1403ace50[platform*8]` and `FUN_14009db30` which injects
-"SHADER_AVAILABLE_"/"SHADER_TARGET_AVAILABLE" defines); disassemble ->
-`FUN_1400a8c10`.
+void BuildPrelude(MacroList& macros, const CompileRequest& req) {
+    foreach (keyword in req.keywords)                      // multi_compile / shader_feature set
+        macros.Add({keyword, "1"});
+    macros.Add({"UNITY_VERSION", req.unityVersion});       // "UNITY_VERSION" @ 0x140583ff0
+    foreach (stage in req.stages)                          // SHADER_STAGE_* @ 0x1405780d0.. block
+        macros.Add({StageName(stage), "1"});               // SHADER_STAGE_VERTEX/FRAGMENT/HULL/DOMAIN/GEOMETRY/RAY_TRACING
+}
+```
 
-## 7. Information-map table
+`FUN_1400b0e60` adds the two availability defines that gate every
+`#if SHADER_API_…` / `#if SHADER_TARGET_…` block in Unity shader code **[V]**:
 
-Legend: **P** = PROVEN, **SI** = STRONGLY INFERRED, **PO** = POSSIBLE,
-**U** = UNKNOWN.
-Columns: Info / Source API / Unity fn / Struct / Offset / Serialized? / Sent? /
-Player data? / Recoverable from shipped? / Confidence.
+```
+// FUN_1400b0e60
+void AddAvailabilityMacros(MacroList& macros, const CompilerCapabilities& caps) {
+    macros.Add({"SHADER_TARGET_AVAILABLE" + caps.targetSuffix, "1"});
+    macros.Add({"SHADER_AVAILABLE_" + caps.apiSuffix, "1"});   // e.g. SHADER_AVAILABLE_D3D11
+    AddCompiledDefines(macros, caps);                          // FUN_1400b18a0
+}
+```
 
-| Info | Source API | Unity fn | Struct | Offset | Serialized | Sent | Player | Recoverable | Conf |
-|---|---|---|---|---|---|---|---|---|---|
-| Input semantics (name+index) | GetInputParameterDesc (0x38) | 140019550 | param_5 semantic list | +8 | yes (0x60-entry lists) | yes (non-compute header only via counts; full in compute blob) | ISGN survives strip | YES (ISGN chunk) | P |
-| Vertex channel mapping | Unity semantic->channel table `1402f4650` ("Normal","Color","TexCoord"...), POSITION/NORMAL/TANGENT/COLOR/TEXCOORDn/BLENDWEIGHTS/BLENDINDICES | 140019550 | builder +8 | n/a | n/a | no | no | REDERIVABLE (semantics->channels is deterministic) | P |
-| CB names | GetConstantBufferByIndex + CB vtable[0] GetName | 140019550/1400be960 | ShaderInfoStruct lists | +0x28.. | yes | compute: yes; non-compute: via serialized +0x90? | RDEF stripped | NO from DXBC (RDEF gone); YES from compute blob | P |
-| CB type (cbuffer/tbuffer) | D3D11_SHADER_BUFFER_DESC.Type | 140019550 | (filter only: 0/3 allowed) | n/a | no | no | no | NO | P |
-| CB size | D3D11_SHADER_BUFFER_DESC.Size | 140019550 | (filter: <0x10000) | n/a | no | no | no | NO | P |
-| CB variable names | GetVariableByName / variable desc | 1400be960/140019550 | 0x50-byte CB records; 0x40-byte var entries | +0x28 | yes | compute: yes | RDEF stripped | NO from DXBC; YES from compute blob | P |
-| Variable start offset/size/uFlags | D3D11_SHADER_VARIABLE_DESC | 1400be960 | 0x40-byte entries | n/a | yes | compute: yes | RDEF stripped | NO from DXBC; YES from compute blob | P |
-| Variable type (class/type/rows/cols/elements) | D3D11_SHADER_TYPE_DESC | 1400be960 | type map 1->2,2->1,3->0,0x13->5,0x36->0 | n/a | yes (mapped enum) | compute: yes | RDEF stripped | NO from DXBC; mapped enum in compute blob | P |
-| UnityInstancing CB | CB name + class STRUCT + "UnityInstancing" | 140019550 | builder +0x18 | +0x18 | yes (implied) | compute: yes | RDEF stripped | RE-DERIVABLE (heuristic on CB name/struct) | P |
-| Resource bind desc (FULL 0x28 bytes, all) | GetResourceBindingDesc (0x30) | 140019550 | param_8 list | verbatim | yes | compute: yes; non-compute: only counts | RDEF stripped | NO from DXBC; YES from compute blob | P |
-| Per-class bind counts | max bindpoint+1 {2,5,7}/{0}/{3}/{4,6,8,9,10,0xb} | 140022fb0 | output header | +1..+4 | yes | YES (all paths) | YES (header survives) | YES — the 4 count bytes ARE the recoverable summary | P |
-| Flag byte | param_1[7] bit 26 | 140022fb0 | output header | +5 | yes | YES | YES | YES | P |
-| Thread group size | GetThreadGroupSize (0xA0) | 1400be960 | ShaderInfoStruct | +0xe8 | yes | compute: yes | RDEF stripped | REDERIVABLE from stripped DXBC (SHDR contains thread-group metadata for cs_5_0) | P |
-| GS output counts/primitive | GetDesc | 140019550 (+0x48 stats) | builder +0x48 | +0x48 | yes | compute: yes | RDEF stripped | NO (GS stat not in ISGN) | SI |
-| cNumTotalThreads | GetDesc.cNumTotalThreads (desc+0x78) | 140019550 (type==4) | *param_9 | n/a | no | no | RDEF stripped | NO | P |
-| Instancing flag / `#pragma instancing_options` | param_5+0x18 path | 140019550 | builder +0x18 | +0x18 | yes | compute: yes | RDEF stripped | NO from DXBC (Unity-side compile flag) | P |
+### 3.2 Surface shader expansion
 
-## 8. RDEF field-by-field comparison (shipped vs. extracted)
+A CGPROGRAM block containing `#pragma surface` is not compiled as written. The
+preprocess handler and `FUN_1400c5ef0` call `FUN_1400bec60`, which rejects mixed
+blocks (`"CGPROGRAM cannot contain #pragma surface as well as other programs"`)
+and rewrites the block into ordinary generated HLSL **[V]**:
 
-What the shipped player shader contains (all PROVEN):
-- Non-compute D3D11: `[0x02][4 counts][flag][0x20 zeros]` + **stripped DXBC**.
-- Compute: `FUN_1400b5e10` serialized blob = sentinel + version + CB/resource
-  list + param list + ShaderInfoStruct array (embedded **stripped** DXBC) + flags.
+```
+// FUN_1400bec60 - surface shader expansion
+Utf8String ExpandSurfaceBlock(const SurfaceDesc& surface) {
+    Utf8String out = "// Surface shader code generated based on:\n";     // 0x14057f2c8
+    if (surface.vertexModifier != null) out += "// vertex modifier: '" + surface.vertexModifier + "'\n";
+    out += EmitLightingModel(surface);        // FUN_140084d60 - Standard / StandardSpecular / ...
+    out += EmitForwardBase(surface);          // FUN_140079e30 | FUN_14007b3c0 | FUN_14007c5c0 ...
+    if (surface.forwardAdd)     out += EmitForwardAdd(surface);      // FUN_14007acc0  "#pragma multi_compile_fwdadd"
+    if (surface.prepassFinal)   out += EmitPrepassFinal(surface);    // FUN_140079820  "#pragma multi_compile_prepassfinal"
+    return out;
+}
+```
 
-DXBC chunks that survive `D3DStripShader(flags=7)` (0x1 RDEF, 0x2 DEBUG, 0x4
-TEST_BLOBS):
-- ISGN / OSGN / PCON (input/output/patch-constant signatures) — these carry
-  semantic names, indices, registers, masks, streams.
-- SHDR/SHEX (shader bytecode).
-- STAT / SFI0 (statistics / shader info: instruction counts, thread-group
-  sizes for compute).
-- PRIV, RTSI as applicable.
+The generator is **per lighting model**, not generic: `FUN_140084d60` contains the
+`"Standard"` / `"StandardSpecular"` model names and dispatches to one of five pass
+emitters (`FUN_140079e30`, `FUN_14007b3c0`, `FUN_14007c5c0`, `FUN_14007e320`,
+`FUN_140080890`), each of which calls the shared block emitters
+`FUN_140082760` (header + `"// vertex shader"` / `"// fragment shader"` markers)
+and `FUN_1400749c0` (`struct v2f_` declarations) **[V]**. That structure is why a
+reconstructed `#pragma surface surf <model>` is the right shape: the original
+shader really was compiled from a model-specific template.
 
-DXBC chunks REMOVED (RDEF, the reflection data):
-- Constant buffer definitions (names, sizes, variables, types, offsets).
-- Resource binding names/types/bindpoints/spaces/flags.
-- All `D3D11_SHADER_DESC` fields derived solely from RDEF.
+`FUN_140085d60` is the companion transform that turns a **reflected** `surfInput`
+/ `surfOutput` struct back into HLSL (`"surfInput"`, `"_hlslin_.%s"`,
+`"_Semantic_"`) for the generated wrapper pass **[V]**.
 
-Mapping of every `D3D11_SHADER_DESC` field to shipped fate:
-| D3D11_SHADER_DESC field | offset | Unity reads? | Survives ship? |
-|---|---|---|---|
-| Version | 0x00 | (implicitly via blob) | YES (DXBC header) |
-| Creator | 0x08 | no | YES (DXBC creator string) |
-| Flags | 0x10 | no | NO (RDEF) |
-| ConstantBuffers (count) | 0x14 | yes (loops) | NO (count re-derived at runtime) |
-| BoundResources (count) | 0x18 | yes | NO |
-| InputParameters (count) | 0x1c | yes | YES (ISGN count) |
-| OutputParameters | 0x20 | no | YES (OSGN) |
-| PatchConstantParameters | 0x24 | no | YES (PCON) |
-| GSOutputs | 0x28 | yes (stats) | NO |
-| GSOutputPrimitive | 0x2c | yes (stats) | NO |
-| GSInputPrimitive | 0x30 | no | NO |
-| PatchConstantPrimitive | 0x34 | no | NO |
-| cGSOutputs | 0x38 | no | NO |
-| cTemps | 0x3c | no | YES (STAT) |
-| cIndexRange | 0x40 | no | NO |
-| cGSMaxOutputVertexCount | 0x44 | yes (stats) | NO |
-| NumInterfaceSlots | 0x48 | no | NO |
-| cMaxMSPatches | 0x4c | no | NO |
-| cMinSpawnCount | 0x50 | no | NO |
-| cNumThreads[3] | 0x54 | yes (compute, via GetThreadGroupSize) | SI: YES (SFI0/SHDR) |
-| cXUVInfo[4] | 0x60 | no | NO |
-| cTGSM | 0x70 | no | NO |
-| cNumBarriers | 0x74 | no | NO |
-| cNumTotalThreads | 0x78 | yes (type==4) | SI: YES (derivable) |
-| cFeatureInfo | 0x7c | no | NO |
+### 3.3 `#pragma` parsing
 
-## 9. Info NOT in RDEF (catalog)
+`FUN_1400c48f0` is the single pragma parser; every directive it recognizes is a
+directive that can appear in a shader asset **[V]**:
 
-These are Unity-side derived facts that never existed in the DXBC:
-1. Vertex channel mapping (semantic name -> Unity channel enum).
-2. Instancing detection (CB named "UnityInstancing" + STRUCT class).
-3. Per-class max-bindpoint+1 counts and the flag byte in the non-compute
-   header (a lossy summary of RDEF resource bindings).
-4. "computeKeywords*" / "kernel"/"requirements"/"params" label metadata sent
-   ahead of compute/raytracing blobs.
-5. Thread-group size (compute) — from GetThreadGroupSize, not RDEF.
-6. The 0x0C0BD1E4 framing + command/label protocol itself.
+```
+// FUN_1400c48f0 - reconstructed dispatch shape
+void ParsePragma(Utf8String text, ShaderPragmaSet& out) {
+    switch (Directive(text)) {
+    case "surface":              out.surface = text.arg1;                     break;
+    case "target":               out.shaderTarget = ParseTarget(text);        break;
+    case "only_renderers":       out.onlyRenderers = ParseRendererList(text); break; // "Unrecognized renderer for #pragma only_renderers: "
+    case "exclude_renderers":    out.excludeRenderers = ParseRendererList(text); break;
+    case "hardware_tier_variants": out.tierVariants = ...;                    break;
+    case "multi_compile": case "shader_feature":
+    case "multi_compile_local": case "shader_feature_local":
+                                 out.keywords.Add(text.args);                 break;
+    case "multi_compile_fwdbase": case "multi_compile_fwdadd":
+    case "multi_compile_fwdadd_fullshadows": case "multi_compile_fog":
+    case "multi_compile_prepassfinal": case "multi_compile_shadowcaster":
+                                 out.keywordSets.Add(text.directive);         break;
+    case "skip_variants":        out.skippedVariants.Add(...);                break;
+    case "use_dxc":              out.useDxc = true;                           break;
+    case "never_use_dxc":        out.neverUseDxc = true;                      break;
+    case "prefer_hlslcc": case "prefer_hlsl2glsl":
+    case "metal_use_hlslcc": case "metal_use_hlsl2glsl":
+                                 out.backendHints.Add(text.directive);        break;
+    case "glsl_no_optimize": case "skip_optimizations":
+    case "disable_fastmath": case "force_concat_matrices":
+    case "enable_d3d11_debug_symbols":
+    case "enable_ray_tracing_shader_debug_symbols":
+    case "hlslcc_bytecode_disassembly":
+    case "enable_cbuffer": case "enable_bindsets":
+    case "editor_sync_compilation": case "no_auto_normalization":
+    case "glsl_no_auto_normalization": case "profiles": case "profileoption":
+    case "fragmentoption": case "lighting": case "warning": case "debug":
+    case "instancing_options": case "argument": case "require":
+    case "max_recursion_depth": case "PSSL_target_output_format":
+    case "enable_bounds_check_block_accesses": case "glsl_es2": case "pssl2":
+    case "dynamic_branch": case "raytracing":
+                                 out.flags.Set(text.directive);               break;
+    default:                     out.warnings.Add(text + " // Unity: Unrecognised #pragma directive");
+    }
+}
+```
 
-## 10. Recoverability assessment
+`#pragma profiles` is explicitly ignored with
+`"Note: #pragma profiles is ignored (use #pragma target instead): "` **[V]**.
 
-- **DXBC bytecode + signatures**: fully recoverable from the shipped blob
-  (DXBC survives stripping; ISGN/OSGN/PCON remain). Signatures give semantic
-  names, indices, register allocation, masks — the same data GetInputParameterDesc
-  returns, so the input-signature half of RDEF-reflection is recoverable.
-- **Constant buffers, resource bindings, variable layout, spaces**: NOT in the
-  shipped DXBC (RDEF stripped). The only surviving trace for D3D11 non-compute
-  is the 4 per-class counts + flag byte. Full fidelity survives ONLY in the
-  compute serialized blob (FUN_1400b5e10 output) IF the editor persists that
-  blob into the player.
-- **Compute reflection blob**: if a shipped compute shader contains the
-  serialized shader-info (sentinel+version+lists+embedded DXBC), a standalone
-  parser can reconstruct nearly the full original RDEF (CB names/sizes/
-  variables/types/offsets, resource bind descs, thread-group size).
-- **Non-compute**: reconstructable info = the 0x26-byte header (4 counts +
-  flag) + stripped DXBC + signatures. Original RDEF CB/binding metadata is
-  NOT reconstructable without external knowledge (heuristics on
-  UnityInstancing naming, standard cbuffer naming conventions).
+### 3.4 Splitting and validation
 
-## 11. Key addresses
+`FUN_1400bd520` walks the preprocessed text line by line, extracts the pragmas
+through `FUN_1400c48f0`, and builds one source segment per declared stage, framed
+by `// SHADER_STAGE_<stage>_begin` / `_end` markers **[V]**. `FUN_1400b84c0`
+then validates the seven-entry stage slot array and, when every slot is empty,
+emits the warning
+`"CGPROGRAM block does not contain #pragma vertex, #pragma fragment or #pragma surface directive, skipping"`
+and drops the block **[V]**. `FUN_1400b3c90` applies the analogous rule for GLSL/
+Metal/`HLSLcc` (`"Both vertex and fragment programs must be present in a shader snippet. Excluding it from compilation."`) **[V]**.
 
-`FUN_140019550` (non-compute reflect), `FUN_1400be960` (compute reflect),
-`FUN_140022fb0` (D3D11 non-compute), `FUN_140006600` (non-compute fp entry),
-`FUN_140006710` (compute fp entry), `FUN_1400b77f0` (compute compile+reflect
-+strip), `FUN_1400a14a0`/`FUN_1400a0a90` (command dispatchers), `FUN_14000f170`
-(ShaderCompileOutputData ctor), `FUN_14007cb80` (D3DReflect), serializers
-`1400b5cf0`/`1400b5b40`/`1400b5220`/`1400b53d0`/`1400b5760`/`1400b5e10`/
-`1400b5b10`/`1400882e0`/`14007b2e0`, wire `1400b8a50`/`1400b4fb0`/`1400b4fe0`/
-`1400b5160`/`1400b5dc0`/`1400b5f50`/`1400b42f0`/`1400b3f50`/`1400b3cf0`/
-`1400b4d70`/`1400e35b0`/`1400e36f0`, IIDs `DAT_1403aa6c8`+`DAT_1402fb898`,
-magic `DAT_1402f46c4`, wrapper `1403acff0`/vtable `1402f5c60`/`DAT_1403b82c0`,
-fp table `1402e64e0` (registered into `DAT_1403b82d0+`; accessor family
-`FUN_14009bcf0`..`FUN_14009bfd0`; interface getters `FUN_14001fe60`/
-`FUN_14001fe80`/`FUN_14001fe30`; registration `FUN_1400ac980`), semantic table
-`1402f4650`, error string `1402e74b0`, `FUN_140037600`, `FUN_1400b7620`,
-`FUN_14000e640`, `FUN_1400af960`, `FUN_140042370`, dispatcher labels
-`1402f6bf4`/`1402f6c00`/`1402f6c18`/`1402f6c68`/`1402f6cf8`/`1402f6d38`/
-`1402f6d58`/`1402f6d78`/`1402f6d90`/`1402f6da0`/`1402f6db0`/`1402f6ea8`/
-`1402f6ef0`, computeData label `1402f6e24`, rayTracing label (near
-`1402f6e24`), `DAT_1403ace50` (per-platform capability bitmask table),
-`FUN_14009db30`/`FUN_14009e280` (SHADER_AVAILABLE_/SHADER_TARGET_AVAILABLE
-define injection).
+```
+// FUN_1400bd520 + FUN_1400b84c0
+void SplitIntoStages(Utf8String preprocessed, StageSource stages[7]) {
+    ShaderPragmaSet pragmas;
+    foreach (line in preprocessed.Lines()) {
+        if (line.StartsWith("#pragma")) { ParsePragma(line, pragmas); continue; }
+        stages[pragmas.currentStage].Append(line);
+    }
+    if (stages.AllEmpty())
+        Warn("CGPROGRAM block does not contain #pragma vertex, #pragma fragment "
+             "or #pragma surface directive, skipping");
+}
+```
+
+---
+
+## 4. Stage 2 — backend selection
+
+`FUN_1400b4e40` indexes a four-entry function table with the request's language
+index **[V]**:
+
+```
+// FUN_1400b4e40
+enum Backend : int { D3DHlsl = 0, GlslHlslcc = 1, MetalMsl = 2, D3DHlslAlt = 3 };
+
+using FrontendFn = void (*)(CompileRequest&, StageSource[7]);
+static const FrontendFn kFrontends[4] = {          // DAT_1400b4e6x
+    /* 0 */ FUN_1400b9770,                          // D3D / HLSL
+    /* 1 */ FUN_1400b8600,                          // GLSL via HLSLcc/glslang
+    /* 2 */ FUN_1400ba6e0,                          // Metal (MSL)
+    /* 3 */ FUN_1400b9770,                          // D3D / HLSL (alias)
+};
+
+void HandleCompileSnippet(CompileRequest& req) {
+    kFrontends[req.language](req, req.stages);      // falls through to the output collector
+}
+```
+
+The three frontends differ in what they do to the source before compiling:
+
+| Frontend | Extra work before compiling |
+|---|---|
+| `FUN_1400b9770` (D3D) | prepends `#define` keyword macros, `UNITY_VERSION`, `SHADER_STAGE_*`; calls preprocess (`FUN_140097870`); validates stages (`FUN_1400b84c0`) **[V]** |
+| `FUN_1400b8600` (GLSL) | prepends macros, drops `#version`, splits pragmas (`FUN_1400bd520`), rewrites `// #pragma ` → `#pragma `, injects `GLSLSupport.glslinc`, `UnityStereoExtensions.glslinc`, `UnityStereoSupport.glslinc`, renames `texture2D` → `textureExternal` and `texture2DProj` → `textureProjExternal` **[V]** |
+| `FUN_1400ba6e0` (Metal) | splits pragmas, prepends macros and `SHADER_STAGE_*`, rewrites `// #pragma `, converts `'` → `"`, then fills `VGlobals`/`FGlobals` through `FUN_140062940`, `FUN_1400630c0`, `FUN_1400625d0`, `FUN_1400621e0`, `FUN_1400640f0` **[V]** |
+
+Only the D3D frontend produces DXBC. Everything this decompiler consumes comes
+from that path.
+
+---
+
+## 5. Stage 3 — D3D compile, reflect, strip
+
+### 5.1 Compiler selection
+
+The D3D frontend does not call `D3DCompile` directly. It calls a slot on the
+compiler-plugin interface at `0x140578000` **[V]**:
+
+```
+// compiler plugin interface, vtable @ 0x140578000
+struct CompilerPlugin {
+    virtual ~CompilerPlugin();                                // +0x00
+    virtual void Reserved08();                                // +0x08
+    virtual void Reserved10();                                // +0x10
+    virtual void Reserved18();                                // +0x18
+    virtual void Reserved20();                                // +0x20 / guard_check_icall
+    virtual void CompileGraphics(CompileBatch&)  = 0;         // +0x28 -> FUN_140006e80 (FXC)
+    virtual void Disassemble(BytecodeBatch&)     = 0;         // +0x30 -> FUN_140006ec0
+    virtual void CompileCompute(CompileBatch&)   = 0;         // +0x38 -> FUN_140006f90 (FXC)
+    virtual void CompileGraphicsDxc(CompileBatch&) = 0;       // +0x40 -> FUN_1400070f0 (DXC)
+    virtual void Reserved48();                                // +0x48
+};
+```
+
+The two thunks are thin:
+
+```
+// FUN_140006e80 -> FXC graphics
+void InvokeCompilerFxc(CompileBatch& batch) {
+    LoadD3DCompiler();                        // FUN_140039af0 (FORCE_DXC_ON_SWITCH handling)
+    InitCompilerState();                      // FUN_140110570
+    CompileGraphicsFxc(batch);                // FUN_1400317e0
+}
+
+// FUN_1400070f0 -> DXC
+void InvokeCompilerDxc(CompileBatch& batch) {
+    LoadD3DCompiler();
+    CompileGraphicsDxc(batch);                // FUN_140039430 -> FUN_14010d2f0
+}
+```
+
+`FUN_140039af0` decides "force DXC anyway" for Switch (`"FORCE_DXC_ON_SWITCH"`,
+`"FORCE_DXC_ON_SWITCH2"`) **[V]**. Otherwise `#pragma use_dxc` /
+`#pragma never_use_dxc` (parsed in §3.3) pick the compiler.
+
+### 5.2 The FXC pass
+
+`FUN_1400317e0` is the graphics FXC implementation **[V]**. Its essential order is:
+
+```
+// FUN_1400317e0 - one graphics compile (abridged)
+void CompileGraphicsFxc(CompileBatch& batch) {
+    AddAvailabilityMacros(batch.macros, batch.caps);           // FUN_1400b0e60
+    D3DBlob* blob = null;
+    HRESULT hr = Fxc->Compile(                                // vtable +0x18 -> FUN_14008aec0 -> D3DCompile
+        batch.source, batch.entryPoint, batch.profile,        // e.g. "vs_5_0" / "ps_5_0"
+        batch.macros, batch.flags, &blob);
+
+    if (FAILED(hr)) { ReportCompileErrors(blob); return; }     // "): error ", "): warning "
+
+    if (!batch.skipReflection) {
+        ReflectAndValidate(blob, batch, out.passMetadata);     // FUN_1400218e0
+    }
+    if (!batch.skipStrip) {
+        u32 stripFlags = batch.skipReflection ? 6 : 7;         // (bVar3 ^ 1) + 6
+        D3DBlob* stripped = null;
+        if (Fxc->Strip(blob, stripFlags, &stripped) >= 0)       // vtable +0x40 -> FUN_14008b400 -> D3DStripShader
+            blob = stripped;
+    }
+    out.programs.Add({batch.entryPoint, blob});
+}
+```
+
+`stripFlags` semantics (`D3DCOMPILER_STRIP_FLAGS`): bit `0x1` reflection data,
+`0x2` debug info, `0x4` test blobs. So:
+
+- `7` = reflection + debug + test blobs removed → RDEF/DEBUG/TESTBLOBS gone,
+  ISGN/OSGN/PCSG/SHDR/SHEX/STAT survive.
+- `6` = debug + test blobs removed, **reflection kept** → RDEF survives.
+
+Both outcomes are legal in shipped data. A parser must not assume RDEF is absent.
+
+The same wrapper object is reached through the global at `DAT_14074ece0`
+(`(**(code **)*DAT_14074ece0)()` returns the API vtable), which is why the strip
+call sites look indirect in the decompilation **[V]**.
+
+### 5.3 Reflection and validation
+
+`FUN_1400218e0` is the FXC reflection pass **[V]**:
+
+```
+// FUN_1400218e0 - reflection + sanity checks (abridged)
+void ReflectAndValidate(D3DBlob* blob, CompileBatch& batch, PassMetadata& out) {
+    ID3D11ShaderReflection* refl = Fxc->Reflect(blob);          // vtable +0x38 -> FUN_14008b310 -> D3DReflect
+    if (!refl) { Error("Failed to get HLSL Reflection interface"); return; }
+
+    D3D11_SHADER_DESC desc = refl->GetDesc();
+
+    for (uint i = 0; i < desc.InputParameters; ++i) {
+        D3D11_SIGNATURE_PARAMETER_DESC p = refl->GetInputParameterDesc(i);
+        out.inputs.Add({p.SemanticName, p.SemanticIndex, ChannelOf(p.SemanticName), p.Register});
+    }
+    for (uint i = 0; i < desc.ConstantBuffers; ++i) {
+        ID3D11ShaderReflectionConstantBuffer* cb = refl->GetConstantBufferByIndex(i);
+        D3D11_SHADER_BUFFER_DESC bd = cb->GetDesc();
+        if (bd.Size > 0x10000) Error("The maximum size for Constant Buffers is %d bytes. Constant Buffer \"%s\" (%d bytes) exceeded the maximum size.");
+        if (out.HasName(bd.Name)) Error("Duplicate constant buffer declaration: %s");
+        if (bd.Type == D3D_SVC_STRUCT && strcmp(bd.Name, "UnityInstancing") == 0)
+            out.instancing = true;
+        foreach (var in cb.Variables where (var.uFlags & D3D_SVF_USED))
+            out.variables.Add({var.Name, var.StartOffset, var.Size, var.Type});
+    }
+    for (uint i = 0; i < desc.BoundResources; ++i) {
+        D3D11_SHADER_INPUT_BIND_DESC b = refl->GetResourceBindingDesc(i);   // verbatim 0x28 bytes kept
+        out.resources.Add(b);
+    }
+}
+```
+
+The vertex-channel table is fixed (`"POSITION"`, `"NORMAL"`, `"TANGENT"`,
+`"COLOR"`, `"TEXCOORD"`, `"BLENDWEIGHTS"`, `"BLENDINDICES"`) and lives in the same
+function **[V]**. This is the same information the ISGN/OSGN chunks carry, which is
+why `--verify-signatures` can cross-check reflection against `d3dcompiler`.
+
+### 5.4 DXC path
+
+`FUN_14010d2f0` drives the packaged DXC **[V]**. Its arguments include
+`/Qembed_debug`, `/Zpc`, `/auto-binding-space`, `/enable-16bit-types`, target
+`HLSL`, and profile `lib_6_3` / `lib_6_6` for raytracing; errors are re-formatted
+into Unity's `): error ` style. Reflection and result handling sit in
+`FUN_140113330` → `FUN_14011a330` (`"Compilation failed: Couldn't retrieve shader
+reflection information."`). DXC output is not DXBC, so it is out of scope for this
+decompiler.
+
+### 5.5 Collecting results
+
+`FUN_1400b1150` walks the result object and appends each program **[V]**:
+
+```
+// FUN_1400b1150
+void AppendPrograms(IpcResponse& response, const CompileResult& result) {
+    uint count = result.Count();                      // vtable +0x30
+    for (uint i = 0; i < count; ++i) {
+        Utf8String name; D3DBlob* code; u32 size; u8 stage;
+        result.Get(i, name, code, size, stage);       // vtable +0x38
+        response.AddProgram(name, code, size, stage); // FUN_140089750
+    }
+    FinalizeResponse(response);                       // FUN_1400c1d10
+}
+```
+
+`FUN_1400c1d10` post-processes the response and can reject a result outright
+(`"Surface shader Input structure needs INTERNAL_DATA for this WorldNormalVector or
+WorldReflectionVector usage"`) **[V]**.
+
+---
+
+## 6. Compute kernels
+
+`FUN_1400b4100` is the handler; the compile core is `FUN_1400cb330` **[V]**. It is
+the same shape as §5.2 with three differences: `cs_5_0`, an entry-point lookup per
+`#pragma kernel`, and reflection stripped by default.
+
+```
+// FUN_1400cb330 - compute compile (abridged)
+void CompileComputeKernel(CompileRequest& req) {
+    foreach (kernel in req.kernels) {                       // "kernel: %s %i"
+        StageSource cs = Preprocess(req.source, req.macros); // FUN_140097870
+        void* entry = FindKernelEntry(cs, kernel.name);      // FUN_1400c34c0
+        if (!entry) { Error("Did not find shader kernel '" + kernel.name + "'"); continue; }
+
+        D3DBlob* blob = Fxc->Compile(cs, kernel.name, "cs_5_0", req.macros);   // vtable +0x18
+
+        bool keepReflection = (req.flags[7] & 0x1004) != 0;  // bits 2 and 12
+        if (!keepReflection) {
+            D3DBlob* stripped = null;
+            if (Fxc->Strip(blob, 7, &stripped) >= 0) blob = stripped;          // vtable +0x40
+        }
+        Emit(kernel.name, blob, threadGroupSize);
+    }
+}
+```
+
+Errors are reported as `"Compilation failed for kernel '%s' [0x%08x - unknown
+error] '%s'"` / `"Compilation failed [0x%08x - %s]"` **[V]**.
+
+`FUN_1400b6370` is the compute preprocess (multi-kernel source expansion) and
+shares the preprocessor pipeline with the graphics path **[V]**.
+
+---
+
+## 7. Ray tracing
+
+`FUN_1400b4760` (compile) and `FUN_1400b7270` (preprocess) run the same pipeline
+with `lib_6_3` / `lib_6_6` targets and the `"raytracing"` pragma. Both reuse
+`FUN_140097870`, `FUN_1400b1070`, `FUN_1400b13b0`, `FUN_1400b1150` **[V]**. Metal
+raytracing is explicitly rejected
+(`"DXC: attempting to compile a raytracing shader stage for Metal - this is not yet
+supported"`) and inline ray queries are rejected
+(`"Inline Ray Tracing (Ray Queries) is not supported in Ray Tracing Shaders."`).
+
+---
+
+## 8. Disassembly and initialisation
+
+- `FUN_1400b5680` (`disassembleShader`) hands the blob to the plugin's
+  `Disassemble` slot → `FUN_140006ec0` → `FUN_140039190`, which produces text
+  (`"// Failed to disassemble shader"`, `"// Invalid bytecode blob found"`) or an
+  error (`"D3D11 shader compiler could not be loaded"`) **[V]**. A SPIR-V variant
+  exists (`InvokeCompilerDisassembleSPIRV` → `FUN_14002fbe0`).
+- `FUN_1400b5080` (`initializeCompiler`) loads and probes the compiler libraries and
+  reports capabilities **[I]** (no user-visible strings; it initialises the plugin
+  objects whose vtables are listed in §5.1).
+
+---
+
+## 9. D3DCompiler wrapper
+
+`FUN_14008f070` loads `D3DCompiler_47.dll` (`"Failed to read D3DCompiler DLL file"`)
+and resolves seven entry points with `GetProcAddress`, in this order **[V]**:
+`D3DCompile`, `D3DDisassemble`, `D3DAssemble`, `D3DPreprocess`, `D3DReflect`,
+`D3DStripShader`, `D3DGetBlobPart`.
+
+They are stored both in the object (offsets `+0x50` … `+0x80`) and in a vtable at
+`0x1405891b0`:
+
+| Slot | Address | API |
+|---|---|---|
+| `+0x18` | `FUN_14008aec0` | `D3DCompile` |
+| `+0x20` | `FUN_14008ada0` | `D3DDisassemble` |
+| `+0x28` | `FUN_14008b010` | `D3DAssemble` |
+| `+0x30` | `FUN_14008b1f0` | `D3DPreprocess` |
+| `+0x38` | `FUN_14008b310` | `D3DReflect` |
+| `+0x40` | `FUN_14008b400` | `D3DStripShader` |
+| `+0x48` | `FUN_14008b100` | `D3DGetBlobPart` |
+
+The name strings sit back to back at `0x140584cd0` … `0x140584d30`; each stub
+references its own name, which is how the mapping above was confirmed.
+
+`FUN_14006a310` is a separate small probe that compiles a fixed `ps_5_0` snippet
+and calls `FUN_140085d60` — the surface-struct rewriter — presumably to validate
+the generator's output on startup **[I]**.
+
+---
+
+## 10. What survives into the data this project reads
+
+Scan of the checked-in fixtures (`tests/Fixtures/*/blob.bin`) **[V]**:
+
+| Chunk | Present in fixture blobs |
+|---|---|
+| `RDEF` | **no** |
+| `ISGN` | yes |
+| `OSGN` | yes |
+| `SHEX` | yes |
+| `STAT`, `PCSG` | no (not needed by these graphics-only passes) |
+
+That matches §5.2 with `stripFlags = 7`: reflection is extracted first, then
+removed from the bytecode. Consequently:
+
+- **Cbuffer names, variable layouts, resource bindings are not in the bytecode.**
+  They come from Unity's serialized shader, which the editor writes immediately
+  after reflection. `Shadermetadata.cs` reads exactly that (`constantBuffers` per
+  pass) and its own comment already says the shipped bytecode has it stripped.
+- **Signatures are recoverable from the bytecode** (ISGN/OSGN/PCSG), and they are
+  the same data `FUN_1400218e0` extracts, so `--verify-signatures` is comparing two
+  independent copies of one fact rather than guessing.
+- **Blobs with `RDEF` intact are legal** (`stripFlags = 6`, compute with
+  `keepReflection`). The parser must keep accepting them — `RdefChunk` stays, it is
+  just not the normal case.
+
+---
+
+## 11. Findings that shaped this decompiler
+
+1. **Surface shaders are generated per lighting model** (§3.2). Reconstructing
+   `#pragma surface surf <model>` plus an `Input` struct and a `surf()` body mirrors
+   what `FUN_1400bec60` produced, instead of inventing a generic template. The
+   compiled passes remain authoritative; `--keep-passes` keeps them visible.
+2. **The generator's markers are stable**: `// Surface shader code generated based
+   on:`, `// vertex shader`, `// fragment shader` **[V]**. They explain the comment
+   shapes seen in decompiled surface shaders.
+3. **Keyword sets are compile-time only.** `multi_compile`/`shader_feature` variants
+   reach the compiler as plain `#define`s, so the only trace left in shipped data is
+   the set of distinct bytecode variants. That is the basis for emitting variant
+   bodies when a pass has ≤4 distinct keyword sets.
+4. **`#pragma surface` blocks always carry a fixed pragma neighbourhood**
+   (`multi_compile_fwdbase`, `multi_compile_fwdadd`, `multi_compile_fog`,
+   `multi_compile_shadowcaster`, …) emitted by `FUN_14007acc0` / `FUN_140079820`
+   **[V]**, so a reconstructed surface shader can reproduce the original's pragma
+   list without guessing.
+5. **Vertex channel mapping is a hard table in the compiler** (§5.3), so
+   `uv_*`/`uv2_*` reconstruction from `_ST` transforms is the only free variable —
+   the semantic → channel part is deterministic.
+6. **`UNITY_VERSION`, `SHADER_STAGE_*`, `SHADER_AVAILABLE_*` are injected by the
+   compiler, not written by the shader author** (§3.1). They must never be emitted
+   as user code.
+7. **Only the D3D frontend yields DXBC.** GLSL/Metal frontends rewrite the source
+   (including `texture2D` → `textureExternal`), so their output cannot be fed to the
+   DXBC/HLSL path; they are recognised but not decompiled.
+
+---
+
+## 12. Function inventory
+
+### Transport and dispatch
+
+| Address | Role |
+|---|---|
+| `FUN_1400d0770` | worker main / command loop |
+| `FUN_1400cc6d0` | command dispatcher (`Cmd: …`) |
+| `FUN_1400c7ea0` | receive + verify frame magic |
+| `FUN_1400c8c30` | send frame magic |
+| `FUN_1400c76e0` / `FUN_1400c8820` | byte-level stream read / write |
+
+### Command handlers
+
+| Address | Command |
+|---|---|
+| `FUN_1400b7db0` | `preprocess` |
+| `FUN_1400b5680` | `disassembleShader` |
+| `FUN_1400b4e40` | `compileSnippet` |
+| `FUN_1400b5080` | `initializeCompiler` |
+| `FUN_1400b6370` | `preprocessCompute` |
+| `FUN_1400b4100` | `compileComputeKernel` |
+| `FUN_1400b4760` | `compileRayTracingShader` |
+| `FUN_1400b7270` | `preprocessRayTracingShader` |
+
+### Source preparation
+
+| Address | Role |
+|---|---|
+| `FUN_1400b9770` | D3D/HLSL frontend |
+| `FUN_1400b8600` | GLSL frontend |
+| `FUN_1400ba6e0` | Metal frontend |
+| `FUN_1400bd520` | pragma extraction + per-stage split |
+| `FUN_1400c48f0` | `#pragma` parser (full directive list, §3.3) |
+| `FUN_1400b84c0` | stage-slot validation ("does not contain #pragma vertex…") |
+| `FUN_1400b3c90` | GLSL/Metal stage requirement check |
+| `FUN_140097870` | preprocessor |
+| `FUN_1400977c0`, `FUN_140097ea0` | preprocessor helpers |
+| `FUN_1400b0e60` | `SHADER_AVAILABLE_*` / `SHADER_TARGET_AVAILABLE*` macros |
+| `FUN_1400b0550`, `FUN_1400b1070`, `FUN_1400b13b0`, `FUN_1400bacc0` | source/segment preparation helpers **[I]** |
+| `FUN_1400b1150` | append compiled programs to the response |
+| `FUN_1400c1d10` | finalise response / emit validation error |
+| `FUN_140089750` | add one `{name, bytecode}` program |
+
+### Surface shader generator
+
+| Address | Role |
+|---|---|
+| `FUN_1400c5ef0` | entry into surface expansion |
+| `FUN_1400bec60` | CGPROGRAM → generated passes; rejects mixed blocks |
+| `FUN_140084d60` | lighting-model dispatch (`Standard`, `StandardSpecular`) |
+| `FUN_140079e30`, `FUN_14007b3c0`, `FUN_14007c5c0`, `FUN_14007e320`, `FUN_140080890` | per-model pass emitters |
+| `FUN_140082760` | header + vertex-modifier comments |
+| `FUN_1400749c0` | `struct v2f_` emission |
+| `FUN_14007acc0` | ForwardAdd pragmas |
+| `FUN_140079820` | prepass-final pragmas |
+| `FUN_14007deb0` | additional pass emitter **[I]** |
+| `FUN_140085d60` | reflected `surfInput`/`surfOutput` → HLSL wrapper |
+
+### Compilers
+
+| Address | Role |
+|---|---|
+| `FUN_1400317e0` | FXC graphics: compile → reflect → strip |
+| `FUN_1400cb330` | FXC compute: kernel lookup → `cs_5_0` → strip |
+| `FUN_140039190` | disassembler (DXBC / SPIR-V text) |
+| `FUN_14010d2f0` | DXC driver (`lib_6_3` / `lib_6_6`, `HLSL`) |
+| `FUN_140113330`, `FUN_14011a330` | DXC result + reflection handling |
+| `FUN_14002ff60`, `FUN_140036a50` | glslang graphics / compute |
+| `FUN_140033340`, `FUN_140037450` | HLSLcc graphics / compute |
+| `FUN_140034ea0`, `FUN_140037f90` | WGSL / additional compute variant |
+| `FUN_14002fbe0` | SPIR-V disassembly |
+| `FUN_140039af0` | `FORCE_DXC_ON_SWITCH*` decision |
+| `FUN_14008f070` | `D3DCompiler_47.dll` loader (7 entry points) |
+| `FUN_14008aec0`, `FUN_14008ada0`, `FUN_14008b010`, `FUN_14008b1f0`, `FUN_14008b310`, `FUN_14008b400`, `FUN_14008b100` | `D3DCompile`, `D3DDisassemble`, `D3DAssemble`, `D3DPreprocess`, `D3DReflect`, `D3DStripShader`, `D3DGetBlobPart` |
+| `FUN_1400218e0` | FXC reflection + validation (signatures, cbuffers, resources) |
+| `FUN_1400c34c0` | kernel entry-point lookup |
+
+### Globals
+
+| Address | Meaning |
+|---|---|
+| `0x140578000` | compiler-plugin interface vtable |
+| `0x1405891b0` | `D3DCompiler_47.dll` wrapper vtable |
+| `DAT_14074ece0` | compiler wrapper singleton (returns the API vtable) |
+| `0x1405780d0` | `SHADER_STAGE_*` name block |
+
+---
+
+## 13. Not verified in this build
+
+- The exact `D3DCompile` flag word passed per stage (only the profile/entry strings
+  were confirmed).
+- Which upstream condition sets `skipReflection` (`bVar3` in `FUN_1400317e0`); only
+  its consequence — reflection-then-strip vs. pass-through — is proven.
+- The internal meaning of `FUN_1400b0550`, `FUN_1400b1070`, `FUN_1400b13b0`,
+  `FUN_1400bacc0` and `FUN_14007deb0` beyond their call position.
+- `initializeCompiler`'s capability report layout (no strings; structure inferred
+  from the plugin objects it initialises).

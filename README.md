@@ -338,8 +338,9 @@ root, prefixing each with
 ## Documentation
 
 - [`docs/shader_compiler_analysis.md`](docs/shader_compiler_analysis.md) —
-  Ghidra analysis of `UnityShaderCompiler.exe`, covering the IPC wire protocol,
-  RDEF extraction, and `D3DStripShader(flags=7)`.
+  Ghidra walkthrough of `UnityShaderCompiler.exe`: IPC dispatch, source
+  preparation, backend selection, FXC/DXC compile, reflection, stripping, and
+  what that leaves in the bytecode this decompiler reads.
 - [`docs/shader_parser_spec.md`](docs/shader_parser_spec.md) —
   implementation-grade parser spec with every fact labeled PROVEN, STRONGLY
   INFERRED, POSSIBLE, or UNKNOWN.
