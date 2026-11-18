@@ -1,6 +1,6 @@
 # Corpus decompile gap audit
 
-Measured on `master` (2026-11-17) against the 48 corpus shaders in
+Measured on `master` (2026-11-18) against the 48 corpus shaders in
 `shaders_json/` and their original sources in `tests/Sources/`. On this commit
 the gates are green:
 
@@ -9,7 +9,7 @@ the gates are green:
 | `tests/e2e/test_faithfulness.py` | 48/48 |
 | `tests/e2e/test_source_fidelity.py` | 48/48 |
 | `tests/e2e/test_corpus_shaders.py` | 48/48 |
-| `dotnet test --filter "Category!=D3D"` | 132/132 |
+| `dotnet test --filter "Category!=D3D"` | 128/128 |
 
 Everything below is outside what those runners assert. Counts are shader
 instances, not lines of code.
@@ -54,23 +54,32 @@ pragma grouping is lost for every pass; the emitted set is always
 Shortcut: `MaxEmittedVariantBodies = 4` in `Decompiler.cs`; raise it only if
 the generated file size is acceptable for the 16-set lighting passes.
 
-## 2. Surface-shader reconstruction matches 0 of 8
+## 2. Surface-shader reconstruction is best-effort, not dataflow-exact
 
-`HlslSurfaceShaderRecognizer` runs by default and is meant to rewrite a
-compiled lit pass back to `#pragma surface surf <model>`. It returns `null`
-for all 8 surface shaders in the corpus (`05`, `06`, `07`, `08`, `09`, `10`,
-`11`, `36`), so they remain expanded into 2-4 ForwardBase/ForwardAdd/Deferred/
-ShadowCaster/Meta passes with no `#pragma surface` and no `surf()` function.
+`HlslSurfaceShaderRecognizer` rewrites all 8 surface shaders (`05`, `06`, `07`,
+`08`, `09`, `10`, `11`, `36`) back to `#pragma surface surf <model>` with an
+`Input` struct and a `surf()` body, dropping the 2-4 compiled passes by default
+(`--keep-passes` restores them as a comment).
 
-Cause: recognition is a set of regex fingerprints for Unity's Standard/Lambert
-lighting boilerplate (GGX constants, `_LightColor0` chains, `sv_Target0`
-writes). None of the corpus fragments match those fingerprints. The Input
-reconstruction also only recovers vertex colour; `uv_*` fields are a TODO
-(`HlslSurfaceShaderRecognizer.cs:186`).
+Detection uses the compiled pass set (ForwardBase + ForwardAdd + `appdata_full`)
+rather than a lighting fingerprint, so every surface shader is recognized. Input
+fields come from the vertex pass's `_ST` transforms (`uv_MainTex`,
+`uv2_LightMap`, ...), and the body is reconstructed from the deferred G-buffer
+writes plus the property set: Standard, StandardSpecular, Lambert and BlinnPhong
+templates, and a heuristic custom-lighting model for `Corpus/09`.
 
-Impact: output is valid ShaderLab but is not the source form; pass count and
-structure differ. `test_source_fidelity.py` skips surface pass structure for
-this reason.
+Remaining gap: the original `surf()` body is not recovered line-for-line. A
+compiled blob carries no source text, and Unity inlines and optimizes the body,
+so dead stores and folded expressions leave no trace. Reconstructed bodies are
+therefore close but not identical: `Corpus/05` loses its `vertex:vert` /
+`finalcolor:finalColor` functions, `Corpus/10` omits tessellation, `Corpus/11`
+omits `vert`/`finalColor`, and a custom lighting function is emitted from a
+template because its name is not serialized.
+
+Impact: the output is source-shaped rather than fully pass-expanded, which is
+the intended goal (readability, not visual correctness). `test_source_fidelity.py`
+still skips surface pass structure. `docs/future_features.md` describes the
+dataflow reconstruction that would close the remaining gap.
 
 ## 3. Hull/domain and compute entry points
 
@@ -133,7 +142,7 @@ than observed failures:
 | `HlslPrettyPrinter.Registers.cs:1360` | Abs-fold guard only covers `max(a, -a)`; other spellings can fail with X8000. |
 | `HlslPrettyPrinter.Registers.cs:1503,1509,1632` | Unmapped intrinsics/texture ops (`DistanceVector`, `MaskedSumOfAbsoluteDifferences`, `Eval*`, unknown texture ops) and empty matrices fall back to `TODO` text. |
 | `HlslPrettyPrinter.Registers.cs:1528` | ResInfo maps 2D/3D/cube; multisampled targets omit the mip parameter and exotic resource types fall back to 3. |
-| `HlslSurfaceShaderRecognizer.cs:186` | Surface `Input` struct recovers only vertex colour, not `uv_*` fields. |
+| `HlslSurfaceShaderRecognizer.cs` | `surf` bodies come from per-model templates, not the pass dataflow; functions outside `surf` (vert, finalcolor, tessellation) are omitted and custom lighting is a template. |
 
 ## 6. Platform coverage
 
@@ -201,4 +210,5 @@ At the time of writing this prints nothing: every emitted `Pass` has a body.
 
 1. Keyword variant bodies beyond 4 permutations (item 1) — 16 passes emit
    per-variant bodies; larger passes still lose non-base behaviour.
-2. Surface reconstruction (item 2) — quality of life, not visual correctness.
+2. Surface dataflow reconstruction (item 2) — readability only; see
+   `docs/future_features.md` for the design.

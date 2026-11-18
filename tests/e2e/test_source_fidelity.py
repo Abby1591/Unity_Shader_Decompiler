@@ -384,6 +384,8 @@ def compare_shader(source, output, errors):
         return
 
     surface = "#pragma surface" in source
+    if surface and "#pragma surface surf" not in output:
+        errors.append("surface shader was not reconstructed to #pragma surface")
     skip_structure = surface or (src_name in STRUCTURE_EXCEPTIONS)
     for index, (src_sub, out_sub) in enumerate(zip(src_subshaders, out_subshaders)):
         label = f"SubShader {index}"

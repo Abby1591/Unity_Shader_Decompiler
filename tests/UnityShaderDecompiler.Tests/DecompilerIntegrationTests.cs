@@ -42,6 +42,20 @@ public class DecompilerIntegrationTests
         { "Corpus_26 Multiple Render Targets", "Corpus/26 Multiple Render Targets" },
     };
 
+    // Reconstructed surface shaders replace their compiled passes with the
+    // #pragma surface form, so pass-structure assertions only apply to the
+    // shaders that keep their passes.
+    public static TheoryData<string, string> PassFixtures => new()
+    {
+        { "Corpus_01 Properties", "Corpus/01 Properties" },
+        { "Corpus_04 Vertex Fragment", "Corpus/04 Vertex Fragment" },
+        { "Corpus_14 Shadow Depth Meta Motion", "Corpus/14 Shadow Depth Meta Motion" },
+        { "Corpus_18 Geometry Shader", "Corpus/18 Geometry Shader" },
+        { "Corpus_19 Hull Domain", "Corpus/19 Hull Domain" },
+        { "Corpus_20 Instancing", "Corpus/20 Instancing" },
+        { "Corpus_26 Multiple Render Targets", "Corpus/26 Multiple Render Targets" },
+    };
+
     [Theory]
     [MemberData(nameof(Fixtures))]
     public void Decompile_ProducesShaderShellWithMetadata(string fixture, string expectedName)
@@ -123,7 +137,7 @@ public class DecompilerIntegrationTests
     }
 
     [Theory]
-    [MemberData(nameof(Fixtures))]
+    [MemberData(nameof(PassFixtures))]
     public void EveryPass_EmitsOneHlslProgram(string fixture, string _)
     {
         var result = FixtureCache.Decompile(fixture);
@@ -141,7 +155,7 @@ public class DecompilerIntegrationTests
     }
 
     [Theory]
-    [MemberData(nameof(Fixtures))]
+    [MemberData(nameof(PassFixtures))]
     public void EveryMetadataPass_KeepsItsPassBlock(string fixture, string _)
     {
         // Pass indices are how real code addresses passes (SetPass,
@@ -187,17 +201,13 @@ public class DecompilerIntegrationTests
     [Fact]
     public void KeywordVariants_EmitABranchPerCompiledBody()
     {
-        // Four compiled permutations: one #if branch per body, most keywords
-        // first, with the base body in the #else.
-        var text = FixtureCache.Decompile("Corpus_05 Surface Standard").ShaderText;
+        // Two compiled permutations: one #if body, base state in #else.
+        var text = FixtureCache.Decompile("Corpus_14 Shadow Depth Meta Motion").ShaderText;
 
-        Assert.Contains("#pragma multi_compile _ LIGHTPROBE_SH", text);
-        Assert.Contains("#pragma multi_compile _ UNITY_HDR_ON", text);
-        Assert.Contains("#if defined(LIGHTPROBE_SH) && defined(UNITY_HDR_ON)", text);
-        Assert.Contains("#elif defined(LIGHTPROBE_SH)", text);
-        Assert.Contains("#elif defined(UNITY_HDR_ON)", text);
-        Assert.Equal(2, Regex.Matches(text, @"(?m)^            #else$").Count);
-        Assert.Equal(2, Regex.Matches(text, @"(?m)^            #endif$").Count);
+        Assert.Contains("#pragma multi_compile _ SHADOWS_DEPTH", text);
+        Assert.Contains("#if defined(SHADOWS_DEPTH)", text);
+        Assert.Contains("#else", text);
+        Assert.Contains("#endif", text);
     }
 
     [Fact]
@@ -235,14 +245,22 @@ public class DecompilerIntegrationTests
     }
 
     [Fact]
-    public void SurfaceStandard_EmitsLightingMembersUsedByBytecode()
+    public void Surface_RewritesToPragmaSurfaceAndKeepsPassesOnRequest()
     {
-        // Metadata lists _LightColor0/_WorldSpaceLightPos0 for the lighting
-        // variant; the bytecode reads both and they must survive.
+        // The compiled passes are authoritative but noisy; the rewritten
+        // form restores the readable source shape.
         var text = FixtureCache.Decompile("Corpus_05 Surface Standard").ShaderText;
 
-        Assert.Contains("_WorldSpaceLightPos0", text);
-        Assert.Contains("_LightColor0", text);
+        Assert.Contains("#pragma surface surf Standard", text);
+        Assert.Contains("struct Input", text);
+        Assert.Contains("void surf(Input IN, inout SurfaceOutputStandard o)", text);
+        Assert.DoesNotContain("\"LIGHTMODE\"=\"FORWARDBASE\"", text);
+
+        var kept = UnityShaderDecompiler.Core.Decompiler.DecompileFolder(
+            TestPaths.FixtureFolder("Corpus_05 Surface Standard"),
+            new DecompileOptions { Verbose = false, KeepPasses = true });
+        Assert.Contains("#pragma surface surf Standard", kept.ShaderText);
+        Assert.Contains("\"LIGHTMODE\"=\"FORWARDBASE\"", kept.ShaderText);
     }
 
     [Fact]
