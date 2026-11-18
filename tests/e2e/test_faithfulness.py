@@ -113,7 +113,7 @@ def main():
         print(f"--- {name} ---")
 
         r = run(
-            [str(parser_exe), "--faithfulness-test", str(folder)],
+            [str(parser_exe), "--faithfulness-test", "--keep-passes", str(folder)],
             REPO_ROOT / "src" / "UnityShaderDecompiler.Cli",
         )
         log = r.stdout + r.stderr

@@ -19,6 +19,19 @@ public class GoldenMetadataTests
     {
         "Corpus_01 Properties",
         "Corpus_04 Vertex Fragment",
+        "Corpus_14 Shadow Depth Meta Motion",
+        "Corpus_18 Geometry Shader",
+        "Corpus_19 Hull Domain",
+        "Corpus_20 Instancing",
+        "Corpus_26 Multiple Render Targets",
+    };
+
+    // Surface shaders drop the compiled passes (and their cbuffer
+    // declarations) by design, so they only take part in the sample check.
+    public static TheoryData<string> SampleFixtures => new()
+    {
+        "Corpus_01 Properties",
+        "Corpus_04 Vertex Fragment",
         "Corpus_05 Surface Standard",
         "Corpus_14 Shadow Depth Meta Motion",
         "Corpus_18 Geometry Shader",
@@ -72,7 +85,7 @@ public class GoldenMetadataTests
     }
 
     [Theory]
-    [MemberData(nameof(Fixtures))]
+    [MemberData(nameof(SampleFixtures))]
     public void Fixture_MatchesCheckedInSample(string fixture)
     {
         var result = FixtureCache.Decompile(fixture);

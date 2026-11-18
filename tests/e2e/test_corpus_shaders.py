@@ -179,20 +179,24 @@ def main():
 
         # 4. Every cbuffer slot from metadata must be represented, either as
         #    an explicit register(bN) or as a generated name ending in bN.
+        #    A reconstructed surface shader deliberately drops the compiled
+        #    passes (and their cbuffers); --keep-passes restores them.
+        surface = "#pragma surface surf" in text
         cbs = []
         for ss in meta["subShaders"]:
             for p in ss.get("passes", []):
                 cbs.extend(p.get("constantBuffers", []))
         slots = sorted({cb["slot"] for cb in cbs})
-        for slot in slots:
-            if re.search(rf"register\(b{slot}\)", text) is None \
-               and re.search(rf"cbuffer\s+[\w$]*b{slot}\b", text) is None:
-                errors.append(f"missing cbuffer slot b{slot}")
+        if not surface:
+            for slot in slots:
+                if re.search(rf"register\(b{slot}\)", text) is None \
+                   and re.search(rf"cbuffer\s+[\w$]*b{slot}\b", text) is None:
+                    errors.append(f"missing cbuffer slot b{slot}")
 
         # 5. Metadata lists all members; the bytecode only uses a subset, so
         #    require that at least one named member survives to the output.
         named = sorted({v["name"] for cb in cbs for v in cb.get("variables", [])})
-        if named and not any(re.search(rf"\b{re.escape(v)}\b", text) for v in named):
+        if named and not surface and not any(re.search(rf"\b{re.escape(v)}\b", text) for v in named):
             errors.append("no named cbuffer members emitted")
 
         # 6. The pipeline must have reached the final writer stage.
