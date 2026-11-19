@@ -24,7 +24,7 @@ exist in the current dispatch chain and have been replaced.
 ## 0. Executive summary
 
 A request arrives over a loopback IPC stream as one line of text
-(`Cmd: compileSnippet …`). `FUN_1400cc6d0` dispatches on the command name to one of
+(`Cmd: compileSnippet …`). `CmdDispatcher_Dispatch` dispatches on the command name to one of
 eight handlers. Every handler then runs the same five stages:
 
 1. **Prepare** — keyword macros, `UNITY_VERSION`, `SHADER_STAGE_*`,
@@ -37,11 +37,11 @@ eight handlers. Every handler then runs the same five stages:
    Metal, D3D/HLSL). The D3D frontend drives either `D3DCompile` (FXC) or the
    packaged DXC through the plugin interface at `0x140578000`.
 4. **Reflect + strip** — before the blob leaves the process, FXC results are
-   reflected through `FUN_1400218e0` (signatures, cbuffers, resources) and then
+   reflected through `ProcessFxcReflectionAndValidate` (signatures, cbuffers, resources) and then
    passed through `D3DStripShader` with flags `7` (reflection+debug+test blobs) or
    `6` (debug+test blobs only, reflection kept). Compute kernels are stripped with
    `7` unless the caller asks to keep reflection **[V]**.
-5. **Collect** — `FUN_1400b1150` walks the per-program results and appends each
+5. **Collect** — `CollectCompiledPrograms` walks the per-program results and appends each
    `{name, bytecode}` pair to the response; the editor stores the bytecode next to
    the reflection data it just received.
 
@@ -55,26 +55,26 @@ not the whole story.
 
 ## 1. Process model and IPC
 
-`FUN_1400d0770` is the worker loop **[V]**: it connects a loopback stream
+`RunShaderCompilerWorkerLoop` is the worker loop **[V]**: it connects a loopback stream
 (`"127.0.0.1"`, `"Couldn't create IPC stream\n"`,
 `"Couldn't connect IPC stream\n"`), reads commands, and on EOF reports
 `"IPC connection closed"`.
 
 ```
-// FUN_1400d0770 - worker main
+// RunShaderCompilerWorkerLoop - worker main
 void WorkerMain() {
     IpcStream stream = ConnectLoopback("127.0.0.1");   // fatal on failure
     for (;;) {
         CommandLine cmd = stream.ReadCommand();        // "Error reading command"
         if (cmd.IsEof) Fatal("IPC connection closed");
-        DispatchCommand(stream, cmd);                  // FUN_1400cc6d0
+        DispatchCommand(stream, cmd);                  // CmdDispatcher_Dispatch
     }
 }
 ```
 
 Each frame on the stream starts with a magic + length header **[V]**
-(`FUN_1400c7ea0` receives and validates it, `FUN_1400c8c30` writes it,
-`FUN_1400c76e0` / `FUN_1400c8820` are the byte-level read/write helpers; all four
+(`ReceiveIpcFrameMagic` receives and validates it, `SendIpcFrameMagic` writes it,
+`ReadIpcStreamBytes` / `WriteIpcStreamBytes` are the byte-level read/write helpers; all four
 raise `"IPC not initialized"` when the stream is unbound):
 
 ```
@@ -85,7 +85,7 @@ struct IpcFrame {          // little endian
 };
 ```
 
-`magic` is compared as a raw 32-bit value inside `FUN_1400c7ea0`; a mismatch is
+`magic` is compared as a raw 32-bit value inside `ReceiveIpcFrameMagic`; a mismatch is
 fatal, not recoverable.
 
 The payload is a text command whose fields are separated by the `Cmd: ` dispatch
@@ -96,36 +96,36 @@ prefixed with a label such as `"computeData: "` or `"rayTracingData: "` **[V]**.
 
 ## 2. Command dispatch
 
-`FUN_1400cc6d0` is a large `if/else` chain over the command string **[V]**.
+`CmdDispatcher_Dispatch` is a large `if/else` chain over the command string **[V]**.
 All nine command names and all eight handlers were confirmed to be referenced
 from this function:
 
 ```
-// FUN_1400cc6d0 - command dispatcher
+// CmdDispatcher_Dispatch - command dispatcher
 void DispatchCommand(IpcStream& stream, Utf8String cmd) {
     if (cmd == "Cmd: shutdown")                  ShutdownWorker();
-    else if (cmd == "Cmd: preprocess")           HandlePreprocess(stream);              // FUN_1400b7db0
-    else if (cmd == "Cmd: disassembleShader")    HandleDisassemble(stream);             // FUN_1400b5680
-    else if (cmd == "Cmd: compileSnippet")       HandleCompileSnippet(stream);          // FUN_1400b4e40
-    else if (cmd == "Cmd: initializeCompiler")   HandleInitializeCompiler(stream);      // FUN_1400b5080
-    else if (cmd == "Cmd: preprocessCompute")    HandlePreprocessCompute(stream);       // FUN_1400b6370
-    else if (cmd == "Cmd: compileComputeKernel") HandleCompileComputeKernel(stream);    // FUN_1400b4100
-    else if (cmd == "Cmd: compileRayTracingShader")  HandleCompileRayTracing(stream);   // FUN_1400b4760
-    else if (cmd == "Cmd: preprocessRayTracingShader") HandlePreprocessRayTracing(stream); // FUN_1400b7270
+    else if (cmd == "Cmd: preprocess")           HandlePreprocess(stream);              // HandlePreprocessCommand
+    else if (cmd == "Cmd: disassembleShader")    HandleDisassemble(stream);             // HandleDisassembleShaderCommand
+    else if (cmd == "Cmd: compileSnippet")       HandleCompileSnippet(stream);          // HandleCompileSnippetCommand
+    else if (cmd == "Cmd: initializeCompiler")   HandleInitializeCompiler(stream);      // HandleInitializeCompilerCommand
+    else if (cmd == "Cmd: preprocessCompute")    HandlePreprocessCompute(stream);       // HandleComputeKernelPreprocessRequest
+    else if (cmd == "Cmd: compileComputeKernel") HandleCompileComputeKernel(stream);    // HandleCompileComputeKernelCommand
+    else if (cmd == "Cmd: compileRayTracingShader")  HandleCompileRayTracing(stream);   // HandleCompileRayTracingShaderCommand
+    else if (cmd == "Cmd: preprocessRayTracingShader") HandlePreprocessRayTracing(stream); // HandleRayTracingPreprocessRequest
     else ReportError(stream, "Unknown command: " + cmd);
 }
 ```
 
 | Command | Handler | Purpose |
 |---|---|---|
-| `preprocess` | `FUN_1400b7db0` | expand macros/includes only; returns source |
-| `disassembleShader` | `FUN_1400b5680` | DXBC → text disassembly |
-| `compileSnippet` | `FUN_1400b4e40` | compile one CGPROGRAM block into per-stage blobs |
-| `initializeCompiler` | `FUN_1400b5080` | load/validate compiler libraries, report capabilities |
-| `preprocessCompute` | `FUN_1400b6370` | compute preprocess (multi-kernel aware) |
-| `compileComputeKernel` | `FUN_1400b4100` | compile named `#pragma kernel` entry points |
-| `compileRayTracingShader` | `FUN_1400b4760` | compile a raytracing library |
-| `preprocessRayTracingShader` | `FUN_1400b7270` | raytracing preprocess |
+| `preprocess` | `HandlePreprocessCommand` | expand macros/includes only; returns source |
+| `disassembleShader` | `HandleDisassembleShaderCommand` | DXBC → text disassembly |
+| `compileSnippet` | `HandleCompileSnippetCommand` | compile one CGPROGRAM block into per-stage blobs |
+| `initializeCompiler` | `HandleInitializeCompilerCommand` | load/validate compiler libraries, report capabilities |
+| `preprocessCompute` | `HandleComputeKernelPreprocessRequest` | compute preprocess (multi-kernel aware) |
+| `compileComputeKernel` | `HandleCompileComputeKernelCommand` | compile named `#pragma kernel` entry points |
+| `compileRayTracingShader` | `HandleCompileRayTracingShaderCommand` | compile a raytracing library |
+| `preprocessRayTracingShader` | `HandleRayTracingPreprocessRequest` | raytracing preprocess |
 
 ---
 
@@ -137,7 +137,7 @@ Before preprocessing, the frontends build the keyword macro list and add the
 engine's own defines **[V]**:
 
 ```
-// FUN_1400b9770 (D3D frontend) and siblings
+// GenerateD3dHlslStageSource (D3D frontend) and siblings
 struct Macro { Utf8String name; Utf8String value; };
 
 void BuildPrelude(MacroList& macros, const CompileRequest& req) {
@@ -149,11 +149,11 @@ void BuildPrelude(MacroList& macros, const CompileRequest& req) {
 }
 ```
 
-`FUN_1400b0e60` adds the two availability defines that gate every
+`SetCompilerAvailabilityMacros` adds the two availability defines that gate every
 `#if SHADER_API_…` / `#if SHADER_TARGET_…` block in Unity shader code **[V]**:
 
 ```
-// FUN_1400b0e60
+// SetCompilerAvailabilityMacros
 void AddAvailabilityMacros(MacroList& macros, const CompilerCapabilities& caps) {
     macros.Add({"SHADER_TARGET_AVAILABLE" + caps.targetSuffix, "1"});
     macros.Add({"SHADER_AVAILABLE_" + caps.apiSuffix, "1"});   // e.g. SHADER_AVAILABLE_D3D11
@@ -164,43 +164,43 @@ void AddAvailabilityMacros(MacroList& macros, const CompilerCapabilities& caps) 
 ### 3.2 Surface shader expansion
 
 A CGPROGRAM block containing `#pragma surface` is not compiled as written. The
-preprocess handler and `FUN_1400c5ef0` call `FUN_1400bec60`, which rejects mixed
+preprocess handler and `ProcessSurfaceShaderBlock` call `GenerateSurfaceShaderPasses`, which rejects mixed
 blocks (`"CGPROGRAM cannot contain #pragma surface as well as other programs"`)
 and rewrites the block into ordinary generated HLSL **[V]**:
 
 ```
-// FUN_1400bec60 - surface shader expansion
+// GenerateSurfaceShaderPasses - surface shader expansion
 Utf8String ExpandSurfaceBlock(const SurfaceDesc& surface) {
     Utf8String out = "// Surface shader code generated based on:\n";     // 0x14057f2c8
     if (surface.vertexModifier != null) out += "// vertex modifier: '" + surface.vertexModifier + "'\n";
-    out += EmitLightingModel(surface);        // FUN_140084d60 - Standard / StandardSpecular / ...
+    out += EmitLightingModel(surface);        // GenerateSurfaceLightingModel - Standard / StandardSpecular / ...
     out += EmitForwardBase(surface);          // FUN_140079e30 | FUN_14007b3c0 | FUN_14007c5c0 ...
-    if (surface.forwardAdd)     out += EmitForwardAdd(surface);      // FUN_14007acc0  "#pragma multi_compile_fwdadd"
-    if (surface.prepassFinal)   out += EmitPrepassFinal(surface);    // FUN_140079820  "#pragma multi_compile_prepassfinal"
+    if (surface.forwardAdd)     out += EmitForwardAdd(surface);      // GenerateForwardAddPasses  "#pragma multi_compile_fwdadd"
+    if (surface.prepassFinal)   out += EmitPrepassFinal(surface);    // GeneratePrepassFinalPasses  "#pragma multi_compile_prepassfinal"
     return out;
 }
 ```
 
-The generator is **per lighting model**, not generic: `FUN_140084d60` contains the
+The generator is **per lighting model**, not generic: `GenerateSurfaceLightingModel` contains the
 `"Standard"` / `"StandardSpecular"` model names and dispatches to one of five pass
 emitters (`FUN_140079e30`, `FUN_14007b3c0`, `FUN_14007c5c0`, `FUN_14007e320`,
 `FUN_140080890`), each of which calls the shared block emitters
-`FUN_140082760` (header + `"// vertex shader"` / `"// fragment shader"` markers)
-and `FUN_1400749c0` (`struct v2f_` declarations) **[V]**. That structure is why a
+`GenerateSurfacePassHeader` (header + `"// vertex shader"` / `"// fragment shader"` markers)
+and `GenerateV2fStruct` (`struct v2f_` declarations) **[V]**. That structure is why a
 reconstructed `#pragma surface surf <model>` is the right shape: the original
 shader really was compiled from a model-specific template.
 
-`FUN_140085d60` is the companion transform that turns a **reflected** `surfInput`
+`GenerateSurfaceStructWrapper` is the companion transform that turns a **reflected** `surfInput`
 / `surfOutput` struct back into HLSL (`"surfInput"`, `"_hlslin_.%s"`,
 `"_Semantic_"`) for the generated wrapper pass **[V]**.
 
 ### 3.3 `#pragma` parsing
 
-`FUN_1400c48f0` is the single pragma parser; every directive it recognizes is a
+`ParseShaderPragmaDirective` is the single pragma parser; every directive it recognizes is a
 directive that can appear in a shader asset **[V]**:
 
 ```
-// FUN_1400c48f0 - reconstructed dispatch shape
+// ParseShaderPragmaDirective - reconstructed dispatch shape
 void ParsePragma(Utf8String text, ShaderPragmaSet& out) {
     switch (Directive(text)) {
     case "surface":              out.surface = text.arg1;                     break;
@@ -245,17 +245,17 @@ void ParsePragma(Utf8String text, ShaderPragmaSet& out) {
 
 ### 3.4 Splitting and validation
 
-`FUN_1400bd520` walks the preprocessed text line by line, extracts the pragmas
-through `FUN_1400c48f0`, and builds one source segment per declared stage, framed
-by `// SHADER_STAGE_<stage>_begin` / `_end` markers **[V]**. `FUN_1400b84c0`
+`SplitSourceByPragmaDirective` walks the preprocessed text line by line, extracts the pragmas
+through `ParseShaderPragmaDirective`, and builds one source segment per declared stage, framed
+by `// SHADER_STAGE_<stage>_begin` / `_end` markers **[V]**. `CheckStageSlotsNotEmpty`
 then validates the seven-entry stage slot array and, when every slot is empty,
 emits the warning
 `"CGPROGRAM block does not contain #pragma vertex, #pragma fragment or #pragma surface directive, skipping"`
-and drops the block **[V]**. `FUN_1400b3c90` applies the analogous rule for GLSL/
+and drops the block **[V]**. `CheckVertexAndFragmentPresent` applies the analogous rule for GLSL/
 Metal/`HLSLcc` (`"Both vertex and fragment programs must be present in a shader snippet. Excluding it from compilation."`) **[V]**.
 
 ```
-// FUN_1400bd520 + FUN_1400b84c0
+// SplitSourceByPragmaDirective + CheckStageSlotsNotEmpty
 void SplitIntoStages(Utf8String preprocessed, StageSource stages[7]) {
     ShaderPragmaSet pragmas;
     foreach (line in preprocessed.Lines()) {
@@ -272,19 +272,19 @@ void SplitIntoStages(Utf8String preprocessed, StageSource stages[7]) {
 
 ## 4. Stage 2 — backend selection
 
-`FUN_1400b4e40` indexes a four-entry function table with the request's language
+`HandleCompileSnippetCommand` indexes a four-entry function table with the request's language
 index **[V]**:
 
 ```
-// FUN_1400b4e40
+// HandleCompileSnippetCommand
 enum Backend : int { D3DHlsl = 0, GlslHlslcc = 1, MetalMsl = 2, D3DHlslAlt = 3 };
 
 using FrontendFn = void (*)(CompileRequest&, StageSource[7]);
 static const FrontendFn kFrontends[4] = {          // DAT_1400b4e6x
-    /* 0 */ FUN_1400b9770,                          // D3D / HLSL
-    /* 1 */ FUN_1400b8600,                          // GLSL via HLSLcc/glslang
-    /* 2 */ FUN_1400ba6e0,                          // Metal (MSL)
-    /* 3 */ FUN_1400b9770,                          // D3D / HLSL (alias)
+    /* 0 */ GenerateD3dHlslStageSource,                          // D3D / HLSL
+    /* 1 */ GenerateGlslStageSource,                          // GLSL via HLSLcc/glslang
+    /* 2 */ GenerateMetalShaderStageSource,                          // Metal (MSL)
+    /* 3 */ GenerateD3dHlslStageSource,                          // D3D / HLSL (alias)
 };
 
 void HandleCompileSnippet(CompileRequest& req) {
@@ -296,9 +296,9 @@ The three frontends differ in what they do to the source before compiling:
 
 | Frontend | Extra work before compiling |
 |---|---|
-| `FUN_1400b9770` (D3D) | prepends `#define` keyword macros, `UNITY_VERSION`, `SHADER_STAGE_*`; calls preprocess (`FUN_140097870`); validates stages (`FUN_1400b84c0`) **[V]** |
-| `FUN_1400b8600` (GLSL) | prepends macros, drops `#version`, splits pragmas (`FUN_1400bd520`), rewrites `// #pragma ` → `#pragma `, injects `GLSLSupport.glslinc`, `UnityStereoExtensions.glslinc`, `UnityStereoSupport.glslinc`, renames `texture2D` → `textureExternal` and `texture2DProj` → `textureProjExternal` **[V]** |
-| `FUN_1400ba6e0` (Metal) | splits pragmas, prepends macros and `SHADER_STAGE_*`, rewrites `// #pragma `, converts `'` → `"`, then fills `VGlobals`/`FGlobals` through `FUN_140062940`, `FUN_1400630c0`, `FUN_1400625d0`, `FUN_1400621e0`, `FUN_1400640f0` **[V]** |
+| `GenerateD3dHlslStageSource` (D3D) | prepends `#define` keyword macros, `UNITY_VERSION`, `SHADER_STAGE_*`; calls preprocess (`ProcessShaderPreprocessor`); validates stages (`CheckStageSlotsNotEmpty`) **[V]** |
+| `GenerateGlslStageSource` (GLSL) | prepends macros, drops `#version`, splits pragmas (`SplitSourceByPragmaDirective`), rewrites `// #pragma ` → `#pragma `, injects `GLSLSupport.glslinc`, `UnityStereoExtensions.glslinc`, `UnityStereoSupport.glslinc`, renames `texture2D` → `textureExternal` and `texture2DProj` → `textureProjExternal` **[V]** |
+| `GenerateMetalShaderStageSource` (Metal) | splits pragmas, prepends macros and `SHADER_STAGE_*`, rewrites `// #pragma `, converts `'` → `"`, then fills `VGlobals`/`FGlobals` through `FUN_140062940`, `FUN_1400630c0`, `FUN_1400625d0`, `FUN_1400621e0`, `FUN_1400640f0` **[V]** |
 
 Only the D3D frontend produces DXBC. Everything this decompiler consumes comes
 from that path.
@@ -320,10 +320,10 @@ struct CompilerPlugin {
     virtual void Reserved10();                                // +0x10
     virtual void Reserved18();                                // +0x18
     virtual void Reserved20();                                // +0x20 / guard_check_icall
-    virtual void CompileGraphics(CompileBatch&)  = 0;         // +0x28 -> FUN_140006e80 (FXC)
-    virtual void Disassemble(BytecodeBatch&)     = 0;         // +0x30 -> FUN_140006ec0
-    virtual void CompileCompute(CompileBatch&)   = 0;         // +0x38 -> FUN_140006f90 (FXC)
-    virtual void CompileGraphicsDxc(CompileBatch&) = 0;       // +0x40 -> FUN_1400070f0 (DXC)
+    virtual void CompileGraphics(CompileBatch&)  = 0;         // +0x28 -> InvokeGraphicsFxcCompilePlugin (FXC)
+    virtual void Disassemble(BytecodeBatch&)     = 0;         // +0x30 -> InvokeBytecodeDisassemblePlugin
+    virtual void CompileCompute(CompileBatch&)   = 0;         // +0x38 -> InvokeComputeFxcCompilePlugin (FXC)
+    virtual void CompileGraphicsDxc(CompileBatch&) = 0;       // +0x40 -> InvokeGraphicsDxcCompilePlugin (DXC)
     virtual void Reserved48();                                // +0x48
 };
 ```
@@ -331,32 +331,32 @@ struct CompilerPlugin {
 The two thunks are thin:
 
 ```
-// FUN_140006e80 -> FXC graphics
+// InvokeGraphicsFxcCompilePlugin -> FXC graphics
 void InvokeCompilerFxc(CompileBatch& batch) {
-    LoadD3DCompiler();                        // FUN_140039af0 (FORCE_DXC_ON_SWITCH handling)
+    LoadD3DCompiler();                        // CheckForceDxcOnSwitch (FORCE_DXC_ON_SWITCH handling)
     InitCompilerState();                      // FUN_140110570
-    CompileGraphicsFxc(batch);                // FUN_1400317e0
+    CompileGraphicsFxc(batch);                // ProcessGraphicsFxcCompile
 }
 
-// FUN_1400070f0 -> DXC
+// InvokeGraphicsDxcCompilePlugin -> DXC
 void InvokeCompilerDxc(CompileBatch& batch) {
     LoadD3DCompiler();
-    CompileGraphicsDxc(batch);                // FUN_140039430 -> FUN_14010d2f0
+    CompileGraphicsDxc(batch);                // FUN_140039430 -> ProcessGraphicsDxcCompile
 }
 ```
 
-`FUN_140039af0` decides "force DXC anyway" for Switch (`"FORCE_DXC_ON_SWITCH"`,
+`CheckForceDxcOnSwitch` decides "force DXC anyway" for Switch (`"FORCE_DXC_ON_SWITCH"`,
 `"FORCE_DXC_ON_SWITCH2"`) **[V]**. Otherwise `#pragma use_dxc` /
 `#pragma never_use_dxc` (parsed in §3.3) pick the compiler.
 
 ### 5.2 The FXC pass
 
-`FUN_1400317e0` is the graphics FXC implementation **[V]**. Its essential order is:
+`ProcessGraphicsFxcCompile` is the graphics FXC implementation **[V]**. Its essential order is:
 
 ```
-// FUN_1400317e0 - one graphics compile (abridged)
+// ProcessGraphicsFxcCompile - one graphics compile (abridged)
 void CompileGraphicsFxc(CompileBatch& batch) {
-    AddAvailabilityMacros(batch.macros, batch.caps);           // FUN_1400b0e60
+    AddAvailabilityMacros(batch.macros, batch.caps);           // SetCompilerAvailabilityMacros
     D3DBlob* blob = null;
     HRESULT hr = Fxc->Compile(                                // vtable +0x18 -> FUN_14008aec0 -> D3DCompile
         batch.source, batch.entryPoint, batch.profile,        // e.g. "vs_5_0" / "ps_5_0"
@@ -365,7 +365,7 @@ void CompileGraphicsFxc(CompileBatch& batch) {
     if (FAILED(hr)) { ReportCompileErrors(blob); return; }     // "): error ", "): warning "
 
     if (!batch.skipReflection) {
-        ReflectAndValidate(blob, batch, out.passMetadata);     // FUN_1400218e0
+        ReflectAndValidate(blob, batch, out.passMetadata);     // ProcessFxcReflectionAndValidate
     }
     if (!batch.skipStrip) {
         u32 stripFlags = batch.skipReflection ? 6 : 7;         // (bVar3 ^ 1) + 6
@@ -392,10 +392,10 @@ call sites look indirect in the decompilation **[V]**.
 
 ### 5.3 Reflection and validation
 
-`FUN_1400218e0` is the FXC reflection pass **[V]**:
+`ProcessFxcReflectionAndValidate` is the FXC reflection pass **[V]**:
 
 ```
-// FUN_1400218e0 - reflection + sanity checks (abridged)
+// ProcessFxcReflectionAndValidate - reflection + sanity checks (abridged)
 void ReflectAndValidate(D3DBlob* blob, CompileBatch& batch, PassMetadata& out) {
     ID3D11ShaderReflection* refl = Fxc->Reflect(blob);          // vtable +0x38 -> FUN_14008b310 -> D3DReflect
     if (!refl) { Error("Failed to get HLSL Reflection interface"); return; }
@@ -430,32 +430,32 @@ why `--verify-signatures` can cross-check reflection against `d3dcompiler`.
 
 ### 5.4 DXC path
 
-`FUN_14010d2f0` drives the packaged DXC **[V]**. Its arguments include
+`ProcessGraphicsDxcCompile` drives the packaged DXC **[V]**. Its arguments include
 `/Qembed_debug`, `/Zpc`, `/auto-binding-space`, `/enable-16bit-types`, target
 `HLSL`, and profile `lib_6_3` / `lib_6_6` for raytracing; errors are re-formatted
 into Unity's `): error ` style. Reflection and result handling sit in
-`FUN_140113330` → `FUN_14011a330` (`"Compilation failed: Couldn't retrieve shader
+`ProcessDxcCompileResult` → `ProcessDxcReflectionResult` (`"Compilation failed: Couldn't retrieve shader
 reflection information."`). DXC output is not DXBC, so it is out of scope for this
 decompiler.
 
 ### 5.5 Collecting results
 
-`FUN_1400b1150` walks the result object and appends each program **[V]**:
+`CollectCompiledPrograms` walks the result object and appends each program **[V]**:
 
 ```
-// FUN_1400b1150
+// CollectCompiledPrograms
 void AppendPrograms(IpcResponse& response, const CompileResult& result) {
     uint count = result.Count();                      // vtable +0x30
     for (uint i = 0; i < count; ++i) {
         Utf8String name; D3DBlob* code; u32 size; u8 stage;
         result.Get(i, name, code, size, stage);       // vtable +0x38
-        response.AddProgram(name, code, size, stage); // FUN_140089750
+        response.AddProgram(name, code, size, stage); // AppendProgramToResponse
     }
-    FinalizeResponse(response);                       // FUN_1400c1d10
+    FinalizeResponse(response);                       // FinalizeCompileResponse
 }
 ```
 
-`FUN_1400c1d10` post-processes the response and can reject a result outright
+`FinalizeCompileResponse` post-processes the response and can reject a result outright
 (`"Surface shader Input structure needs INTERNAL_DATA for this WorldNormalVector or
 WorldReflectionVector usage"`) **[V]**.
 
@@ -463,16 +463,16 @@ WorldReflectionVector usage"`) **[V]**.
 
 ## 6. Compute kernels
 
-`FUN_1400b4100` is the handler; the compile core is `FUN_1400cb330` **[V]**. It is
+`HandleCompileComputeKernelCommand` is the handler; the compile core is `ProcessComputeFxcCompile` **[V]**. It is
 the same shape as §5.2 with three differences: `cs_5_0`, an entry-point lookup per
 `#pragma kernel`, and reflection stripped by default.
 
 ```
-// FUN_1400cb330 - compute compile (abridged)
+// ProcessComputeFxcCompile - compute compile (abridged)
 void CompileComputeKernel(CompileRequest& req) {
     foreach (kernel in req.kernels) {                       // "kernel: %s %i"
-        StageSource cs = Preprocess(req.source, req.macros); // FUN_140097870
-        void* entry = FindKernelEntry(cs, kernel.name);      // FUN_1400c34c0
+        StageSource cs = Preprocess(req.source, req.macros); // ProcessShaderPreprocessor
+        void* entry = FindKernelEntry(cs, kernel.name);      // FindComputeKernelEntryPoint
         if (!entry) { Error("Did not find shader kernel '" + kernel.name + "'"); continue; }
 
         D3DBlob* blob = Fxc->Compile(cs, kernel.name, "cs_5_0", req.macros);   // vtable +0x18
@@ -490,16 +490,16 @@ void CompileComputeKernel(CompileRequest& req) {
 Errors are reported as `"Compilation failed for kernel '%s' [0x%08x - unknown
 error] '%s'"` / `"Compilation failed [0x%08x - %s]"` **[V]**.
 
-`FUN_1400b6370` is the compute preprocess (multi-kernel source expansion) and
+`HandleComputeKernelPreprocessRequest` is the compute preprocess (multi-kernel source expansion) and
 shares the preprocessor pipeline with the graphics path **[V]**.
 
 ---
 
 ## 7. Ray tracing
 
-`FUN_1400b4760` (compile) and `FUN_1400b7270` (preprocess) run the same pipeline
+`HandleCompileRayTracingShaderCommand` (compile) and `HandleRayTracingPreprocessRequest` (preprocess) run the same pipeline
 with `lib_6_3` / `lib_6_6` targets and the `"raytracing"` pragma. Both reuse
-`FUN_140097870`, `FUN_1400b1070`, `FUN_1400b13b0`, `FUN_1400b1150` **[V]**. Metal
+`ProcessShaderPreprocessor`, `PrepareStageSourceSegment`, `PrepareComputeStageSource`, `CollectCompiledPrograms` **[V]**. Metal
 raytracing is explicitly rejected
 (`"DXC: attempting to compile a raytracing shader stage for Metal - this is not yet
 supported"`) and inline ray queries are rejected
@@ -509,12 +509,12 @@ supported"`) and inline ray queries are rejected
 
 ## 8. Disassembly and initialisation
 
-- `FUN_1400b5680` (`disassembleShader`) hands the blob to the plugin's
-  `Disassemble` slot → `FUN_140006ec0` → `FUN_140039190`, which produces text
+- `HandleDisassembleShaderCommand` (`disassembleShader`) hands the blob to the plugin's
+  `Disassemble` slot → `InvokeBytecodeDisassemblePlugin` → `ProcessDxbcDisassemble`, which produces text
   (`"// Failed to disassemble shader"`, `"// Invalid bytecode blob found"`) or an
   error (`"D3D11 shader compiler could not be loaded"`) **[V]**. A SPIR-V variant
-  exists (`InvokeCompilerDisassembleSPIRV` → `FUN_14002fbe0`).
-- `FUN_1400b5080` (`initializeCompiler`) loads and probes the compiler libraries and
+  exists (`InvokeCompilerDisassembleSPIRV` → `ProcessSpirvDisassemble`).
+- `HandleInitializeCompilerCommand` (`initializeCompiler`) loads and probes the compiler libraries and
   reports capabilities **[I]** (no user-visible strings; it initialises the plugin
   objects whose vtables are listed in §5.1).
 
@@ -522,7 +522,7 @@ supported"`) and inline ray queries are rejected
 
 ## 9. D3DCompiler wrapper
 
-`FUN_14008f070` loads `D3DCompiler_47.dll` (`"Failed to read D3DCompiler DLL file"`)
+`InitializeD3dCompilerLibrary` loads `D3DCompiler_47.dll` (`"Failed to read D3DCompiler DLL file"`)
 and resolves seven entry points with `GetProcAddress`, in this order **[V]**:
 `D3DCompile`, `D3DDisassemble`, `D3DAssemble`, `D3DPreprocess`, `D3DReflect`,
 `D3DStripShader`, `D3DGetBlobPart`.
@@ -544,7 +544,7 @@ The name strings sit back to back at `0x140584cd0` … `0x140584d30`; each stub
 references its own name, which is how the mapping above was confirmed.
 
 `FUN_14006a310` is a separate small probe that compiles a fixed `ps_5_0` snippet
-and calls `FUN_140085d60` — the surface-struct rewriter — presumably to validate
+and calls `GenerateSurfaceStructWrapper` — the surface-struct rewriter — presumably to validate
 the generator's output on startup **[I]**.
 
 ---
@@ -569,7 +569,7 @@ removed from the bytecode. Consequently:
   after reflection. `Shadermetadata.cs` reads exactly that (`constantBuffers` per
   pass) and its own comment already says the shipped bytecode has it stripped.
 - **Signatures are recoverable from the bytecode** (ISGN/OSGN/PCSG), and they are
-  the same data `FUN_1400218e0` extracts, so `--verify-signatures` is comparing two
+  the same data `ProcessFxcReflectionAndValidate` extracts, so `--verify-signatures` is comparing two
   independent copies of one fact rather than guessing.
 - **Blobs with `RDEF` intact are legal** (`stripFlags = 6`, compute with
   `keepReflection`). The parser must keep accepting them — `RdefChunk` stays, it is
@@ -581,7 +581,7 @@ removed from the bytecode. Consequently:
 
 1. **Surface shaders are generated per lighting model** (§3.2). Reconstructing
    `#pragma surface surf <model>` plus an `Input` struct and a `surf()` body mirrors
-   what `FUN_1400bec60` produced, instead of inventing a generic template. The
+   what `GenerateSurfaceShaderPasses` produced, instead of inventing a generic template. The
    compiled passes remain authoritative; `--keep-passes` keeps them visible.
 2. **The generator's markers are stable**: `// Surface shader code generated based
    on:`, `// vertex shader`, `// fragment shader` **[V]**. They explain the comment
@@ -592,7 +592,7 @@ removed from the bytecode. Consequently:
    bodies when a pass has ≤4 distinct keyword sets.
 4. **`#pragma surface` blocks always carry a fixed pragma neighbourhood**
    (`multi_compile_fwdbase`, `multi_compile_fwdadd`, `multi_compile_fog`,
-   `multi_compile_shadowcaster`, …) emitted by `FUN_14007acc0` / `FUN_140079820`
+   `multi_compile_shadowcaster`, …) emitted by `GenerateForwardAddPasses` / `GeneratePrepassFinalPasses`
    **[V]**, so a reconstructed surface shader can reproduce the original's pragma
    list without guessing.
 5. **Vertex channel mapping is a hard table in the compiler** (§5.3), so
@@ -609,81 +609,118 @@ removed from the bytecode. Consequently:
 
 ## 12. Function inventory
 
+Every function below carries this name and a plate comment in the Ghidra
+database, so the names here and in the decompiler match. Addresses are virtual
+addresses (image base `0x140000000`); `FUN_` prefixed entries are the few
+functions left unnamed on purpose (see the note under each group). The D3D
+pipeline has its decompiled bodies archived in [`decomp/`](decomp/); the
+GLSL/Metal/WGSL backends are listed for orientation only and are not archived.
+
 ### Transport and dispatch
 
-| Address | Role |
-|---|---|
-| `FUN_1400d0770` | worker main / command loop |
-| `FUN_1400cc6d0` | command dispatcher (`Cmd: …`) |
-| `FUN_1400c7ea0` | receive + verify frame magic |
-| `FUN_1400c8c30` | send frame magic |
-| `FUN_1400c76e0` / `FUN_1400c8820` | byte-level stream read / write |
+| Function | Address | Role |
+|---|---|---|
+| `RunShaderCompilerWorkerLoop` | `0x1400d0770` | worker main / command loop |
+| `CmdDispatcher_Dispatch` | `0x1400cc6d0` | command dispatcher (`Cmd: …`) |
+| `ReceiveIpcFrameMagic` | `0x1400c7ea0` | receive + verify frame magic |
+| `SendIpcFrameMagic` | `0x1400c8c30` | send frame magic |
+| `ReadIpcStreamBytes` | `0x1400c76e0` | byte-level stream read |
+| `WriteIpcStreamBytes` | `0x1400c8820` | byte-level stream write |
 
 ### Command handlers
 
-| Address | Command |
-|---|---|
-| `FUN_1400b7db0` | `preprocess` |
-| `FUN_1400b5680` | `disassembleShader` |
-| `FUN_1400b4e40` | `compileSnippet` |
-| `FUN_1400b5080` | `initializeCompiler` |
-| `FUN_1400b6370` | `preprocessCompute` |
-| `FUN_1400b4100` | `compileComputeKernel` |
-| `FUN_1400b4760` | `compileRayTracingShader` |
-| `FUN_1400b7270` | `preprocessRayTracingShader` |
+| Function | Address | Command |
+|---|---|---|
+| `HandlePreprocessCommand` | `0x1400b7db0` | `preprocess` |
+| `HandleDisassembleShaderCommand` | `0x1400b5680` | `disassembleShader` |
+| `HandleCompileSnippetCommand` | `0x1400b4e40` | `compileSnippet` |
+| `HandleInitializeCompilerCommand` | `0x1400b5080` | `initializeCompiler` |
+| `HandleComputeKernelPreprocessRequest` | `0x1400b6370` | `preprocessCompute` |
+| `HandleCompileComputeKernelCommand` | `0x1400b4100` | `compileComputeKernel` |
+| `HandleCompileRayTracingShaderCommand` | `0x1400b4760` | `compileRayTracingShader` |
+| `HandleRayTracingPreprocessRequest` | `0x1400b7270` | `preprocessRayTracingShader` |
 
 ### Source preparation
 
-| Address | Role |
-|---|---|
-| `FUN_1400b9770` | D3D/HLSL frontend |
-| `FUN_1400b8600` | GLSL frontend |
-| `FUN_1400ba6e0` | Metal frontend |
-| `FUN_1400bd520` | pragma extraction + per-stage split |
-| `FUN_1400c48f0` | `#pragma` parser (full directive list, §3.3) |
-| `FUN_1400b84c0` | stage-slot validation ("does not contain #pragma vertex…") |
-| `FUN_1400b3c90` | GLSL/Metal stage requirement check |
-| `FUN_140097870` | preprocessor |
-| `FUN_1400977c0`, `FUN_140097ea0` | preprocessor helpers |
-| `FUN_1400b0e60` | `SHADER_AVAILABLE_*` / `SHADER_TARGET_AVAILABLE*` macros |
-| `FUN_1400b0550`, `FUN_1400b1070`, `FUN_1400b13b0`, `FUN_1400bacc0` | source/segment preparation helpers **[I]** |
-| `FUN_1400b1150` | append compiled programs to the response |
-| `FUN_1400c1d10` | finalise response / emit validation error |
-| `FUN_140089750` | add one `{name, bytecode}` program |
+| Function | Address | Role |
+|---|---|---|
+| `GenerateD3dHlslStageSource` | `0x1400b9770` | D3D/HLSL frontend |
+| `GenerateGlslStageSource` | `0x1400b8600` | GLSL frontend |
+| `GenerateMetalShaderStageSource` | `0x1400ba6e0` | Metal frontend |
+| `SplitSourceByPragmaDirective` | `0x1400bd520` | pragma extraction + per-stage split |
+| `ParseShaderPragmaDirective` | `0x1400c48f0` | `#pragma` parser (full directive list, §3.3) |
+| `CheckStageSlotsNotEmpty` | `0x1400b84c0` | stage-slot validation ("does not contain #pragma vertex…") |
+| `CheckVertexAndFragmentPresent` | `0x1400b3c90` | GLSL/Metal stage requirement check |
+| `ProcessShaderPreprocessor` | `0x140097870` | preprocessor |
+| `ProcessPreprocessorPragmaState` | `0x1400977c0` | preprocessor helper (pragma state) |
+| `ProcessPreprocessorIncludeStack` | `0x140097ea0` | preprocessor helper (include stack) |
+| `SetCompilerAvailabilityMacros` | `0x1400b0e60` | `SHADER_AVAILABLE_*` / `SHADER_TARGET_AVAILABLE*` macros |
+| `PrepareCompileRequestSource` | `0x1400b0550` | compile-request source preparation **[I]** |
+| `PrepareStageSourceSegment` | `0x1400b1070` | per-stage segment preparation **[I]** |
+| `PrepareComputeStageSource` | `0x1400b13b0` | compute stage source preparation **[I]** |
+| `PrepareBackendSourceBuffer` | `0x1400bacc0` | backend source buffer preparation **[I]** |
+| `CollectCompiledPrograms` | `0x1400b1150` | append compiled programs to the response |
+| `FinalizeCompileResponse` | `0x1400c1d10` | finalise response / emit validation error |
+| `AppendProgramToResponse` | `0x140089750` | add one `{name, bytecode}` program |
+
+`FUN_1400b18a0` (compiled-define accumulation, called from
+`SetCompilerAvailabilityMacros`) is the one helper left unnamed.
 
 ### Surface shader generator
 
-| Address | Role |
-|---|---|
-| `FUN_1400c5ef0` | entry into surface expansion |
-| `FUN_1400bec60` | CGPROGRAM → generated passes; rejects mixed blocks |
-| `FUN_140084d60` | lighting-model dispatch (`Standard`, `StandardSpecular`) |
-| `FUN_140079e30`, `FUN_14007b3c0`, `FUN_14007c5c0`, `FUN_14007e320`, `FUN_140080890` | per-model pass emitters |
-| `FUN_140082760` | header + vertex-modifier comments |
-| `FUN_1400749c0` | `struct v2f_` emission |
-| `FUN_14007acc0` | ForwardAdd pragmas |
-| `FUN_140079820` | prepass-final pragmas |
-| `FUN_14007deb0` | additional pass emitter **[I]** |
-| `FUN_140085d60` | reflected `surfInput`/`surfOutput` → HLSL wrapper |
+| Function | Address | Role |
+|---|---|---|
+| `ProcessSurfaceShaderBlock` | `0x1400c5ef0` | entry into surface expansion |
+| `GenerateSurfaceShaderPasses` | `0x1400bec60` | CGPROGRAM → generated passes; rejects mixed blocks |
+| `GenerateSurfaceLightingModel` | `0x140084d60` | lighting-model dispatch (`Standard`, `StandardSpecular`) |
+| `FUN_140079e30` | `0x140079e30` | per-model pass emitter |
+| `FUN_14007b3c0` | `0x14007b3c0` | per-model pass emitter |
+| `FUN_14007c5c0` | `0x14007c5c0` | per-model pass emitter |
+| `FUN_14007e320` | `0x14007e320` | per-model pass emitter |
+| `FUN_140080890` | `0x140080890` | per-model pass emitter |
+| `GenerateSurfacePassHeader` | `0x140082760` | header + vertex-modifier comments |
+| `GenerateV2fStruct` | `0x1400749c0` | `struct v2f_` emission |
+| `GenerateForwardAddPasses` | `0x14007acc0` | ForwardAdd pragmas |
+| `GeneratePrepassFinalPasses` | `0x140079820` | prepass-final pragmas |
+| `GenerateSurfaceAdditionalPass` | `0x14007deb0` | additional pass emitter **[I]** |
+| `GenerateSurfaceStructWrapper` | `0x140085d60` | reflected `surfInput`/`surfOutput` → HLSL wrapper |
+
+The five per-model emitters stay unnamed: their bodies are assembled from the
+same shared block emitters and their lighting model is chosen by the caller,
+so a name would assert a mapping that was not proven (see §3.2).
 
 ### Compilers
 
-| Address | Role |
-|---|---|
-| `FUN_1400317e0` | FXC graphics: compile → reflect → strip |
-| `FUN_1400cb330` | FXC compute: kernel lookup → `cs_5_0` → strip |
-| `FUN_140039190` | disassembler (DXBC / SPIR-V text) |
-| `FUN_14010d2f0` | DXC driver (`lib_6_3` / `lib_6_6`, `HLSL`) |
-| `FUN_140113330`, `FUN_14011a330` | DXC result + reflection handling |
-| `FUN_14002ff60`, `FUN_140036a50` | glslang graphics / compute |
-| `FUN_140033340`, `FUN_140037450` | HLSLcc graphics / compute |
-| `FUN_140034ea0`, `FUN_140037f90` | WGSL / additional compute variant |
-| `FUN_14002fbe0` | SPIR-V disassembly |
-| `FUN_140039af0` | `FORCE_DXC_ON_SWITCH*` decision |
-| `FUN_14008f070` | `D3DCompiler_47.dll` loader (7 entry points) |
-| `FUN_14008aec0`, `FUN_14008ada0`, `FUN_14008b010`, `FUN_14008b1f0`, `FUN_14008b310`, `FUN_14008b400`, `FUN_14008b100` | `D3DCompile`, `D3DDisassemble`, `D3DAssemble`, `D3DPreprocess`, `D3DReflect`, `D3DStripShader`, `D3DGetBlobPart` |
-| `FUN_1400218e0` | FXC reflection + validation (signatures, cbuffers, resources) |
-| `FUN_1400c34c0` | kernel entry-point lookup |
+| Function | Address | Role |
+|---|---|---|
+| `InvokeGraphicsFxcCompilePlugin` | `0x140006e80` | plugin slot `+0x28` |
+| `InvokeComputeFxcCompilePlugin` | `0x140006f90` | plugin slot `+0x38` |
+| `InvokeBytecodeDisassemblePlugin` | `0x140006ec0` | plugin slot `+0x30` |
+| `InvokeGraphicsDxcCompilePlugin` | `0x1400070f0` | plugin slot `+0x40` |
+| `FUN_140039430` | `0x140039430` | DXC compile thunk |
+| `ProcessGraphicsFxcCompile` | `0x1400317e0` | FXC graphics: compile → reflect → strip |
+| `ProcessComputeFxcCompile` | `0x1400cb330` | FXC compute: kernel lookup → `cs_5_0` → strip |
+| `FindComputeKernelEntryPoint` | `0x1400c34c0` | kernel entry-point lookup |
+| `ProcessFxcReflectionAndValidate` | `0x1400218e0` | FXC reflection + validation (signatures, cbuffers, resources) |
+| `ProcessDxbcDisassemble` | `0x140039190` | disassembler (DXBC / SPIR-V text) |
+| `ProcessGraphicsDxcCompile` | `0x14010d2f0` | DXC driver (`lib_6_3` / `lib_6_6`, `HLSL`) |
+| `ProcessDxcCompileResult` | `0x140113330` | DXC compile result handling |
+| `ProcessDxcReflectionResult` | `0x14011a330` | DXC reflection result handling |
+| `ProcessGlslangGraphicsCompile` | `0x14002ff60` | glslang graphics |
+| `ProcessGlslangComputeCompile` | `0x140036a50` | glslang compute |
+| `ProcessHlslccGraphicsCompile` | `0x140033340` | HLSLcc graphics |
+| `ProcessHlslccComputeCompile` | `0x140037450` | HLSLcc compute |
+| `ProcessWgslGraphicsCompile` | `0x140034ea0` | WGSL graphics |
+| `ProcessComputeKernelCompileVariant` | `0x140037f90` | additional compute variant |
+| `ProcessSpirvDisassemble` | `0x14002fbe0` | SPIR-V disassembly |
+| `CheckForceDxcOnSwitch` | `0x140039af0` | `FORCE_DXC_ON_SWITCH*` decision |
+| `InitializeD3dCompilerLibrary` | `0x14008f070` | `D3DCompiler_47.dll` loader (7 entry points) |
+| `FUN_14008ada0` … `FUN_14008b400` | `0x14008ada0`–`0x14008b400` | `D3DCompile`, `D3DDisassemble`, … wrapper stubs (slot mapping in §9) |
+
+The GLSL/Metal backends (glslang, HLSLcc, WGSL, SPIR-V) are named for
+orientation only; this project only consumes the D3D path, so their bodies are
+not analysed. The `D3DCompiler_47.dll` stubs stay unnamed because their real
+names are the imported symbols they forward to (§9).
 
 ### Globals
 
@@ -700,9 +737,9 @@ removed from the bytecode. Consequently:
 
 - The exact `D3DCompile` flag word passed per stage (only the profile/entry strings
   were confirmed).
-- Which upstream condition sets `skipReflection` (`bVar3` in `FUN_1400317e0`); only
+- Which upstream condition sets `skipReflection` (`bVar3` in `ProcessGraphicsFxcCompile`); only
   its consequence — reflection-then-strip vs. pass-through — is proven.
-- The internal meaning of `FUN_1400b0550`, `FUN_1400b1070`, `FUN_1400b13b0`,
-  `FUN_1400bacc0` and `FUN_14007deb0` beyond their call position.
+- The internal meaning of `PrepareCompileRequestSource`, `PrepareStageSourceSegment`, `PrepareComputeStageSource`,
+  `PrepareBackendSourceBuffer` and `GenerateSurfaceAdditionalPass` beyond their call position.
 - `initializeCompiler`'s capability report layout (no strings; structure inferred
   from the plugin objects it initialises).

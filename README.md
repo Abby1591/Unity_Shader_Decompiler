@@ -341,6 +341,8 @@ root, prefixing each with
   Ghidra walkthrough of `UnityShaderCompiler.exe`: IPC dispatch, source
   preparation, backend selection, FXC/DXC compile, reflection, stripping, and
   what that leaves in the bytecode this decompiler reads.
+- [`docs/decomp/`](docs/decomp/) — the same pipeline as raw decompiler output,
+  one file per stage, every function named and addressed.
 - [`docs/shader_parser_spec.md`](docs/shader_parser_spec.md) —
   implementation-grade parser spec with every fact labeled PROVEN, STRONGLY
   INFERRED, POSSIBLE, or UNKNOWN.
